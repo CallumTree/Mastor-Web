@@ -1,0 +1,6 @@
+const gbp = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' })
+export const money = (n: number) => gbp.format(Math.round(n * 100) / 100)
+export const voRef = (n: number) => 'VO-' + String(n).padStart(3, '0')
+export const ukDate = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+export const qtyText = (q: number) => (Number.isInteger(q) ? String(q) : q.toFixed(2))
+export const upliftFactor = (u1: number, u2: number) => (1 + u1 / 100) * (1 + u2 / 100)
