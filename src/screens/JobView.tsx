@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { Job, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
-import { TitleBlock } from '../components/Ui'
 import { usePhotoUrl } from '../lib/photos'
 import { money, upliftFactor } from '../lib/format'
 import { IconBack, IconDiary, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
@@ -9,19 +8,26 @@ import { VariationsTab } from './Variations'
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
-function Hero({ job, onBack, onSetup }: { job: Job; onBack: () => void; onSetup: () => void }) {
+function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; onBack: () => void; onSetup: () => void }) {
   const photo = usePhotoUrl(job.photoId)
   return (
-    <div className="hero" style={{ borderRadius: 0, height: 190, margin: '-16px -16px 16px' }}>
-      {photo ? <img src={photo} alt="" /> : <Drawing id={job.id} type={job.workType} active={job.status === 'Active'} />}
-      <div className="hero-top">
-        <button className="btn-ghost" style={{ background: 'none', border: 'none', color: 'var(--cream-text)', padding: 4 }} onClick={onBack} aria-label="All jobs"><IconBack /></button>
-        <span className="label bracket">{job.contractRef || job.workType}</span>
-        <button style={{ background: 'none', border: 'none', color: 'var(--cream-text)', padding: 4 }} onClick={onSetup} aria-label="Job setup"><IconSettings /></button>
+    <div className="jhero bleed" style={{ height: compact ? 150 : 300 }}>
+      <div className="sky" />
+      {photo ? (
+        <><img className="bg-photo" src={photo} alt="" /><div className="shade" /></>
+      ) : (
+        <div className="bg-drawing" style={compact ? { bottom: '-30%', opacity: .7 } : undefined}>
+          <Drawing id={job.id} type={job.workType} active={job.status === 'Active'} bare />
+        </div>
+      )}
+      <div className="jhero-top">
+        <button onClick={onBack} aria-label="All jobs"><IconBack size={20} /></button>
+        <span className="label bracket" style={{ color: 'var(--cream-muted)' }}>{job.contractRef || job.workType}</span>
+        <button onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button>
       </div>
-      <div className="hero-bottom">
-        <h2>{job.name}</h2>
-        <div style={{ fontSize: 13, color: 'var(--cream-muted)', marginTop: 2 }}>{[job.client, job.address].filter(Boolean).join(' · ')}</div>
+      <div className="jhero-title" style={compact ? { top: 60 } : undefined}>
+        <h2 style={compact ? { fontSize: 20 } : undefined}>{job.name}</h2>
+        {!compact && <div className="sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
       </div>
     </div>
   )
@@ -43,33 +49,27 @@ function Home({ job, vos, go, onSetup }: { job: Job; vos: Variation[]; go: (t: T
   if (awaitingRef) actions.push({ text: `${awaitingRef} priced variation${awaitingRef === 1 ? '' : 's'} awaiting instruction`, hint: 'Send to the client for a VO reference', colour: 'var(--amber)', onClick: () => go('vos') })
 
   return (
-    <div className="stack">
-      <div>
-        <div className="label bracket" style={{ marginBottom: 8, color: actions.length ? 'var(--copper)' : 'var(--green)' }}>
-          {actions.length ? `Action needed (${actions.length})` : 'All clear'}
-        </div>
-        <div className="card-dark" style={{ padding: actions.length ? '6px 16px' : 16 }}>
-          {actions.length === 0 && <div>Nothing outstanding on this job.</div>}
-          {actions.map((a, i) => (
-            <button key={i} onClick={a.onClick} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 12, padding: '10px 0', background: 'none', border: 'none', borderTop: i ? '1px solid var(--charcoal-line)' : 'none', color: 'inherit', textAlign: 'left' }}>
-              <span style={{ width: 10, height: 10, borderRadius: 5, background: a.colour, flex: 'none' }} />
-              <span className="grow"><div style={{ fontWeight: 600 }}>{a.text}</div><div style={{ fontSize: 12, color: 'var(--cream-muted)' }}>{a.hint}</div></span>
-              <span style={{ color: 'var(--cream-muted)', fontSize: 20 }}>›</span>
-            </button>
-          ))}
-        </div>
+    <div>
+      <div className="tiles">
+        <div className="glass tile tile-dark"><div className="n">{job.contractValue ? money(job.contractValue).replace(/\.\d\d$/, '') : '—'}</div><div className="l">Contract</div></div>
+        <div className="glass tile tile-dark"><div className="n" style={{ color: 'var(--copper-light)' }}>{money(voGross).replace(/\.\d\d$/, '')}</div><div className="l">Variations</div></div>
+        <div className={'glass tile tile-dark' + (unpriced ? ' warn' : '')}><div className="n">{unpriced}</div><div className="l">Unpriced VOs</div></div>
       </div>
-      <div>
-        <div className="label bracket" style={{ marginBottom: 8 }}>Commercial position</div>
-        <TitleBlock
-          sheetRef={job.contractRef}
-          head={['Contract value', job.contractValue ? money(job.contractValue) : 'Not set']}
-          rows={[
-            [['Variations (base)', money(voBase), 'var(--copper)'], ['Incl. uplifts', money(voGross)]],
-            [['Priced VOs', String(priced.length)], ['Unpriced VOs', String(unpriced), unpriced ? 'var(--copper-light)' : undefined]],
-            [['PO number', job.poNumber || '—'], ['Uplifts', `${job.uplift1}% + ${job.uplift2}%`]],
-          ]}
-        />
+      <div className="label bracket" style={{ marginBottom: 8, color: actions.length ? 'var(--copper)' : 'var(--green)' }}>
+        {actions.length ? `Action needed (${actions.length})` : 'All clear'}
+      </div>
+      <div className="card-dark" style={{ padding: actions.length ? '6px 16px' : 16 }}>
+        {actions.length === 0 && <div>Nothing outstanding on this job.</div>}
+        {actions.map((a, i) => (
+          <button key={i} onClick={a.onClick} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 12, padding: '12px 0', background: 'none', border: 'none', borderTop: i ? '1px solid var(--charcoal-line)' : 'none', color: 'inherit', textAlign: 'left' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 5, background: a.colour, flex: 'none' }} />
+            <span className="grow"><div style={{ fontWeight: 600 }}>{a.text}</div><div style={{ fontSize: 12, color: 'var(--cream-muted)' }}>{a.hint}</div></span>
+            <span style={{ color: 'var(--cream-muted)', fontSize: 20 }}>›</span>
+          </button>
+        ))}
+      </div>
+      <div className="muted" style={{ fontSize: 12, marginTop: 12 }}>
+        PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts
       </div>
     </div>
   )
@@ -102,7 +102,7 @@ export function JobView({ job, vos, onBack, onSetup, onLogVariation, onEditVaria
   return (
     <>
       <div className="page">
-        <Hero job={job} onBack={onBack} onSetup={onSetup} />
+        <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} go={setTab} onSetup={onSetup} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} onLog={onLogVariation} onEdit={onEditVariation} />}
         {tab === 'diary' && <Soon title="Site diary" what="Record your walk-round by voice; completed work and extras are picked out for you to confirm." />}

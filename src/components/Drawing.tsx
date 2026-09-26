@@ -38,19 +38,21 @@ const SETS: Record<WorkType, Lines[]> = { PPR: RESIDENTIAL, Commercial: COMMERCI
 
 function hash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h) }
 
-export function Drawing({ id, type, active }: { id: string; type: WorkType; active: boolean }) {
+export function Drawing({ id, type, active, bare = false }: { id: string; type: WorkType; active: boolean; bare?: boolean }) {
   const set = SETS[type] ?? RESIDENTIAL
   const lines = set[hash(id) % set.length]
   const gid = 'sw' + hash(id)
   return (
-    <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" aria-hidden>
-      <rect width="400" height="200" fill="#1A1A2E" />
-      {/* drafting grid */}
-      <g stroke="#2A2A48" strokeWidth=".5">
-        {Array.from({ length: 21 }, (_, i) => <line key={'v' + i} x1={i * 20} y1="0" x2={i * 20} y2="200" />)}
-        {Array.from({ length: 11 }, (_, i) => <line key={'h' + i} x1="0" y1={i * 20} x2="400" y2={i * 20} />)}
-      </g>
-      <g fill="none" stroke="#C97B3F" strokeOpacity=".38" strokeWidth="1.3" strokeLinecap="square">
+    <svg viewBox="0 0 400 200" preserveAspectRatio={bare ? 'xMidYMax meet' : 'xMidYMid slice'} aria-hidden>
+      {!bare && <rect width="400" height="200" fill="#1A1A2E" />}
+      {/* drafting grid (bare mode: the page supplies its own grid behind) */}
+      {!bare && (
+        <g stroke="#2A2A48" strokeWidth=".5">
+          {Array.from({ length: 21 }, (_, i) => <line key={'v' + i} x1={i * 20} y1="0" x2={i * 20} y2="200" />)}
+          {Array.from({ length: 11 }, (_, i) => <line key={'h' + i} x1="0" y1={i * 20} x2="400" y2={i * 20} />)}
+        </g>
+      )}
+      <g fill="none" stroke="#C97B3F" strokeOpacity={bare ? .5 : .38} strokeWidth="1.3" strokeLinecap="square">
         {lines.map((d, i) => <path key={i} d={d} />)}
       </g>
       {active && (

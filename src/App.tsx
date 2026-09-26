@@ -26,7 +26,7 @@ export default function App() {
 
   return (
     <>
-      <div className="banner">Test mode · saved on this device only</div>
+      {ready && job && <div className="banner">Test mode · saved on this device only</div>}
       {!ready ? null : job ? (
         <JobView job={job} vos={vos.filter(v => v.jobId === job.id)}
           onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')}
