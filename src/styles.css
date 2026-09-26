@@ -146,3 +146,8 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 .tile .l { font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--cream-muted); margin-top: 4px; }
 .tile.warn .n { color: var(--copper-light); }
 .tile-dark { background: rgba(26,26,46,.55); }
+
+/* Tracing beam: a dash travels the full length of the drawing's linework and loops */
+@keyframes trace { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+.beam { animation: trace linear infinite; stroke-dasharray: 3 997; }
+@media (prefers-reduced-motion: reduce) { .beam { animation: none; display: none; } }
