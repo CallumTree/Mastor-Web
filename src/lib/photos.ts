@@ -1,4 +1,5 @@
 import { db, uid } from './db'
+import { fetchPhoto } from './sync'
 import { useEffect, useState } from 'react'
 
 /** Shrinks a camera photo to a sensible size before storing (phones shoot 5-10MB images). */
@@ -24,7 +25,8 @@ export function usePhotoUrl(id: string | null | undefined): string | null {
   useEffect(() => {
     let u: string | null = null
     let live = true
-    if (id) db.photo(id).then(b => { if (b && live) { u = URL.createObjectURL(b); setUrl(u) } })
+    // local copy first; if it was taken on another device, fetch it from the cloud once
+    if (id) db.photo(id).then(b => b ?? fetchPhoto(id)).then(b => { if (b && live) { u = URL.createObjectURL(b); setUrl(u) } }).catch(() => {})
     else setUrl(null)
     return () => { live = false; if (u) URL.revokeObjectURL(u) }
   }, [id])

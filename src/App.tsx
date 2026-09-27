@@ -4,6 +4,8 @@ import { db, nextVoNumber, uid } from './lib/db'
 import { deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
+import { onRemoteChange } from './lib/sync'
+import { SyncBadge } from './components/SyncBadge'
 import { keepStorage, makeBackup, downloadBackup, restoreBackup } from './lib/backup'
 import { JobForm } from './screens/JobForm'
 import { JobView } from './screens/JobView'
@@ -35,6 +37,8 @@ export default function App() {
     setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
+  // changes made on another device arrive → refresh what's on screen
+  useEffect(() => onRemoteChange(() => { void reload() }), [reload])
 
   const job = jobs.find(j => j.id === openId) ?? null
   const jobVos = job ? vos.filter(v => v.jobId === job.id) : []
@@ -44,7 +48,7 @@ export default function App() {
 
   return (
     <>
-      {ready && job && <div className="banner">Test mode · saved on this device only</div>}
+      {ready && job && <div className="banner"><SyncBadge /></div>}
       {!ready ? null : showDash && !job ? (
         <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
       ) : job ? (

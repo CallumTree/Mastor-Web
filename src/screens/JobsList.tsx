@@ -4,6 +4,7 @@ import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
 import { money } from '../lib/format'
 import { IconChart, IconPlus } from '../components/Icons'
+import { SyncBadge } from '../components/SyncBadge'
 
 /**
  * Jobs — Starlink-style. The job's drawing (or site photo) is the screen; swipe between jobs
@@ -48,7 +49,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onBackup, onRe
     <div className="immersive">
       <Backdrop job={current} />
       <div className="imm-banner">
-        Saved on this device only ·{' '}
+        <SyncBadge />{' · '}
         <button className="linkish" onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>{' · '}
         <label className="linkish">Restore<input type="file" hidden accept=".json,application/json" onChange={async e => {
           const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
