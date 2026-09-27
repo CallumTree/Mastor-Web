@@ -9,6 +9,7 @@ import { IconPlus } from '../components/Icons'
  * Jobs — Starlink-style. The job's drawing (or site photo) is the screen; swipe between jobs
  * and the backdrop follows. One solid action (Open job), everything else glass.
  */
+// The front page always shows the house — it's the brand moment. Job headers show their own type.
 function Backdrop({ job }: { job: Job | null }) {
   const photo = usePhotoUrl(job?.photoId)
   return (
@@ -17,8 +18,8 @@ function Backdrop({ job }: { job: Job | null }) {
       {photo ? (
         <><img className="bg-photo" src={photo} alt="" /><div className="shade" /></>
       ) : (
-        <div className="bg-drawing" key={job?.id ?? 'none'}>
-          <Drawing id={job?.id ?? 'mastor'} type={job?.workType ?? 'PPR'} active={job?.status === 'Active'} bare />
+        <div className="bg-drawing">
+          <Drawing id={job?.id ?? 'mastor'} type="PPR" active={job ? job.status === 'Active' : true} bare />
         </div>
       )}
     </>

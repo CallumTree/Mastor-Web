@@ -30,7 +30,7 @@ export function Drawing({ id, type, active, bare = false }: { id: string; type: 
           {Array.from({ length: 11 }, (_, i) => <line key={'h' + i} x1="0" y1={i * 20} x2="400" y2={i * 20} />)}
         </g>
       )}
-      <g fill="none" stroke="#C97B3F" strokeOpacity=".2" strokeWidth=".6" vectorEffect="non-scaling-stroke">
+      <g fill="none" stroke="#C97B3F" strokeOpacity=".36" strokeWidth=".75" vectorEffect="non-scaling-stroke">
         {drawing.guides.map((d, i) => <path key={i} d={d} vectorEffect="non-scaling-stroke" />)}
       </g>
       <path d={drawing.d} fill="none" stroke="#C97B3F" strokeOpacity={bare ? .6 : .45} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
