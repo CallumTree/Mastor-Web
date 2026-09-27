@@ -21,7 +21,7 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
         <><img className="bg-photo" src={photo} alt="" /><div className="shade" /></>
       ) : (
         <div className="bg-drawing" style={compact ? { bottom: '-30%', opacity: .7 } : undefined}>
-          <Drawing id={job.id} type={job.workType} active={job.status === 'Active'} bare />
+          <Drawing id={job.id} type={job.workType} active={job.status === 'Active'} bare paper />
         </div>
       )}
       <div className="jhero-top">

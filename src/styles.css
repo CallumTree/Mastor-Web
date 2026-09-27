@@ -269,3 +269,83 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
   border-left: 1.5px solid var(--copper); border-right: 1.5px solid var(--copper); }
 .card-dark .chip, .immersive .chip { color: var(--cream-muted); }
 .linkish { background: none; border: none; padding: 0; color: var(--copper-light); text-decoration: underline; text-underline-offset: 3px; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+
+/* =====================================================================
+   SHEET THEME v3 — every page inside the app is a drawing sheet.
+   Paper + faint drafting grid, ink linework, copper accent. The front
+   page (.immersive) stays the dark cover sheet.
+   Dark-panel classes are remapped by overriding the variables they use,
+   so every inline var(--cream-text) etc. inside them flips to ink too.
+   ===================================================================== */
+:root {
+  --paper: #F7F3EB; --paper-2: #FFFDF8; --ink-line: rgba(26,26,46,.16); --ink-hair: rgba(26,26,46,.08);
+  --copper-ink: #A85E28;
+}
+body { background: var(--paper); }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--ink-hair) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ink-hair) 1px, transparent 1px),
+    linear-gradient(rgba(26,26,46,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,26,46,.035) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* ---- drawing panel: replaces the dark cards ---- */
+.card, .card-dark, .panel {
+  --cream-text: var(--ink); --cream-muted: var(--ink-muted); --charcoal-line: var(--ink-line); --copper-light: var(--copper-ink);
+  background:
+    linear-gradient(var(--copper), var(--copper)) top left / 9px 1.5px no-repeat,
+    linear-gradient(var(--copper), var(--copper)) top left / 1.5px 9px no-repeat,
+    linear-gradient(var(--copper), var(--copper)) top right / 9px 1.5px no-repeat,
+    linear-gradient(var(--copper), var(--copper)) top right / 1.5px 9px no-repeat,
+    linear-gradient(var(--copper), var(--copper)) bottom left / 9px 1.5px no-repeat,
+    linear-gradient(var(--copper), var(--copper)) bottom left / 1.5px 9px no-repeat,
+    linear-gradient(var(--copper), var(--copper)) bottom right / 9px 1.5px no-repeat,
+    linear-gradient(var(--copper), var(--copper)) bottom right / 1.5px 9px no-repeat,
+    var(--paper-2);
+  color: var(--ink); border: 1px solid var(--ink-line); border-radius: 3px; box-shadow: none;
+}
+.card-dark .label, .panel .label { color: var(--ink-muted); }
+.accent-left { border-left: 2px solid var(--copper); }
+
+/* ---- title block on paper ---- */
+.tb { --cream-text: var(--ink); --cream-muted: var(--ink-muted); background: var(--paper-2); color: var(--ink); border: 1px solid var(--ink); }
+.tb-row { border-top: 1px solid var(--ink-line); } .tb-row .tb-cell + .tb-cell { border-left: 1px solid var(--ink-line); }
+.tb-label { color: var(--ink-muted); } .tb-head .tb-val { color: var(--copper-ink); }
+.scalebar { background: var(--ink-line); }
+
+/* ---- job header: the drawing on paper ---- */
+.jhero { --cream-text: var(--ink); --cream-muted: var(--ink-muted); color: var(--ink); border-bottom: 1px solid var(--ink-line); }
+.jhero .sky { background: var(--paper-2); }
+.jhero .sky::before { opacity: 1; background-image:
+  linear-gradient(var(--ink-hair) 1px, transparent 1px), linear-gradient(90deg, var(--ink-hair) 1px, transparent 1px);
+  background-size: 24px 24px; }
+.jhero::after { background: linear-gradient(180deg, rgba(255,253,248,.85) 0%, rgba(255,253,248,0) 38%, rgba(255,253,248,0) 62%, rgba(255,253,248,.92) 100%); }
+.jhero .bg-photo + .shade { background: linear-gradient(180deg, rgba(20,20,42,.55), rgba(20,20,42,.1) 45%, rgba(20,20,42,.75)); }
+.jhero:has(.bg-photo) { --cream-text: #F5F0E8; --cream-muted: #D9D0C2; color: #F5F0E8; }
+.jhero-top button { background: rgba(255,253,248,.8); border: 1px solid var(--ink-line); color: var(--ink); border-radius: 4px; backdrop-filter: blur(8px); }
+.jhero .label { color: var(--ink-muted); }
+
+/* glass tiles over the header: paper glass */
+.tile-dark { --cream-text: var(--ink); --cream-muted: var(--ink-muted); --copper-light: var(--copper-ink); background: rgba(255,253,248,.82) !important; border: 1px solid var(--ink-line) !important; border-radius: 3px !important; color: var(--ink); backdrop-filter: blur(10px); }
+.tile .n { color: var(--ink); } .tile.warn .n { color: var(--copper-ink); }
+
+/* ---- nav + banner: light ---- */
+.nav { background: rgba(255,253,248,.94); border-top: 1px solid var(--ink); backdrop-filter: blur(10px); }
+.nav button { color: var(--ink-muted); opacity: .75; }
+.nav button.on { color: var(--copper-ink); opacity: 1; }
+.banner { background: var(--paper-2); color: var(--ink-muted); border-bottom: 1px solid var(--ink-line); }
+.banner .linkish { color: var(--copper-ink); }
+
+/* ---- halo buttons inside paper pages ---- */
+.jhero .btn-glass, .jhero .btn-dark { color: var(--ink); background: linear-gradient(#FFFDF8, #FFFDF8) padding-box, linear-gradient(160deg, rgba(201,123,63,.95), rgba(201,123,63,.15) 50%, rgba(201,123,63,.6)) border-box; }
+.btn-dark { color: var(--ink); background: linear-gradient(#FFFDF8, #FFFDF8) padding-box, linear-gradient(160deg, rgba(201,123,63,.95), rgba(201,123,63,.15) 50%, rgba(201,123,63,.6)) border-box; }
+.sheet { background: var(--paper-2); border-top: 1px solid var(--ink); border-radius: 6px 6px 0 0; }
+.flag { color: var(--copper-ink); }
+
+/* hatching — how drawings show a cut section. Used in charts. */
+.hatch { background-image: repeating-linear-gradient(135deg, var(--copper) 0 1.2px, transparent 1.2px 5px); }
