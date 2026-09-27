@@ -268,3 +268,4 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 .chip.on::before { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 9px;
   border-left: 1.5px solid var(--copper); border-right: 1.5px solid var(--copper); }
 .card-dark .chip, .immersive .chip { color: var(--cream-muted); }
+.linkish { background: none; border: none; padding: 0; color: var(--copper-light); text-decoration: underline; text-underline-offset: 3px; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }

@@ -26,7 +26,11 @@ function Backdrop({ job }: { job: Job | null }) {
   )
 }
 
-export function JobsList({ jobs, vos, onOpen, onNew }: { jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void }) {
+export function JobsList({ jobs, vos, onOpen, onNew, onBackup, onRestore }: {
+  jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void
+  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>
+}) {
+  const [msg, setMsg] = useState<string | null>(null)
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const [idx, setIdx] = useState(0)
   const track = useRef<HTMLDivElement>(null)
@@ -43,7 +47,16 @@ export function JobsList({ jobs, vos, onOpen, onNew }: { jobs: Job[]; vos: Varia
   return (
     <div className="immersive">
       <Backdrop job={current} />
-      <div className="imm-banner">Test mode · saved on this device only</div>
+      <div className="imm-banner">
+        Saved on this device only ·{' '}
+        <button className="linkish" onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>{' · '}
+        <label className="linkish">Restore<input type="file" hidden accept=".json,application/json" onChange={async e => {
+          const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
+          try { const t = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsText(f) }); const n = await onRestore(t); setMsg(`Restored ${n} job${n === 1 ? '' : 's'}`) }
+          catch (err) { setMsg((err as Error).message || 'Couldn’t restore that file') }
+        }} /></label>
+        {msg && <div style={{ color: 'var(--copper-light)', marginTop: 4 }}>{msg}</div>}
+      </div>
       <div className="imm-top">
         <div className="wordmark">MASTOR</div>
         <div className="imm-sub">{sorted.length ? `${active} active job${active === 1 ? '' : 's'}` : 'Site · Variations · Valuations'}</div>

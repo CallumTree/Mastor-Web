@@ -3,6 +3,7 @@ import type { Job, ScopeItem, Valuation, Variation } from './lib/types'
 import { db, nextVoNumber, uid } from './lib/db'
 import { deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
+import { keepStorage, makeBackup, downloadBackup, restoreBackup } from './lib/backup'
 import { JobForm } from './screens/JobForm'
 import { JobView } from './screens/JobView'
 import { EditVariation, LogVariation } from './screens/Variations'
@@ -31,7 +32,7 @@ export default function App() {
     ])
     setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setReady(true)
   }, [])
-  useEffect(() => { reload() }, [reload])
+  useEffect(() => { reload(); keepStorage() }, [reload])
 
   const job = jobs.find(j => j.id === openId) ?? null
   const jobVos = job ? vos.filter(v => v.jobId === job.id) : []
@@ -52,7 +53,9 @@ export default function App() {
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} />
+        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')}
+          onBackup={async () => downloadBackup(await makeBackup())}
+          onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }} />
       )}
 
       {jobForm && (
