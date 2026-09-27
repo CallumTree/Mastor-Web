@@ -19,3 +19,4 @@ export const IconCamera = (p: P) => <S {...p}><rect x="3" y="7" width="18" heigh
 export const IconSettings = (p: P) => <S {...p}><path d="M13 15l-2-3.5h-4L5 15l2 3.5h4z" /><path d="M13 11L21 3" strokeWidth={2} /><circle cx="20" cy="4" r="1.1" fill={COPPER} stroke="none" /></S>
 export const IconBack = (p: P) => <S {...p}><path d="M15 5l-7 7 7 7" /></S>
 export const IconPlus = (p: P) => <S {...p}><path d="M12 5v14M5 12h14" /></S>
+export const IconChart = (p: P) => <S {...p}><path d="M3 21h18" /><rect x="5" y="12" width="3" height="9" /><rect x="10.5" y="7" width="3" height="14" /><rect x="16" y="10" width="3" height="11" /><circle cx="12" cy="4" r="1.1" fill={COPPER} stroke="none" /></S>

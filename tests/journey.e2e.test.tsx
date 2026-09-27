@@ -104,5 +104,13 @@ describe('College Park, end to end', () => {
     await screen.findByText('58 items')
     expect(screen.getAllByText('🔒 VAL-001').length).toBe(1)
     expect(screen.getAllByText('VAL-002').length).toBe(1)
+
+    // --- director dashboard reflects it
+    cleanup()
+    render(<App />)
+    click(await screen.findByRole('button', { name: /director dashboard/i }))
+    await screen.findByText(/at a glance/i)
+    expect(screen.getByText('Certified this year')).toBeTruthy()
+    expect(screen.getByText('32 College Park')).toBeTruthy()
   })
 })

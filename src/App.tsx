@@ -3,6 +3,7 @@ import type { Job, ScopeItem, Valuation, Variation } from './lib/types'
 import { db, nextVoNumber, uid } from './lib/db'
 import { deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
+import { Dashboard } from './screens/Dashboard'
 import { keepStorage, makeBackup, downloadBackup, restoreBackup } from './lib/backup'
 import { JobForm } from './screens/JobForm'
 import { JobView } from './screens/JobView'
@@ -22,6 +23,7 @@ export default function App() {
   const [scopeForm, setScopeForm] = useState<ScopeItem | 'new' | null>(null)
   const [importing, setImporting] = useState(false)
   const [ready, setReady] = useState(false)
+  const [showDash, setShowDash] = useState(false)
 
   const reload = useCallback(async () => {
     const js = await db.jobs()
@@ -43,7 +45,9 @@ export default function App() {
   return (
     <>
       {ready && job && <div className="banner">Test mode · saved on this device only</div>}
-      {!ready ? null : job ? (
+      {!ready ? null : showDash && !job ? (
+        <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
+      ) : job ? (
         <JobView job={job} vos={jobVos} scope={jobScope} vals={jobVals}
           onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')}
           onLogVariation={() => setLogging(true)} onEditVariation={setEditing}
@@ -53,7 +57,7 @@ export default function App() {
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')}
+        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)}
           onBackup={async () => downloadBackup(await makeBackup())}
           onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }} />
       )}
