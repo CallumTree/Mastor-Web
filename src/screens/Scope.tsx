@@ -4,7 +4,7 @@ import { Field, Sheet } from '../components/Ui'
 import { money, qtyText } from '../lib/format'
 import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
-import { IconPlus } from '../components/Icons'
+import { IconPlus, IconScope } from '../components/Icons'
 
 export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; onClick: () => void }) {
   return (
@@ -22,8 +22,8 @@ export function ValBadge({ val }: { val?: Valuation }) {
 
 type Filter = 'all' | 'live' | 'claimed'
 
-export function ScopeTab({ scope, vals, onToggle, onAdd, onEdit }: {
-  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void
+export function ScopeTab({ scope, vals, onToggle, onAdd, onEdit, onImport }: {
+  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
 }) {
   const [filter, setFilter] = useState<Filter>('all')
   const total = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -59,7 +59,10 @@ export function ScopeTab({ scope, vals, onToggle, onAdd, onEdit }: {
       </div>
 
       {scope.length === 0 && (
-        <div className="card empty">No scope yet. Add items from the works order.<br /><span style={{ fontSize: 12 }}>BoQ upload with auto-read is coming in the next build.</span></div>
+        <>
+          <div className="card empty">No scope yet. Import the BoQ / works order and every line is read for you to check.</div>
+          <button className="btn btn-primary" onClick={onImport}><IconScope /> Import BoQ</button>
+        </>
       )}
 
       {rooms.map(room => (
@@ -91,7 +94,10 @@ export function ScopeTab({ scope, vals, onToggle, onAdd, onEdit }: {
         </div>
       ))}
 
-      <button className="btn btn-secondary" onClick={onAdd}><IconPlus /> Add scope item</button>
+      <div className="row">
+        {scope.length > 0 && <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onImport}><IconScope /> Import more</button>}
+        <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onAdd}><IconPlus /> Add item</button>
+      </div>
       {scope.length > 0 && <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>Tick an item to put it in the open valuation. Untick to send it back.</div>}
     </div>
   )

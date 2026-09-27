@@ -7,6 +7,7 @@ import { JobForm } from './screens/JobForm'
 import { JobView } from './screens/JobView'
 import { EditVariation, LogVariation } from './screens/Variations'
 import { ScopeForm } from './screens/Scope'
+import { BoqImport } from './screens/BoqImport'
 
 export default function App() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -18,6 +19,7 @@ export default function App() {
   const [logging, setLogging] = useState(false)
   const [editing, setEditing] = useState<Variation | null>(null)
   const [scopeForm, setScopeForm] = useState<ScopeItem | 'new' | null>(null)
+  const [importing, setImporting] = useState(false)
   const [ready, setReady] = useState(false)
 
   const reload = useCallback(async () => {
@@ -46,7 +48,7 @@ export default function App() {
           onLogVariation={() => setLogging(true)} onEditVariation={setEditing}
           onToggleVo={v => run(() => toggleVariation(v, jobVals))()}
           onToggleScope={i => run(() => toggleScope(i, jobVals))()}
-          onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm}
+          onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)}
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()} />
       ) : (
@@ -70,6 +72,17 @@ export default function App() {
             await db.putVariation(stillPriced ? v : { ...v, valuationId: null }); setEditing(null); await reload()
           }}
           onDelete={async () => { await db.deleteVariation(editing); setEditing(null); await reload() }} />
+      )}
+      {importing && job && (
+        <BoqImport job={job} existing={jobScope.length} onClose={() => setImporting(false)}
+          onImport={async (lines, ref) => {
+            let order = jobScope.reduce((m, s) => Math.max(m, s.order), 0)
+            for (const l of lines) {
+              await db.putScope({ id: uid(), jobId: job.id, code: l.code, description: l.description, room: l.room, qty: l.qty, unit: l.unit, rate: l.rate, valuationId: null, order: ++order, createdAt: Date.now() })
+            }
+            if (ref && !job.contractRef) await db.putJob({ ...job, contractRef: ref })
+            setImporting(false); await reload()
+          }} />
       )}
       {scopeForm && job && (
         <ScopeForm item={scopeForm === 'new' ? undefined : scopeForm} jobId={job.id}

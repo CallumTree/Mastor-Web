@@ -151,3 +151,6 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 @keyframes trace { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
 .beam { animation: trace linear infinite; stroke-dasharray: 3 997; }
 @media (prefers-reduced-motion: reduce) { .beam { animation: none; display: none; } }
+/* reading indicator — the beam, on its own */
+@keyframes orbit { from { transform: rotate(0deg) translateX(22px) rotate(0deg); } to { transform: rotate(360deg) translateX(22px) rotate(-360deg); } }
+.beam-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFF4E4; box-shadow: 0 0 10px 3px #E8A868; margin: 18px auto 0; animation: orbit 1.6s linear infinite; }
