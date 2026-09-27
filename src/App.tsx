@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Job, ScopeItem, Valuation, Variation } from './lib/types'
+import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from './lib/types'
 import { db, nextVoNumber, uid } from './lib/db'
 import { deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
@@ -11,6 +11,7 @@ import { JobForm } from './screens/JobForm'
 import { JobView } from './screens/JobView'
 import { EditVariation, LogVariation } from './screens/Variations'
 import { ScopeForm } from './screens/Scope'
+import { savePhoto, saveVideo, saveImageBlob } from './lib/photos'
 import { BoqImport } from './screens/BoqImport'
 
 export default function App() {
@@ -18,6 +19,8 @@ export default function App() {
   const [vos, setVos] = useState<Variation[]>([])
   const [scope, setScope] = useState<ScopeItem[]>([])
   const [vals, setVals] = useState<Valuation[]>([])
+  const [diary, setDiary] = useState<DiaryEntry[]>([])
+  const [logFrom, setLogFrom] = useState<DiaryEntry | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
   const [logging, setLogging] = useState(false)
@@ -29,12 +32,13 @@ export default function App() {
 
   const reload = useCallback(async () => {
     const js = await db.jobs()
-    const [v, s, va] = await Promise.all([
+    const [v, s, va, di] = await Promise.all([
       Promise.all(js.map(j => db.variations(j.id))),
       Promise.all(js.map(j => db.scope(j.id))),
       Promise.all(js.map(j => db.valuations(j.id))),
+      Promise.all(js.map(j => db.diary(j.id))),
     ])
-    setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setReady(true)
+    setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setDiary(di.flat()); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
   // changes made on another device arrive → refresh what's on screen
@@ -44,6 +48,7 @@ export default function App() {
   const jobVos = job ? vos.filter(v => v.jobId === job.id) : []
   const jobScope = job ? scope.filter(s => s.jobId === job.id) : []
   const jobVals = job ? vals.filter(v => v.jobId === job.id) : []
+  const jobDiary = job ? diary.filter(d => d.jobId === job.id) : []
   const run = (fn: () => Promise<unknown>) => async () => { await fn(); await reload() }
 
   return (
@@ -59,7 +64,20 @@ export default function App() {
           onToggleScope={i => run(() => toggleScope(i, jobVals))()}
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)}
           onIssue={v => run(() => issueValuation(v))()}
-          onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()} />
+          onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
+          diary={jobDiary}
+          onSaveDiary={async (e, markedUp) => {
+            // mark-up saves a NEW image; the first original is always kept
+            if (markedUp) { const id = await saveImageBlob(markedUp); e = { ...e, originalMediaId: e.originalMediaId ?? e.mediaId, mediaId: id } }
+            await db.putDiary(e); await reload()
+          }}
+          onDeleteDiary={async e => { await db.deleteDiary(e); await reload() }}
+          onAddMedia={async (file, kind, date) => {
+            const mediaId = kind === 'video' ? await saveVideo(file) : await savePhoto(file)
+            await db.putDiary({ id: uid(), jobId: job.id, date, type: kind, note: '', labour: null, weather: '', mediaId, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
+            await reload()
+          }}
+          onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }} />
       ) : (
         <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)}
           onBackup={async () => downloadBackup(await makeBackup())}
@@ -72,8 +90,19 @@ export default function App() {
           onDelete={jobForm === 'edit' && job ? async () => { await db.deleteJob(job.id); setJobForm(null); setOpenId(null); await reload() } : undefined} />
       )}
       {logging && job && (
-        <LogVariation onClose={() => setLogging(false)}
-          onSave={async data => { await db.putVariation({ ...data, id: uid(), jobId: job.id, number: await nextVoNumber(job.id), valuationId: null }); setLogging(false); await reload() }} />
+        <LogVariation onClose={() => { setLogging(false); setLogFrom(null) }}
+          initial={logFrom ? { description: logFrom.note, room: logFrom.room, photoIds: logFrom.mediaId ? [logFrom.mediaId] : [] } : undefined}
+          onSave={async data => {
+            const id = uid()
+            // The VO keeps its OWN copy of the diary photo — deleting one must never delete the other's evidence
+            if (logFrom?.mediaId && data.photoIds.includes(logFrom.mediaId)) {
+              const blob = await db.photo(logFrom.mediaId)
+              if (blob) { const copy = await saveImageBlob(blob); data = { ...data, photoIds: data.photoIds.map(p => (p === logFrom.mediaId ? copy : p)) } }
+            }
+            await db.putVariation({ ...data, id, jobId: job.id, number: await nextVoNumber(job.id), valuationId: null })
+            if (logFrom) await db.putDiary({ ...logFrom, voId: id })   // the photo now shows it's evidence for this VO
+            setLogging(false); setLogFrom(null); await reload()
+          }} />
       )}
       {editing && (
         <EditVariation vo={editing} locked={!!lockedIn(editing, jobVals)} onClose={() => setEditing(null)}

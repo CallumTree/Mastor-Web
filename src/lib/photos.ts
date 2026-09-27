@@ -32,3 +32,19 @@ export function usePhotoUrl(id: string | null | undefined): string | null {
   }, [id])
   return url
 }
+
+/** Videos are stored as recorded. Free storage caps a file at 50MB — roughly 30–40 seconds on most phones. */
+export const MAX_VIDEO_BYTES = 50 * 1024 * 1024
+export async function saveVideo(file: File): Promise<string> {
+  if (file.size > MAX_VIDEO_BYTES) throw new Error(`That clip is ${(file.size / 1048576).toFixed(0)}MB — the limit is 50MB (about 30–40 seconds). Try a shorter clip.`)
+  const id = uid()
+  await db.putPhoto(id, file)
+  return id
+}
+
+/** Saves an already-encoded image (e.g. a marked-up photo). */
+export async function saveImageBlob(blob: Blob): Promise<string> {
+  const id = uid()
+  await db.putPhoto(id, blob)
+  return id
+}

@@ -62,3 +62,22 @@ export interface Valuation {
   createdAt: number
   issuedAt: number | null
 }
+
+/**
+ * Site diary. One 'day' record per job per date (id `day:<jobId>:<date>`, so two devices never
+ * create duplicates) holding weather, labour and the note; plus one record per photo or video.
+ */
+export interface DiaryEntry {
+  id: string
+  jobId: string
+  date: string                 // YYYY-MM-DD (UK local day)
+  type: 'day' | 'photo' | 'video'
+  note: string                 // day note, or the photo/video caption
+  labour: number | null        // day only — operatives on site
+  weather: string              // day only
+  mediaId: string | null       // photo (marked-up version if marked up) or video
+  originalMediaId: string | null // photo before mark-up
+  room: string
+  voId: string | null          // variation raised from this photo
+  createdAt: number
+}

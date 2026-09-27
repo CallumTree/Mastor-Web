@@ -352,3 +352,8 @@ body {
 /* photo look: stronger dusk shade so text stays readable over any photo */
 .immersive .bg-photo { filter: saturate(.85) contrast(1.05); }
 .immersive .shade { background: linear-gradient(180deg, rgba(20,20,42,.82) 0%, rgba(20,20,42,.25) 38%, rgba(30,22,36,.35) 62%, rgba(20,20,42,.9) 100%); }
+/* ⊕ capture — the one raised button in the nav */
+.nav .nav-capture { flex: 0 0 64px; opacity: 1; }
+.nav .nav-capture span { width: 48px; height: 48px; margin-top: -18px; border-radius: 12px; display: grid; place-items: center; font-size: 28px; font-weight: 300; line-height: 1;
+  color: #1A1A2E; background: linear-gradient(180deg, #D98A4C, #C07034); border: 1px solid var(--ink); box-shadow: 0 6px 16px -6px rgba(168,94,40,.7); }
+.nav .nav-capture:active span { transform: scale(.94); }

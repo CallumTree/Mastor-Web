@@ -3,10 +3,10 @@
  * Every change is also queued in the OUTBOX; sync.ts sends the queue to the cloud when it can.
  * Writes coming *from* the cloud use the `local` helpers, which don't queue anything.
  */
-import type { Job, ScopeItem, Valuation, Variation } from './types'
+import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from './types'
 
 const DB_NAME = 'mastor'
-const VERSION = 3 // v2: scope + valuations · v3: outbox + meta (cloud sync)
+const VERSION = 4 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary
 let dbp: Promise<IDBDatabase> | null = null
 
 function open(): Promise<IDBDatabase> {
@@ -22,6 +22,7 @@ function open(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('valuations')) db.createObjectStore('valuations', { keyPath: 'id' }).createIndex('jobId', 'jobId')
       if (!db.objectStoreNames.contains('outbox')) db.createObjectStore('outbox', { keyPath: 'seq', autoIncrement: true })
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta')
+      if (!db.objectStoreNames.contains('diary')) db.createObjectStore('diary', { keyPath: 'id' }).createIndex('jobId', 'jobId')
     }
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error)
@@ -41,7 +42,7 @@ function tx<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore) 
 export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36))
 
 // ---------- outbox (changes waiting to go to the cloud) ----------
-export type RecordTable = 'jobs' | 'scope' | 'variations' | 'valuations'
+export type RecordTable = 'jobs' | 'scope' | 'variations' | 'valuations' | 'diary'
 export type OutboxOp =
   | { seq?: number; kind: 'record'; table: RecordTable; id: string; jobId: string | null; data: unknown | null } // data null = delete
   | { seq?: number; kind: 'photo'; id: string }
@@ -81,6 +82,7 @@ export const db = {
     for (const v of await db.variations(id)) await db.deleteVariation(v)
     for (const s of await db.scope(id)) await db.deleteScope(s.id)
     for (const v of await db.valuations(id)) await db.deleteValuation(v.id)
+    for (const d of await db.diary(id)) await db.deleteDiary(d)
     await tx('jobs', 'readwrite', s => s.delete(id))
     await enqueue({ kind: 'record', table: 'jobs', id, jobId: id, data: null })
   },
@@ -97,6 +99,13 @@ export const db = {
     await tx('variations', 'readwrite', s => s.delete(v.id))
     await enqueue({ kind: 'record', table: 'variations', id: v.id, jobId: v.jobId, data: null })
   },
+  diary: (jobId: string) => tx<DiaryEntry[]>('diary', 'readonly', s => s.index('jobId').getAll(jobId)),
+  putDiary: async (d: DiaryEntry) => { await tx('diary', 'readwrite', s => s.put(d)); await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: d }) },
+  deleteDiary: async (d: DiaryEntry) => {
+    for (const m of [d.mediaId, d.originalMediaId]) if (m) await tx('photos', 'readwrite', s => s.delete(m))
+    await tx('diary', 'readwrite', s => s.delete(d.id))
+    await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: null })
+  },
   putPhoto: async (id: string, blob: Blob) => { await tx('photos', 'readwrite', s => s.put(blob, id)); await enqueue({ kind: 'photo', id }) },
   photo: (id: string) => tx<Blob | undefined>('photos', 'readonly', s => s.get(id)),
   deletePhoto: (id: string) => tx('photos', 'readwrite', s => s.delete(id)),
@@ -104,7 +113,7 @@ export const db = {
 
 /** Sign-out: remove every local copy so the next person on this phone sees nothing of yours. */
 export async function wipeLocal() {
-  for (const store of ['jobs', 'scope', 'variations', 'valuations', 'photos', 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
+  for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'photos', 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
 }
 
 /** Next VO number = highest existing + 1. Never count-based (that reuses numbers after a delete). */

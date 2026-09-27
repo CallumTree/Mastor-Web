@@ -16,13 +16,13 @@ function Thumb({ id, onClick }: { id: string; onClick?: () => void }) {
 }
 
 /** On-site capture: what, where, how much, why, photos. Price it later. */
-export function LogVariation({ onSave, onClose }: { onSave: (v: Omit<Variation, 'id' | 'jobId' | 'number'>) => void; onClose: () => void }) {
-  const [description, setDescription] = useState('')
-  const [room, setRoom] = useState('')
+export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Variation, 'id' | 'jobId' | 'number'>) => void; onClose: () => void; initial?: { description?: string; room?: string; photoIds?: string[] } }) {
+  const [description, setDescription] = useState(initial?.description ?? '')
+  const [room, setRoom] = useState(initial?.room ?? '')
   const [qty, setQty] = useState('')
   const [unit, setUnit] = useState('')
   const [reason, setReason] = useState('')
-  const [photoIds, setPhotoIds] = useState<string[]>([])
+  const [photoIds, setPhotoIds] = useState<string[]>(initial?.photoIds ?? [])
   const [busy, setBusy] = useState(false)
   const q = parseFloat(qty.replace(',', '.'))
   return (

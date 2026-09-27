@@ -1,13 +1,16 @@
-import { useState } from 'react'
-import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
+import { Fragment, useState } from 'react'
+import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
 import { getLook, PHOTOS } from '../lib/look'
 import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
-import { IconBack, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
+import { IconBack, IconCamera, IconDiary, IconFlag, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
+import { DiaryTab } from './Diary'
+import { dayKey } from '../lib/dates'
+import { Sheet } from '../components/Ui'
 import { ValuationsTab } from './Valuations'
 import { valRef, valTotals } from '../lib/valuation'
 
@@ -97,7 +100,7 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
 
 const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Element }[] = [
   { tab: 'home', label: 'Home', Icon: IconHome },
-  // Diary returns when it works end to end — nothing half-built on show
+  { tab: 'diary', label: 'Diary', Icon: IconDiary },
   { tab: 'scope', label: 'Scope', Icon: IconScope },
   { tab: 'vos', label: 'VOs', Icon: IconMarkup },
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
@@ -108,24 +111,59 @@ export function JobView(p: {
   onBack: () => void; onSetup: () => void; onLogVariation: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void
   onIssue: (v: Valuation) => void; onDeleteOpenVal: (v: Valuation) => void
+  diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
+  onAddMedia: (file: File, kind: 'photo' | 'video', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
 }) {
   const { job, vos, scope, vals, onBack, onSetup, onLogVariation, onEditVariation } = p
   const [tab, setTab] = useState<Tab>('home')
+  const [diaryDate, setDiaryDate] = useState(dayKey())
+  const [capture, setCapture] = useState(false)
+  const [focusNote, setFocusNote] = useState(false)
+  const [capErr, setCapErr] = useState<string | null>(null)
+  const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
+    if (!f) return
+    setCapErr(null)
+    try { const d = dayKey(); await p.onAddMedia(f, kind, d); setDiaryDate(d); setCapture(false); setTab('diary') }
+    catch (x) { setCapErr((x as Error).message) }
+  }
   return (
     <>
       <div className="page">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} />}
+        {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
+          date={diaryDate} setDate={setDiaryDate} focusNote={focusNote}
+          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
         {tab === 'scope' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} />}
         {tab === 'vals' && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} />}
       </div>
       <nav className="nav">
-        {NAV.map(({ tab: t, label, Icon }) => (
-          <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}><Icon />{label}</button>
+        {NAV.map(({ tab: t, label, Icon }, i) => (
+          <Fragment key={t}>{i === 2 && (
+            <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span>+</span></button>
+          )}
+          <button className={tab === t ? 'on' : ''} onClick={() => { setFocusNote(false); setTab(t) }}><Icon />{label}</button></Fragment>
         ))}
       </nav>
+      {capture && (
+        <Sheet onClose={() => setCapture(false)}>
+          <div className="stack">
+            <div className="label bracket">Capture · {job.name}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <label className="btn btn-secondary"><IconCamera /> Photo
+                <input type="file" accept="image/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
+              <label className="btn btn-secondary">▶ Video
+                <input type="file" accept="video/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
+              <button className="btn btn-secondary" onClick={() => { setDiaryDate(dayKey()); setCapture(false); setFocusNote(true); setTab('diary') }}>✎ Diary note</button>
+              <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
+            </div>
+            {capErr && <div className="flag">{capErr}</div>}
+            <div className="muted" style={{ fontSize: 12 }}>Photos and video go into today’s diary.</div>
+          </div>
+        </Sheet>
+      )}
     </>
   )
 }

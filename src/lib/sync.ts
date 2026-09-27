@@ -6,7 +6,7 @@
 import { supabase } from './supabase'
 import { db, local, meta, outbox, setQueueing, type RecordTable } from './db'
 
-const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations' }
+const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries' }
 const TABLES = Object.keys(CLOUD) as RecordTable[]
 
 export type SyncState = 'idle' | 'syncing' | 'synced' | 'offline' | 'error'
@@ -20,6 +20,8 @@ export const onRemoteChange = (f: () => void) => { changeListeners.add(f); retur
 const setStatus = (s: Partial<SyncStatus>) => { status = { ...status, ...s }; statusListeners.forEach(f => f(status)) }
 
 let companyId: string | null = null
+let missingDiaryTable = false
+export const diaryTableMissing = () => missingDiaryTable
 let running = false, again = false
 let timer: ReturnType<typeof setTimeout> | null = null
 
@@ -52,6 +54,10 @@ async function queueEverything() {
       for (const p of v.photoIds) await outbox.add({ kind: 'photo', id: p })
     }
     for (const v of await db.valuations(j.id)) await outbox.add({ kind: 'record', table: 'valuations', id: v.id, jobId: j.id, data: v })
+    for (const d of await db.diary(j.id)) {
+      await outbox.add({ kind: 'record', table: 'diary', id: d.id, jobId: j.id, data: d })
+      for (const m of [d.mediaId, d.originalMediaId]) if (m) await outbox.add({ kind: 'photo', id: m })
+    }
     if (j.photoId) await outbox.add({ kind: 'photo', id: j.photoId })
   }
 }
@@ -82,6 +88,7 @@ async function push() {
     if (op.kind === 'record') {
       const row = { id: op.id, company_id: companyId, job_id: op.jobId, data: op.data ?? {}, deleted: op.data === null }
       const { error } = await supabase.from(CLOUD[op.table]).upsert(row, { onConflict: 'id' })
+      if (error && op.table === 'diary' && /diary_entries/.test(error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
       if (error) throw new Error(error.message)
     } else {
       const blob = await db.photo(op.id)
@@ -102,6 +109,7 @@ async function pull(): Promise<boolean> {
     for (;;) {
       const { data, error } = await supabase.from(CLOUD[t]).select('id, data, deleted, updated_at')
         .eq('company_id', companyId!).gt('updated_at', since).order('updated_at', { ascending: true }).limit(500)
+      if (error && t === 'diary' && /diary_entries/.test(error.message)) { missingDiaryTable = true; break }
       if (error) throw new Error(error.message)
       if (!data?.length) break
       for (const row of data as { id: string; data: unknown; deleted: boolean; updated_at: string }[]) {
