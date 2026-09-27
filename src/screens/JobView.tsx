@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
+import { getLook, PHOTOS } from '../lib/look'
 import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
 import { IconBack, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
@@ -13,7 +14,8 @@ import { valRef, valTotals } from '../lib/valuation'
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
 function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; onBack: () => void; onSetup: () => void }) {
-  const photo = usePhotoUrl(job.photoId)
+  const jobPhoto = usePhotoUrl(job.photoId)
+  const photo = jobPhoto ?? (getLook() === 'photo' ? PHOTOS.job.src : null)
   return (
     <div className="jhero bleed" style={{ height: compact ? 150 : 300 }}>
       <div className="sky" />

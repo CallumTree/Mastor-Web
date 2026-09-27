@@ -5,6 +5,7 @@ import { usePhotoUrl } from '../lib/photos'
 import { money } from '../lib/format'
 import { IconChart, IconPlus } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
+import { getLook, PHOTOS } from '../lib/look'
 
 /**
  * Jobs — Starlink-style. The job's drawing (or site photo) is the screen; swipe between jobs
@@ -12,10 +13,13 @@ import { SyncBadge } from '../components/SyncBadge'
  */
 // The front page always shows the house — it's the brand moment. Job headers show their own type.
 function Backdrop({ job }: { job: Job | null }) {
-  const photo = usePhotoUrl(job?.photoId)
+  const jobPhoto = usePhotoUrl(job?.photoId)
+  const photoLook = getLook() === 'photo'
+  const photo = jobPhoto ?? (photoLook ? PHOTOS.cover.src : null)
   return (
     <>
       <div className="sky" />
+      {photoLook && !jobPhoto && <div style={{ position: 'absolute', zIndex: 3, right: 10, bottom: 4, fontSize: 9, color: 'rgba(245,240,232,.5)' }}>Photo: {PHOTOS.cover.credit}</div>}
       {photo ? (
         <><img className="bg-photo" src={photo} alt="" /><div className="shade" /></>
       ) : (
