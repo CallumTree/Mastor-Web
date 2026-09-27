@@ -9,7 +9,7 @@ import { IconPlus, IconScope } from '../components/Icons'
 export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; onClick: () => void }) {
   return (
     <button onClick={e => { e.stopPropagation(); onClick() }} disabled={locked} aria-label={on ? 'Remove from valuation' : 'Add to valuation'}
-      style={{ width: 30, height: 30, flex: 'none', borderRadius: 6, border: `1.6px solid ${on ? 'var(--copper)' : 'var(--cream-line)'}`, background: on ? 'var(--copper)' : '#fff', color: 'var(--cream)', display: 'grid', placeItems: 'center', opacity: locked ? .55 : 1 }}>
+      style={{ width: 30, height: 30, flex: 'none', borderRadius: 9, border: `1.5px solid ${on ? 'var(--copper)' : 'rgba(201,123,63,.45)'}`, background: on ? 'linear-gradient(180deg, #D98A4C, #C07034)' : '#FFFCF7', color: '#FFF4E4', display: 'grid', placeItems: 'center', opacity: locked ? .6 : 1, boxShadow: on && !locked ? '0 0 12px -2px #E8A868' : 'none', transition: 'box-shadow .2s, background .2s' }}>
       {on && (locked ? '🔒' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M5 12l5 5L19 7" /></svg>)}
     </button>
   )

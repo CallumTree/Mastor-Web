@@ -230,3 +230,41 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 .tk { width: 30px; height: 30px; border: 1.5px solid rgba(201,123,63,.6); background: transparent; display: grid; place-items: center; color: var(--cream); padding: 0; }
 .tk.on { background: var(--copper); border-color: var(--copper); }
 .tkA { border-radius: 2px; } .tkB { border-radius: 8px; } .tkB.on { box-shadow: 0 0 12px -2px #E8A868; } .tkC { border-radius: 3px; border-width: 2px; } .tkD { border-radius: 50%; } .tkE { border-radius: 9px; }
+
+/* =====================================================================
+   BUTTON SYSTEM v2 — chosen in the style lab
+   Main (one per screen) = B Beam · Everyday = E Halo · Chips = D Dimension · Ticks = B glow
+   ===================================================================== */
+.btn { position: relative; isolation: isolate; transition: transform .1s, box-shadow .2s; }
+.btn:active:not(:disabled) { transform: scale(.985); }
+
+/* B · Beam — copper main button with the tracing beam running its edge */
+.btn-primary { background: transparent; color: #1A1A2E; border: none; }
+.btn-primary::before { content: ""; position: absolute; inset: -1.5px; border-radius: 13.5px; z-index: -2;
+  background: conic-gradient(from var(--ang), transparent 0 78%, rgba(232,168,104,.15) 84%, #E8A868 94%, #FFF4E4 97%, transparent 100%);
+  animation: spinAng 3.2s linear infinite; }
+.btn-primary::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-md); z-index: -1; background: linear-gradient(180deg, #D98A4C, #C07034); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+.btn-primary:disabled { opacity: .45; } .btn-primary:disabled::before { animation: none; background: none; }
+@media (prefers-reduced-motion: reduce) { .btn-primary::before { animation: none; } }
+
+/* E · Halo — everyday buttons: glass with a copper edge-light */
+.btn-secondary, .btn-glass, .btn-dark {
+  border: 1px solid transparent; border-radius: 14px; font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 22px -14px rgba(201,123,63,.55);
+}
+.btn-secondary { color: var(--ink);
+  background: linear-gradient(#FFFCF7, #FFFCF7) padding-box, linear-gradient(160deg, rgba(201,123,63,.95), rgba(201,123,63,.15) 50%, rgba(201,123,63,.6)) border-box; }
+.btn-glass, .btn-dark { color: var(--cream-text); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(rgba(37,37,64,.72), rgba(37,37,64,.72)) padding-box, linear-gradient(160deg, rgba(232,168,104,.9), rgba(201,123,63,.1) 45%, rgba(232,168,104,.5)) border-box; }
+.btn-secondary:active, .btn-glass:active, .btn-dark:active { box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 4px rgba(201,123,63,.15), 0 10px 28px -8px rgba(232,168,104,.65); }
+.btn-secondary svg, .btn-glass svg, .btn-dark svg { color: var(--copper); }
+
+/* D · Dimension — chips: the selected one sits on a dimension line */
+.chips { gap: 4px 14px; }
+.chip { position: relative; background: none; border: none; border-radius: 0; padding: 8px 2px 10px; font-size: 14px; color: var(--ink-muted); }
+.chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 1px; background: rgba(201,123,63,.25); }
+.chip.on { background: none; color: var(--copper); font-weight: 700; }
+.chip.on::after { height: 1.5px; background: var(--copper); }
+.chip.on::before { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 9px;
+  border-left: 1.5px solid var(--copper); border-right: 1.5px solid var(--copper); }
+.card-dark .chip, .immersive .chip { color: var(--cream-muted); }
