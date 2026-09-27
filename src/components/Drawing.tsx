@@ -41,12 +41,12 @@ export function Drawing({ id, type, active, bare = false, paper = false }: { id:
           <defs>
             <filter id={fid} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" /></filter>
           </defs>
-          <path d={drawing.d} pathLength={1000} className="beam" fill="none" stroke={paper ? "#E8A868" : "#FFD29A"} strokeOpacity={paper ? .7 : 1} strokeWidth="7" strokeLinecap="round"
-            filter={`url(#${fid})`} vectorEffect="non-scaling-stroke" style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${tail * step}s` }} />
+          <path d={drawing.d} pathLength={1000} className="beam" fill="none" stroke={paper ? "#E8A868" : "#FFD29A"} strokeOpacity={paper ? .7 : 1} strokeWidth="3.5" strokeLinecap="round"
+            filter={`url(#${fid})`} style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${tail * step}s` }} />
           {Array.from({ length: tail + 1 }, (_, k) => (
             <path key={k} d={drawing.d} pathLength={1000} className="beam" fill="none"
               stroke={k === tail ? (paper ? '#C97B3F' : '#FFF4E4') : (paper ? '#D98A4C' : '#E8A868')} strokeOpacity={k === tail ? 1 : 0.08 + 0.6 * (k / tail)}
-              strokeWidth={k === tail ? 2.6 : 1.8} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
+              strokeWidth={k === tail ? 1.3 : 0.9} strokeLinecap="round" strokeLinejoin="round"
               style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${k * step}s` }} />
           ))}
         </>
