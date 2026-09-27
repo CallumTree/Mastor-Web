@@ -12,13 +12,13 @@ Extract EVERY line item that carries a quantity or a rate (repair items, SoR cod
 
 OUTPUT FORMAT — plain text only, no commentary, no markdown:
 First line:  REF<TAB>the works order / contract reference if printed, else blank
-Then one line per item, 7 tab-separated fields:
-CODE<TAB>ROOM<TAB>DESCRIPTION<TAB>QTY<TAB>UNIT<TAB>RATE<TAB>NOTE
+Then one line per item, 8 tab-separated fields:
+CODE<TAB>ROOM<TAB>DESCRIPTION<TAB>QTY<TAB>UNIT<TAB>RATE<TAB>COST<TAB>NOTE
 
 RULES — accuracy matters more than completeness:
-- Copy numbers exactly as printed. RATE is the unit rate (not the line total). No £ signs or commas.
+- Copy numbers exactly as printed. RATE is the unit rate; COST is the printed line total. No £ signs or commas.
 - NEVER invent or estimate a code, quantity, unit or rate. If it is not printed, leave that field empty.
-- If only a line total is printed with no rate, leave RATE empty and put "total only: <amount>" in NOTE.
+- If only a line total is printed with no rate, leave RATE empty and put the total in COST.
 - ROOM = the location/room heading the item sits under (e.g. Kitchen, Bathroom, External). If none, "General".
 - DESCRIPTION: a short one-line version of the SoR description (the heading before the colon plus the key work,
   e.g. "Wall: take down half-brick wall, remove spoil"). If the Comments column has text for this item, append it

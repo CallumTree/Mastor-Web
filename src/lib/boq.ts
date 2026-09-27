@@ -3,6 +3,7 @@ export interface ParsedLine {
   include: boolean
   code: string; room: string; description: string
   qty: number | null; unit: string; rate: number | null
+  cost: number | null      // the document's printed line total, if any
   note: string
   issues: string[]          // why this line needs checking
 }
@@ -19,21 +20,33 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
   let ref = ''
   const lines: ParsedLine[] = []
   for (const raw of text.split(/\r?\n/)) {
-    const line = raw.replace(/^```\w*|```$/g, '').trimEnd()
+    // keep trailing tabs (an empty NOTE field) — only strip spaces / carriage returns
+    const line = raw.replace(/^```\w*|```$/g, '').replace(/[ \r]+$/, '')
     if (!line.trim()) continue
     const f = line.split('\t')
     if (f[0].trim().toUpperCase() === 'REF') { ref = (f[1] ?? '').trim(); continue }
     if (f.length < 3) continue
-    const [code = '', room = '', description = '', qty, unit = '', rate, note = ''] = f.map(x => x?.trim())
+    // 8 fields: CODE ROOM DESC QTY UNIT RATE COST NOTE (older 7-field replies had no COST)
+    const t = f.map(x => x?.trim())
+    const [code = '', room = '', description = '', qty, unit = '', rate] = t
+    // Field 7 is COST when it's a plain amount (even if the model dropped the empty NOTE after it)
+    const looksLikeAmount = (x?: string) => !!x && /^£?\s*[\d,]*\.?\d+$/.test(x)
+    const costRaw = looksLikeAmount(t[6]) ? t[6] : undefined
+    const note = (costRaw !== undefined ? t[7] : t.length >= 8 ? t[7] : t[6]) ?? ''
     if (!description) continue
     if (/^(sub)?total|carried forward|brought forward/i.test(description)) continue
-    const q = num(qty), r = num(rate)
+    const q = num(qty), r = num(rate), c = num(costRaw)
     const issues: string[] = []
+    if (q != null && r != null && c != null) {
+      const calc = Math.round(q * r * 100 + 1e-7) / 100
+      if (Math.abs(calc - c) > 0.005) issues.push(`document cost £${c.toFixed(2)} ≠ qty × rate £${calc.toFixed(2)}`)
+    }
+    if (r == null && c != null) issues.push(`total only: £${c.toFixed(2)}`)
     if (r == null) issues.push('no rate')
     if (q == null) issues.push('no qty')
     if (!code) issues.push('no code')
     if (note) issues.push(note)
-    lines.push({ include: true, code, room: room || 'General', description, qty: q, unit: unit || 'item', rate: r, note, issues })
+    lines.push({ include: true, code, room: room || 'General', description, qty: q, unit: unit || 'item', rate: r, cost: c, note, issues })
   }
   return { ref, lines, truncated }
 }

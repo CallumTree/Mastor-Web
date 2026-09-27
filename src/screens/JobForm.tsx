@@ -33,7 +33,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
           <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CAP00290" /></Field></div>
           <div className="grow"><Field label="PO number" warn={!f.poNumber} hint={!f.poNumber ? 'Needed on invoices' : undefined}><input value={f.poNumber} onChange={set('poNumber')} /></Field></div>
         </div>
-        <Field label="Contract value (£)"><input inputMode="decimal" value={valueText} onChange={e => setValueText(e.target.value)} placeholder="From the works order" /></Field>
+        <Field label="PO value — all-in, incl. uplifts (£)" hint="Uplifts below should turn the BoQ total into this figure"><input inputMode="decimal" value={valueText} onChange={e => setValueText(e.target.value)} placeholder="From the purchase order" /></Field>
         <div className="row">
           <div className="grow"><Field label="Uplift 1 (%)"><input inputMode="decimal" value={u1} onChange={e => setU1(e.target.value)} placeholder="0" /></Field></div>
           <div className="grow"><Field label="Uplift 2 (%)"><input inputMode="decimal" value={u2} onChange={e => setU2(e.target.value)} placeholder="0" /></Field></div>

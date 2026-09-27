@@ -50,6 +50,15 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
   const voGross = voBase * upliftFactor(job.uplift1, job.uplift2)
 
   const actions: { text: string; hint: string; colour: string; onClick: () => void }[] = []
+  // Uplifts must turn the BoQ into the PO's all-in figure — otherwise every valuation is wrong
+  const scopeBase = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+  if (scopeBase > 0 && job.contractValue > 0) {
+    const withUplifts = scopeBase * upliftFactor(job.uplift1, job.uplift2)
+    if (Math.abs(withUplifts - job.contractValue) / job.contractValue > 0.001) {
+      const needed = (job.contractValue / scopeBase - 1) * 100
+      actions.push({ text: "Uplifts don't reconcile with the PO", hint: `BoQ ${money(scopeBase)} + ${job.uplift1}% + ${job.uplift2}% = ${money(withUplifts)}, PO is ${money(job.contractValue)} (needs ${needed.toFixed(2)}% combined)`, colour: 'var(--red)', onClick: onSetup })
+    }
+  }
   if (!job.poNumber) actions.push({ text: 'No PO number', hint: 'Invoices will be rejected without it', colour: 'var(--red)', onClick: onSetup })
   if (unpriced) actions.push({ text: `${unpriced} variation${unpriced === 1 ? '' : 's'} unpriced`, hint: 'Add SoR code and rate so they can be claimed', colour: 'var(--amber)', onClick: () => go('vos') })
   if (unmeasured) actions.push({ text: `${unmeasured} variation${unmeasured === 1 ? '' : 's'} not measured`, hint: 'Measure on site', colour: 'var(--amber)', onClick: () => go('vos') })
