@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react'
 
 /** Shrinks a camera photo to a sensible size before storing (phones shoot 5-10MB images). */
 export async function savePhoto(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file)
+  // createImageBitmap is missing on older iPhones — fall back to a plain <img>
+  const bitmap: { width: number; height: number } & CanvasImageSource = typeof createImageBitmap === 'function'
+    ? await createImageBitmap(file)
+    : await new Promise<HTMLImageElement>((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = URL.createObjectURL(file) })
   const max = 1600
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')

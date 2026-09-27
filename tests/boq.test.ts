@@ -22,4 +22,6 @@ const r8 = parseBoqTsv(['REF\tX', '4210AA\tLiving Room\tHack off plaster — Hac
 ok(r8.lines[0].qty === 0.5 && r8.lines[0].cost === 7.52 && r8.lines[0].issues.length === 0, 'reads ".5", printed cost matches penny-rounded qty × rate — no flag')
 ok(r8.lines[0].description.includes('— Hack off 0.5m2'), 'comment kept on the description')
 ok(r8.lines[1].issues.some(i => i.includes('document cost £31.00')), 'flags when the document cost disagrees with qty × rate')
+const md = parseBoqTsv('| CODE | ROOM | DESCRIPTION | QTY | UNIT | RATE | COST | NOTE |\n|---|---|---|---|---|---|---|---|\n| 4310AB | Bathroom | Wall tiles | 10 | SM | 51.29 | 512.90 | |')
+ok(md.lines.length === 1 && md.lines[0].rate === 51.29 && md.lines[0].cost === 512.9, 'also reads a markdown table reply (header + separator skipped)')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

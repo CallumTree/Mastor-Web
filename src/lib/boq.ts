@@ -23,8 +23,10 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
     // keep trailing tabs (an empty NOTE field) — only strip spaces / carriage returns
     const line = raw.replace(/^```\w*|```$/g, '').replace(/[ \r]+$/, '')
     if (!line.trim()) continue
-    const f = line.split('\t')
+    if (/^\|?\s*:?-{3,}/.test(line)) continue // markdown table separator
+    const f = line.includes('\t') ? line.split('\t') : line.includes('|') ? line.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|') : [line]
     if (f[0].trim().toUpperCase() === 'REF') { ref = (f[1] ?? '').trim(); continue }
+    if (/^code$/i.test(f[0].trim())) continue // header row
     if (f.length < 3) continue
     // 8 fields: CODE ROOM DESC QTY UNIT RATE COST NOTE (older 7-field replies had no COST)
     const t = f.map(x => x?.trim())
@@ -51,27 +53,31 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
   return { ref, lines, truncated }
 }
 
+// FileReader works on every browser, including older Android phones (File.text/arrayBuffer don't)
+const readAsText = (f: Blob) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsText(f) })
+const readAsBuffer = (f: Blob) => new Promise<ArrayBuffer>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as ArrayBuffer); r.onerror = () => rej(r.error); r.readAsArrayBuffer(f) })
+
 /** Reads the picked file into what the server function expects. */
 export async function readBoqFile(file: File): Promise<{ kind: 'pdf'; data: string } | { kind: 'text'; text: string }> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.pdf') || file.type === 'application/pdf') {
     if (file.size > 3_200_000) throw new Error('That PDF is over 3MB — try exporting it smaller, or upload the Excel version.')
-    const buf = new Uint8Array(await file.arrayBuffer())
+    const buf = new Uint8Array(await readAsBuffer(file))
     let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000))
     return { kind: 'pdf', data: btoa(bin) }
   }
   if (/\.(xlsx|xlsm|xls)$/.test(name)) {
     const XLSX = await import('xlsx')
-    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' })
+    const wb = XLSX.read(await readAsBuffer(file), { type: 'array' })
     const text = wb.SheetNames.map(n => `### Sheet: ${n}\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n], { blankrows: false })).join('\n\n')
     return { kind: 'text', text }
   }
   if (name.endsWith('.docx')) {
     const mammoth = await import('mammoth')
-    const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
+    const { value } = await mammoth.extractRawText({ arrayBuffer: await readAsBuffer(file) })
     return { kind: 'text', text: value }
   }
-  return { kind: 'text', text: await file.text() }
+  return { kind: 'text', text: await readAsText(file) }
 }
 
 export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
@@ -80,5 +86,7 @@ export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
   let data: { text?: string; truncated?: boolean; error?: string } = {}
   try { data = await r.json() } catch { /* non-JSON error page */ }
   if (!r.ok || !data.text) throw new Error(data.error || (r.status === 404 ? 'The reader isn’t deployed yet.' : `Couldn’t read the document (${r.status}).`))
-  return parseBoqTsv(data.text, !!data.truncated)
+  const parsed = parseBoqTsv(data.text, !!data.truncated)
+  if (parsed.lines.length === 0) throw new Error('The document was read, but no priced line items were found in it. Is this the BoQ / works order? If it is, send it over and it can be looked at.')
+  return parsed
 }
