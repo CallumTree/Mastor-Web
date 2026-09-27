@@ -4,7 +4,7 @@ import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
 import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
-import { IconBack, IconDiary, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
+import { IconBack, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { ValuationsTab } from './Valuations'
@@ -93,21 +93,9 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
   )
 }
 
-function Soon({ title, what }: { title: string; what: string }) {
-  return (
-    <div className="stack">
-      <div className="label bracket">{title}</div>
-      <div className="card empty">
-        <div style={{ fontWeight: 600, color: 'var(--ink)', marginBottom: 6 }}>Coming in the next build</div>
-        {what}
-      </div>
-    </div>
-  )
-}
-
 const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Element }[] = [
   { tab: 'home', label: 'Home', Icon: IconHome },
-  { tab: 'diary', label: 'Diary', Icon: IconDiary },
+  // Diary returns when it works end to end — nothing half-built on show
   { tab: 'scope', label: 'Scope', Icon: IconScope },
   { tab: 'vos', label: 'VOs', Icon: IconMarkup },
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
@@ -130,7 +118,6 @@ export function JobView(p: {
         {tab === 'scope' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} />}
         {tab === 'vals' && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} />}
-        {tab === 'diary' && <Soon title="Site diary" what="Record your walk-round by voice; completed work and extras are picked out for you to confirm." />}
       </div>
       <nav className="nav">
         {NAV.map(({ tab: t, label, Icon }) => (
