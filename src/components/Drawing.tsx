@@ -10,12 +10,12 @@ function hash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h 
 
 export function Drawing({ id, type, active, bare = false }: { id: string; type: WorkType; active: boolean; bare?: boolean }) {
   const set = DRAWINGS[type] ?? DRAWINGS.PPR
-  // PPR shows the detailed sketch-style house while the rest of the set is redrawn in that style
-  const drawing = type === 'PPR' ? set[0] : set[hash(id) % set.length]
+  // Each type's first drawing is its detailed sketch-style one
+  const drawing = set[0]
   const fid = 'glow' + hash(id)
-  // Constant travel speed (~160 drawing units/sec) and a fixed-size head/tail, whatever the line length.
+  // Constant travel speed (~120 drawing units/sec) and a fixed-size head/tail, whatever the line length.
   const len = drawing.length
-  const dur = Math.max(8, len / 160)
+  const dur = Math.max(10, len / 120)
   const dash = (2.5 / len) * 1000            // head segment ~2.5 units long, in pathLength units
   const dasharray = `${dash} ${1000 - dash}`
   const tail = 12
