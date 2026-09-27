@@ -67,13 +67,22 @@ function SignIn() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [unconfirmed, setUnconfirmed] = useState(false)
+  const resend = async () => {
+    if (!email.includes('@')) { setMsg({ ok: false, text: 'Enter your email first.' }); return }
+    setBusy(true)
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: location.origin } })
+    setBusy(false)
+    setMsg(error ? { ok: false, text: error.message } : { ok: true, text: 'New confirmation email sent — tap the link in it, then sign in here.' })
+  }
   const go = async () => {
     setBusy(true); setMsg(null)
     const r = mode === 'in'
       ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
       : await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: location.origin } })
     setBusy(false)
-    if (r.error) setMsg({ ok: false, text: r.error.message })
+    if (r.error && /not confirmed/i.test(r.error.message)) { setUnconfirmed(true); setMsg({ ok: false, text: 'Your email isn’t confirmed yet. Tap “Resend confirmation email” and use the link in the new email.' }) }
+    else if (r.error) setMsg({ ok: false, text: r.error.message })
     else if (mode === 'up' && !r.data.session) setMsg({ ok: true, text: 'Check your email and tap the link to confirm — then sign in here.' })
   }
   return (
@@ -88,6 +97,7 @@ function SignIn() {
       <button className="btn btn-primary" disabled={busy || !email.includes('@') || password.length < (mode === 'up' ? 8 : 1)} onClick={go}>
         {busy ? '…' : mode === 'in' ? 'Sign in' : 'Create account'}
       </button>
+      {(unconfirmed || mode === 'up') && <button className="btn btn-secondary" disabled={busy} onClick={resend}>Resend confirmation email</button>}
       {mode === 'in' && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--cream-muted)' }} onClick={async () => {
         if (!email.includes('@')) { setMsg({ ok: false, text: 'Enter your email first.' }); return }
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin })
