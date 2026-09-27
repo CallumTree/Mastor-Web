@@ -63,11 +63,10 @@ def room():
     P += [L([TL,TR,BR,BL,TL])]
     P += [L([BL,FL]), L([BR,FR]), L([TL,FTL]), L([TR,FTR])]
     # floorboards converging to VP
-    for k in range(1,12):
-        x=4+k*(392/12); t=(140-92)/(196-92)
+    for k in range(1,6):
+        x=4+k*(392/6); t=(140-92)/(196-92)
         bx=VP[0]+(x-VP[0])*t
         P.append(L([(bx,140),(x,196)]))
-    for y in (156,176): P.append(L([(128-(y-140)*124/56,y),(272+(y-140)*124/56,y)]))
     # skirting on back + side walls
     P.append(L([(128,134),(272,134)])); P.append(L([(128,134),(40,176)])); P.append(L([(272,134),(360,176)]))
     # window on back wall with mullions & sill
@@ -85,14 +84,14 @@ def room():
     P.append(L([(63.5,20),(336.5,20)]))  # ceiling bulkhead
     P.append(L([(200,20),(200,26)])); P.append(L([(190,34),(193,26),(207,26),(210,34),(190,34)]))
     # stepladder (it's a works drawing)
-    P.append(L([(236,176),(248,120),(260,176)])); P.append(L([(248,120),(268,176)]))
+    P.append(L([(236,176),(248,120),(260,176)])); P.append(L([(248,120),(268,176)])); P.append(L([(228,176),(276,176)]))
     for y in (136,150,164): P.append(L([(248-(y-120)*12/56,y),(248+(y-120)*12/56,y)]))
-    G += [L([VP,(4,196)]), L([VP,(396,196)]), L([VP,(4,-4)]), L([VP,(396,-4)]), L([(0,92),(400,92)])]
+    G += [L([(0,92),(128,92)]), L([(272,92),(400,92)])]  # horizon only, outside the back wall
     return P,G
 
 src=json.load(open('/tmp/mastor-web/tools/drawings.source.json'))
 tp,tg=tower(); rp,rg=room()
-src['Commercial']=[['g:'+g for g in tg]+tp]+src['Commercial'][1:]
-src['Internal']=[['g:'+g for g in rg]+rp]+src['Internal'][1:]
+src['Commercial']=[['g:'+g for g in tg]+tp]+src['Commercial']
+src['Internal']=[['g:'+g for g in rg]+rp]+src['Internal']
 json.dump(src,open('/tmp/mastor-web/tools/drawings.source.json','w'),indent=1)
 print('ok', len(tp), len(rp))

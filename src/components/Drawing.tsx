@@ -30,21 +30,21 @@ export function Drawing({ id, type, active, bare = false }: { id: string; type: 
           {Array.from({ length: 11 }, (_, i) => <line key={'h' + i} x1="0" y1={i * 20} x2="400" y2={i * 20} />)}
         </g>
       )}
-      <g fill="none" stroke="#C97B3F" strokeOpacity=".22" strokeWidth=".5">
-        {drawing.guides.map((d, i) => <path key={i} d={d} />)}
+      <g fill="none" stroke="#C97B3F" strokeOpacity=".2" strokeWidth=".6" vectorEffect="non-scaling-stroke">
+        {drawing.guides.map((d, i) => <path key={i} d={d} vectorEffect="non-scaling-stroke" />)}
       </g>
-      <path d={drawing.d} fill="none" stroke="#C97B3F" strokeOpacity={bare ? .55 : .42} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={drawing.d} fill="none" stroke="#C97B3F" strokeOpacity={bare ? .6 : .45} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
       {active && (
         <>
           <defs>
             <filter id={fid} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" /></filter>
           </defs>
-          <path d={drawing.d} pathLength={1000} className="beam" fill="none" stroke="#FFD29A" strokeWidth="5" strokeLinecap="round"
-            filter={`url(#${fid})`} style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${tail * step}s` }} />
+          <path d={drawing.d} pathLength={1000} className="beam" fill="none" stroke="#FFD29A" strokeWidth="7" strokeLinecap="round"
+            filter={`url(#${fid})`} vectorEffect="non-scaling-stroke" style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${tail * step}s` }} />
           {Array.from({ length: tail + 1 }, (_, k) => (
             <path key={k} d={drawing.d} pathLength={1000} className="beam" fill="none"
               stroke={k === tail ? '#FFF4E4' : '#E8A868'} strokeOpacity={k === tail ? 1 : 0.08 + 0.6 * (k / tail)}
-              strokeWidth={k === tail ? 1.8 : 1.4} strokeLinecap="round" strokeLinejoin="round"
+              strokeWidth={k === tail ? 2.6 : 1.8} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
               style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${k * step}s` }} />
           ))}
         </>
