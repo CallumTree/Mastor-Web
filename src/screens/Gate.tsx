@@ -5,6 +5,7 @@ import { createCompany, myCompany, startSync, stopSync } from '../lib/sync'
 import { meta } from '../lib/db'
 import { Drawing } from '../components/Drawing'
 import { Field } from '../components/Ui'
+import { getLook, PHOTOS } from '../lib/look'
 
 /**
  * Sign-in gate. Signed in + company → the app (syncing). Works offline once signed in:
@@ -40,7 +41,9 @@ export function Gate({ children }: { children: ReactNode }) {
   return (
     <div className="immersive">
       <div className="sky" />
-      <div className="bg-drawing"><Drawing id="mastor" type="PPR" active bare /></div>
+      {getLook() === 'photo'
+        ? <><img className="bg-photo" src={PHOTOS.cover.src} alt="" /><div className="shade" /></>
+        : <div className="bg-drawing"><Drawing id="mastor" type="PPR" active bare /></div>}
       <div className="imm-top" style={{ paddingTop: 48 }}>
         <div className="wordmark">MASTOR</div>
         <div className="imm-sub">Site · Variations · Valuations</div>
