@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import type { Job, Variation, VoStatus } from '../lib/types'
+import type { Job, Valuation, Variation, VoStatus } from '../lib/types'
+import { Tick, ValBadge } from './Scope'
+import { lockedIn } from '../lib/valuation'
 import { Field, Sheet } from '../components/Ui'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoUrl } from '../lib/photos'
@@ -60,7 +62,7 @@ export function LogVariation({ onSave, onClose }: { onSave: (v: Omit<Variation, 
 
 const STATUSES: VoStatus[] = ['Identified', 'Instructed', 'Complete', 'Rejected']
 
-export function EditVariation({ vo, onSave, onDelete, onClose }: { vo: Variation; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
+export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: Variation; locked: boolean; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
   const [v, setV] = useState(vo)
   const [qty, setQty] = useState(vo.qty != null ? String(vo.qty) : '')
   const [rate, setRate] = useState(vo.rate != null ? String(vo.rate) : '')
@@ -71,6 +73,8 @@ export function EditVariation({ vo, onSave, onDelete, onClose }: { vo: Variation
     <Sheet onClose={onClose}>
       <div className="stack">
         <div className="label bracket">{voRef(vo.number)}</div>
+        {locked && <div className="flag">Claimed on an issued valuation — locked.</div>}
+        <fieldset disabled={locked} style={{ border: 'none', padding: 0, margin: 0 }} className="stack">
         <Field label="Description"><textarea rows={2} value={v.description} onChange={e => setV({ ...v, description: e.target.value })} /></Field>
         <Field label="Where"><input value={v.room} onChange={e => setV({ ...v, room: e.target.value })} /></Field>
         <div className="row">
@@ -89,11 +93,12 @@ export function EditVariation({ vo, onSave, onDelete, onClose }: { vo: Variation
           <div className="field"><span>Status</span></div>
           <div className="chips">{STATUSES.map(s => <button key={s} className={'chip' + (v.status === s ? ' on' : '')} onClick={() => setV({ ...v, status: s })}>{s}</button>)}</div>
         </div>
+        </fieldset>
         {v.photoIds.length > 0 && <div className="thumbs">{v.photoIds.map(id => <Thumb key={id} id={id} />)}</div>}
-        <button className="btn btn-primary" onClick={() => onSave({ ...v, qty: qv, rate: rv })}>Save</button>
-        {confirmDelete
+        {!locked && <button className="btn btn-primary" onClick={() => onSave({ ...v, qty: qv, rate: rv })}>Save</button>}
+        {!locked && (confirmDelete
           ? <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={onDelete}>Delete {voRef(vo.number)}</button>
-          : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirmDelete(true)}>Delete…</button>}
+          : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirmDelete(true)}>Delete…</button>)}
       </div>
     </Sheet>
   )
@@ -101,7 +106,7 @@ export function EditVariation({ vo, onSave, onDelete, onClose }: { vo: Variation
 
 const statusClass: Record<VoStatus, string> = { Identified: 'b-amber', Instructed: 'b-slate', Complete: 'b-green', Rejected: 'b-red' }
 
-export function VariationsTab({ job, vos, onLog, onEdit }: { job: Job; vos: Variation[]; onLog: () => void; onEdit: (v: Variation) => void }) {
+export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle }: { job: Job; vos: Variation[]; vals: Valuation[]; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void }) {
   const sorted = [...vos].sort((a, b) => a.number - b.number)
   return (
     <div className="stack">
@@ -113,8 +118,10 @@ export function VariationsTab({ job, vos, onLog, onEdit }: { job: Job; vos: Vari
         return (
           <div key={v.id} className="card" style={{ cursor: 'pointer' }} onClick={() => onEdit(v)}>
             <div className="row">
+              {priced && v.status !== 'Rejected' && <Tick on={!!v.valuationId} locked={!!lockedIn(v, vals)} onClick={() => onToggle(v)} />}
               <span className="mono" style={{ color: 'var(--copper)', fontWeight: 500 }}>{voRef(v.number)}</span>
               <span className={'badge ' + statusClass[v.status]}>{v.status}</span>
+              <ValBadge val={vals.find(x => x.id === v.valuationId)} />
               <span className="grow" />
               <span className="mono" style={{ color: priced ? 'var(--ink)' : 'var(--ink-muted)' }}>{priced ? money(v.qty! * v.rate!) : '—'}</span>
             </div>

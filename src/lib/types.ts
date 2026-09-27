@@ -33,4 +33,32 @@ export interface Variation {
   status: VoStatus
   photoIds: string[]
   dateRaised: number
+  valuationId?: string | null // which valuation it's claimed in; null/undefined = live
+}
+
+/** One line of the works order / BoQ. */
+export interface ScopeItem {
+  id: string
+  jobId: string
+  code: string              // SoR code
+  description: string
+  room: string
+  qty: number | null        // null = not stated. Never guessed.
+  unit: string
+  rate: number | null       // null = no rate. Never shown as £0.
+  valuationId: string | null // null = live (not yet claimed)
+  order: number
+  createdAt: number
+}
+
+export type ValuationStatus = 'Open' | 'Issued'
+
+/** Interim valuation. Only one Open per job; Issued ones are locked. */
+export interface Valuation {
+  id: string
+  jobId: string
+  number: number            // VAL-001, VAL-002 …
+  status: ValuationStatus
+  createdAt: number
+  issuedAt: number | null
 }

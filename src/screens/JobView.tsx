@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import type { Job, Variation } from '../lib/types'
+import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
 import { money, upliftFactor } from '../lib/format'
 import { IconBack, IconDiary, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
 import { VariationsTab } from './Variations'
+import { ScopeTab } from './Scope'
+import { ValuationsTab } from './Valuations'
+import { valRef, valTotals } from '../lib/valuation'
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
@@ -33,7 +36,10 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
   )
 }
 
-function Home({ job, vos, go, onSetup }: { job: Job; vos: Variation[]; go: (t: Tab) => void; onSetup: () => void }) {
+function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void }) {
+  const open = vals.find(v => v.status === 'Open')
+  const openTotals = open ? valTotals(job, open.id, scope, vos) : null
+  const certified = vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
   const live = vos.filter(v => v.status !== 'Rejected')
   const priced = live.filter(v => v.qty != null && v.rate != null)
   const unpriced = live.filter(v => v.rate == null).length
@@ -46,14 +52,16 @@ function Home({ job, vos, go, onSetup }: { job: Job; vos: Variation[]; go: (t: T
   if (!job.poNumber) actions.push({ text: 'No PO number', hint: 'Invoices will be rejected without it', colour: 'var(--red)', onClick: onSetup })
   if (unpriced) actions.push({ text: `${unpriced} variation${unpriced === 1 ? '' : 's'} unpriced`, hint: 'Add SoR code and rate so they can be claimed', colour: 'var(--amber)', onClick: () => go('vos') })
   if (unmeasured) actions.push({ text: `${unmeasured} variation${unmeasured === 1 ? '' : 's'} not measured`, hint: 'Measure on site', colour: 'var(--amber)', onClick: () => go('vos') })
+  if (open && openTotals && openTotals.lines > 0) actions.push({ text: `${valRef(open.number)}: ${money(openTotals.gross)} ready`, hint: `${openTotals.lines} line${openTotals.lines === 1 ? '' : 's'} — review and issue`, colour: 'var(--green)', onClick: () => go('vals') })
+  if (scope.length === 0) actions.push({ text: 'No scope yet', hint: 'Add the works order items', colour: 'var(--amber)', onClick: () => go('scope') })
   if (awaitingRef) actions.push({ text: `${awaitingRef} priced variation${awaitingRef === 1 ? '' : 's'} awaiting instruction`, hint: 'Send to the client for a VO reference', colour: 'var(--amber)', onClick: () => go('vos') })
 
   return (
     <div>
       <div className="tiles">
         <div className="glass tile tile-dark"><div className="n">{job.contractValue ? money(job.contractValue).replace(/\.\d\d$/, '') : '—'}</div><div className="l">Contract</div></div>
-        <div className="glass tile tile-dark"><div className="n" style={{ color: 'var(--copper-light)' }}>{money(voGross).replace(/\.\d\d$/, '')}</div><div className="l">Variations</div></div>
-        <div className={'glass tile tile-dark' + (unpriced ? ' warn' : '')}><div className="n">{unpriced}</div><div className="l">Unpriced VOs</div></div>
+        <div className="glass tile tile-dark"><div className="n" style={{ color: 'var(--copper-light)' }}>{money(certified).replace(/\.\d\d$/, '')}</div><div className="l">Certified</div></div>
+        <div className="glass tile tile-dark"><div className="n">{money(voGross).replace(/\.\d\d$/, '')}</div><div className="l">Variations</div></div>
       </div>
       <div className="label bracket" style={{ marginBottom: 8, color: actions.length ? 'var(--copper)' : 'var(--green)' }}>
         {actions.length ? `Action needed (${actions.length})` : 'All clear'}
@@ -95,19 +103,24 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
 ]
 
-export function JobView({ job, vos, onBack, onSetup, onLogVariation, onEditVariation }: {
-  job: Job; vos: Variation[]; onBack: () => void; onSetup: () => void; onLogVariation: () => void; onEditVariation: (v: Variation) => void
+export function JobView(p: {
+  job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
+  onBack: () => void; onSetup: () => void; onLogVariation: () => void; onEditVariation: (v: Variation) => void
+  onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void
+  onIssue: (v: Valuation) => void; onDeleteOpenVal: (v: Valuation) => void
 }) {
+  const { job, vos, scope, vals, onBack, onSetup, onLogVariation, onEditVariation } = p
   const [tab, setTab] = useState<Tab>('home')
   return (
     <>
       <div className="page">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
-        {tab === 'home' && <Home job={job} vos={vos} go={setTab} onSetup={onSetup} />}
-        {tab === 'vos' && <VariationsTab job={job} vos={vos} onLog={onLogVariation} onEdit={onEditVariation} />}
+        {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} />}
+        {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} />}
+        {tab === 'scope' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onAdd={p.onAddScope} onEdit={p.onEditScope} />}
+        {tab === 'vals' && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
+          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} />}
         {tab === 'diary' && <Soon title="Site diary" what="Record your walk-round by voice; completed work and extras are picked out for you to confirm." />}
-        {tab === 'scope' && <Soon title="Scope" what="Import the works order / BoQ and tick work off as it's done." />}
-        {tab === 'vals' && <Soon title="Valuations" what="Build the valuation from completed scope and priced variations, then issue the invoice." />}
       </div>
       <nav className="nav">
         {NAV.map(({ tab: t, label, Icon }) => (
