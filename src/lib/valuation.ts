@@ -13,7 +13,9 @@ import { db, uid } from './db'
 import { upliftFactor } from './format'
 
 export const valRef = (n: number) => 'VAL-' + String(n).padStart(3, '0')
-export const lineValue = (qty: number | null, rate: number | null) => (qty != null && rate != null ? qty * rate : 0)
+/** Each line rounded to the penny (half up), exactly as the council prices it — then lines are summed. */
+export const pennies = (x: number) => Math.round(x * 100 + 1e-7 * Math.sign(x)) / 100
+export const lineValue = (qty: number | null, rate: number | null) => (qty != null && rate != null ? pennies(qty * rate) : 0)
 export const isPriced = (x: { qty: number | null; rate: number | null }) => x.qty != null && x.rate != null
 
 export function openValuation(vals: Valuation[]) { return vals.find(v => v.status === 'Open') ?? null }

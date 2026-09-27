@@ -3,6 +3,7 @@ import type { Job, Valuation, Variation, VoStatus } from '../lib/types'
 import { Tick, ValBadge } from './Scope'
 import { lockedIn } from '../lib/valuation'
 import { Field, Sheet } from '../components/Ui'
+import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoUrl } from '../lib/photos'
 import { IconCamera, IconFlag } from '../components/Icons'
@@ -86,7 +87,7 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
           <div className="grow"><Field label="Rate (£)"><input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="Unpriced" /></Field></div>
         </div>
         <div className="mono" style={{ fontSize: 20, color: qv && rv ? 'var(--copper)' : 'var(--ink-muted)', fontWeight: 300 }}>
-          {qv && rv ? money(qv * rv) : 'Add qty and rate to price'}
+          {qv && rv ? money(lineValue(qv, rv)) : 'Add qty and rate to price'}
         </div>
         <Field label="Client VO reference" hint="Once the client issues one"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value })} /></Field>
         <div>
@@ -123,7 +124,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle }: { job
               <span className={'badge ' + statusClass[v.status]}>{v.status}</span>
               <ValBadge val={vals.find(x => x.id === v.valuationId)} />
               <span className="grow" />
-              <span className="mono" style={{ color: priced ? 'var(--ink)' : 'var(--ink-muted)' }}>{priced ? money(v.qty! * v.rate!) : '—'}</span>
+              <span className="mono" style={{ color: priced ? 'var(--ink)' : 'var(--ink-muted)' }}>{priced ? money(lineValue(v.qty, v.rate)) : '—'}</span>
             </div>
             <div style={{ fontWeight: 600, marginTop: 6 }}>{v.description}</div>
             <div className="muted" style={{ fontSize: 13 }}>

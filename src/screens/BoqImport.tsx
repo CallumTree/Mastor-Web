@@ -3,6 +3,7 @@ import type { Job } from '../lib/types'
 import { Sheet } from '../components/Ui'
 import { money, qtyText, upliftFactor } from '../lib/format'
 import { parseBoqRemote, type ParsedBoq, type ParsedLine } from '../lib/boq'
+import { lineValue } from '../lib/valuation'
 import { IconScope } from '../components/Icons'
 
 type Stage = { s: 'pick' } | { s: 'reading'; name: string } | { s: 'review'; boq: ParsedBoq } | { s: 'error'; msg: string }
@@ -53,7 +54,7 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
   const [lines, setLines] = useState(boq.lines)
   const [onlyIssues, setOnlyIssues] = useState(false)
   const chosen = lines.filter(l => l.include)
-  const base = chosen.reduce((t, l) => t + (l.qty != null && l.rate != null ? l.qty * l.rate : 0), 0)
+  const base = chosen.reduce((t, l) => t + lineValue(l.qty, l.rate), 0)
   const withUplift = base * upliftFactor(job.uplift1, job.uplift2)
   const flagged = lines.filter(l => l.issues.length).length
   const rooms = [...new Set(lines.map(l => l.room))]
@@ -107,7 +108,7 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
                       <div className="muted" style={{ fontSize: 12 }}>{l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty'}{l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate'}</div>
                       {l.issues.length > 0 && <div className="flag" style={{ fontWeight: 600 }}>{l.issues.join(' · ')}</div>}
                     </div>
-                    <div className="mono" style={{ fontSize: 13 }}>{l.qty != null && l.rate != null ? money(l.qty * l.rate) : '—'}</div>
+                    <div className="mono" style={{ fontSize: 13 }}>{l.qty != null && l.rate != null ? money(lineValue(l.qty, l.rate)) : '—'}</div>
                   </div>
                 ))}
               </div>

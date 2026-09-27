@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
+import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
 import { IconBack, IconDiary, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
 import { VariationsTab } from './Variations'
@@ -45,7 +46,7 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
   const unpriced = live.filter(v => v.rate == null).length
   const unmeasured = live.filter(v => v.qty == null).length
   const awaitingRef = live.filter(v => v.rate != null && !v.clientRef && v.status === 'Identified').length
-  const voBase = priced.reduce((s, v) => s + v.qty! * v.rate!, 0)
+  const voBase = priced.reduce((s, v) => s + lineValue(v.qty, v.rate), 0)
   const voGross = voBase * upliftFactor(job.uplift1, job.uplift2)
 
   const actions: { text: string; hint: string; colour: string; onClick: () => void }[] = []

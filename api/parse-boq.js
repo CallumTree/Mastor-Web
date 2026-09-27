@@ -20,7 +20,12 @@ RULES — accuracy matters more than completeness:
 - NEVER invent or estimate a code, quantity, unit or rate. If it is not printed, leave that field empty.
 - If only a line total is printed with no rate, leave RATE empty and put "total only: <amount>" in NOTE.
 - ROOM = the location/room heading the item sits under (e.g. Kitchen, Bathroom, External). If none, "General".
-- DESCRIPTION: the item description, tidied to one line, keep the meaning.
+- DESCRIPTION: a short one-line version of the SoR description (the heading before the colon plus the key work,
+  e.g. "Wall: take down half-brick wall, remove spoil"). If the Comments column has text for this item, append it
+  after " — " exactly as written (e.g. "... — Remove partition to airing cupboard in kitchen"). The comment is the
+  site-specific instruction and must never be dropped.
+- The same code can legitimately appear more than once (different location or a different comment). Output every one.
+- Keep codes exactly as printed, including leading zeros (e.g. 0390AC).
 - Do NOT output subtotals, "carried forward", "brought forward", summary pages or grand totals as items.
 - NOTE: anything the contractor should check (unclear figure, possible duplicate, illegible). Otherwise empty.`
 

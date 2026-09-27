@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "tsx tests/valuation.test.ts && tsx tests/boq.test.ts"
+    "test": "tsx tests/valuation.test.ts && tsx tests/boq.test.ts && tsx tests/money.test.ts"
   },
   "dependencies": {
     "mammoth": "^1.13.0",
