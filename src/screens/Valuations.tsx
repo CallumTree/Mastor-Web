@@ -54,12 +54,14 @@ function Progress({ certified, current, total }: { certified: number; current: n
   )
 }
 
-export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid }: {
+export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate }: {
   job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]
   onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
   onIssue: (v: Valuation) => void; onDeleteOpen: (v: Valuation) => void; go: (t: 'scope' | 'vos') => void
-  onPaid: (v: Valuation) => void
+  onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>
 }) {
+  const [making, setMaking] = useState<string | null>(null)
+  const cert = async (v: Valuation) => { setMaking(v.id); try { await onCertificate(v) } finally { setMaking(null) } }
   const [paying, setPaying] = useState<Valuation | null>(null)
   const [confirmIssue, setConfirmIssue] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -99,6 +101,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
           <div className="stack" style={{ marginTop: 14 }}>
             {!job.poNumber && <div className="flag">No PO number on this job — add it in job setup before issuing.</div>}
+            {current.lines > 0 && <button className="btn btn-secondary" disabled={making === open.id} onClick={() => cert(open)}>{making === open.id ? 'Preparing…' : 'Preview certificate (draft)'}</button>}
             {confirmIssue ? (
               <>
                 <div style={{ fontSize: 13 }}>Issuing locks every line in {valRef(open.number)}. They can't be unticked afterwards. Next ticks start {valRef(open.number + 1)}.</div>
@@ -133,9 +136,10 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             </div>
             <div style={{ marginTop: 6 }}><CourtLine c={valCourt(v, job, scope, vos)} /></div>
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t.lines} line{t.lines === 1 ? '' : 's'} · base {money(t.base)} · tap to {expanded === v.id ? 'hide' : 'show'}</div>
-            <button className="btn btn-secondary" style={{ marginTop: 10, minHeight: 44 }} onClick={e => { e.stopPropagation(); setPaying(v) }}>
-              {v.paidAt ? 'Edit payment' : 'Mark as paid'}
-            </button>
+            <div className="row" style={{ marginTop: 10 }}>
+              <button className="btn btn-secondary" style={{ minHeight: 44, flex: 1 }} disabled={making === v.id} onClick={e => { e.stopPropagation(); cert(v) }}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>
+              <button className="btn btn-secondary" style={{ minHeight: 44, flex: 1 }} onClick={e => { e.stopPropagation(); setPaying(v) }}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>
+            </div>
             {expanded === v.id && <Lines val={v} scope={scope} vos={vos} />}
           </div>
         )

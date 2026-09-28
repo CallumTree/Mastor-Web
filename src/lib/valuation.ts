@@ -10,7 +10,6 @@
  */
 import type { Job, ScopeItem, Valuation, Variation } from './types'
 import { db, uid } from './db'
-import { upliftFactor } from './format'
 
 export const valRef = (n: number) => 'VAL-' + String(n).padStart(3, '0')
 /** Each line rounded to the penny (half up), exactly as the council prices it — then lines are summed. */
@@ -60,12 +59,20 @@ export async function issueValuation(v: Valuation) {
   await db.putValuation({ ...v, status: 'Issued', issuedAt: Date.now() })
 }
 
+/** Uplifts compound (uplift 2 applies on top of uplift 1), each rounded to the penny as printed. */
+export function upliftAmounts(base: number, u1pct: number, u2pct: number) {
+  const u1 = pennies(base * (u1pct || 0) / 100)
+  const u2 = pennies((base + u1) * (u2pct || 0) / 100)
+  return { u1, u2 }
+}
+
 export interface ValTotals { scopeBase: number; voBase: number; base: number; gross: number; lines: number }
 export function valTotals(job: Job, valId: string, scope: ScopeItem[], vos: Variation[]): ValTotals {
   const s = scope.filter(x => x.valuationId === valId)
   const o = vos.filter(x => x.valuationId === valId)
   const scopeBase = s.reduce((t, x) => t + lineValue(x.qty, x.rate), 0)
   const voBase = o.reduce((t, x) => t + lineValue(x.qty, x.rate), 0)
-  const base = scopeBase + voBase
-  return { scopeBase, voBase, base, gross: base * upliftFactor(job.uplift1, job.uplift2), lines: s.length + o.length }
+  const base = pennies(scopeBase + voBase)
+  const u = upliftAmounts(base, job.uplift1, job.uplift2)
+  return { scopeBase, voBase, base, gross: pennies(base + u.u1 + u.u2), lines: s.length + o.length }
 }

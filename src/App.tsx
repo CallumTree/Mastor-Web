@@ -12,6 +12,8 @@ import { JobView } from './screens/JobView'
 import { EditVariation, LogVariation } from './screens/Variations'
 import { ScopeForm } from './screens/Scope'
 import { savePhoto, saveVideo, saveImageBlob } from './lib/photos'
+import { buildCertificate, certificateFileName, shareOrDownload } from './lib/certificate'
+import { meta } from './lib/db'
 import { BoqImport } from './screens/BoqImport'
 
 export default function App() {
@@ -66,6 +68,11 @@ export default function App() {
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
+          onCertificate={async v => {
+            const company = (await meta.get<{ name: string }>('company'))?.name
+            const blob = await buildCertificate({ job, val: v, vals: jobVals, scope: jobScope, vos: jobVos, company })
+            await shareOrDownload(blob, certificateFileName(job, v))
+          }}
           diary={jobDiary}
           onSaveDiary={async (e, markedUp) => {
             // mark-up saves a NEW image; the first original is always kept
