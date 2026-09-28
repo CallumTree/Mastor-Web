@@ -15,6 +15,7 @@ export interface Job {
   workType: WorkType
   status: JobStatus
   photoId: string | null    // real site photo; replaces the drawing when set
+  paymentTermsDays?: number // days from valuation issue to payment due (default 30)
   createdAt: number
 }
 
@@ -34,6 +35,7 @@ export interface Variation {
   photoIds: string[]
   dateRaised: number
   valuationId?: string | null // which valuation it's claimed in; null/undefined = live
+  submittedAt?: number | null // sent to the client for instruction — the ball is in their court from here
 }
 
 /** One line of the works order / BoQ. */
@@ -61,6 +63,8 @@ export interface Valuation {
   status: ValuationStatus
   createdAt: number
   issuedAt: number | null
+  paidAt?: number | null     // date payment received
+  paidAmount?: number | null // amount received (can be a part payment)
 }
 
 /**

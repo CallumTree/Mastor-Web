@@ -112,7 +112,9 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         head={['Certified this year', money(p.certifiedThisYear)]}
         rows={[
           [['In valuations now', k(p.inValuation)], ['Pipeline to claim', k(p.pipeline)]],
-          [['Variations', k(p.variations), undefined], ['Active jobs', `${p.active} · ${k(p.revised)}`]],
+          [['Paid this year', k(p.paidThisYear)], ['Owed to you', k(p.owed)]],
+          [['Overdue', p.overdueCount ? `${k(p.overdue)} · ${p.overdueCount}` : '—', p.overdueCount ? '#DC2626' : undefined], ['Variations', k(p.variations)]],
+          [['Active jobs', `${p.active} · ${k(p.revised)}`], ['', '']],
         ]} />
       <div className="muted" style={{ fontSize: 11, marginTop: 6, marginLeft: '12%' }}>Certified = issued valuations incl. uplifts{p.unpricedVos ? ` · ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not included` : ''}</div>
 

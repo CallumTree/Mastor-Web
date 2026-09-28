@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { Job, Valuation, Variation, VoStatus } from '../lib/types'
 import { Tick, ValBadge } from './Scope'
 import { lockedIn } from '../lib/valuation'
+import { CourtLine, voCourt } from '../lib/chase'
+import { ukDate as ukd } from '../lib/format'
 import { Field, Sheet } from '../components/Ui'
 import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
@@ -89,6 +91,11 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
         <div className="mono" style={{ fontSize: 20, color: qv && rv ? 'var(--copper)' : 'var(--ink-muted)', fontWeight: 300 }}>
           {qv && rv ? money(lineValue(qv, rv)) : 'Add qty and rate to price'}
         </div>
+        {qv && rv && v.status === 'Identified' && !v.clientRef && (
+          v.submittedAt
+            ? <div className="row"><span className="grow flag">Sent to client {ukd(v.submittedAt)} — waiting on their instruction</span><button className="chip" onClick={() => setV({ ...v, submittedAt: null })}>Undo</button></div>
+            : <button className="btn btn-secondary" onClick={() => setV({ ...v, submittedAt: Date.now() })}>Mark as sent to client for instruction</button>
+        )}
         <Field label="Client VO reference" hint="Once the client issues one"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value })} /></Field>
         <div>
           <div className="field"><span>Status</span></div>
@@ -130,9 +137,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle }: { job
             <div className="muted" style={{ fontSize: 13 }}>
               {v.room} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{v.rate != null ? ` @ ${money(v.rate)}` : ''} · {ukDate(v.dateRaised)}
             </div>
-            {(v.rate == null || v.qty == null) && v.status !== 'Rejected' && (
-              <div className="flag" style={{ marginTop: 4 }}>{v.rate == null ? 'UNPRICED — tap to price' : 'NO QUANTITY — tap to add'}</div>
-            )}
+            <div style={{ marginTop: 6 }}><CourtLine c={voCourt(v, vals)} /></div>
             {v.photoIds.length > 0 && <div className="thumbs" style={{ marginTop: 8 }}>{v.photoIds.map(id => <Thumb key={id} id={id} />)}</div>}
           </div>
         )

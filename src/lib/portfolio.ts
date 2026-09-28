@@ -2,6 +2,7 @@
 import type { Job, ScopeItem, Valuation, Variation } from './types'
 import { upliftFactor } from './format'
 import { lineValue, valTotals } from './valuation'
+import { valCourt } from './chase'
 
 export interface JobFigures {
   job: Job
@@ -19,6 +20,7 @@ export interface Portfolio {
   active: number
   revised: number; certified: number; inValuation: number; pipeline: number; variations: number; unpricedVos: number
   certifiedThisYear: number
+  paidThisYear: number; owed: number; overdue: number; overdueCount: number
   byMonth: { label: string; value: number }[]   // certified per month, this year
   voByStatus: { status: string; value: number; count: number }[]
 }
@@ -58,7 +60,17 @@ export function portfolio(jobs: Job[], scope: ScopeItem[], vos: Variation[], val
     return { status, value, count: list.length }
   })
 
+  let paidThisYear = 0, owed = 0, overdue = 0, overdueCount = 0
+  for (const v of vals) {
+    const job = jobs.find(j => j.id === v.jobId); if (!job || v.status !== 'Issued') continue
+    if (v.paidAt && new Date(v.paidAt).getFullYear() === year) paidThisYear += v.paidAmount ?? 0
+    const c = valCourt(v, job, scope, vos, now.getTime())
+    owed += c.owed
+    if (c.tone === 'late') { overdue += c.owed; overdueCount++ }
+  }
+
   return {
+    paidThisYear, owed, overdue, overdueCount,
     jobs: figures, active: activeFigs.length,
     revised: sum(activeFigs, 'revised'), certified: sum(figures, 'certified'), inValuation: sum(figures, 'inValuation'),
     pipeline: sum(activeFigs, 'remaining'), variations: sum(figures, 'variations'), unpricedVos: sum(figures, 'unpricedVos'),

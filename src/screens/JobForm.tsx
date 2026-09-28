@@ -17,6 +17,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
   const [valueText, setValueText] = useState(job && job.contractValue ? String(job.contractValue) : '')
   const [u1, setU1] = useState(job ? String(job.uplift1) : '')
   const [u2, setU2] = useState(job ? String(job.uplift2) : '')
+  const [terms, setTerms] = useState(job?.paymentTermsDays ? String(job.paymentTermsDays) : '30')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const photoUrl = usePhotoUrl(f.photoId)
   const set = (k: keyof Job) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
@@ -38,6 +39,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
           <div className="grow"><Field label="Uplift 1 (%)"><input inputMode="decimal" value={u1} onChange={e => setU1(e.target.value)} placeholder="0" /></Field></div>
           <div className="grow"><Field label="Uplift 2 (%)"><input inputMode="decimal" value={u2} onChange={e => setU2(e.target.value)} placeholder="0" /></Field></div>
         </div>
+        <Field label="Payment terms (days from valuation issue)" hint="Used to show when each valuation is due and flag it when it's late"><input inputMode="numeric" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
         <div>
           <div className="field"><span>Type of work</span></div>
           <div className="chips">{TYPES.map(t => <button key={t} className={'chip' + (f.workType === t ? ' on' : '')} onClick={() => setF({ ...f, workType: t })}>{t}</button>)}</div>
@@ -61,7 +63,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
           <div className="hint muted" style={{ fontSize: 12, marginTop: 4 }}>Without a photo, the job shows its drawing.</div>
         </div>
         <button className="btn btn-primary" disabled={!f.name.trim()}
-          onClick={() => onSave({ ...f, name: f.name.trim(), contractValue: num(valueText), uplift1: num(u1), uplift2: num(u2) })}>
+          onClick={() => onSave({ ...f, name: f.name.trim(), contractValue: num(valueText), uplift1: num(u1), uplift2: num(u2), paymentTermsDays: Math.round(num(terms)) || 30 })}>
           {job ? 'Save' : 'Create job'}
         </button>
         {onDelete && (confirmDelete

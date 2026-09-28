@@ -65,6 +65,7 @@ export default function App() {
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)}
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
+          onPaid={v => run(() => db.putValuation(v))()}
           diary={jobDiary}
           onSaveDiary={async (e, markedUp) => {
             // mark-up saves a NEW image; the first original is always kept

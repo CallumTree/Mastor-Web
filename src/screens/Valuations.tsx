@@ -3,6 +3,8 @@ import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { TitleBlock } from '../components/Ui'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { lineValue, valRef, valTotals } from '../lib/valuation'
+import { CourtLine, valCourt } from '../lib/chase'
+import { Field, Sheet } from '../components/Ui'
 
 function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   val: Valuation; scope: ScopeItem[]; vos: Variation[]
@@ -52,11 +54,13 @@ function Progress({ certified, current, total }: { certified: number; current: n
   )
 }
 
-export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go }: {
+export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid }: {
   job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]
   onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
   onIssue: (v: Valuation) => void; onDeleteOpen: (v: Valuation) => void; go: (t: 'scope' | 'vos') => void
+  onPaid: (v: Valuation) => void
 }) {
+  const [paying, setPaying] = useState<Valuation | null>(null)
   const [confirmIssue, setConfirmIssue] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -127,11 +131,36 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
               <span className="grow muted" style={{ fontSize: 12 }}>{v.issuedAt ? ukDate(v.issuedAt) : ''}</span>
               <span className="mono">{money(t.gross)}</span>
             </div>
+            <div style={{ marginTop: 6 }}><CourtLine c={valCourt(v, job, scope, vos)} /></div>
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t.lines} line{t.lines === 1 ? '' : 's'} · base {money(t.base)} · tap to {expanded === v.id ? 'hide' : 'show'}</div>
+            <button className="btn btn-secondary" style={{ marginTop: 10, minHeight: 44 }} onClick={e => { e.stopPropagation(); setPaying(v) }}>
+              {v.paidAt ? 'Edit payment' : 'Mark as paid'}
+            </button>
             {expanded === v.id && <Lines val={v} scope={scope} vos={vos} />}
           </div>
         )
       })}
+      {paying && <PaidSheet v={paying} gross={valTotals(job, paying.id, scope, vos).gross} onClose={() => setPaying(null)} onSave={x => { onPaid(x); setPaying(null) }} />}
     </div>
+  )
+}
+
+function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number; onSave: (v: Valuation) => void; onClose: () => void }) {
+  const toKey = (t: number) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+  const [date, setDate] = useState(toKey(v.paidAt ?? Date.now()))
+  const [amount, setAmount] = useState(String(v.paidAmount ?? Math.round(gross * 100) / 100))
+  const n = parseFloat(amount.replace(/[£,\s]/g, ''))
+  return (
+    <Sheet onClose={onClose}>
+      <div className="stack">
+        <div className="label bracket">Payment · {valRef(v.number)}</div>
+        <div className="muted" style={{ fontSize: 13 }}>Certified {money(gross)}. Enter what actually landed — a part payment leaves the rest showing as owed.</div>
+        <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
+        <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} /></Field>
+        {isFinite(n) && n < gross - 0.005 && <div className="flag">{money(gross - n)} will still show as owed</div>}
+        <button className="btn btn-primary" disabled={!date || !isFinite(n) || n <= 0} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(n * 100) / 100 }) }}>Save payment</button>
+        {v.paidAt && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...v, paidAt: null, paidAmount: null })}>Remove payment (not paid)</button>}
+      </div>
+    </Sheet>
   )
 }

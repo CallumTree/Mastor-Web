@@ -13,6 +13,7 @@ import { dayKey } from '../lib/dates'
 import { Sheet } from '../components/Ui'
 import { ValuationsTab } from './Valuations'
 import { valRef, valTotals } from '../lib/valuation'
+import { valCourt, voCourt, VO_CHASE_AMBER } from '../lib/chase'
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
@@ -50,7 +51,6 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
   const priced = live.filter(v => v.qty != null && v.rate != null)
   const unpriced = live.filter(v => v.rate == null).length
   const unmeasured = live.filter(v => v.qty == null).length
-  const awaitingRef = live.filter(v => v.rate != null && !v.clientRef && v.status === 'Identified').length
   const voBase = priced.reduce((s, v) => s + lineValue(v.qty, v.rate), 0)
   const voGross = voBase * upliftFactor(job.uplift1, job.uplift2)
 
@@ -64,12 +64,20 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
       actions.push({ text: "Uplifts don't reconcile with the PO", hint: `BoQ ${money(scopeBase)} + ${job.uplift1}% + ${job.uplift2}% = ${money(withUplifts)}, PO is ${money(job.contractValue)} (needs ${needed.toFixed(2)}% combined)`, colour: 'var(--red)', onClick: onSetup })
     }
   }
+  for (const v of vals.filter(x => x.status === 'Issued')) {
+    const c = valCourt(v, job, scope, vos)
+    if (c.tone === 'late') actions.push({ text: `${valRef(v.number)} overdue — ${money(c.owed)}`, hint: c.text + ' · chase the client', colour: 'var(--red)', onClick: () => go('vals') })
+    else if (c.tone === 'due') actions.push({ text: `${valRef(v.number)} payment due soon`, hint: c.text, colour: 'var(--amber)', onClick: () => go('vals') })
+  }
+  const waiting = vos.filter(v => { const c = voCourt(v, vals); return c.who === 'client' && (c.days ?? 0) >= VO_CHASE_AMBER })
+  if (waiting.length) actions.push({ text: `${waiting.length} VO${waiting.length === 1 ? '' : 's'} waiting on the client ${VO_CHASE_AMBER}+ days`, hint: 'Chase for an instruction', colour: waiting.some(v => voCourt(v, vals).tone === 'late') ? 'var(--red)' : 'var(--amber)', onClick: () => go('vos') })
+  const toSend = vos.filter(v => voCourt(v, vals).text.startsWith('Send')).length
+  if (toSend) actions.push({ text: `${toSend} priced VO${toSend === 1 ? '' : 's'} not sent to the client`, hint: 'Send for instruction so the clock starts', colour: 'var(--amber)', onClick: () => go('vos') })
   if (!job.poNumber) actions.push({ text: 'No PO number', hint: 'Invoices will be rejected without it', colour: 'var(--red)', onClick: onSetup })
   if (unpriced) actions.push({ text: `${unpriced} variation${unpriced === 1 ? '' : 's'} unpriced`, hint: 'Add SoR code and rate so they can be claimed', colour: 'var(--amber)', onClick: () => go('vos') })
   if (unmeasured) actions.push({ text: `${unmeasured} variation${unmeasured === 1 ? '' : 's'} not measured`, hint: 'Measure on site', colour: 'var(--amber)', onClick: () => go('vos') })
   if (open && openTotals && openTotals.lines > 0) actions.push({ text: `${valRef(open.number)}: ${money(openTotals.gross)} ready`, hint: `${openTotals.lines} line${openTotals.lines === 1 ? '' : 's'} — review and issue`, colour: 'var(--green)', onClick: () => go('vals') })
   if (scope.length === 0) actions.push({ text: 'No scope yet', hint: 'Add the works order items', colour: 'var(--amber)', onClick: () => go('scope') })
-  if (awaitingRef) actions.push({ text: `${awaitingRef} priced variation${awaitingRef === 1 ? '' : 's'} awaiting instruction`, hint: 'Send to the client for a VO reference', colour: 'var(--amber)', onClick: () => go('vos') })
 
   return (
     <div>
@@ -110,7 +118,7 @@ export function JobView(p: {
   job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
   onBack: () => void; onSetup: () => void; onLogVariation: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void
-  onIssue: (v: Valuation) => void; onDeleteOpenVal: (v: Valuation) => void
+  onIssue: (v: Valuation) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void
   diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
   onAddMedia: (file: File, kind: 'photo' | 'video', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
 }) {
@@ -137,7 +145,7 @@ export function JobView(p: {
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
         {tab === 'scope' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} />}
         {tab === 'vals' && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
-          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} />}
+          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} />}
       </div>
       <nav className="nav">
         {NAV.map(({ tab: t, label, Icon }, i) => (
