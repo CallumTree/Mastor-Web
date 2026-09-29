@@ -77,7 +77,7 @@ export interface DiaryEntry {
   id: string
   jobId: string
   date: string                 // YYYY-MM-DD (UK local day)
-  type: 'day' | 'photo' | 'video'
+  type: 'day' | 'photo' | 'video' | 'note'
   note: string                 // day note, or the photo/video caption
   labour: number | null        // day only — operatives on site
   weather: string              // day only
@@ -85,5 +85,10 @@ export interface DiaryEntry {
   originalMediaId: string | null // photo before mark-up
   room: string
   voId: string | null          // variation raised from this photo
+  category?: NoteCategory      // job notes only
+  pinned?: boolean             // job notes only
   createdAt: number
 }
+
+export type NoteCategory = 'Client' | 'Commercial' | 'Site' | 'H&S' | 'Other'
+export const NOTE_CATEGORIES: NoteCategory[] = ['Client', 'Commercial', 'Site', 'H&S', 'Other']

@@ -69,7 +69,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
 }) {
   const today = dayKey()
   const day = entries.find(e => e.id === dayId(job.id, date)) ?? null
-  const media = entries.filter(e => e.date === date && e.type !== 'day').sort((a, b) => a.createdAt - b.createdAt)
+  const media = entries.filter(e => e.date === date && (e.type === 'photo' || e.type === 'video')).sort((a, b) => a.createdAt - b.createdAt)
   const [note, setNote] = useState(day?.note ?? '')
   const [weather, setWeather] = useState(day?.weather ?? '')
   const [labour, setLabour] = useState<number | null>(day?.labour ?? null)
@@ -94,7 +94,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
     setErr(null); setBusy(true)
     try { await onAddMedia(f, kind, date) } catch (x) { setErr((x as Error).message) } finally { setBusy(false) }
   }
-  const recent = [...new Set(entries.map(e => e.date))].filter(d => d !== date).sort().reverse().slice(0, 7)
+  const recent = [...new Set(entries.filter(e => e.type !== 'note').map(e => e.date))].filter(d => d !== date).sort().reverse().slice(0, 7)
 
   return (
     <div className="stack">
@@ -153,7 +153,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <div className="label" style={{ margin: '10px 0 6px' }}>Recent days</div>
           <div className="panel" style={{ padding: '2px 14px' }}>
             {recent.map((d, i) => {
-              const n = entries.filter(e => e.date === d && e.type !== 'day').length
+              const n = entries.filter(e => e.date === d && (e.type === 'photo' || e.type === 'video')).length
               const dd = entries.find(e => e.id === dayId(job.id, d))
               return (
                 <button key={d} onClick={() => setDate(d)} className="row" style={{ width: '100%', background: 'none', border: 'none', borderTop: i ? '1px solid var(--ink-line)' : 'none', padding: '10px 0', textAlign: 'left', color: 'var(--ink)' }}>

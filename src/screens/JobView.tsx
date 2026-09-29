@@ -9,6 +9,7 @@ import { IconBack, IconCamera, IconDiary, IconFlag, IconHome, IconMarkup, IconSc
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab } from './Diary'
+import { NoteEditor, NoteRow, NotesSheet, newNote, sortNotes } from './Notes'
 import { dayKey } from '../lib/dates'
 import { Sheet, TitleBlock } from '../components/Ui'
 import { ValuationsTab } from './Valuations'
@@ -44,7 +45,9 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
   )
 }
 
-function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void }) {
+function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void }) {
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [noteEdit, setNoteEdit] = useState<DiaryEntry | null>(null)
   const open = vals.find(v => v.status === 'Open')
   const openTotals = open ? valTotals(job, open.id, scope, vos) : null
   const certified = vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
@@ -110,7 +113,21 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob }: { job: Job; v
         ))}
       </div>
       {poNote && <div className="panel" style={{ padding: '10px 14px', marginTop: 10, fontSize: 12 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish" style={{ color: 'var(--copper-ink)' }} onClick={() => setGapOpen(true)}>review</button></div>}
-      {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => { setGapOpen(false); onUpdateJob(j) }} />}
+      {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => {
+        setGapOpen(false); onUpdateJob(j)
+        // the reason goes on record in the job's notes
+        if (j.poGapAccepted) onSaveNote(newNote(job, `PO difference of ${money(Math.abs(j.poGapAccepted.diff))} accepted (BoQ ${j.poGapAccepted.diff > 0 ? 'over' : 'under'} PO): ${j.poGapAccepted.note}`, 'Commercial'))
+      }} />}
+      <div className="row" style={{ margin: '18px 0 8px' }}>
+        <div className="label bracket grow">Notes &amp; decisions</div>
+        <button className="linkish" style={{ color: 'var(--copper-ink)', fontSize: 13 }} onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length} ›` : '+ Add'}</button>
+      </div>
+      <div className="panel" style={{ padding: '0 14px' }}>
+        {notes.length === 0 && <button onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', color: 'var(--ink-muted)', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}
+        {[...notes].sort(sortNotes).slice(0, 3).map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--ink-line)' : 'none' }}><NoteRow n={n} onOpen={() => setNoteEdit(n)} /></div>)}
+      </div>
+      {notesOpen && <NotesSheet job={job} notes={notes} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} />}
+      {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
       <div className="muted" style={{ fontSize: 12, marginTop: 12 }}>
         PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts
       </div>
@@ -140,6 +157,7 @@ export function JobView(p: {
   const [capture, setCapture] = useState(false)
   const [focusNote, setFocusNote] = useState(false)
   const [capErr, setCapErr] = useState<string | null>(null)
+  const [quickNote, setQuickNote] = useState(false)
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setCapErr(null)
@@ -150,7 +168,8 @@ export function JobView(p: {
     <>
       <div className="page">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
-        {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob} />}
+        {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
+          notes={p.diary.filter(d => d.type === 'note')} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} />}
         {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote}
@@ -167,6 +186,7 @@ export function JobView(p: {
           <button className={tab === t ? 'on' : ''} onClick={() => { setFocusNote(false); setTab(t) }}><Icon />{label}</button></Fragment>
         ))}
       </nav>
+      {quickNote && <NoteEditor job={job} onClose={() => setQuickNote(false)} onSave={n => { p.onSaveDiary(n); setQuickNote(false) }} />}
       {capture && (
         <Sheet onClose={() => setCapture(false)}>
           <div className="stack">
@@ -178,6 +198,7 @@ export function JobView(p: {
                 <input type="file" accept="video/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
               <button className="btn btn-secondary" onClick={() => { setDiaryDate(dayKey()); setCapture(false); setFocusNote(true); setTab('diary') }}>✎ Diary note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
+              <button className="btn btn-secondary" style={{ gridColumn: '1 / -1' }} onClick={() => { setCapture(false); setQuickNote(true) }}>📌 Job note / decision</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
             <div className="muted" style={{ fontSize: 12 }}>Photos and video go into today’s diary.</div>

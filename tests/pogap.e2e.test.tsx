@@ -25,6 +25,23 @@ describe('BoQ vs PO difference', () => {
     click(screen.getByRole('button', { name: /accept £136\.65 difference/i }))
     await screen.findByText(/accepted .* — Added after PO — Dylan aware/i)
     await waitFor(() => expect(screen.queryByText(/doesn't reconcile/i)).toBeNull())
+    await screen.findByText(/PO difference of £136\.65 accepted \(BoQ over PO\): Added after PO — Dylan aware/)   // on record in Notes
+
+    // a note from ⊕ lands on Home, pinned first, and stays out of the diary's photo grid
+    click(screen.getByRole('button', { name: 'Capture' }))
+    click(await screen.findByRole('button', { name: /job note/i }))
+    click(screen.getByRole('button', { name: 'Client' }))
+    type(/^note/i, 'Tenant asked for extra socket in bedroom 2')
+    click(screen.getByLabelText(/pin to the top/i))
+    click(screen.getByRole('button', { name: 'Add note' }))
+    await screen.findByText('Tenant asked for extra socket in bedroom 2')
+    click(screen.getByRole('button', { name: /all 2/i }))
+    click(screen.getAllByRole('button', { name: 'Commercial' })[0])
+    await waitFor(() => expect(screen.queryAllByText('Tenant asked for extra socket in bedroom 2').length).toBe(1))  // filtered to Commercial: only the Home copy remains
+    fireEvent.click(document.querySelector('.sheet-bg')!)
+    nav('diary')
+    await screen.findByText(/photos & video \(0\)/i)
+    nav('home')
     // change the uplifts → the difference changes → flagged again
     click(screen.getByRole('button', { name: /job setup/i }))
     type('Uplift 2 (%)', '6')
