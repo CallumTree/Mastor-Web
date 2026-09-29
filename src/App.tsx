@@ -137,6 +137,8 @@ export default function App() {
         <ScopeForm item={scopeForm === 'new' ? undefined : scopeForm} jobId={job.id}
           nextOrder={jobScope.reduce((m, s) => Math.max(m, s.order), 0) + 1}
           rooms={[...new Set(jobScope.map(s => s.room))]}
+          props={[...new Set(jobScope.map(s => s.property).filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}
+          streams={[...new Set(jobScope.map(s => s.workstream).filter((x): x is string => !!x))]}
           locked={scopeForm !== 'new' && !!lockedIn(scopeForm, jobVals)}
           onClose={() => setScopeForm(null)}
           onSave={async i => {

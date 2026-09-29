@@ -58,6 +58,7 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
   const withUplift = base * upliftFactor(job.uplift1, job.uplift2)
   const flagged = lines.filter(l => l.issues.length).length
   const rooms = [...new Set(lines.map(l => l.room))]
+  const props = [...new Set(chosen.map(l => l.property).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
   const toggle = (idx: number) => setLines(ls => ls.map((l, i) => (i === idx ? { ...l, include: !l.include } : l)))
   const near = (a: number, b: number) => b > 0 && Math.abs(a - b) / b < 0.005
   const match = job.contractValue > 0 ? (near(base, job.contractValue) ? 'base' : near(withUplift, job.contractValue) ? 'uplift' : null) : null
@@ -73,7 +74,7 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
             <div style={{ textAlign: 'right' }}><div className="label">Lines</div><div className="mono" style={{ fontSize: 20, fontWeight: 300 }}>{chosen.length}</div></div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--cream-muted)', marginTop: 6 }}>
-            {rooms.length} area{rooms.length === 1 ? '' : 's'}{boq.ref ? ` · ref ${boq.ref}` : ''} · incl. uplifts {money(withUplift)}
+            {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''} · incl. uplifts {money(withUplift)}
           </div>
           {job.contractValue > 0 && (
             <div style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: match ? 'var(--green)' : 'var(--copper-light)' }}>

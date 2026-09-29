@@ -21,6 +21,7 @@ describe('multi-property scheme', () => {
     nav('scope')
     click(await screen.findByRole('button', { name: /import boq/i }))
     fireEvent.change(document.querySelector('input[type=file][accept*=".pdf"]')!, { target: { files: [new File(['x'], 'p.csv', { type: 'text/csv' })] } })
+    await screen.findByText(/3 properties: 1, 2, 13/)
     click(await screen.findByRole('button', { name: 'Import 7 items' }))
 
     // collapsed: property headers only, in number order, no lines showing

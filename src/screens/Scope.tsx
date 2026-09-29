@@ -32,8 +32,8 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, o
   const rooms = [...new Set(shown.map(i => i.room))]
   const valById = (id: string | null) => vals.find(v => v.id === id)
   // Multi-property schemes: one collapsible block per property, lines in the council's order
-  const hasProps = scope.some(i => i.property)
   const properties = [...new Set(scope.map(i => i.property || '—'))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+  const hasProps = properties.filter(p => p !== '—').length > 1 || (properties.length > 1 && scope.some(i => i.property))
   const [openProps, setOpenProps] = useState<Set<string>>(new Set())
   const [confirmAll, setConfirmAll] = useState<string | null>(null)
   const toggleProp = (p: string) => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })
@@ -151,8 +151,8 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, o
   )
 }
 
-export function ScopeForm({ item, jobId, nextOrder, rooms, locked, onSave, onDelete, onClose }: {
-  item?: ScopeItem; jobId: string; nextOrder: number; rooms: string[]; locked: boolean
+export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams = [], locked, onSave, onDelete, onClose }: {
+  item?: ScopeItem; jobId: string; nextOrder: number; rooms: string[]; props?: string[]; streams?: string[]; locked: boolean
   onSave: (i: ScopeItem) => void; onDelete?: () => void; onClose: () => void
 }) {
   const [f, setF] = useState<ScopeItem>(item ?? { id: uid(), jobId, code: '', description: '', room: rooms[rooms.length - 1] ?? 'General', qty: null, unit: 'nr', rate: null, valuationId: null, order: nextOrder, createdAt: Date.now() })
@@ -168,6 +168,12 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, locked, onSave, onDel
         <div className="row">
           <div style={{ width: '38%' }}><Field label="SoR code"><input disabled={locked} value={f.code} onChange={e => setF({ ...f, code: e.target.value })} /></Field></div>
           <div className="grow"><Field label="Room / area"><input disabled={locked} value={f.room} onChange={e => setF({ ...f, room: e.target.value })} list="rooms" /></Field></div>
+        </div>
+        <div className="row">
+          <div style={{ width: '38%' }}><Field label="Property no." hint="Multi-property jobs"><input disabled={locked} value={f.property ?? ''} onChange={e => setF({ ...f, property: e.target.value.replace(/^(no\.?|plot|house)\s*/i, '') || undefined })} list="props" placeholder="e.g. 4" /></Field></div>
+          <div className="grow"><Field label="Workstream"><input disabled={locked} value={f.workstream ?? ''} onChange={e => setF({ ...f, workstream: e.target.value || undefined })} list="streams" placeholder="e.g. PPR Paint" /></Field></div>
+          <datalist id="props">{props.map(r => <option key={r} value={r} />)}</datalist>
+          <datalist id="streams">{streams.map(r => <option key={r} value={r} />)}</datalist>
           <datalist id="rooms">{rooms.map(r => <option key={r} value={r} />)}</datalist>
         </div>
         <Field label="Description *"><textarea disabled={locked} rows={2} value={f.description} onChange={e => setF({ ...f, description: e.target.value })} /></Field>
