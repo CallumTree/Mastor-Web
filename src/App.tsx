@@ -60,7 +60,7 @@ export default function App() {
         <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
       ) : job ? (
         <JobView job={job} vos={jobVos} scope={jobScope} vals={jobVals}
-          onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')}
+          onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')} onUpdateJob={j => run(() => db.putJob(j))()}
           onLogVariation={() => setLogging(true)} onEditVariation={setEditing}
           onToggleVo={v => run(() => toggleVariation(v, jobVals))()}
           onToggleScope={i => run(() => toggleScope(i, jobVals))()}

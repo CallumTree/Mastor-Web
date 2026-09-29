@@ -16,6 +16,8 @@ export interface Job {
   status: JobStatus
   photoId: string | null    // real site photo; replaces the drawing when set
   paymentTermsDays?: number // days from valuation issue to payment due (default 30)
+  /** You've accepted a difference between BoQ × uplifts and the PO (e.g. items added after the PO). Re-flags if the difference changes. */
+  poGapAccepted?: { diff: number; note: string; at: number } | null
   createdAt: number
 }
 

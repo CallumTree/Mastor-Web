@@ -4,15 +4,16 @@ import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
 import { getLook, PHOTOS } from '../lib/look'
 import { lineValue } from '../lib/valuation'
-import { money, upliftFactor } from '../lib/format'
+import { money, ukDate, upliftFactor } from '../lib/format'
 import { IconBack, IconCamera, IconDiary, IconFlag, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab } from './Diary'
 import { dayKey } from '../lib/dates'
-import { Sheet } from '../components/Ui'
+import { Sheet, TitleBlock } from '../components/Ui'
 import { ValuationsTab } from './Valuations'
-import { valRef, valTotals } from '../lib/valuation'
+import { pennies, upliftAmounts, valRef, valTotals } from '../lib/valuation'
+import { Field } from '../components/Ui'
 import { valCourt, voCourt, VO_CHASE_AMBER } from '../lib/chase'
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
@@ -43,7 +44,7 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
   )
 }
 
-function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void }) {
+function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void }) {
   const open = vals.find(v => v.status === 'Open')
   const openTotals = open ? valTotals(job, open.id, scope, vos) : null
   const certified = vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
@@ -55,13 +56,22 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
   const voGross = voBase * upliftFactor(job.uplift1, job.uplift2)
 
   const actions: { text: string; hint: string; colour: string; onClick: () => void }[] = []
-  // Uplifts must turn the BoQ into the PO's all-in figure — otherwise every valuation is wrong
+  // Uplifts must turn the BoQ into the PO's all-in figure. A known, accepted difference becomes a note;
+  // if the difference changes after it was accepted, it's flagged again.
   const scopeBase = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+  let poNote: string | null = null
+  const [gapOpen, setGapOpen] = useState(false)
+  let gap: { withUplifts: number; diff: number; needed: number } | null = null
   if (scopeBase > 0 && job.contractValue > 0) {
-    const withUplifts = scopeBase * upliftFactor(job.uplift1, job.uplift2)
-    if (Math.abs(withUplifts - job.contractValue) / job.contractValue > 0.001) {
-      const needed = (job.contractValue / scopeBase - 1) * 100
-      actions.push({ text: "Uplifts don't reconcile with the PO", hint: `BoQ ${money(scopeBase)} + ${job.uplift1}% + ${job.uplift2}% = ${money(withUplifts)}, PO is ${money(job.contractValue)} (needs ${needed.toFixed(2)}% combined)`, colour: 'var(--red)', onClick: onSetup })
+    const withUplifts = upliftAmounts(pennies(scopeBase), job.uplift1, job.uplift2).gross
+    const diff = pennies(withUplifts - job.contractValue)
+    if (Math.abs(diff) / job.contractValue > 0.0005) {
+      gap = { withUplifts, diff, needed: (job.contractValue / scopeBase - 1) * 100 }
+      const acc = job.poGapAccepted
+      if (acc && Math.abs(acc.diff - diff) < 0.01) poNote = `PO difference of ${money(Math.abs(diff))} accepted ${ukDate(acc.at)}${acc.note ? ` — ${acc.note}` : ''}`
+      else actions.push({ text: acc ? 'PO difference has changed since you accepted it' : "BoQ doesn't reconcile with the PO",
+        hint: `BoQ ${money(scopeBase)} + ${job.uplift1}% + ${job.uplift2}% = ${money(withUplifts)}; PO is ${money(job.contractValue)} (${diff > 0 ? 'over' : 'under'} by ${money(Math.abs(diff))}). Tap to review or accept.`,
+        colour: 'var(--red)', onClick: () => setGapOpen(true) })
     }
   }
   for (const v of vals.filter(x => x.status === 'Issued')) {
@@ -99,6 +109,8 @@ function Home({ job, vos, scope, vals, go, onSetup }: { job: Job; vos: Variation
           </button>
         ))}
       </div>
+      {poNote && <div className="panel" style={{ padding: '10px 14px', marginTop: 10, fontSize: 12 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish" style={{ color: 'var(--copper-ink)' }} onClick={() => setGapOpen(true)}>review</button></div>}
+      {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => { setGapOpen(false); onUpdateJob(j) }} />}
       <div className="muted" style={{ fontSize: 12, marginTop: 12 }}>
         PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts
       </div>
@@ -116,7 +128,7 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
 
 export function JobView(p: {
   job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
-  onBack: () => void; onSetup: () => void; onLogVariation: () => void; onEditVariation: (v: Variation) => void
+  onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void
   onIssue: (v: Valuation) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>
   diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
@@ -138,7 +150,7 @@ export function JobView(p: {
     <>
       <div className="page">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
-        {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} />}
+        {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} />}
         {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote}
@@ -173,5 +185,26 @@ export function JobView(p: {
         </Sheet>
       )}
     </>
+  )
+}
+
+function PoGapSheet({ job, gap, onSave, onSetup, onClose }: {
+  job: Job; gap: { withUplifts: number; diff: number; needed: number }; onSave: (j: Job) => void; onSetup: () => void; onClose: () => void
+}) {
+  const accepted = job.poGapAccepted && Math.abs(job.poGapAccepted.diff - gap.diff) < 0.01
+  const [note, setNote] = useState(accepted ? job.poGapAccepted!.note : '')
+  return (
+    <Sheet onClose={onClose}>
+      <div className="stack">
+        <div className="label bracket">BoQ vs PO</div>
+        <TitleBlock head={[gap.diff > 0 ? 'BoQ is over the PO by' : 'BoQ is under the PO by', money(Math.abs(gap.diff))]}
+          rows={[[['BoQ + uplifts', money(gap.withUplifts)], ['PO value', money(job.contractValue)]], [['Uplifts set', `${job.uplift1}% + ${job.uplift2}%`], ['Would reconcile at', `${gap.needed.toFixed(2)}% combined`]]]} />
+        <div className="muted" style={{ fontSize: 13 }}>Common reasons: items added after the PO was raised, a PO line missing, or the wrong uplifts. If you know why and will claim it anyway, accept it with a note — it'll stay recorded, and flag again if the difference changes.</div>
+        <Field label="Why (for the record)"><textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Kitchen partition + ceiling patch added after PO — Dylan aware, will be claimed" /></Field>
+        <button className="btn btn-primary" disabled={!note.trim()} onClick={() => onSave({ ...job, poGapAccepted: { diff: gap.diff, note: note.trim(), at: Date.now() } })}>{accepted ? 'Update note' : `Accept ${money(Math.abs(gap.diff))} difference`}</button>
+        <button className="btn btn-secondary" onClick={onSetup}>Check uplifts / PO value in job setup</button>
+        {accepted && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...job, poGapAccepted: null })}>Withdraw acceptance (flag it again)</button>}
+      </div>
+    </Sheet>
   )
 }
