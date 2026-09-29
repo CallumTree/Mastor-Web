@@ -59,11 +59,16 @@ export async function issueValuation(v: Valuation) {
   await db.putValuation({ ...v, status: 'Issued', issuedAt: Date.now() })
 }
 
-/** Uplifts compound (uplift 2 applies on top of uplift 1), each rounded to the penny as printed. */
+/**
+ * Uplifts compound (uplift 2 on top of uplift 1) and — as Pembrokeshire's POs do — the total is
+ * rounded ONCE: base × (1+u1) × (1+u2). Uplift 1 is shown to the penny; uplift 2 is the balance,
+ * so the printed lines always add up to the total exactly.
+ */
 export function upliftAmounts(base: number, u1pct: number, u2pct: number) {
+  const gross = pennies(base * (1 + (u1pct || 0) / 100) * (1 + (u2pct || 0) / 100))
   const u1 = pennies(base * (u1pct || 0) / 100)
-  const u2 = pennies((base + u1) * (u2pct || 0) / 100)
-  return { u1, u2 }
+  const u2 = pennies(gross - base - u1)
+  return { u1, u2, gross }
 }
 
 export interface ValTotals { scopeBase: number; voBase: number; base: number; gross: number; lines: number }
@@ -74,5 +79,5 @@ export function valTotals(job: Job, valId: string, scope: ScopeItem[], vos: Vari
   const voBase = o.reduce((t, x) => t + lineValue(x.qty, x.rate), 0)
   const base = pennies(scopeBase + voBase)
   const u = upliftAmounts(base, job.uplift1, job.uplift2)
-  return { scopeBase, voBase, base, gross: pennies(base + u.u1 + u.u2), lines: s.length + o.length }
+  return { scopeBase, voBase, base, gross: u.gross, lines: s.length + o.length }
 }

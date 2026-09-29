@@ -10,4 +10,10 @@ const lines: [number, number][] = [[1,2437.35],[1,328.47],[10,51.29],[1,161.56],
 const total = pennies(lines.reduce((t, [q, r]) => t + lineValue(q, r), 0))
 ok(lines.length === 58, '58 lines')
 ok(total === 34613.81, `CAP00290 totals exactly £34,613.81 (got ${total})`)
+// Pembrokeshire PO PC26061: nett × 1.2028 × 1.05, rounded once — every line must match the PO exactly
+import { upliftAmounts } from '../src/lib/valuation'
+for (const [area, nett, po] of [['Internal Improvement', 22940.60, 28972.60], ['Kitchen', 2505.61, 3164.44], ['Bathroom', 3981.43, 5028.31], ['Estate Improvement', 2370.92, 2994.33]] as const) {
+  const u = upliftAmounts(nett, 20.28, 5)
+  ok(u.gross === po && pennies(nett + u.u1 + u.u2) === po, `PO line ${area}: £${nett} → £${u.gross} (PO says £${po})`)
+}
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
