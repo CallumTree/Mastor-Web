@@ -41,6 +41,14 @@ export async function toggleScope(item: ScopeItem, vals: Valuation[]) {
   else { const v = await ensureOpenValuation(item.jobId); await db.putScope({ ...item, valuationId: v.id }) }
 }
 
+/** Tick a batch (e.g. a whole property) into the open valuation. Skips unpriced and already-claimed lines. */
+export async function claimMany(items: ScopeItem[]) {
+  const live = items.filter(i => !i.valuationId && isPriced(i))
+  if (!live.length) return
+  const v = await ensureOpenValuation(live[0].jobId)
+  for (const i of live) await db.putScope({ ...i, valuationId: v.id })
+}
+
 export async function toggleVariation(vo: Variation, vals: Valuation[]) {
   if (lockedIn(vo, vals)) return
   if (vo.valuationId) await db.putVariation({ ...vo, valuationId: null })

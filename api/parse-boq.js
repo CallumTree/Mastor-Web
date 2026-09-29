@@ -12,8 +12,8 @@ Extract EVERY line item that carries a quantity or a rate (repair items, SoR cod
 
 OUTPUT FORMAT — plain text only, no commentary, no markdown:
 First line:  REF<TAB>the works order / contract reference if printed, else blank
-Then one line per item, 8 tab-separated fields:
-CODE<TAB>ROOM<TAB>DESCRIPTION<TAB>QTY<TAB>UNIT<TAB>RATE<TAB>COST<TAB>NOTE
+Then one line per item, 11 tab-separated fields:
+CODE<TAB>ROOM<TAB>DESCRIPTION<TAB>QTY<TAB>UNIT<TAB>RATE<TAB>COST<TAB>PROPERTY<TAB>WORKSTREAM<TAB>HOURS<TAB>NOTE
 
 RULES — accuracy matters more than completeness:
 - Copy numbers exactly as printed. RATE is the unit rate; COST is the printed line total. No £ signs or commas.
@@ -27,6 +27,13 @@ RULES — accuracy matters more than completeness:
 - The same code can legitimately appear more than once (different location or a different comment). Output every one.
 - Keep codes exactly as printed, including leading zeros (e.g. 0390AC).
 - Do NOT output subtotals, "carried forward", "brought forward", summary pages or grand totals as items.
+- PROPERTY: on schedules covering several properties/units (a NUMBER column, plot or house number), the property
+  it belongs to, exactly as printed (e.g. 1, 13, 4A). Single-property documents: leave empty.
+- WORKSTREAM: if the schedule splits costs into work categories (columns such as PPR Paint, PPR Repairs, Est Imp,
+  Kitchen, Bathroom, Roofing, Scaffold, WHQS, Windows, Decarb, Comp Doors), the category this line's cost sits in,
+  using the column's heading. Otherwise empty.
+- HOURS: labour hours for the line if an hours column is printed, else empty. Never estimate.
+- Keep lines in the order they appear in the document.
 - NOTE: anything the contractor should check (unclear figure, possible duplicate, illegible). Otherwise empty.`
 
 export default async function handler(req, res) {

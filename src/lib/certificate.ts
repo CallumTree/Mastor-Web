@@ -64,12 +64,23 @@ export async function buildCertificate({ job, val, vals, scope, vos, company }: 
   y += rowH * 4 + 8
 
   // ---- schedule of lines
-  const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => a.room.localeCompare(b.room) || a.order - b.order)
+  const byProp = scope.some(x => x.property)
+  const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => byProp ? (a.property ?? '').localeCompare(b.property ?? '', 'en', { numeric: true }) || a.order - b.order : a.room.localeCompare(b.room) || a.order - b.order)
   const o = vos.filter(x => x.valuationId === val.id).sort((a, b) => a.number - b.number)
   const body: (string | { content: string; colSpan: number; styles: object })[][] = []
   const section = (label: string) => body.push([{ content: label, colSpan: 6, styles: { fontStyle: 'bold', textColor: COPPER, fillColor: [247, 243, 235], fontSize: 7 } }])
-  if (s.length) section('CONTRACT SCOPE')
-  for (const i of s) body.push([i.code || '—', i.description, i.room, `${qtyText(i.qty!)} ${i.unit}`, money(i.rate!), money(lineValue(i.qty, i.rate))])
+  const line = (i: ScopeItem) => [i.code || '—', i.description, i.room + (i.workstream ? `\n${i.workstream}` : ''), `${qtyText(i.qty!)} ${i.unit}`, money(i.rate!), money(lineValue(i.qty, i.rate))]
+  if (byProp) {
+    for (const p of [...new Set(s.map(i => i.property || '—'))]) {
+      const ls = s.filter(i => (i.property || '—') === p)
+      section(p === '—' ? 'UNASSIGNED' : `NO. ${p}`)
+      for (const i of ls) body.push(line(i))
+      body.push([{ content: `Subtotal No. ${p}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fontSize: 7, font: 'helvetica', textColor: INK } }, { content: money(ls.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), colSpan: 1, styles: { halign: 'right', fontStyle: 'bold', font: 'courier' } }])
+    }
+  } else {
+    if (s.length) section('CONTRACT SCOPE')
+    for (const i of s) body.push(line(i))
+  }
   if (o.length) section('VARIATIONS')
   for (const v of o) body.push([voRef(v.number) + (v.clientRef ? `\n${v.clientRef}` : ''), v.description + (v.code ? `  [${v.code}]` : ''), v.room, `${qtyText(v.qty!)} ${v.unit}`, money(v.rate!), money(lineValue(v.qty, v.rate))])
 

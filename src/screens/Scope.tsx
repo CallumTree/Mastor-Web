@@ -22,8 +22,8 @@ export function ValBadge({ val }: { val?: Valuation }) {
 
 type Filter = 'all' | 'live' | 'claimed'
 
-export function ScopeTab({ scope, vals, onToggle, onAdd, onEdit, onImport }: {
-  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
+export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, onImport }: {
+  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
 }) {
   const [filter, setFilter] = useState<Filter>('all')
   const total = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -31,6 +31,34 @@ export function ScopeTab({ scope, vals, onToggle, onAdd, onEdit, onImport }: {
   const shown = scope.filter(i => filter === 'all' || (filter === 'live' ? !i.valuationId : !!i.valuationId))
   const rooms = [...new Set(shown.map(i => i.room))]
   const valById = (id: string | null) => vals.find(v => v.id === id)
+  // Multi-property schemes: one collapsible block per property, lines in the council's order
+  const hasProps = scope.some(i => i.property)
+  const properties = [...new Set(scope.map(i => i.property || '—'))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+  const [openProps, setOpenProps] = useState<Set<string>>(new Set())
+  const [confirmAll, setConfirmAll] = useState<string | null>(null)
+  const toggleProp = (p: string) => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })
+  const row = (i: ScopeItem, idx: number, showRoom: boolean) => {
+    const val = valById(i.valuationId)
+    const locked = !!lockedIn(i, vals)
+    return (
+      <div key={i.id} onClick={() => onEdit(i)} className="row" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--ink-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer' }}>
+        {isPriced(i) || i.valuationId ? <Tick on={!!i.valuationId} locked={locked} onClick={() => onToggle(i)} /> : <span style={{ width: 30, flex: 'none' }} />}
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+            {i.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{i.code}</span>}
+            {showRoom && <span className="muted" style={{ fontSize: 11 }}>{i.room}{i.workstream ? ` · ${i.workstream}` : ''}</span>}
+            <ValBadge val={val} />
+          </div>
+          <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
+          <div className="muted" style={{ fontSize: 12 }}>
+            {i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated'}{i.rate != null ? ` @ ${money(i.rate)}` : ''}{i.hours ? ` · ${i.hours}h` : ''}
+          </div>
+          {!isPriced(i) && <div className="flag">{i.rate == null ? 'NO RATE' : 'NO QTY'} — tap to fix</div>}
+        </div>
+        <div className="mono" style={{ fontSize: 14, color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
+      </div>
+    )
+  }
 
   return (
     <div className="stack">
@@ -65,31 +93,51 @@ export function ScopeTab({ scope, vals, onToggle, onAdd, onEdit, onImport }: {
         </>
       )}
 
-      {rooms.map(room => (
+      {hasProps ? properties.map(p => {
+        const all = scope.filter(i => (i.property || '—') === p)
+        const lines = shown.filter(i => (i.property || '—') === p).sort((a, b) => a.order - b.order)
+        const tot = all.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+        const cl = all.filter(i => i.valuationId).reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+        const pct = tot ? Math.round((cl / tot) * 100) : 0
+        const remaining = all.filter(i => !i.valuationId && isPriced(i))
+        const isOpen = openProps.has(p)
+        if (!lines.length && filter !== 'all') return null
+        return (
+          <div key={p} className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+            <button onClick={() => toggleProp(p)} aria-expanded={isOpen} aria-label={`Property ${p}`}
+              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '12px 14px', color: 'var(--ink)' }}>
+              <div className="row">
+                <span style={{ width: 14, color: 'var(--copper-ink)', transition: 'transform .2s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
+                <span style={{ fontWeight: 700, fontSize: 17 }}>{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
+                <span className="grow muted" style={{ fontSize: 12 }}>{all.length} line{all.length === 1 ? '' : 's'}</span>
+                <span className="mono" style={{ fontSize: 14 }}>{money(tot)}</span>
+              </div>
+              <div className="row" style={{ marginTop: 8, gap: 10 }}>
+                <div className="grow" style={{ height: 5, border: '1px solid var(--ink-line)' }}><div style={{ height: '100%', width: `${pct}%`, background: 'var(--copper)' }} /></div>
+                <span className="mono" style={{ fontSize: 12, color: pct === 100 ? 'var(--green)' : 'var(--copper-ink)', width: 38, textAlign: 'right' }}>{pct}%</span>
+              </div>
+            </button>
+            {isOpen && (
+              <div style={{ borderTop: '1px solid var(--ink)' }}>
+                {remaining.length > 0 && (
+                  <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ink-line)' }}>
+                    {confirmAll === p
+                      ? <div className="row"><span className="grow" style={{ fontSize: 13 }}>Put all {remaining.length} remaining lines ({money(remaining.reduce((t, i) => t + lineValue(i.qty, i.rate), 0))}) into the valuation?</span>
+                          <button className="chip" onClick={() => setConfirmAll(null)}>No</button><button className="chip on" onClick={() => { setConfirmAll(null); onToggleMany(remaining) }}>Yes</button></div>
+                      : <button className="btn btn-secondary" style={{ minHeight: 42 }} onClick={() => setConfirmAll(p)}>Tick all remaining ({remaining.length})</button>}
+                  </div>
+                )}
+                {lines.length === 0 && <div className="muted" style={{ padding: 12, fontSize: 13 }}>Nothing here for this filter.</div>}
+                {lines.map((i, idx) => row(i, idx, true))}
+              </div>
+            )}
+          </div>
+        )
+      }) : rooms.map(room => (
         <div key={room}>
           <div className="label" style={{ margin: '6px 0 6px' }}>{room}</div>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            {shown.filter(i => i.room === room).sort((a, b) => a.order - b.order).map((i, idx) => {
-              const val = valById(i.valuationId)
-              const locked = !!lockedIn(i, vals)
-              return (
-                <div key={i.id} onClick={() => onEdit(i)} className="row" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer' }}>
-                  {isPriced(i) || i.valuationId ? <Tick on={!!i.valuationId} locked={locked} onClick={() => onToggle(i)} /> : <span style={{ width: 30, flex: 'none' }} />}
-                  <div className="grow" style={{ minWidth: 0 }}>
-                    <div className="row" style={{ gap: 6 }}>
-                      {i.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{i.code}</span>}
-                      <ValBadge val={val} />
-                    </div>
-                    <div style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
-                    <div className="muted" style={{ fontSize: 12 }}>
-                      {i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated'}{i.rate != null ? ` @ ${money(i.rate)}` : ''}
-                    </div>
-                    {!isPriced(i) && <div className="flag">{i.rate == null ? 'NO RATE' : 'NO QTY'} — tap to fix</div>}
-                  </div>
-                  <div className="mono" style={{ fontSize: 14, color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
-                </div>
-              )
-            })}
+            {shown.filter(i => i.room === room).sort((a, b) => a.order - b.order).map((i, idx) => row(i, idx, false))}
           </div>
         </div>
       ))}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from './lib/types'
 import { db, nextVoNumber, uid } from './lib/db'
-import { deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
+import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
 import { onRemoteChange } from './lib/sync'
@@ -64,6 +64,7 @@ export default function App() {
           onLogVariation={() => setLogging(true)} onEditVariation={setEditing}
           onToggleVo={v => run(() => toggleVariation(v, jobVals))()}
           onToggleScope={i => run(() => toggleScope(i, jobVals))()}
+          onClaimMany={items => run(() => claimMany(items))()}
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)}
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
@@ -126,7 +127,7 @@ export default function App() {
           onImport={async (lines, ref) => {
             let order = jobScope.reduce((m, s) => Math.max(m, s.order), 0)
             for (const l of lines) {
-              await db.putScope({ id: uid(), jobId: job.id, code: l.code, description: l.description, room: l.room, qty: l.qty, unit: l.unit, rate: l.rate, valuationId: null, order: ++order, createdAt: Date.now() })
+              await db.putScope({ id: uid(), jobId: job.id, code: l.code, description: l.description, room: l.room, qty: l.qty, unit: l.unit, rate: l.rate, valuationId: null, order: ++order, createdAt: Date.now(), property: l.property || undefined, workstream: l.workstream || undefined, hours: l.hours })
             }
             if (ref && !job.contractRef) await db.putJob({ ...job, contractRef: ref })
             setImporting(false); await reload()

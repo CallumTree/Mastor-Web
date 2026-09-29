@@ -52,6 +52,9 @@ export interface ScopeItem {
   rate: number | null       // null = no rate. Never shown as £0.
   valuationId: string | null // null = live (not yet claimed)
   order: number
+  property?: string          // multi-property schemes: the house/unit number, e.g. "1", "13"
+  workstream?: string        // e.g. PPR Paint, Kitchen, Roofing, Scaffold, Decarb
+  hours?: number | null      // labour hours from the schedule, if given
   createdAt: number
 }
 

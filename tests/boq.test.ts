@@ -24,4 +24,11 @@ ok(r8.lines[0].description.includes('— Hack off 0.5m2'), 'comment kept on the 
 ok(r8.lines[1].issues.some(i => i.includes('document cost £31.00')), 'flags when the document cost disagrees with qty × rate')
 const md = parseBoqTsv('| CODE | ROOM | DESCRIPTION | QTY | UNIT | RATE | COST | NOTE |\n|---|---|---|---|---|---|---|---|\n| 4310AB | Bathroom | Wall tiles | 10 | SM | 51.29 | 512.90 | |')
 ok(md.lines.length === 1 && md.lines[0].rate === 51.29 && md.lines[0].cost === 512.9, 'also reads a markdown table reply (header + separator skipped)')
+const multi = parseBoqTsv(['REF\tPRESCELLY ROAD',
+  '4360BD\tPROPERTY\tWashdown and 1 coat masonry paint\t71\tSM\t8.55\t607.05\t1\tPPR Paint\t0.00\t',
+  '3745ZB\tKITCHEN\tKitchen upgrade 3P/4P 2 bed\t1\tIT\t2613.65\t2613.65\tNo. 13\tKitchen\t44\t',
+  '2402AA\tFRONT ELEVATION\tScaffold tower ne 5m\t1\tIT\t350\t350.00\t4\tScaffold\t\t'].join('\n'))
+ok(multi.lines.length === 3 && multi.lines[0].property === '1' && multi.lines[0].workstream === 'PPR Paint', 'reads property + workstream')
+ok(multi.lines[1].property === '13' && multi.lines[1].hours === 44, '"No. 13" → 13, hours read')
+ok(multi.lines[2].hours === null && multi.lines[2].issues.length === 0, 'blank hours stays blank; cost check still works')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

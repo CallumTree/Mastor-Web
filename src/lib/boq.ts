@@ -4,6 +4,9 @@ export interface ParsedLine {
   code: string; room: string; description: string
   qty: number | null; unit: string; rate: number | null
   cost: number | null      // the document's printed line total, if any
+  property: string
+  workstream: string
+  hours: number | null
   note: string
   issues: string[]          // why this line needs checking
 }
@@ -34,7 +37,12 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
     // Field 7 is COST when it's a plain amount (even if the model dropped the empty NOTE after it)
     const looksLikeAmount = (x?: string) => !!x && /^£?\s*[\d,]*\.?\d+$/.test(x)
     const costRaw = looksLikeAmount(t[6]) ? t[6] : undefined
-    const note = (costRaw !== undefined ? t[7] : t.length >= 8 ? t[7] : t[6]) ?? ''
+    // 11-field lines: … COST PROPERTY WORKSTREAM HOURS NOTE
+    const wide = t.length >= 10
+    const property = wide ? (t[7] ?? '').replace(/^(no\.?|plot|house)\s*/i, '').trim() : ''
+    const workstream = wide ? (t[8] ?? '').trim() : ''
+    const hoursNum = wide && t[9] ? parseFloat(t[9]) : NaN
+    const note = (wide ? t[10] : costRaw !== undefined ? t[7] : t.length >= 8 ? t[7] : t[6]) ?? ''
     if (!description) continue
     if (/^(sub)?total|carried forward|brought forward/i.test(description)) continue
     const q = num(qty), r = num(rate), c = num(costRaw)
@@ -48,7 +56,7 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
     if (q == null) issues.push('no qty')
     if (!code) issues.push('no code')
     if (note) issues.push(note)
-    lines.push({ include: true, code, room: room || 'General', description, qty: q, unit: unit || 'item', rate: r, cost: c, note, issues })
+    lines.push({ include: true, code, room: room || 'General', description, qty: q, unit: unit || 'item', rate: r, cost: c, property, workstream, hours: isFinite(hoursNum) ? hoursNum : null, note, issues })
   }
   return { ref, lines, truncated }
 }

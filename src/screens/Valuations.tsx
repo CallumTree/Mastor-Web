@@ -10,7 +10,8 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   val: Valuation; scope: ScopeItem[]; vos: Variation[]
   onRemoveScope?: (i: ScopeItem) => void; onRemoveVo?: (v: Variation) => void
 }) {
-  const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => a.room.localeCompare(b.room) || a.order - b.order)
+  const byProp = scope.some(x => x.property)
+  const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => byProp ? (a.property ?? '').localeCompare(b.property ?? '', 'en', { numeric: true }) || a.order - b.order : a.room.localeCompare(b.room) || a.order - b.order)
   const o = vos.filter(x => x.valuationId === val.id).sort((a, b) => a.number - b.number)
   const row = (key: string, ref: string, desc: string, sub: string, value: number, onRemove?: () => void) => (
     <div key={key} className="row" style={{ padding: '10px 0', borderTop: '1px solid var(--cream-line)', alignItems: 'flex-start' }}>
@@ -26,7 +27,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   return (
     <div>
       {s.length > 0 && <div className="label" style={{ marginTop: 8 }}>Scope</div>}
-      {s.map(i => row(i.id, i.code, i.description, `${i.room} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i))))}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <div className="label" style={{ marginTop: 10, color: 'var(--copper-ink)' }}>No. {i.property || '—'}</div>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
       {o.length > 0 && <div className="label" style={{ marginTop: 12 }}>Variations</div>}
       {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v))))}
     </div>
