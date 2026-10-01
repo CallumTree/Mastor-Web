@@ -13,22 +13,27 @@ Extract EVERY line item that carries a quantity or a rate (repair items, SoR cod
 OUTPUT FORMAT — plain text only, no commentary, no markdown:
 First line:  REF<TAB>the works order / contract reference if printed, else blank
 Then one line per item, 11 tab-separated fields:
-CODE<TAB>ROOM<TAB>DESCRIPTION<TAB>QTY<TAB>UNIT<TAB>RATE<TAB>COST<TAB>PROPERTY<TAB>WORKSTREAM<TAB>HOURS<TAB>NOTE
+CODE<TAB>LOCATION<TAB>DESCRIPTION<TAB>QTY<TAB>UNIT<TAB>RATE<TAB>COST<TAB>PROPNO<TAB>WORKSTREAM<TAB>HOURS<TAB>NOTE
+Always output all 11 fields per line (empty fields still need their tab).
 
 RULES — accuracy matters more than completeness:
 - Copy numbers exactly as printed. RATE is the unit rate; COST is the printed line total. No £ signs or commas.
 - NEVER invent or estimate a code, quantity, unit or rate. If it is not printed, leave that field empty.
 - If only a line total is printed with no rate, leave RATE empty and put the total in COST.
-- ROOM = the location/room heading the item sits under (e.g. Kitchen, Bathroom, External). If none, "General".
+- LOCATION = the location/room/elevation the item is in (e.g. Kitchen, Bathroom, Front Elevation, Property). If none, "General".
 - DESCRIPTION: a short one-line version of the SoR description (the heading before the colon plus the key work,
   e.g. "Wall: take down half-brick wall, remove spoil"). If the Comments column has text for this item, append it
   after " — " exactly as written (e.g. "... — Remove partition to airing cupboard in kitchen"). The comment is the
   site-specific instruction and must never be dropped.
 - The same code can legitimately appear more than once (different location or a different comment). Output every one.
 - Keep codes exactly as printed, including leading zeros (e.g. 0390AC).
+- Example multi-property line:
+4360BD<TAB>PROPERTY<TAB>Washdown and apply 1 coat masonry paint to render<TAB>71<TAB>SM<TAB>8.55<TAB>607.05<TAB>1<TAB>PPR Paint<TAB>0<TAB>
 - Do NOT output subtotals, "carried forward", "brought forward", summary pages or grand totals as items.
-- PROPERTY: on schedules covering several properties/units (a NUMBER column, plot or house number), the property
-  it belongs to, exactly as printed (e.g. 1, 13, 4A). Single-property documents: leave empty.
+- PROPNO: the house / unit / plot NUMBER this line belongs to. Schedules covering several properties have a
+  NUMBER (or No., Plot, House) column — copy that number exactly (e.g. 1, 2, 13, 4A). This is NOT the location:
+  a location column may literally say "PROPERTY" — that word goes in LOCATION, never in PROPNO.
+  Single-property documents (one address): leave PROPNO empty.
 - WORKSTREAM: if the schedule splits costs into work categories (columns such as PPR Paint, PPR Repairs, Est Imp,
   Kitchen, Bathroom, Roofing, Scaffold, WHQS, Windows, Decarb, Comp Doors), the category this line's cost sits in,
   using the column's heading. Otherwise empty.

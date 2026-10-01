@@ -29,21 +29,29 @@ describe('multi-property scheme', () => {
     expect(heads.map(h => h.getAttribute('aria-label'))).toEqual(['Property 1', 'Property 2', 'Property 13'])
     expect(screen.queryByText(/masonry paint/i)).toBeNull()
 
-    // open No. 1 → its 3 lines in council order, tagged with location + workstream
+    // open No. 1 → workstream groups (collapsed), then lines inside
     click(heads[0])
+    expect(screen.queryByText(/masonry paint/i)).toBeNull()
+    click(screen.getByRole('button', { name: 'No. 1 PPR Paint' }))
     expect(screen.getAllByText(/masonry paint/i).length).toBe(1)
-    expect(screen.getAllByText('PROPERTY · PPR Paint').length).toBe(2)
-    expect(screen.getByText('FRONT ELEVATION · Scaffold')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'No. 1 Scaffold' })).toBeTruthy()
 
     // tick all remaining in No. 1 → VAL-001, 100%
     click(screen.getByRole('button', { name: /tick all remaining \(3\)/i }))
     click(screen.getByRole('button', { name: 'Yes' }))
-    await waitFor(() => expect(screen.getAllByText('VAL-001').length).toBe(3))
-    expect(screen.getByText('100%')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))   // property header (+ open group)
+    expect(screen.getAllByText('VAL-001').length).toBe(2)                                // the open PPR Paint group's lines
 
     // valuation shows the lines under a "No. 1" heading
     nav('vals')
     await screen.findByText('No. 1')
     expect(screen.getAllByRole('button', { name: /remove from valuation/i }).length).toBe(3)
+
+    // clear unclaimed lines (to redo an import) keeps the claimed ones
+    nav('scope')
+    click(await screen.findByRole('button', { name: /clear unclaimed lines/i }))
+    click(screen.getByRole('button', { name: 'Remove 4' }))
+    await waitFor(() => expect(screen.queryAllByRole('button', { name: /^property /i }).length).toBe(0))   // only No. 1 left → single-property layout
+    expect(screen.getByText('3 items')).toBeTruthy()
   })
 })

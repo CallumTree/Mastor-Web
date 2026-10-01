@@ -22,8 +22,8 @@ export function ValBadge({ val }: { val?: Valuation }) {
 
 type Filter = 'all' | 'live' | 'claimed'
 
-export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, onImport }: {
-  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
+export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed, onAdd, onEdit, onImport }: {
+  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
 }) {
   const [filter, setFilter] = useState<Filter>('all')
   const total = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -36,6 +36,13 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, o
   const hasProps = properties.filter(p => p !== '—').length > 1 || (properties.length > 1 && scope.some(i => i.property))
   const [openProps, setOpenProps] = useState<Set<string>>(new Set())
   const [confirmAll, setConfirmAll] = useState<string | null>(null)
+  // second level inside a property: workstream (Kitchen, Bathroom, Paint, Scaffold…), else location
+  const groupName = (i: ScopeItem) => i.workstream || i.room || 'General'
+  const groupsOf = (ls: ScopeItem[]) => [...new Set(ls.map(groupName))]
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
+  const toggleGroup = (k: string) => setOpenGroups(s => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
+  const [confirmClear, setConfirmClear] = useState(false)
+  const unclaimed = scope.filter(i => !i.valuationId)
   const toggleProp = (p: string) => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const row = (i: ScopeItem, idx: number, showRoom: boolean) => {
     const val = valById(i.valuationId)
@@ -46,7 +53,7 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, o
         <div className="grow" style={{ minWidth: 0 }}>
           <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
             {i.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{i.code}</span>}
-            {showRoom && <span className="muted" style={{ fontSize: 11 }}>{i.room}{i.workstream ? ` · ${i.workstream}` : ''}</span>}
+            {showRoom && <span className="muted" style={{ fontSize: 11 }}>{i.room}</span>}
             <ValBadge val={val} />
           </div>
           <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
@@ -128,7 +135,33 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, o
                   </div>
                 )}
                 {lines.length === 0 && <div className="muted" style={{ padding: 12, fontSize: 13 }}>Nothing here for this filter.</div>}
-                {lines.map((i, idx) => row(i, idx, true))}
+                {groupsOf(lines).map(g => {
+                  const key = `${p}|${g}`
+                  const gl = lines.filter(i => groupName(i) === g)
+                  const gall = all.filter(i => groupName(i) === g)
+                  const gt = gall.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+                  const gc = gall.filter(i => i.valuationId).reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+                  const gpct = gt ? Math.round((gc / gt) * 100) : 0
+                  const grem = gall.filter(i => !i.valuationId && isPriced(i))
+                  const gOpen = openGroups.has(key)
+                  return (
+                    <div key={key} style={{ borderTop: '1px solid var(--ink-line)' }}>
+                      <button onClick={() => toggleGroup(key)} aria-expanded={gOpen} aria-label={`No. ${p} ${g}`}
+                        className="row" style={{ width: '100%', background: gOpen ? 'rgba(201,123,63,.06)' : 'none', border: 'none', padding: '10px 14px 10px 30px', color: 'var(--ink)', textAlign: 'left' }}>
+                        <span style={{ width: 12, color: 'var(--copper-ink)', fontSize: 11, transition: 'transform .2s', transform: gOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
+                        <span className="grow" style={{ fontWeight: 600, fontSize: 14 }}>{g} <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>· {gall.length}</span></span>
+                        <span className="mono" style={{ fontSize: 13 }}>{money(gt)}</span>
+                        <span className="mono" style={{ fontSize: 11, width: 36, textAlign: 'right', color: gpct === 100 ? 'var(--green)' : 'var(--copper-ink)' }}>{gpct}%</span>
+                      </button>
+                      {gOpen && (
+                        <div style={{ paddingLeft: 18 }}>
+                          {grem.length > 1 && <div style={{ padding: '6px 12px' }}><button className="chip" onClick={() => onToggleMany(grem)}>Tick all {g} ({grem.length})</button></div>}
+                          {gl.map((i, idx) => row(i, idx, true))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -147,6 +180,10 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onAdd, onEdit, o
         <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onAdd}><IconPlus /> Add item</button>
       </div>
       {scope.length > 0 && <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>Tick an item to put it in the open valuation. Untick to send it back.</div>}
+      {unclaimed.length > 0 && (confirmClear
+        ? <div className="panel" style={{ padding: 12 }}><div style={{ fontSize: 13, marginBottom: 8 }}>Remove all {unclaimed.length} unclaimed lines? Anything already in a valuation stays. Use this to redo an import.</div>
+            <div className="row"><button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmClear(false)}>Cancel</button><button className="btn" style={{ flex: 1, background: 'var(--red)', color: '#fff' }} onClick={() => { setConfirmClear(false); onClearUnclaimed(unclaimed) }}>Remove {unclaimed.length}</button></div></div>
+        : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)', fontSize: 13 }} onClick={() => setConfirmClear(true)}>Clear unclaimed lines…</button>)}
     </div>
   )
 }

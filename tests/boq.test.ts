@@ -31,4 +31,8 @@ const multi = parseBoqTsv(['REF\tPRESCELLY ROAD',
 ok(multi.lines.length === 3 && multi.lines[0].property === '1' && multi.lines[0].workstream === 'PPR Paint', 'reads property + workstream')
 ok(multi.lines[1].property === '13' && multi.lines[1].hours === 44, '"No. 13" → 13, hours read')
 ok(multi.lines[2].hours === null && multi.lines[2].issues.length === 0, 'blank hours stays blank; cost check still works')
+const nine = parseBoqTsv('4360BD\tPROPERTY\tPaint\t71\tSM\t8.55\t607.05\t4\tPPR Paint')
+ok(nine.lines[0].property === '4' && nine.lines[0].workstream === 'PPR Paint', 'line missing hours + note still keeps its property number')
+const word = parseBoqTsv('4360BD\tPROPERTY\tPaint\t71\tSM\t8.55\t607.05\tPROPERTY\tPPR Paint\t0\t')
+ok(word.lines[0].property === '', 'the word PROPERTY is never taken as a property number')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

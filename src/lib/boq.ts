@@ -38,11 +38,12 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
     const looksLikeAmount = (x?: string) => !!x && /^£?\s*[\d,]*\.?\d+$/.test(x)
     const costRaw = looksLikeAmount(t[6]) ? t[6] : undefined
     // 11-field lines: … COST PROPERTY WORKSTREAM HOURS NOTE
-    const wide = t.length >= 10
-    const property = wide ? (t[7] ?? '').replace(/^(no\.?|plot|house)\s*/i, '').trim() : ''
+    const wide = t.length >= 9
+    let property = wide ? (t[7] ?? '').replace(/^(no\.?|plot|house|unit)\s*/i, '').trim() : ''
+    if (/^(property|general|n\/a|-)$/i.test(property)) property = ''
     const workstream = wide ? (t[8] ?? '').trim() : ''
     const hoursNum = wide && t[9] ? parseFloat(t[9]) : NaN
-    const note = (wide ? t[10] : costRaw !== undefined ? t[7] : t.length >= 8 ? t[7] : t[6]) ?? ''
+    const note = (wide ? (t[10] ?? '') : costRaw !== undefined ? t[7] : t.length >= 8 ? t[7] : t[6]) ?? ''
     if (!description) continue
     if (/^(sub)?total|carried forward|brought forward/i.test(description)) continue
     const q = num(qty), r = num(rate), c = num(costRaw)
