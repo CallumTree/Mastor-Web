@@ -1,3 +1,4 @@
+import { readSchedule } from './sheet'
 /** Turning an uploaded BoQ into reviewable lines. Nothing here saves anything. */
 export interface ParsedLine {
   include: boolean
@@ -10,6 +11,17 @@ export interface ParsedLine {
   note: string
   issues: string[]          // why this line needs checking
 }
+/** One label per place, however the AMO wrote it: "ALL ELVS" → "All elevations", "Front Elv" → "Front elevation". */
+export function tidyLocation(raw: string): string {
+  let t = raw.replace(/\s+/g, ' ').trim()
+  if (!t) return ''
+  t = t.replace(/\b(elvs?|elev?s?|elevs?|elevations?)\.?(?=\s|$)/gi, m => /s\.?$/i.test(m) && !/^elev?$/i.test(m) ? 'elevations' : 'elevation')
+       .replace(/^(f|fr|frt)\/?\s*(?=elevation)/i, 'Front ').replace(/^(r|rr)\/?\s*(?=elevation)/i, 'Rear ').replace(/^(s|sd)\/?\s*(?=elevation)/i, 'Side ')
+       .replace(/\bbed\s*(\d)/i, 'Bedroom $1').replace(/\bbedroom(\d)/i, 'Bedroom $1')
+  if (/^all elevation$/i.test(t)) t = 'All elevations'
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
+}
+
 export interface ParsedBoq { ref: string; lines: ParsedLine[]; truncated: boolean }
 
 const num = (s: string | undefined): number | null => {
@@ -57,7 +69,7 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
     if (q == null) issues.push('no qty')
     if (!code) issues.push('no code')
     if (note) issues.push(note)
-    lines.push({ include: true, code, room: room || 'General', description, qty: q, unit: unit || 'item', rate: r, cost: c, property, workstream, hours: isFinite(hoursNum) ? hoursNum : null, note, issues })
+    lines.push({ include: true, code, room: tidyLocation(room) || 'General', description, qty: q, unit: unit || 'item', rate: r, cost: c, property, workstream, hours: isFinite(hoursNum) ? hoursNum : null, note, issues })
   }
   return { ref, lines, truncated }
 }
@@ -67,13 +79,22 @@ const readAsText = (f: Blob) => new Promise<string>((res, rej) => { const r = ne
 const readAsBuffer = (f: Blob) => new Promise<ArrayBuffer>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as ArrayBuffer); r.onerror = () => rej(r.error); r.readAsArrayBuffer(f) })
 
 /** Reads the picked file into what the server function expects. */
-export async function readBoqFile(file: File): Promise<{ kind: 'pdf'; data: string } | { kind: 'text'; text: string }> {
+export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'pdf'; data: string } | { kind: 'text'; text: string } | { kind: 'parsed'; boq: ParsedBoq }> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.pdf') || file.type === 'application/pdf') {
     if (file.size > 3_200_000) throw new Error('That PDF is over 3MB — try exporting it smaller, or upload the Excel version.')
     const buf = new Uint8Array(await readAsBuffer(file))
     let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000))
     return { kind: 'pdf', data: btoa(bin) }
+  }
+  if (/\.(xlsx|xlsm|xls|csv)$/.test(name) && direct) {
+    const XLSX = await import('xlsx')
+    const wb = name.endsWith('.csv') ? XLSX.read(await readAsText(file), { type: 'string' }) : XLSX.read(await readAsBuffer(file), { type: 'array' })
+    for (const n of wb.SheetNames) {
+      const rows = XLSX.utils.sheet_to_json<(string | number | null)[]>(wb.Sheets[n], { header: 1, blankrows: false, defval: null })
+      const parsed = readSchedule(rows)
+      if (parsed) return { kind: 'parsed', boq: parsed }
+    }
   }
   if (/\.(xlsx|xlsm|xls)$/.test(name)) {
     const XLSX = await import('xlsx')
@@ -91,6 +112,7 @@ export async function readBoqFile(file: File): Promise<{ kind: 'pdf'; data: stri
 
 export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
   const payload = await readBoqFile(file)
+  if (payload.kind === 'parsed') return payload.boq   // spreadsheet read exactly — no AI needed
   const r = await fetch('/api/parse-boq', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
   let data: { text?: string; truncated?: boolean; error?: string } = {}
   try { data = await r.json() } catch { /* non-JSON error page */ }
