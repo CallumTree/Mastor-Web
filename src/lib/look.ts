@@ -16,7 +16,8 @@ export function getLook(): Look {
 }
 
 const img = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1600&q=70`
+// UK work: red brick + scaffold (Cheltenham). A job's own site photo always replaces these.
 export const PHOTOS = {
-  cover: { src: img('photo-1693639767415-27ff64ce4da2'), credit: 'Troy Mortier / Unsplash' },
-  job: { src: img('photo-1639953803381-e9c3f3a38253'), credit: 'Sandy Millar / Unsplash' },
+  cover: { src: img('photo-1674568644622-01b419fb6e5a'), credit: 'Ottr Dan / Unsplash' },
+  job: { src: img('photo-1674568644622-01b419fb6e5a'), credit: 'Ottr Dan / Unsplash' },
 }
