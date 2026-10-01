@@ -49,6 +49,12 @@ export function readSchedule(rows: Cell[][]): ParsedBoq | null {
     if (!code && !description) continue
     if (/^(sub)?total|carried forward|brought forward/i.test(description) || /^total/i.test(code)) continue
     const qty = money(r[col.qty]), rate = money(r[col.rate])
+    // A wrapped description (common in PDF→Excel conversions): no code, qty or rate → belongs to the line above
+    if (!code && qty == null && rate == null && lines.length) {
+      const prev = lines[lines.length - 1]
+      prev.description = `${prev.description} ${description.toLowerCase()}`.replace(/\s+/g, ' ')
+      continue
+    }
     // workstream = the stream column that holds this line's money
     let workstream = '', streamCost: number | null = null
     for (const s of streams) { const v = money(r[s.i]); if (v && v > 0) { workstream = title(s.t); streamCost = v; break } }

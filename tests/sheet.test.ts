@@ -35,4 +35,6 @@ ok(parsed.lines[3].hours === 44 && parsed.lines[0].hours === 0, 'hours read')
 ok(parsed.lines[0].description.startsWith('Washdown and apply'), 'SHOUTY descriptions made readable')
 ok(readSchedule([['Some', 'random'], ['sheet', 'nothing']]) === null, 'unrecognised layout → null (falls back to the AI reader)')
 ok(tidyLocation('F/Elev') === 'Front elevation' && tidyLocation('ALL ELEVATIONS') === 'All elevations' && tidyLocation('Bed2') === 'Bedroom 2', 'F/Elev, ALL ELEVATIONS, Bed2')
+const wrapped = readSchedule([H, row(1, '4360BD', 71, 8.55, 'PROPERTY', 'WASHDOWN AND APPLY 1 COAT OF MASONRY PAINT', 'PAINT', 607.05, 0), [null, null, null, null, null, 'TO RENDER'], row(2, '4350AA', 27, 3.7753, 'PROPERTY', 'GUTTER:CLEAN OUT', 'PAINT', 101.93, 2.16)])!
+ok(wrapped.lines.length === 2 && wrapped.lines[0].description.endsWith('masonry paint to render'), 'a wrapped description row joins the line above (PDF→Excel conversions)')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
