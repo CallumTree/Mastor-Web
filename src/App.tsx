@@ -66,6 +66,7 @@ export default function App() {
           onToggleScope={i => run(() => toggleScope(i, jobVals))()}
           onClaimMany={items => run(() => claimMany(items))()}
           onClearUnclaimed={items => run(async () => { for (const i of items) if (!i.valuationId) await db.deleteScope(i.id) })()}
+          onDeleteScope={items => run(async () => { for (const i of items) if (!lockedIn(i, jobVals)) await db.deleteScope(i.id) })()}
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)}
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}

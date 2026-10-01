@@ -5,6 +5,7 @@ import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { lineValue, valRef, valTotals } from '../lib/valuation'
 import { CourtLine, valCourt } from '../lib/chase'
 import { Field, Sheet } from '../components/Ui'
+import { TabMenu } from '../components/TabMenu'
 
 function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   val: Valuation; scope: ScopeItem[]; vos: Variation[]
@@ -79,7 +80,13 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
 
   return (
     <div className="stack">
-      <div className="label bracket">Valuations</div>
+      <div className="row"><div className="label bracket grow">Valuations</div>
+        <TabMenu title="Valuations" actions={[
+          { label: 'Preview certificate', hint: open ? `${valRef(open.number)} as a draft PDF` : 'No open valuation', disabled: !open || !current?.lines, onClick: () => open && cert(open) },
+          { label: 'Delete open valuation', hint: open ? `Sends every line in ${valRef(open.number)} back to live` : 'No open valuation', danger: true, disabled: !open,
+            confirm: open ? `Delete ${valRef(open.number)}? Its lines go back to live — nothing else is lost.` : '', onClick: () => open && onDeleteOpen(open) },
+        ]} />
+      </div>
       <Progress certified={certified} current={current?.gross ?? 0} total={target} />
 
       {open && current ? (

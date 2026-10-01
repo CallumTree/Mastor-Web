@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { DiaryEntry, Job, Variation } from '../lib/types'
 import { Field, Sheet } from '../components/Ui'
 import { Markup } from '../components/Markup'
+import { TabMenu } from '../components/TabMenu'
 import { usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
 import { weatherFor } from '../lib/weather'
@@ -104,6 +105,10 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <div className="label">{date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : 'Site diary'}</div>
           <div style={{ fontWeight: 700, fontSize: 17 }}>{prettyDay(date)}</div>
         </div>
+        <TabMenu title="Diary" actions={[
+          { label: 'Go to today', disabled: date === today, onClick: () => setDate(today) },
+          { label: 'Write a note for this day', onClick: () => noteRef.current?.focus() },
+        ]} />
         <button aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ width: 44, height: 44, border: '1px solid var(--ink-line)', background: 'var(--paper-2)', borderRadius: 3, color: 'var(--ink)', opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
       </div>
 

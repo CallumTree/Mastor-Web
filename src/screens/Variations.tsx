@@ -3,6 +3,7 @@ import type { Job, Valuation, Variation, VoStatus } from '../lib/types'
 import { Tick, ValBadge } from './Scope'
 import { lockedIn } from '../lib/valuation'
 import { CourtLine, voCourt } from '../lib/chase'
+import { TabMenu } from '../components/TabMenu'
 import { ukDate as ukd } from '../lib/format'
 import { Field, Sheet } from '../components/Ui'
 import { lineValue } from '../lib/valuation'
@@ -118,7 +119,8 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle }: { job
   const sorted = [...vos].sort((a, b) => a.number - b.number)
   return (
     <div className="stack">
-      <div className="row"><div className="grow"><div className="label bracket">Variations</div><h1 style={{ fontSize: 22 }}>{job.name}</h1></div></div>
+      <div className="row"><div className="grow"><div className="label bracket">Variations</div><h1 style={{ fontSize: 22 }}>{job.name}</h1></div>
+        <TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }]} /></div>
       <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
       {sorted.length === 0 && <div className="card empty">No variations yet. Log extras the moment you spot them.</div>}
       {sorted.map(v => {

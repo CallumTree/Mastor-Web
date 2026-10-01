@@ -5,6 +5,7 @@ import { money, qtyText } from '../lib/format'
 import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
 import { IconPlus, IconScope } from '../components/Icons'
+import { TabMenu } from '../components/TabMenu'
 
 export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; onClick: () => void }) {
   return (
@@ -22,8 +23,8 @@ export function ValBadge({ val }: { val?: Valuation }) {
 
 type Filter = 'all' | 'live' | 'claimed'
 
-export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed, onAdd, onEdit, onImport }: {
-  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
+export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport }: {
+  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
 }) {
   const [filter, setFilter] = useState<Filter>('all')
   const total = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -41,8 +42,8 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
   const groupsOf = (ls: ScopeItem[]) => [...new Set(ls.map(groupName))]
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
   const toggleGroup = (k: string) => setOpenGroups(s => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
-  const [confirmClear, setConfirmClear] = useState(false)
   const unclaimed = scope.filter(i => !i.valuationId)
+  const lockedCount = scope.filter(i => !!lockedIn(i, vals)).length
   const toggleProp = (p: string) => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const row = (i: ScopeItem, idx: number, showRoom: boolean) => {
     const val = valById(i.valuationId)
@@ -71,6 +72,15 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
     <div className="stack">
       <div className="row">
         <div className="grow"><div className="label bracket">Scope</div></div>
+        <TabMenu title="Scope" actions={[
+          { label: 'Import BoQ / works order', hint: 'PDF or Excel', onClick: onImport },
+          { label: 'Add item', hint: 'One line, by hand', onClick: onAdd },
+          ...(hasProps ? [{ label: openProps.size ? 'Collapse all' : 'Expand all properties', onClick: () => setOpenProps(openProps.size ? new Set() : new Set(properties)) }] : []),
+          { label: 'Clear unclaimed lines', hint: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'} not in any valuation`, danger: true, disabled: !unclaimed.length,
+            confirm: `Remove ${unclaimed.length} unclaimed lines? Anything in a valuation stays.`, onClick: () => onClearUnclaimed(unclaimed) },
+          { label: 'Delete entire scope', hint: lockedCount ? `Wrong spec? ${lockedCount} certified line${lockedCount === 1 ? '' : 's'} will stay (issued valuations are locked)` : 'Wrong spec? Removes every line so you can import again', danger: true, disabled: lockedCount === scope.length,
+            confirm: lockedCount ? `Delete ${scope.length - lockedCount} lines? The ${lockedCount} certified on issued valuations stay.` : `Delete all ${scope.length} lines from this job? This can't be undone.`, onClick: () => onDeleteAll(scope.filter(i => !lockedIn(i, vals))) },
+        ]} />
         <div className="mono muted" style={{ fontSize: 13 }}>{scope.length} items</div>
       </div>
 
@@ -180,10 +190,6 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
         <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onAdd}><IconPlus /> Add item</button>
       </div>
       {scope.length > 0 && <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>Tick an item to put it in the open valuation. Untick to send it back.</div>}
-      {unclaimed.length > 0 && (confirmClear
-        ? <div className="panel" style={{ padding: 12 }}><div style={{ fontSize: 13, marginBottom: 8 }}>Remove all {unclaimed.length} unclaimed lines? Anything already in a valuation stays. Use this to redo an import.</div>
-            <div className="row"><button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmClear(false)}>Cancel</button><button className="btn" style={{ flex: 1, background: 'var(--red)', color: '#fff' }} onClick={() => { setConfirmClear(false); onClearUnclaimed(unclaimed) }}>Remove {unclaimed.length}</button></div></div>
-        : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)', fontSize: 13 }} onClick={() => setConfirmClear(true)}>Clear unclaimed lines…</button>)}
     </div>
   )
 }

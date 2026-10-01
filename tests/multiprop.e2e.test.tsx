@@ -49,9 +49,27 @@ describe('multi-property scheme', () => {
 
     // clear unclaimed lines (to redo an import) keeps the claimed ones
     nav('scope')
-    click(await screen.findByRole('button', { name: /clear unclaimed lines/i }))
-    click(screen.getByRole('button', { name: 'Remove 4' }))
+    click(await screen.findByRole('button', { name: 'Scope options' }))
+    click(screen.getByRole('button', { name: /clear unclaimed lines/i }))
+    click(screen.getByRole('button', { name: /yes, clear unclaimed lines/i }))
     await waitFor(() => expect(screen.queryAllByRole('button', { name: /^property /i }).length).toBe(0))   // only No. 1 left → single-property layout
     expect(screen.getByText('3 items')).toBeTruthy()
+
+    // wrong spec: delete entire scope → certified lines survive, everything else goes
+    nav('vals')
+    click(await screen.findByRole('button', { name: 'Issue VAL-001' }))
+    click(await screen.findByRole('button', { name: /issue val-001 for/i }))
+    await screen.findByText(/^Due /)
+    nav('scope')
+    click(await screen.findByRole('button', { name: 'Add item' }))
+    fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Wrong spec line' } })
+    click(screen.getAllByRole('button', { name: 'Add item' }).at(-1)!)
+    await screen.findByText('4 items')
+    click(screen.getByRole('button', { name: 'Scope options' }))
+    click(screen.getByRole('button', { name: /delete entire scope/i }))
+    await screen.findByText(/delete 1 lines\? the 3 certified/i)
+    click(screen.getByRole('button', { name: /yes, delete entire scope/i }))
+    await screen.findByText('3 items')
+    expect(screen.queryByText('Wrong spec line')).toBeNull()
   })
 })
