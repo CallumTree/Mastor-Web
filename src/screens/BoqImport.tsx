@@ -83,6 +83,13 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
               {!match && `Contract value is ${money(job.contractValue)} — ${money(Math.abs(job.contractValue - base))} difference. Check for missed or flagged lines.`}
             </div>
           )}
+          {boq.method && <div style={{ fontSize: 12, color: 'var(--cream-muted)', marginTop: 6 }}>{boq.method === 'ai' ? 'Read by AI — check the flagged lines' : `Read exactly from the ${boq.method === 'table' ? 'PDF table' : 'spreadsheet'} — no AI`}</div>}
+          {boq.columnCheck && boq.columnCheck.length > 0 && (() => {
+            const off = boq.columnCheck.filter(c => Math.abs(c.sheet - c.read) > 0.05)
+            return <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600, color: off.length ? 'var(--copper-light)' : 'var(--green)' }}>
+              {off.length ? `Column totals differ: ${off.map(c => `${c.stream} sheet ${money(c.sheet)} vs read ${money(c.read)}`).join(' · ')}` : `✓ All ${boq.columnCheck.length} column totals match the sheet`}
+            </div>
+          })()}
           {boq.truncated && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--copper-light)' }}>⚠ The document was very long and may have been cut short — check the last section.</div>}
         </div>
 

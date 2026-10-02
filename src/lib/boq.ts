@@ -22,7 +22,7 @@ export function tidyLocation(raw: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
 }
 
-export interface ParsedBoq { ref: string; lines: ParsedLine[]; truncated: boolean }
+export interface ParsedBoq { ref: string; lines: ParsedLine[]; truncated: boolean; columnCheck?: { stream: string; sheet: number; read: number }[]; method?: 'table' | 'spreadsheet' | 'ai' }
 
 /** Builds one reviewed line, with the shift repair and all the checks. Shared by the JSON and TSV paths. */
 function buildLine(code: string, room: string, description: string, qty: number | null, unit: string, rate: number | null, cost: number | null,
@@ -110,6 +110,17 @@ const readAsBuffer = (f: Blob) => new Promise<ArrayBuffer>((res, rej) => { const
 export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'pdf'; data: string } | { kind: 'text'; text: string } | { kind: 'parsed'; boq: ParsedBoq }> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.pdf') || file.type === 'application/pdf') {
+    // 1) read the table directly — exact, no AI. Falls through to the AI if it isn't a table we recognise.
+    if (direct) {
+      try {
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+        const worker = await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url')
+        pdfjs.GlobalWorkerOptions.workerSrc = worker.default
+        const { pdfPages, readPdfSchedule } = await import('./pdfTable')
+        const read = readPdfSchedule(await pdfPages(new Uint8Array(await readAsBuffer(file)), pdfjs as never))
+        if (read) return { kind: 'parsed', boq: { ...read, method: 'table' } }
+      } catch { /* not readable as a table — use the AI */ }
+    }
     if (file.size > 3_200_000) throw new Error('That PDF is over 3MB — try exporting it smaller, or upload the Excel version.')
     const buf = new Uint8Array(await readAsBuffer(file))
     let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000))
@@ -121,7 +132,7 @@ export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'p
     for (const n of wb.SheetNames) {
       const rows = XLSX.utils.sheet_to_json<(string | number | null)[]>(wb.Sheets[n], { header: 1, blankrows: false, defval: null })
       const parsed = readSchedule(rows)
-      if (parsed) return { kind: 'parsed', boq: parsed }
+      if (parsed) return { kind: 'parsed', boq: { ...parsed, method: 'spreadsheet' } }
     }
   }
   if (/\.(xlsx|xlsm|xls)$/.test(name)) {
@@ -147,5 +158,5 @@ export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
   if (!r.ok || !data.text) throw new Error(data.error || (r.status === 404 ? 'The reader isn’t deployed yet.' : `Couldn’t read the document (${r.status}).`))
   const parsed = parseBoqTsv(data.text, !!data.truncated)
   if (parsed.lines.length === 0) throw new Error('The document was read, but no priced line items were found in it. Is this the BoQ / works order? If it is, send it over and it can be looked at.')
-  return parsed
+  return { ...parsed, method: 'ai' }
 }
