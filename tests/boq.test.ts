@@ -35,4 +35,21 @@ const nine = parseBoqTsv('4360BD\tPROPERTY\tPaint\t71\tSM\t8.55\t607.05\t4\tPPR 
 ok(nine.lines[0].property === '4' && nine.lines[0].workstream === 'PPR Paint', 'line missing hours + note still keeps its property number')
 const word = parseBoqTsv('4360BD\tPROPERTY\tPaint\t71\tSM\t8.55\t607.05\tPROPERTY\tPPR Paint\t0\t')
 ok(word.lines[0].property === '', 'the word PROPERTY is never taken as a property number')
+// --- labelled JSON lines (current AI reader): Prescelly has no unit column
+const js = parseBoqTsv([
+  '{"ref": "PRESCELLY ROAD"}',
+  '{"code": "0171BD", "location": "SIDE ELEVATION", "description": "Fencing: renew 1.8m close board timber post", "qty": 13, "unit": "", "rate": 133.9055, "cost": 1740.77, "property": "5", "workstream": "Est Imp", "hours": 21.71, "note": ""}',
+  '{"code": "4600FB", "location": "REAR ELEVATION", "description": "Garden: clear exceptional debris", "qty": 4, "unit": "", "rate": 204.2933, "cost": 817.17, "property": "2", "workstream": "PPR Repairs", "hours": 14, "note": ""}',
+  '```',
+].join('\n'))
+ok(js.ref === 'PRESCELLY ROAD' && js.lines.length === 2, 'reads labelled JSON lines (ignores code fences)')
+ok(js.lines[0].qty === 13 && js.lines[0].rate === 133.9055 && js.lines[0].cost === 1740.77 && js.lines[0].issues.length === 0, 'fencing: 13 × £133.9055 = £1,740.77 — no false £22,630')
+ok(js.lines[0].property === '5' && js.lines[1].property === '2' && js.lines[0].room === 'Side elevation', 'property numbers kept; location separate')
+// --- the exact shift from the screenshots: rate landed in "unit", cost landed in "rate"
+const shifted = parseBoqTsv([
+  '{"code": "0171BD", "location": "SIDE ELEVATION", "description": "Fencing", "qty": 13, "unit": "133.9055", "rate": 1740.77, "cost": null, "property": "5", "workstream": "", "hours": null, "note": ""}',
+  '0390CE\tFRONT ELEVATION\tDrain channels: clear\t10\t8.8709\t88.71\t\t2\tPPR Repairs\t3.3\t',
+].join('\n'))
+ok(shifted.lines[0].rate === 133.9055 && shifted.lines[0].cost === 1740.77 && shifted.lines[0].unit === '', 'repairs a shifted line: rate back from "unit", £1,740.77 back to cost')
+ok(shifted.lines[1].rate === 8.8709 && shifted.lines[1].cost === 88.71 && shifted.lines[1].qty === 10, 'drain channels: 10 × £8.8709 = £88.71 (was showing £887.10)')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

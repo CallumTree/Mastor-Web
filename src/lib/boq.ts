@@ -24,6 +24,33 @@ export function tidyLocation(raw: string): string {
 
 export interface ParsedBoq { ref: string; lines: ParsedLine[]; truncated: boolean }
 
+/** Builds one reviewed line, with the shift repair and all the checks. Shared by the JSON and TSV paths. */
+function buildLine(code: string, room: string, description: string, qty: number | null, unit: string, rate: number | null, cost: number | null,
+  property: string, workstream: string, hours: number | null, note: string): ParsedLine | null {
+  if (!description) return null
+  if (/^(sub)?total|carried forward|brought forward/i.test(description)) return null
+  // Repair a one-column shift (rate landed in "unit", line cost landed in "rate"):
+  // e.g. qty 13, unit "133.9055", rate 1740.77 → qty 13, rate 133.9055, cost 1740.77
+  const unitNum = /^\d+(\.\d+)?$/.test(unit.trim()) ? parseFloat(unit) : null
+  if (unitNum != null && qty != null && rate != null && Math.abs(qty * unitNum - rate) <= 0.011 * Math.max(1, qty)) {
+    if (cost == null || Math.abs(cost - rate) < 0.011) cost = rate
+    rate = unitNum; unit = ''
+  }
+  property = property.replace(/^(no\.?|plot|house|unit)\s*/i, '').trim()
+  if (/^(property|general|n\/a|-)$/i.test(property)) property = ''
+  const issues: string[] = []
+  if (qty != null && rate != null && cost != null) {
+    const calc = Math.round(qty * rate * 100 + 1e-7) / 100
+    if (Math.abs(calc - cost) > 0.005) issues.push(`document cost £${cost.toFixed(2)} ≠ qty × rate £${calc.toFixed(2)}`)
+  }
+  if (rate == null && cost != null) issues.push(`total only: £${cost.toFixed(2)}`)
+  if (rate == null) issues.push('no rate')
+  if (qty == null) issues.push('no qty')
+  if (!code) issues.push('no code')
+  if (note) issues.push(note)
+  return { include: true, code, room: tidyLocation(room) || 'General', description, qty, unit, rate, cost, property, workstream, hours, note, issues }
+}
+
 const num = (s: string | undefined): number | null => {
   if (!s) return null
   const v = parseFloat(s.replace(/[£,\s]/g, ''))
@@ -34,7 +61,20 @@ const num = (s: string | undefined): number | null => {
 export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
   let ref = ''
   const lines: ParsedLine[] = []
-  for (const raw of text.split(/\r?\n/)) {
+  for (const raw0 of text.split(/\r?\n/)) {
+    const raw = raw0                                   // TSV path needs trailing tabs intact
+    const j = raw0.replace(/^```\w*|```$/g, '').trim()
+    // JSON Lines (current reader): every value is labelled, so a missing column can't shift anything
+    if (j.startsWith('{')) {
+      let o: Record<string, unknown>
+      try { o = JSON.parse(j.replace(/,\s*}$/, '}')) } catch { continue }
+      if ('ref' in o && !('code' in o) && !('description' in o)) { ref = String(o.ref ?? '').trim(); continue }
+      const str = (k: string) => String(o[k] ?? '').trim()
+      const n = (k: string) => (typeof o[k] === 'number' ? (o[k] as number) : num(String(o[k] ?? '')))
+      const line = buildLine(str('code'), str('location'), str('description'), n('qty'), str('unit'), n('rate'), n('cost'), str('property'), str('workstream'), n('hours') ?? null, str('note'))
+      if (line) lines.push(line)
+      continue
+    }
     // keep trailing tabs (an empty NOTE field) — only strip spaces / carriage returns
     const line = raw.replace(/^```\w*|```$/g, '').replace(/[ \r]+$/, '')
     if (!line.trim()) continue
@@ -56,20 +96,8 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
     const workstream = wide ? (t[8] ?? '').trim() : ''
     const hoursNum = wide && t[9] ? parseFloat(t[9]) : NaN
     const note = (wide ? (t[10] ?? '') : costRaw !== undefined ? t[7] : t.length >= 8 ? t[7] : t[6]) ?? ''
-    if (!description) continue
-    if (/^(sub)?total|carried forward|brought forward/i.test(description)) continue
-    const q = num(qty), r = num(rate), c = num(costRaw)
-    const issues: string[] = []
-    if (q != null && r != null && c != null) {
-      const calc = Math.round(q * r * 100 + 1e-7) / 100
-      if (Math.abs(calc - c) > 0.005) issues.push(`document cost £${c.toFixed(2)} ≠ qty × rate £${calc.toFixed(2)}`)
-    }
-    if (r == null && c != null) issues.push(`total only: £${c.toFixed(2)}`)
-    if (r == null) issues.push('no rate')
-    if (q == null) issues.push('no qty')
-    if (!code) issues.push('no code')
-    if (note) issues.push(note)
-    lines.push({ include: true, code, room: tidyLocation(room) || 'General', description, qty: q, unit: unit || 'item', rate: r, cost: c, property, workstream, hours: isFinite(hoursNum) ? hoursNum : null, note, issues })
+    const built = buildLine(code, room, description, num(qty), unit, num(rate), num(costRaw), property, workstream, isFinite(hoursNum) ? hoursNum : null, note)
+    if (built) lines.push(built)
   }
   return { ref, lines, truncated }
 }
