@@ -110,7 +110,7 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
         </>
       )}
 
-      {hasProps ? properties.map(p => {
+      {hasProps ? <div className="panel prop-list">{properties.map(p => {
         const all = scope.filter(i => (i.property || '—') === p)
         const lines = shown.filter(i => (i.property || '—') === p).sort((a, b) => a.order - b.order)
         const tot = all.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -120,22 +120,19 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
         const isOpen = openProps.has(p)
         if (!lines.length && filter !== 'all') return null
         return (
-          <div key={p} className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-            <button onClick={() => toggleProp(p)} aria-expanded={isOpen} aria-label={`Property ${p}`}
-              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '12px 14px', color: 'var(--ink)' }}>
-              <div className="row">
-                <span style={{ width: 14, color: 'var(--copper-ink)', transition: 'transform .2s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
-                <span style={{ fontWeight: 700, fontSize: 17 }}>{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
-                <span className="grow muted" style={{ fontSize: 12 }}>{all.length} line{all.length === 1 ? '' : 's'}</span>
-                <span className="mono" style={{ fontSize: 14 }}>{money(tot)}</span>
-              </div>
-              <div className="row" style={{ marginTop: 8, gap: 10 }}>
-                <div className="grow" style={{ height: 5, border: '1px solid var(--ink-line)' }}><div style={{ height: '100%', width: `${pct}%`, background: 'var(--copper)' }} /></div>
-                <span className="mono" style={{ fontSize: 12, color: pct === 100 ? 'var(--green)' : 'var(--copper-ink)', width: 38, textAlign: 'right' }}>{pct}%</span>
-              </div>
+          <div key={p} className={'prop-item' + (isOpen ? ' open' : '')}>
+            <button className="prop-row" onClick={() => toggleProp(p)} aria-expanded={isOpen} aria-label={`Property ${p}`}>
+              <span className="prop-no">{p === '—' ? '?' : p}</span>
+              <span className="prop-main">
+                <span className="prop-name">{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
+                <span className="prop-meta" style={{ display: 'block' }}>{[...new Set(all.map(groupName))].join(' · ')}</span>
+              </span>
+              <span className="prop-amt"><span className="mono">{money(tot)}</span><small style={{ color: pct === 100 ? 'var(--green)' : undefined }}>{pct === 100 ? '✓ all claimed' : `${pct}% claimed`}</small></span>
+              <span className="prop-chev">▸</span>
             </button>
+            <div className="prop-bar"><div style={{ width: `${pct}%` }} /></div>
             {isOpen && (
-              <div style={{ borderTop: '1px solid var(--ink)' }}>
+              <div className="prop-body">
                 {remaining.length > 0 && (
                   <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ink-line)' }}>
                     {confirmAll === p
@@ -176,7 +173,7 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
             )}
           </div>
         )
-      }) : rooms.map(room => (
+      })}</div> : rooms.map(room => (
         <div key={room}>
           <div className="label" style={{ margin: '6px 0 6px' }}>{room}</div>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>

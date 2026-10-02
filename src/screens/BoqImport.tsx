@@ -48,7 +48,7 @@ export function BoqImport({ job, existing, onImport, onClose }: {
   )
 }
 
-function Review({ job, existing, boq, onImport, onBack, onClose }: {
+export function Review({ job, existing, boq, onImport, onBack, onClose }: {
   job: Job; existing: number; boq: ParsedBoq; onImport: (lines: ParsedLine[], ref: string) => void; onBack: () => void; onClose: () => void
 }) {
   const [lines, setLines] = useState(boq.lines)
@@ -76,7 +76,7 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
             <div style={{ textAlign: 'right' }}><div className="label">Lines</div><div className="mono" style={{ fontSize: 20, fontWeight: 300 }}>{chosen.length}</div></div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--cream-muted)', marginTop: 6 }}>
-            {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''} · incl. uplifts {money(withUplift)}
+            {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''}{withUplift - base > 0.005 ? ` · incl. uplifts ${money(withUplift)}` : ''}
           </div>
           {job.contractValue > 0 && (
             <div style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: match ? 'var(--green)' : 'var(--copper-light)' }}>
@@ -102,7 +102,7 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
           </div>
         )}
 
-        {multi ? props.map(p => {
+        {multi ? <div className="panel prop-list">{props.map(p => {
           const rows = lines.map((l, i) => ({ l, i })).filter(({ l }) => (l.property || '—') === p && (!onlyIssues || l.issues.length))
           if (!rows.length) return null
           const isOpen = openProps.has(p) || onlyIssues
@@ -110,15 +110,17 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
           const flagged = rows.filter(({ l }) => l.issues.length).length
           const groups = [...new Set(rows.map(({ l }) => l.workstream || l.room))]
           return (
-            <div key={p} className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              <button aria-label={`Review property ${p}`} aria-expanded={isOpen} onClick={() => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })}
-                className="row" style={{ width: '100%', background: 'none', border: 'none', padding: '12px 14px', textAlign: 'left', color: 'var(--ink)' }}>
-                <span style={{ width: 14, color: 'var(--copper-ink)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }}>▸</span>
-                <span style={{ fontWeight: 700, fontSize: 17 }}>{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
-                <span className="grow muted" style={{ fontSize: 12 }}>{rows.length} lines{flagged ? ` · ${flagged} to check` : ''}</span>
-                <span className="mono" style={{ fontSize: 14 }}>{money(sum)}</span>
+            <div key={p} className={'prop-item' + (isOpen ? ' open' : '')}>
+              <button className="prop-row" aria-label={`Review property ${p}`} aria-expanded={isOpen} onClick={() => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })}>
+                <span className="prop-no">{p === '—' ? '?' : p}</span>
+                <span className="prop-main">
+                  <span className="prop-name">{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
+                  <span className="prop-meta" style={{ display: 'block' }}>{groups.join(' · ')}</span>
+                </span>
+                <span className="prop-amt"><span className="mono">{money(sum)}</span><small>{rows.length} lines{flagged ? ` · ${flagged} to check` : ''}</small></span>
+                <span className="prop-chev">▸</span>
               </button>
-              {isOpen && groups.map(g => {
+              {isOpen && <div className="prop-body">{groups.map(g => {
                 const gRows = rows.filter(({ l }) => (l.workstream || l.room) === g)
                 return (
                   <div key={g}>
@@ -136,11 +138,11 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
                   </div>
                 ))}
                   </div>
-                )
-              })}
+)
+              })}</div>}
             </div>
           )
-        }) : rooms.map(room => {
+        })}</div> : rooms.map(room => {
           const rows = lines.map((l, i) => ({ l, i })).filter(({ l }) => l.room === room && (!onlyIssues || l.issues.length))
           if (!rows.length) return null
           return (
