@@ -30,7 +30,7 @@ export function coverPick(): string | null { try { return localStorage.getItem(P
 export function setCoverPick(id: string | null) { try { if (id) localStorage.setItem(PICK, id); else localStorage.removeItem(PICK) } catch { /* ignore */ } }
 
 // Cover = the photo being trialled on this device, else the chosen default. A job's own site photo always wins.
-const chosen = CANDIDATES.find(c => c.id === 'photo-1674568644622-01b419fb6e5a')!
+const chosen = CANDIDATES.find(c => c.id === 'photo-1621983209342-ebf870427308')!  // Bedford estate being built — chosen by Callum
 const trial = () => CANDIDATES.find(c => c.id === coverPick())
 export const PHOTOS = {
   get cover() { const c = trial() ?? chosen; return { src: img(c.id), credit: `${c.credit} / Unsplash` } },
