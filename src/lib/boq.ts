@@ -51,6 +51,7 @@ function buildLine(code: string, room: string, description: string, qty: number 
   return { include: true, code, room: tidyLocation(room) || 'General', description, qty, unit, rate, cost, property, workstream, hours, note, issues }
 }
 
+export let lastTableError: string | null = null
 const num = (s: string | undefined): number | null => {
   if (!s) return null
   const v = parseFloat(s.replace(/[£,\s]/g, ''))
@@ -119,7 +120,7 @@ export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'p
         const { pdfPages, readPdfSchedule } = await import('./pdfTable')
         const read = readPdfSchedule(await pdfPages(new Uint8Array(await readAsBuffer(file)), pdfjs as never))
         if (read) return { kind: 'parsed', boq: { ...read, method: 'table' } }
-      } catch { /* not readable as a table — use the AI */ }
+      } catch (e) { console.warn('PDF table reader failed — using the AI', e); lastTableError = (e as Error)?.message ?? String(e) }
     }
     if (file.size > 3_200_000) throw new Error('That PDF is over 3MB — try exporting it smaller, or upload the Excel version.')
     const buf = new Uint8Array(await readAsBuffer(file))
@@ -154,7 +155,10 @@ export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
   if (payload.kind === 'parsed') return payload.boq   // spreadsheet read exactly — no AI needed
   const r = await fetch('/api/parse-boq', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
   let data: { text?: string; truncated?: boolean; error?: string } = {}
-  try { data = await r.json() } catch { /* non-JSON error page */ }
+  let gotJson = true
+  try { data = await r.json() } catch { gotJson = false }
+  if (r.ok && !gotJson) throw new Error('The connection dropped before the answer came back. Try again with better signal.')
+  if (r.ok && !data.text) throw new Error('The reader came back empty. Try again — if it keeps happening, send the file over so it can be looked at.')
   if (!r.ok || !data.text) throw new Error(data.error || (r.status === 404 ? 'The reader isn’t deployed yet.' : `Couldn’t read the document (${r.status}).`))
   const parsed = parseBoqTsv(data.text, !!data.truncated)
   if (parsed.lines.length === 0) throw new Error('The document was read, but no priced line items were found in it. Is this the BoQ / works order? If it is, send it over and it can be looked at.')
