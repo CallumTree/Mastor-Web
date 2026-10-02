@@ -58,7 +58,9 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
   const withUplift = base * upliftFactor(job.uplift1, job.uplift2)
   const flagged = lines.filter(l => l.issues.length).length
   const rooms = [...new Set(lines.map(l => l.room))]
-  const props = [...new Set(chosen.map(l => l.property).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+  const props = [...new Set(lines.map(l => l.property).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+  const multi = props.length > 1
+  const [openProps, setOpenProps] = useState<Set<string>>(new Set())
   const toggle = (idx: number) => setLines(ls => ls.map((l, i) => (i === idx ? { ...l, include: !l.include } : l)))
   const near = (a: number, b: number) => b > 0 && Math.abs(a - b) / b < 0.005
   const match = job.contractValue > 0 ? (near(base, job.contractValue) ? 'base' : near(withUplift, job.contractValue) ? 'uplift' : null) : null
@@ -100,7 +102,45 @@ function Review({ job, existing, boq, onImport, onBack, onClose }: {
           </div>
         )}
 
-        {rooms.map(room => {
+        {multi ? props.map(p => {
+          const rows = lines.map((l, i) => ({ l, i })).filter(({ l }) => (l.property || '—') === p && (!onlyIssues || l.issues.length))
+          if (!rows.length) return null
+          const isOpen = openProps.has(p) || onlyIssues
+          const sum = rows.filter(({ l }) => l.include).reduce((t, { l }) => t + lineValue(l.qty, l.rate), 0)
+          const flagged = rows.filter(({ l }) => l.issues.length).length
+          const groups = [...new Set(rows.map(({ l }) => l.workstream || l.room))]
+          return (
+            <div key={p} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <button aria-label={`Review property ${p}`} aria-expanded={isOpen} onClick={() => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })}
+                className="row" style={{ width: '100%', background: 'none', border: 'none', padding: '12px 14px', textAlign: 'left', color: 'var(--ink)' }}>
+                <span style={{ width: 14, color: 'var(--copper-ink)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }}>▸</span>
+                <span style={{ fontWeight: 700, fontSize: 17 }}>{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
+                <span className="grow muted" style={{ fontSize: 12 }}>{rows.length} lines{flagged ? ` · ${flagged} to check` : ''}</span>
+                <span className="mono" style={{ fontSize: 14 }}>{money(sum)}</span>
+              </button>
+              {isOpen && groups.map(g => {
+                const gRows = rows.filter(({ l }) => (l.workstream || l.room) === g)
+                return (
+                  <div key={g}>
+                    <div className="label" style={{ padding: '8px 14px', borderTop: '1px solid var(--ink-line)', color: 'var(--copper-ink)' }}>{g}</div>
+                {gRows.map(({ l, i }, n) => (
+                  <div key={i} className="row" onClick={() => toggle(i)} style={{ padding: '10px 12px', borderTop: n ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer', opacity: l.include ? 1 : .45, background: l.issues.length ? 'rgba(217,119,6,.07)' : undefined }}>
+                    <input type="checkbox" checked={l.include} readOnly style={{ width: 20, height: 20, accentColor: 'var(--copper)', marginTop: 2 }} />
+                    <div className="grow" style={{ minWidth: 0 }}>
+                      {l.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{l.code}</span>}
+                      <div style={{ fontWeight: 500, fontSize: 14 }}>{l.description}</div>
+                      <div className="muted" style={{ fontSize: 12 }}>{l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty'}{l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate'}</div>
+                      {l.issues.length > 0 && <div className="flag" style={{ fontWeight: 600 }}>{l.issues.join(' · ')}</div>}
+                    </div>
+                    <div className="mono" style={{ fontSize: 13 }}>{l.qty != null && l.rate != null ? money(lineValue(l.qty, l.rate)) : '—'}</div>
+                  </div>
+                ))}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        }) : rooms.map(room => {
           const rows = lines.map((l, i) => ({ l, i })).filter(({ l }) => l.room === room && (!onlyIssues || l.issues.length))
           if (!rows.length) return null
           return (
