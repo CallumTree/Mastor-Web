@@ -48,6 +48,8 @@ export function readSchedule(rows: Cell[][]): ParsedBoq | null {
     const code = norm(r[col.code]); const description = col.desc >= 0 ? norm(r[col.desc]) : ''
     if (!code && !description) continue
     if (/^(sub)?total|carried forward|brought forward/i.test(description) || /^total/i.test(code)) continue
+    // uplift / summary rows (BCIS, framework %, nett, VAT…) aren't work — skip them
+    if (!code && /^(framework|bcis|uplift|total|nett?|vat|contractor|overheads?|profit|discount|%)/i.test(description)) continue
     const qty = money(r[col.qty]), rate = money(r[col.rate])
     // A wrapped description (common in PDF→Excel conversions): no code, qty or rate → belongs to the line above
     if (!code && qty == null && rate == null && lines.length) {

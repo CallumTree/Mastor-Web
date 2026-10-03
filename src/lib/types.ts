@@ -38,6 +38,7 @@ export interface Variation {
   dateRaised: number
   valuationId?: string | null // which valuation it's claimed in; null/undefined = live
   submittedAt?: number | null // sent to the client for instruction — the ball is in their court from here
+  attachments?: { id: string; name: string; type: string }[] // original council instruction (scan, PDF, Excel)
 }
 
 /** One line of the works order / BoQ. */

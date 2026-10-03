@@ -15,6 +15,7 @@ import { savePhoto, saveVideo, saveImageBlob } from './lib/photos'
 import { buildCertificate, certificateFileName, shareOrDownload } from './lib/certificate'
 import { meta } from './lib/db'
 import { BoqImport } from './screens/BoqImport'
+import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
@@ -29,6 +30,7 @@ export default function App() {
   const [settings, setSettings] = useState<CompanySettings | undefined>(undefined)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
+  const [voImport, setVoImport] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
   const [logging, setLogging] = useState(false)
@@ -77,6 +79,7 @@ export default function App() {
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
+          onImportVo={() => setVoImport(true)}
           onCreateInvoice={v => setInvoicing(v)}
           onInvoicePdf={async v => { if (!settings) return; await shareOrDownload(await buildInvoice({ job, val: v, scope: jobScope, vos: jobVos, settings }), invoiceFileName(job, v)) }}
           onCertificate={async v => {
@@ -103,6 +106,27 @@ export default function App() {
           onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }} />
       )}
 
+      {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}
+        onApply={async (vo, dec, file) => {
+          const isImage = file.type.startsWith('image/')
+          const reason = `Council instruction ${vo.ref}${vo.issuedBy ? ` (${vo.issuedBy})` : ''}${vo.date ? ` issued ${new Date(vo.date).toLocaleDateString('en-GB')}` : ''}`
+          for (const d of dec.filter(x => x.include)) {
+            const l = vo.lines[d.line]
+            // every VO keeps its own copy of the document (deleting one never deletes another's evidence)
+            const copy = await saveImageBlob(file)
+            const att = { id: copy, name: file.name, type: file.type || 'application/octet-stream' }
+            const base = { clientRef: vo.ref, status: 'Instructed' as const, qty: l.qty, unit: l.unit || 'item', rate: l.rate, code: l.code }
+            if (d.target !== 'new') {
+              const v = jobVos.find(x => x.id === d.target); if (!v) continue
+              await db.putVariation({ ...v, ...base, code: l.code || v.code, reason: v.reason ? `${v.reason}\n${reason}` : reason,
+                photoIds: isImage ? [...v.photoIds, copy] : v.photoIds, attachments: [...(v.attachments ?? []), att] })
+            } else {
+              await db.putVariation({ ...base, id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: l.description, room: l.room !== 'General' ? l.room : '',
+                reason, photoIds: isImage ? [copy] : [], dateRaised: vo.date ?? Date.now(), valuationId: null, attachments: [att] })
+            }
+          }
+          setVoImport(false); await reload()
+        }} />}
       {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }} />}
       {invoicing && job && (() => {
         const rate = settings?.vatRate ?? 20
