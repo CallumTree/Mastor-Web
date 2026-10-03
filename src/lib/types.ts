@@ -70,6 +70,9 @@ export interface Valuation {
   issuedAt: number | null
   paidAt?: number | null     // date payment received
   paidAmount?: number | null // amount received (can be a part payment)
+  invoiceNumber?: string | null // VAT invoice raised for this valuation (one per valuation)
+  invoiceDate?: number | null
+  invoiceVatRate?: number | null
 }
 
 /**
@@ -95,3 +98,18 @@ export interface DiaryEntry {
 
 export type NoteCategory = 'Client' | 'Commercial' | 'Site' | 'H&S' | 'Other'
 export const NOTE_CATEGORIES: NoteCategory[] = ['Client', 'Commercial', 'Site', 'H&S', 'Other']
+
+/** Company details used on invoices. One record per company (id 'company'). */
+export interface CompanySettings {
+  id: 'company'
+  name: string; address: string; email: string; phone: string
+  vatNumber: string; companyNumber: string
+  bankName: string; accountName: string; sortCode: string; accountNumber: string
+  invoicePrefix: string        // e.g. "TS-" or "" — whatever you use now
+  nextInvoiceNumber: number    // carries on from your current numbering
+  invoicePad: number           // digits, e.g. 4 → 0042
+  vatRate: number              // % (20)
+  defaultTermsDays: number
+  updatedAt: number
+}
+export const blankSettings = (): CompanySettings => ({ id: 'company', name: '', address: '', email: '', phone: '', vatNumber: '', companyNumber: '', bankName: '', accountName: '', sortCode: '', accountNumber: '', invoicePrefix: '', nextInvoiceNumber: 1, invoicePad: 0, vatRate: 20, defaultTermsDays: 30, updatedAt: 0 })

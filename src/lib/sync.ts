@@ -6,7 +6,7 @@
 import { supabase } from './supabase'
 import { db, local, meta, outbox, setQueueing, type RecordTable } from './db'
 
-const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries' }
+const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries', settings: 'company_settings' }
 const TABLES = Object.keys(CLOUD) as RecordTable[]
 
 export type SyncState = 'idle' | 'syncing' | 'synced' | 'offline' | 'error'
@@ -46,6 +46,7 @@ export function schedule(delay = 800) {
 }
 
 async function queueEverything() {
+  const st = await db.settings(); if (st) await outbox.add({ kind: 'record', table: 'settings', id: st.id, jobId: null, data: st })
   for (const j of await db.jobs()) {
     await outbox.add({ kind: 'record', table: 'jobs', id: j.id, jobId: j.id, data: j })
     for (const s of await db.scope(j.id)) await outbox.add({ kind: 'record', table: 'scope', id: s.id, jobId: j.id, data: s })
@@ -87,8 +88,8 @@ async function push() {
   for (const op of ops) {
     if (op.kind === 'record') {
       const row = { id: op.id, company_id: companyId, job_id: op.jobId, data: op.data ?? {}, deleted: op.data === null }
-      const { error } = await supabase.from(CLOUD[op.table]).upsert(row, { onConflict: 'id' })
-      if (error && op.table === 'diary' && /diary_entries/.test(error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
+      const { error } = await supabase.from(CLOUD[op.table]).upsert(row, { onConflict: op.table === 'settings' ? 'company_id,id' : 'id' })  // settings: one row per company
+      if (error && (op.table === 'diary' || op.table === 'settings') && /diary_entries|company_settings/.test(error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
       if (error) throw new Error(error.message)
     } else {
       const blob = await db.photo(op.id)
@@ -109,7 +110,7 @@ async function pull(): Promise<boolean> {
     for (;;) {
       const { data, error } = await supabase.from(CLOUD[t]).select('id, data, deleted, updated_at')
         .eq('company_id', companyId!).gt('updated_at', since).order('updated_at', { ascending: true }).limit(500)
-      if (error && t === 'diary' && /diary_entries/.test(error.message)) { missingDiaryTable = true; break }
+      if (error && (t === 'diary' || t === 'settings') && /diary_entries|company_settings/.test(error.message)) { missingDiaryTable = true; break }
       if (error) throw new Error(error.message)
       if (!data?.length) break
       for (const row of data as { id: string; data: unknown; deleted: boolean; updated_at: string }[]) {

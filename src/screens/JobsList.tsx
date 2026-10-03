@@ -3,7 +3,7 @@ import type { Job, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
 import { money } from '../lib/format'
-import { IconChart, IconPlus } from '../components/Icons'
+import { IconChart, IconPlus, IconSettings } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
 import { getLook, PHOTOS } from '../lib/look'
 
@@ -31,8 +31,8 @@ function Backdrop({ job }: { job: Job | null }) {
   )
 }
 
-export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onBackup, onRestore }: {
-  jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void
+export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, onBackup, onRestore }: {
+  jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
   onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>
 }) {
   const [msg, setMsg] = useState<string | null>(null)
@@ -62,6 +62,10 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onBackup, onRe
         }} /></label>
         {msg && <div style={{ color: 'var(--copper-light)', marginTop: 4 }}>{msg}</div>}
       </div>
+      <button onClick={onSettings} aria-label="Company settings" className="btn-glass"
+        style={{ position: 'absolute', zIndex: 4, top: 34, left: 14, width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center', padding: 0 }}>
+        <IconSettings size={22} />
+      </button>
       {sorted.length > 0 && (
         <button onClick={onDashboard} aria-label="Director dashboard" className="btn-glass"
           style={{ position: 'absolute', zIndex: 4, top: 34, right: 14, width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center', padding: 0 }}>

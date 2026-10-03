@@ -29,11 +29,15 @@ export function voCourt(v: Variation, vals: Valuation[], now = Date.now()): Cour
   return { who: 'us', text: 'Complete — tick into a valuation', tone: 'due' }
 }
 
-export function dueAt(val: Valuation, job: Job) { return val.issuedAt ? val.issuedAt + termsOf(job) * DAY : null }
+/** Terms run from the invoice date once invoiced, otherwise from the valuation issue date. */
+export function dueAt(val: Valuation, job: Job) { const from = val.invoiceDate ?? val.issuedAt; return from ? from + termsOf(job) * DAY : null }
 
 export function valCourt(val: Valuation, job: Job, scope: ScopeItem[], vos: Variation[], now = Date.now()): Court & { owed: number } {
   if (val.status === 'Open') return { who: 'us', text: 'Open — review and issue', tone: 'ok', owed: 0 }
-  const gross = valTotals(job, val.id, scope, vos).gross
+  const net = valTotals(job, val.id, scope, vos).gross
+  // once a VAT invoice is raised, what's owed is the invoice total (net + VAT)
+  const p = (x: number) => Math.round(x * 100 + 1e-7) / 100
+  const gross = val.invoiceNumber ? p(net + p(net * (val.invoiceVatRate ?? 20) / 100)) : net   // same rounding as the invoice
   const paid = val.paidAmount ?? 0
   const owed = Math.max(0, Math.round((gross - paid) * 100) / 100)
   if (val.paidAt && owed < 0.01) return { who: 'none', text: `Paid ${ukDate(val.paidAt)}`, tone: 'done', owed: 0 }

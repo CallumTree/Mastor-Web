@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from './lib/types'
+import type { CompanySettings, DiaryEntry, Job, ScopeItem, Valuation, Variation } from './lib/types'
 import { db, nextVoNumber, uid } from './lib/db'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
@@ -15,6 +15,9 @@ import { savePhoto, saveVideo, saveImageBlob } from './lib/photos'
 import { buildCertificate, certificateFileName, shareOrDownload } from './lib/certificate'
 import { meta } from './lib/db'
 import { BoqImport } from './screens/BoqImport'
+import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
+import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
+import { money } from './lib/format'
 
 export default function App() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -23,6 +26,9 @@ export default function App() {
   const [vals, setVals] = useState<Valuation[]>([])
   const [diary, setDiary] = useState<DiaryEntry[]>([])
   const [logFrom, setLogFrom] = useState<DiaryEntry | null>(null)
+  const [settings, setSettings] = useState<CompanySettings | undefined>(undefined)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
   const [logging, setLogging] = useState(false)
@@ -40,7 +46,7 @@ export default function App() {
       Promise.all(js.map(j => db.valuations(j.id))),
       Promise.all(js.map(j => db.diary(j.id))),
     ])
-    setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setDiary(di.flat()); setReady(true)
+    setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setDiary(di.flat()); setSettings(await db.settings()); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
   // changes made on another device arrive → refresh what's on screen
@@ -71,6 +77,8 @@ export default function App() {
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
+          onCreateInvoice={v => setInvoicing(v)}
+          onInvoicePdf={async v => { if (!settings) return; await shareOrDownload(await buildInvoice({ job, val: v, scope: jobScope, vos: jobVos, settings }), invoiceFileName(job, v)) }}
           onCertificate={async v => {
             const company = (await meta.get<{ name: string }>('company'))?.name
             const blob = await buildCertificate({ job, val: v, vals: jobVals, scope: jobScope, vos: jobVos, company })
@@ -90,11 +98,28 @@ export default function App() {
           }}
           onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)}
+        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)}
           onBackup={async () => downloadBackup(await makeBackup())}
           onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }} />
       )}
 
+      {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }} />}
+      {invoicing && job && (() => {
+        const rate = settings?.vatRate ?? 20
+        const a = invoiceAmounts(job, invoicing, jobScope, jobVos, rate)
+        const alloc = settings ? allocateInvoiceNo(settings, vals) : { number: '—', next: 1 }
+        return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)}
+          onClose={() => setInvoicing(null)} onSettings={() => { setInvoicing(null); setSettingsOpen(true) }}
+          onCreate={async date => {
+            // re-check against every invoice at the moment of creating, then move the sequence on
+            const fresh = await db.settings(); if (!fresh) return
+            const all = (await Promise.all((await db.jobs()).map(j => db.valuations(j.id)))).flat()
+            const { number, next } = allocateInvoiceNo(fresh, all)
+            await db.putValuation({ ...invoicing, invoiceNumber: number, invoiceDate: date, invoiceVatRate: rate })
+            await db.putSettings({ ...fresh, nextInvoiceNumber: next, updatedAt: Date.now() })
+            setInvoicing(null); await reload()
+          }} />
+      })()}
       {jobForm && (
         <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} onClose={() => setJobForm(null)}
           onSave={async j => { await db.putJob(j); setJobForm(null); await reload(); setOpenId(j.id) }}

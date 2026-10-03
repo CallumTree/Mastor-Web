@@ -6,6 +6,7 @@ import { lineValue, valRef, valTotals } from '../lib/valuation'
 import { CourtLine, valCourt } from '../lib/chase'
 import { Field, Sheet } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
+import { invoiceAmounts } from '../lib/invoice'
 
 function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   val: Valuation; scope: ScopeItem[]; vos: Variation[]
@@ -56,11 +57,12 @@ function Progress({ certified, current, total }: { certified: number; current: n
   )
 }
 
-export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate }: {
+export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate, onCreateInvoice, onInvoicePdf }: {
   job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]
   onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
   onIssue: (v: Valuation) => void; onDeleteOpen: (v: Valuation) => void; go: (t: 'scope' | 'vos') => void
   onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>
+  onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
 }) {
   const [making, setMaking] = useState<string | null>(null)
   const cert = async (v: Valuation) => { setMaking(v.id); try { await onCertificate(v) } finally { setMaking(null) } }
@@ -144,6 +146,12 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             </div>
             <div style={{ marginTop: 6 }}><CourtLine c={valCourt(v, job, scope, vos)} /></div>
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t.lines} line{t.lines === 1 ? '' : 's'} · base {money(t.base)} · tap to {expanded === v.id ? 'hide' : 'show'}</div>
+            {v.invoiceNumber
+              ? <div className="row" style={{ marginTop: 10, gap: 8 }}>
+                  <span className="grow" style={{ fontSize: 13 }}>Invoice <b className="mono" style={{ color: 'var(--copper-ink)' }}>{v.invoiceNumber}</b> · {money(invoiceAmounts(job, v, scope, vos).total)} incl. VAT</span>
+                  <button className="btn btn-primary" style={{ minHeight: 42, width: 'auto', padding: '0 16px' }} disabled={making === 'inv' + v.id} onClick={async e => { e.stopPropagation(); setMaking('inv' + v.id); try { await onInvoicePdf(v) } finally { setMaking(null) } }}>{making === 'inv' + v.id ? 'Preparing…' : 'Invoice PDF'}</button>
+                </div>
+              : <button className="btn btn-primary" style={{ marginTop: 10, minHeight: 44 }} onClick={e => { e.stopPropagation(); onCreateInvoice(v) }}>Create invoice</button>}
             <div className="row" style={{ marginTop: 10 }}>
               <button className="btn btn-secondary" style={{ minHeight: 44, flex: 1 }} disabled={making === v.id} onClick={e => { e.stopPropagation(); cert(v) }}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>
               <button className="btn btn-secondary" style={{ minHeight: 44, flex: 1 }} onClick={e => { e.stopPropagation(); setPaying(v) }}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>
@@ -152,7 +160,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           </div>
         )
       })}
-      {paying && <PaidSheet v={paying} gross={valTotals(job, paying.id, scope, vos).gross} onClose={() => setPaying(null)} onSave={x => { onPaid(x); setPaying(null) }} />}
+      {paying && <PaidSheet v={paying} gross={paying.invoiceNumber ? invoiceAmounts(job, paying, scope, vos).total : valTotals(job, paying.id, scope, vos).gross} onClose={() => setPaying(null)} onSave={x => { onPaid(x); setPaying(null) }} />}
     </div>
   )
 }
@@ -166,7 +174,7 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
     <Sheet onClose={onClose}>
       <div className="stack">
         <div className="label bracket">Payment · {valRef(v.number)}</div>
-        <div className="muted" style={{ fontSize: 13 }}>Certified {money(gross)}. Enter what actually landed — a part payment leaves the rest showing as owed.</div>
+        <div className="muted" style={{ fontSize: 13 }}>{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Enter what actually landed — a part payment leaves the rest showing as owed.</div>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} /></Field>
         {isFinite(n) && n < gross - 0.005 && <div className="flag">{money(gross - n)} will still show as owed</div>}
