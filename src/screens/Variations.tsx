@@ -129,7 +129,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
           <div key={v.id} className="card" style={{ cursor: 'pointer' }} onClick={() => onEdit(v)}>
             <div className="row">
               {priced && v.status !== 'Rejected' && <Tick on={!!v.valuationId} locked={!!lockedIn(v, vals)} onClick={() => onToggle(v)} />}
-              <span className="mono" style={{ color: 'var(--copper)', fontWeight: 500 }}>{voRef(v.number)}</span>
+              <span className="ref-roman" style={{ color: 'var(--copper)', fontWeight: 500 }}>{voRef(v.number)}</span>
               <span className={'badge ' + statusClass[v.status]}>{v.status}</span>
               <ValBadge val={vals.find(x => x.id === v.valuationId)} />
               <span className="grow" />

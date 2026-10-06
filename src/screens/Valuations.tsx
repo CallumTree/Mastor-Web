@@ -94,7 +94,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
       {open && current ? (
         <div className="card" style={{ padding: 12 }}>
           <div className="row" style={{ marginBottom: 10 }}>
-            <span className="mono" style={{ color: 'var(--copper)', fontWeight: 500 }}>{valRef(open.number)}</span>
+            <span className="ref-roman" style={{ color: 'var(--copper)', fontWeight: 500 }}>{valRef(open.number)}</span>
             <span className="badge b-amber">Open</span><span className="grow" />
             <span className="muted" style={{ fontSize: 12 }}>started {ukDate(open.createdAt)}</span>
           </div>
@@ -139,7 +139,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         return (
           <div key={v.id} className="card" style={{ cursor: 'pointer' }} onClick={() => setExpanded(expanded === v.id ? null : v.id)}>
             <div className="row">
-              <span className="mono" style={{ color: 'var(--copper)', fontWeight: 500 }}>{valRef(v.number)}</span>
+              <span className="ref-roman" style={{ color: 'var(--copper)', fontWeight: 500 }}>{valRef(v.number)}</span>
               <span className="badge b-slate">🔒 Issued</span>
               <span className="grow muted" style={{ fontSize: 12 }}>{v.issuedAt ? ukDate(v.issuedAt) : ''}</span>
               <span className="mono">{money(t.gross)}</span>

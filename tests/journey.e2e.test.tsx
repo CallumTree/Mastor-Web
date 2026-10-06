@@ -21,7 +21,7 @@ beforeAll(() => {
 })
 
 describe('College Park, end to end', () => {
-  it('create job → import BoQ → scope → valuations → issue → VAL-002 → VOs → survives reload', async () => {
+  it('create job → import BoQ → scope → valuations → issue → VAL II → VOs → survives reload', async () => {
     render(<App />)
     await screen.findByText('MASTOR')
 
@@ -52,9 +52,9 @@ describe('College Park, end to end', () => {
     const ticks = () => screen.getAllByRole('button', { name: /add to valuation/i })
     expect(ticks().length).toBe(58)
 
-    // --- tick two into VAL-001
-    click(ticks()[0]); await waitFor(() => expect(screen.getAllByText('VAL-001').length).toBe(1))
-    click(ticks()[0]); await waitFor(() => expect(screen.getAllByText('VAL-001').length).toBe(2))
+    // --- tick two into VAL I
+    click(ticks()[0]); await waitFor(() => expect(screen.getAllByText('VAL I').length).toBe(1))
+    click(ticks()[0]); await waitFor(() => expect(screen.getAllByText('VAL I').length).toBe(2))
 
     // --- valuation shows both; remove one → back to live
     nav('vals')
@@ -66,35 +66,35 @@ describe('College Park, end to end', () => {
     nav('scope')
     await waitFor(() => expect(ticks().length).toBe(57))
 
-    // --- issue VAL-001 → locked
+    // --- issue VAL I → locked
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Issue VAL-001' }))
-    click(await screen.findByRole('button', { name: /issue val-001 for/i }))
+    click(await screen.findByRole('button', { name: 'Issue VAL I' }))
+    click(await screen.findByRole('button', { name: /issue val i for/i }))
     await screen.findByText('🔒 Issued')
     nav('scope')
-    const locked = await screen.findByText('🔒 VAL-001')
+    const locked = await screen.findByText('🔒 VAL I')
     expect(locked).toBeTruthy()
 
-    // --- next tick opens VAL-002
+    // --- next tick opens VAL II
     click(ticks()[0])
-    await screen.findByText('VAL-002')
+    await screen.findByText('VAL II')
 
-    // --- log a variation, price it, tick it into VAL-002
+    // --- log a variation, price it, tick it into VAL II
     nav('vos')
     click(await screen.findByRole('button', { name: /log variation/i }))
     type(/extra work/i, 'Replace rotten joists under bath')
     type('Where', 'Bathroom')
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!)
-    await screen.findByText('VO-001')
+    await screen.findByText('VO I')
     expect(screen.getByText(/price it/i)).toBeTruthy()
     click(screen.getByText('Replace rotten joists under bath'))
     type('Qty', '2'); type('Rate (£)', '85.50'); type('SoR code', '3051AB')
     click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.queryByText(/^price it$/i)).toBeNull())
     click(screen.getByRole('button', { name: /add to valuation/i }))
-    await waitFor(() => expect(screen.getAllByText('VAL-002').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('VAL II').length).toBeGreaterThan(0))
     nav('vals')
-    await screen.findByText(/VO-001/)
+    await screen.findByText(/VO I/)
 
     // --- everything survives a full reload
     cleanup()
@@ -102,8 +102,8 @@ describe('College Park, end to end', () => {
     click(await screen.findByRole('button', { name: /open job/i }))
     nav('scope')
     await screen.findByText('58 items')
-    expect(screen.getAllByText('🔒 VAL-001').length).toBe(1)
-    expect(screen.getAllByText('VAL-002').length).toBe(1)
+    expect(screen.getAllByText('🔒 VAL I').length).toBe(1)
+    expect(screen.getAllByText('VAL II').length).toBe(1)
 
     // --- director dashboard reflects it
     cleanup()

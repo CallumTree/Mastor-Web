@@ -23,6 +23,6 @@ ok(scan.ref === '11284' && scan.lines.length === 2 && scan.lines[0].rate === 540
 ok(matchJob(scan, jobs)?.id === 'b', '"vary order H/PC21812" → the job with PO PC21812')
 const vo = (n: number, d: string, code = ''): Variation => ({ id: 'v' + n, jobId: 'b', number: n, description: d, room: 'Roof', qty: null, unit: '', rate: null, code, reason: '', clientRef: '', status: 'Identified', photoIds: [], dateRaised: 0, valuationId: null })
 const sug = suggestVo(scan.lines[0], [vo(1, 'Rotten joists under bath'), vo(2, 'Chimney stack unsafe — demolish and make good'), vo(3, 'Extra socket')])
-ok(sug.length === 1 && sug[0].number === 2, 'suggests the open VO it most likely is (VO-002 chimney)')
+ok(sug.length === 1 && sug[0].number === 2, 'suggests the open VO it most likely is (VO II chimney)')
 ok(suggestVo(scan.lines[0], [{ ...vo(2, 'Chimney'), clientRef: 'X1' }]).length === 0, 'already-instructed VOs are never re-matched')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

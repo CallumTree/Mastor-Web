@@ -57,7 +57,7 @@ describe('council VO instructions', () => {
     await importFile(new File([new Uint8Array([255, 216, 255])], 'VO11284.jpg', { type: 'image/jpeg' }))
     expect(screen.getByText('11284')).toBeTruthy()
     expect(screen.getByText(/varies order H\/PC21812 — this job/i)).toBeTruthy()
-    expect((screen.getByLabelText('Line 1 goes to') as HTMLSelectElement).selectedOptions[0].textContent).toMatch(/VO-001 .*likely match/)
+    expect((screen.getByLabelText('Line 1 goes to') as HTMLSelectElement).selectedOptions[0].textContent).toMatch(/VO I .*likely match/)
     expect((screen.getByLabelText('Line 2 goes to') as HTMLSelectElement).value).toBe('new')
     click(screen.getByRole('button', { name: 'Add 2 to variations' })); await closed()
     const vs = (await db.variations((await db.jobs()).find(j => j.name === '57 Coombs Drive')!.id)).sort((a, b) => a.number - b.number)

@@ -15,8 +15,8 @@ async function issueOne(desc: string, rate: string, valNo: number) {
   await waitFor(() => expect(screen.getByText(desc)).toBeTruthy())
   click((await screen.findAllByRole('button', { name: /add to valuation/i }))[0])
   nav('vals')
-  click(await screen.findByRole('button', { name: `Issue VAL-00${valNo}` }))
-  click(await screen.findByRole('button', { name: new RegExp(`issue val-00${valNo} for`, 'i') }))
+  click(await screen.findByRole('button', { name: `Issue VAL ${'I'.repeat(valNo)}` }))
+  click(await screen.findByRole('button', { name: new RegExp(`issue val ${'i'.repeat(valNo)} for`, 'i') }))
   await screen.findAllByRole('button', { name: 'Create invoice' })
 }
 

@@ -10,7 +10,7 @@ ok(voCourt(vo({}), [], now).who === 'us' && voCourt(vo({}), [], now).text.starts
 ok(voCourt(vo({ submittedAt: now - 3 * DAY }), [], now).tone === 'ok', 'sent 3 days ago → with client, fine')
 ok(voCourt(vo({ submittedAt: now - 8 * DAY }), [], now).tone === 'due', '8 days → amber')
 ok(voCourt(vo({ submittedAt: now - 15 * DAY }), [], now).tone === 'late', '15 days → red')
-ok(voCourt(vo({ valuationId: 'x' }), [{ id: 'x', jobId: 'j', number: 2, status: 'Open', createdAt: 0, issuedAt: null }], now).text === 'Claimed in VAL-002', 'claimed → done')
+ok(voCourt(vo({ valuationId: 'x' }), [{ id: 'x', jobId: 'j', number: 2, status: 'Open', createdAt: 0, issuedAt: null }], now).text === 'Claimed in VAL II', 'claimed → done')
 const scope: ScopeItem[] = [{ id: 's', jobId: 'j', code: '', description: '', room: '', qty: 1, unit: 'nr', rate: 1000, valuationId: 'v1', order: 1, createdAt: 0 }]
 const val = (p: Partial<Valuation>): Valuation => ({ id: 'v1', jobId: 'j', number: 1, status: 'Issued', createdAt: 0, issuedAt: now - 10 * DAY, ...p })
 ok(valCourt(val({}), job, scope, [], now).text.startsWith('Due') && valCourt(val({}), job, scope, [], now).tone === 'ok', 'issued 10 days ago, 30-day terms → due, fine')

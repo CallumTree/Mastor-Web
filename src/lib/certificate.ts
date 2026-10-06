@@ -129,7 +129,7 @@ export async function buildCertificate({ job, val, vals, scope, vos, company }: 
 }
 
 export const certificateFileName = (job: Job, val: Valuation) =>
-  `${(job.contractRef || job.name).replace(/[^A-Za-z0-9-]+/g, '_')}_${valRef(val.number)}${val.status === 'Open' ? '_DRAFT' : ''}.pdf`
+  `${(job.contractRef || job.name).replace(/[^A-Za-z0-9-]+/g, '_')}_${valRef(val.number).replace(' ', '-')}${val.status === 'Open' ? '_DRAFT' : ''}.pdf`
 
 /** Share on phones (email/WhatsApp/Drive) where supported, otherwise download. */
 export async function shareOrDownload(blob: Blob, name: string) {

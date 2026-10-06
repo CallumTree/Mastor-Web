@@ -383,3 +383,13 @@ body {
 .prop-bar { height: 3px; margin: 0 14px 12px 62px; background: var(--ink-line); }
 .prop-bar > div { height: 100%; background: var(--copper); }
 .prop-body { border-top: 1px solid var(--ink); }
+
+/* ---- Classical type: Roman inscription capitals (Cinzel) for headings, labels, menus and the wordmark.
+        Body text and figures stay in Inter / mono so lists read easily on site. ---- */
+:root { --classic: 'Cinzel', 'Trajan Pro', Georgia, serif; }
+.wordmark { font-family: var(--classic) !important; font-weight: 600 !important; letter-spacing: .28em !important; }
+.label, .bracket, .imm-sub, .tb-label, .lab-title span { font-family: var(--classic) !important; font-weight: 600; letter-spacing: .16em; }
+.nav button { font-family: var(--classic); font-weight: 600; letter-spacing: .12em; }
+.jhero h1, .jhero .title, .prop-name, .sheet h2, h1 { font-family: var(--classic); font-weight: 600; letter-spacing: .04em; }
+.tabmenu-item > span:first-child { font-family: var(--classic); font-weight: 600; letter-spacing: .04em; }
+.ref-roman { font-family: var(--classic); font-weight: 700; letter-spacing: .06em; }

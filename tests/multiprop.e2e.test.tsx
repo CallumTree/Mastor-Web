@@ -43,11 +43,11 @@ describe('multi-property scheme', () => {
     expect(screen.getAllByText(/masonry paint/i).length).toBe(1)
     expect(screen.getByRole('button', { name: 'No. 1 Scaffold' })).toBeTruthy()
 
-    // tick all remaining in No. 1 → VAL-001, 100%
+    // tick all remaining in No. 1 → VAL I, 100%
     click(screen.getByRole('button', { name: /tick all remaining \(3\)/i }))
     click(screen.getByRole('button', { name: 'Yes' }))
     await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))   // property header (+ open group)
-    expect(screen.getAllByText('VAL-001').length).toBe(2)                                // the open PPR Paint group's lines
+    expect(screen.getAllByText('VAL I').length).toBe(2)                                // the open PPR Paint group's lines
 
     // valuation shows the lines under a "No. 1" heading
     nav('vals')
@@ -64,8 +64,8 @@ describe('multi-property scheme', () => {
 
     // wrong spec: delete entire scope → certified lines survive, everything else goes
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Issue VAL-001' }))
-    click(await screen.findByRole('button', { name: /issue val-001 for/i }))
+    click(await screen.findByRole('button', { name: 'Issue VAL I' }))
+    click(await screen.findByRole('button', { name: /issue val i for/i }))
     await screen.findByText(/^Due /)
     nav('scope')
     click(await screen.findByRole('button', { name: 'Add item' }))

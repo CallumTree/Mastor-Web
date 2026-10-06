@@ -36,8 +36,8 @@ describe('payments and chasing', () => {
     // claim it, issue, it becomes due
     click(screen.getByRole('button', { name: /add to valuation/i }))
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Issue VAL-001' }))
-    click(await screen.findByRole('button', { name: /issue val-001 for/i }))
+    click(await screen.findByRole('button', { name: 'Issue VAL I' }))
+    click(await screen.findByRole('button', { name: /issue val i for/i }))
     await screen.findByText(/^Due /)
 
     // part payment → still owed; then paid in full
