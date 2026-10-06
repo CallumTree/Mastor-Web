@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react'
 const KEY = 'mastor.splashSeen'
 export function shouldPlaySplash() {
   try {
+    // ?intro always plays it (handy for showing people, and for phones with animations reduced)
+    if (new URLSearchParams(location.search).has('intro')) return true
     if (sessionStorage.getItem(KEY)) return false
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return false
     return true
