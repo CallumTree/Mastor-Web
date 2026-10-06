@@ -393,3 +393,29 @@ body {
 .jhero h1, .jhero .title, .prop-name, .sheet h2, h1 { font-family: var(--classic); font-weight: 600; letter-spacing: .04em; }
 .tabmenu-item > span:first-child { font-family: var(--classic); font-weight: 600; letter-spacing: .04em; }
 .ref-roman { font-family: var(--classic); font-weight: 700; letter-spacing: .06em; }
+
+/* ===================== opening titles ===================== */
+.splash { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; cursor: pointer; transition: opacity .55s ease, transform .55s ease; }
+.splash.out { opacity: 0; transform: scale(1.04); pointer-events: none; }
+.splash-sky { position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 38%, #26264A 0%, #1A1A2E 55%, #121224 100%); }
+.splash-sky::after { content: ""; position: absolute; inset: 0; opacity: .5;
+  background-image: linear-gradient(rgba(201,123,63,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(201,123,63,.06) 1px, transparent 1px); background-size: 24px 24px; }
+.splash > *:not(.splash-sky) { position: relative; }
+.splash-arch { overflow: visible; margin-bottom: 26px; }
+.splash-arch .draw { fill: none; stroke: #C97B3F; stroke-width: 1.6; stroke-linecap: square; stroke-dasharray: 1; stroke-dashoffset: 1; animation: sp-draw .95s cubic-bezier(.6,.05,.3,1) forwards; }
+.splash-arch .d2 { stroke-width: 1; animation-delay: .1s; animation-duration: .7s; }
+.splash-arch .d3 { stroke-width: .8; stroke-opacity: .55; animation-delay: .3s; }
+.splash-arch .keystone { fill: #C97B3F; opacity: 0; transform: translateY(-26px); animation: sp-key .42s cubic-bezier(.3,1.4,.5,1) .92s forwards; filter: drop-shadow(0 0 6px rgba(232,168,104,.55)); }
+.splash-word { display: flex; gap: .34em; font-family: var(--classic, 'Cinzel', Georgia, serif); font-weight: 600; font-size: 34px; color: #F5F0E8; padding-left: .34em; }
+.splash-word span { opacity: 0; transform: translateY(14px); animation: sp-rise .55s cubic-bezier(.2,.8,.2,1) forwards; }
+.splash-dim { position: relative; display: flex; align-items: center; width: 230px; height: 14px; margin-top: 16px; }
+.splash-dim b { flex: 1; height: 1px; background: #C97B3F; transform: scaleX(0); animation: sp-grow .6s cubic-bezier(.6,.05,.3,1) 1.55s forwards; }
+.splash-dim i { width: 1px; height: 11px; background: #C97B3F; opacity: 0; animation: sp-fade .2s linear 1.55s forwards; }
+.splash-dim em { position: absolute; left: 0; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #FFF4E4; box-shadow: 0 0 10px 3px #E8A868; opacity: 0; animation: sp-beam .9s ease-in-out 1.95s forwards; }
+.splash-sub { margin-top: 16px; font-family: var(--classic, 'Cinzel', Georgia, serif); font-size: 11px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: #B0A898; opacity: 0; animation: sp-fade .6s ease 2.0s forwards; }
+@keyframes sp-draw { to { stroke-dashoffset: 0; } }
+@keyframes sp-key { 0% { opacity: 0; transform: translateY(-26px); } 70% { opacity: 1; } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes sp-rise { to { opacity: 1; transform: translateY(0); } }
+@keyframes sp-grow { to { transform: scaleX(1); } }
+@keyframes sp-fade { to { opacity: 1; } }
+@keyframes sp-beam { 0% { opacity: 0; left: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; left: 100%; } }
