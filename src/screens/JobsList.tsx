@@ -5,6 +5,7 @@ import { usePhotoUrl } from '../lib/photos'
 import { money } from '../lib/format'
 import { IconChart, IconPlus, IconSettings } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
+import { Splash } from '../components/Splash'
 import { getLook, PHOTOS } from '../lib/look'
 
 /**
@@ -36,6 +37,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, on
   onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>
 }) {
   const [msg, setMsg] = useState<string | null>(null)
+  const [intro, setIntro] = useState(false)
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const [idx, setIdx] = useState(0)
   const track = useRef<HTMLDivElement>(null)
@@ -53,6 +55,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, on
     <div className="immersive">
       <Backdrop job={current} />
       <div className="imm-banner">
+        <button className="linkish" onClick={() => setIntro(true)}>▶ Play intro</button>{' · '}
         <SyncBadge />{' · '}
         <button className="linkish" onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>{' · '}
         <label className="linkish">Restore<input type="file" hidden accept=".json,application/json" onChange={async e => {
@@ -117,6 +120,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, on
           <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
         )}
       </div>
+      {intro && <Splash onDone={() => setIntro(false)} />}
     </div>
   )
 }
