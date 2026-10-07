@@ -23,7 +23,7 @@ beforeAll(() => {
 describe('College Park, end to end', () => {
   it('create job → import BoQ → scope → valuations → issue → VAL II → VOs → survives reload', async () => {
     render(<App />)
-    await screen.findByText('MASTOR')
+    await screen.findByRole('img', { name: 'MASTOR' })
 
     // --- new job
     click(screen.getByRole('button', { name: /new job/i }))

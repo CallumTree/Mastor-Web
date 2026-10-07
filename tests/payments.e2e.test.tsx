@@ -11,7 +11,7 @@ beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { 
 describe('payments and chasing', () => {
   it('VO sent to client, valuation issued → due → part paid → paid; dashboard follows', async () => {
     render(<App />)
-    await screen.findByText('MASTOR')
+    await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
     type('Job name *', 'Pay Street'); type(/PO number/i, 'PO9'); type(/payment terms/i, '30')
     click(screen.getByRole('button', { name: 'Create job' }))

@@ -13,7 +13,7 @@ beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async (u: string) => String(u).in
 describe('multi-property scheme', () => {
   it('shows one collapsed block per property; tick all remaining; valuation grouped by property', async () => {
     render(<App />)
-    await screen.findByText('MASTOR')
+    await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
     type('Job name *', 'Prescelly Road')
     click(screen.getByRole('button', { name: 'Create job' }))

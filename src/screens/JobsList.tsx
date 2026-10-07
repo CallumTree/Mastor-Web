@@ -1,3 +1,4 @@
+import { Wordmark } from '../components/Wordmark'
 import { useRef, useState } from 'react'
 import type { Job, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
@@ -76,7 +77,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, on
         </button>
       )}
       <div className="imm-top">
-        <div className="wordmark">MASTOR</div>
+        <Wordmark />
         <div className="imm-sub">{sorted.length ? `${active} active job${active === 1 ? '' : 's'}` : 'Site · Variations · Valuations'}</div>
       </div>
 

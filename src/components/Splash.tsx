@@ -1,3 +1,4 @@
+import { Lambda, Theta } from './Wordmark'
 import { useEffect, useState } from 'react'
 
 /**
@@ -37,7 +38,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
         {/* keystone drops in last and locks the arch */}
         <path className="keystone" d="M53 9 L67 9 L64 26 L56 26 Z" />
       </svg>
-      <div className="splash-word">{'MASTOR'.split('').map((c, i) => <span key={i} style={{ animationDelay: `${1.05 + i * 0.07}s` }}>{c}</span>)}</div>
+      <div className="splash-word">{['M', <Lambda key="l" />, 'S', 'T', <Theta key="t" />, 'R'].map((c, i) => <span key={i} style={{ animationDelay: `${1.05 + i * 0.07}s` }}>{c}</span>)}</div>
       <div className="splash-dim"><i /><b /><i /><em /></div>
       <div className="splash-sub">Site · Variations · Valuations</div>
     </div>

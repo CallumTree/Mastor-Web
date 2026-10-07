@@ -23,7 +23,7 @@ beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { 
 describe('site diary', () => {
   it('note, labour, photos, video, mark-up link, raise VO, safe delete', async () => {
     render(<App />)
-    await screen.findByText('MASTOR')
+    await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
     fireEvent.change(screen.getByLabelText('Job name *'), { target: { value: 'Diary Close' } })
     click(screen.getByRole('button', { name: 'Create job' }))

@@ -1,3 +1,4 @@
+import { Wordmark } from '../components/Wordmark'
 import { useState } from 'react'
 
 /** Style lab — open mastor-web.vercel.app/#lab. Five button directions to tap and compare. */
@@ -38,7 +39,7 @@ export function ButtonLab() {
   return (
     <div className="lab">
       <div className="lab-head">
-        <div className="wordmark" style={{ fontSize: 22 }}>MASTOR</div>
+        <Wordmark size={22} />
         <div className="imm-sub">Style lab · buttons · tap everything</div>
       </div>
       {DIRS.map(d => (

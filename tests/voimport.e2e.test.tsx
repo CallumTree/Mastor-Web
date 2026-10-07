@@ -28,7 +28,7 @@ async function importFile(file: File) {
 
 describe('council VO instructions', () => {
   it('Excel VO (like 51 Precelly Place VO 5): read free, new instructed VO with the council ref', async () => {
-    render(<App />); await screen.findByText('MASTOR')
+    render(<App />); await screen.findByRole('img', { name: 'MASTOR' })
     await newJob('51 Precelly Place', 'PC30001')
     const rows = [['51 Precelly Place - VO 5'], ['Officer:', 'Dan Lawrence'], ['Date:', '23/02/2025'], ['Framework: ', 'Minor Works Framwork LOT 4'], ['ADDRESS: ', '51 Precelly Place'], ['Description: ', 'VO 5 - Scaffolding'], [],
       ['CODE', 'DESCRIPTION', 'UNIT', 'RATE', 'QUANTITY', 'COST'], [null, '51 Precelly Place'], ['SCA003', 'Scaffolding to all elevations', 'IT', 250, 6, 1500], [], [null, null, 'Total NETT:', null, null, 1500],

@@ -1,3 +1,4 @@
+import { Wordmark } from '../components/Wordmark'
 import { useState } from 'react'
 import { CANDIDATES, coverPick, imgUrl, setCoverPick } from '../lib/look'
 
@@ -7,7 +8,7 @@ export function PhotoPicker() {
   return (
     <div style={{ minHeight: '100vh', background: '#14142A', color: '#F5F0E8', padding: '20px 14px 40px' }}>
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
-        <div className="wordmark" style={{ fontSize: 20 }}>MASTOR</div>
+        <Wordmark size={20} />
         <div className="imm-sub">Cover photos · tap one to try it</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, maxWidth: 760, margin: '0 auto' }}>

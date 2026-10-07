@@ -1,3 +1,4 @@
+import { Wordmark } from '../components/Wordmark'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
@@ -45,7 +46,7 @@ export function Gate({ children }: { children: ReactNode }) {
         ? <><img className="bg-photo" src={PHOTOS.cover.src} alt="" /><div className="shade" /></>
         : <div className="bg-drawing"><Drawing id="mastor" type="PPR" active bare /></div>}
       <div className="imm-top" style={{ paddingTop: 48 }}>
-        <div className="wordmark">MASTOR</div>
+        <Wordmark />
         <div className="imm-sub">Site · Variations · Valuations</div>
       </div>
       <div style={{ position: 'relative', zIndex: 3, padding: '28px 16px', maxWidth: 440, width: '100%', margin: '0 auto' }}>

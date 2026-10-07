@@ -419,3 +419,8 @@ body {
 @keyframes sp-grow { to { transform: scaleX(1); } }
 @keyframes sp-fade { to { opacity: 1; } }
 @keyframes sp-beam { 0% { opacity: 0; left: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; left: 100%; } }
+/* MΛSTΘR wordmark glyphs sit on the baseline with the same tracking as the letters */
+.wm-glyph { display: inline-block; vertical-align: baseline; margin-right: .28em; overflow: visible; }
+.wordmark { display: inline-flex; align-items: baseline; justify-content: center; }
+.wordmark > span { display: inline-block; }
+.splash-word .wm-glyph { margin-right: 0; }

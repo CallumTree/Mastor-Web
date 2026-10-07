@@ -23,7 +23,7 @@ async function issueOne(desc: string, rate: string, valNo: number) {
 describe('VAT invoicing', () => {
   it('needs company details first, numbers carry on and never repeat, payment expects VAT', async () => {
     render(<App />)
-    await screen.findByText('MASTOR')
+    await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
     type('Job name *', 'Invoice Close'); type('Client', 'Pembrokeshire County Council'); type(/PO number/i, 'PC1')
     click(screen.getByRole('button', { name: 'Create job' }))
