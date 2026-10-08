@@ -58,7 +58,7 @@ describe('College Park, end to end', () => {
 
     // --- valuation shows both; remove one → back to live
     nav('vals')
-    await screen.findByText(/this valuation \(incl\. uplifts\)/i)
+    await screen.findByText(/incl\. uplifts, excl\. VAT/i)
     const removes = screen.getAllByRole('button', { name: /remove from valuation/i })
     expect(removes.length).toBe(2)
     click(removes[0])

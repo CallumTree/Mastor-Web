@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
-import { TitleBlock } from '../components/Ui'
+import { SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { lineValue, valRef, valTotals } from '../lib/valuation'
 import { CourtLine, valCourt } from '../lib/chase'
@@ -36,27 +36,6 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   )
 }
 
-/** Claimed-to-date bar: certified | this valuation | remaining — against contract + priced VOs. */
-function Progress({ certified, current, total }: { certified: number; current: number; total: number }) {
-  const pct = (n: number) => (total > 0 ? Math.min(100, (n / total) * 100) : 0)
-  return (
-    <div className="card-dark">
-      <div className="row" style={{ fontSize: 12, color: 'var(--cream-muted)', marginBottom: 8 }}>
-        <span className="grow">Claimed to date</span><span className="mono">{Math.round(pct(certified + current))}%</span>
-      </div>
-      <div style={{ display: 'flex', height: 10, borderRadius: 3, overflow: 'hidden', background: 'var(--charcoal-line)' }}>
-        <div style={{ width: `${pct(certified)}%`, background: 'var(--copper)' }} />
-        <div style={{ width: `${pct(current)}%`, background: 'var(--copper-light)', opacity: .7 }} />
-      </div>
-      <div className="row" style={{ fontSize: 11, marginTop: 8, gap: 14, color: 'var(--cream-muted)', flexWrap: 'wrap' }}>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, background: 'var(--copper)', marginRight: 5 }} />Certified {money(certified)}</span>
-        <span><span style={{ display: 'inline-block', width: 8, height: 8, background: 'var(--copper-light)', opacity: .7, marginRight: 5 }} />This valuation {money(current)}</span>
-        <span>Remaining {money(Math.max(0, total - certified - current))}</span>
-      </div>
-    </div>
-  )
-}
-
 export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate, onCreateInvoice, onInvoicePdf }: {
   job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]
   onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
@@ -69,7 +48,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   const [paying, setPaying] = useState<Valuation | null>(null)
   const [confirmIssue, setConfirmIssue] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [expanded, setExpanded] = useState<string | null>(null)
+  const [expandedPick, setExpanded] = useState<string | null | undefined>(undefined) // undefined = newest issued open by default
+  const [showLines, setShowLines] = useState<string | null>(null)
   const sorted = [...vals].sort((a, b) => b.number - a.number)
   const open = sorted.find(v => v.status === 'Open') ?? null
   const issued = sorted.filter(v => v.status === 'Issued')
@@ -79,17 +59,26 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   const pricedVos = vos.filter(v => v.status !== 'Rejected').reduce((t, v) => t + lineValue(v.qty, v.rate), 0) * f
   const target = (job.contractValue || scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) * f) + pricedVos
   const nextNo = vals.reduce((m, v) => Math.max(m, v.number), 0) + 1
+  const expanded = expandedPick === undefined ? issued[0]?.id ?? null : expandedPick
+  const courts = new Map(issued.map(v => [v.id, valCourt(v, job, scope, vos)]))
+  const paid = issued.reduce((t, v) => t + (v.paidAmount ?? 0), 0)
+  const owed = issued.reduce((t, v) => t + (courts.get(v.id)?.owed ?? 0), 0)
+  const overdue = issued.filter(v => courts.get(v.id)?.tone === 'late').length
+  const pct = target > 0 ? Math.round(((certified + (current?.gross ?? 0)) / target) * 100) : 0
 
   return (
     <div className="stack">
-      <div className="row"><div className="label bracket grow">Valuations</div>
-        <TabMenu title="Valuations" actions={[
+      <TabHead label="Valuations" title={job.name} menu={<TabMenu title="Valuations" actions={[
           { label: 'Preview certificate', hint: open ? `${valRef(open.number)} as a draft PDF` : 'No open valuation', disabled: !open || !current?.lines, onClick: () => open && cert(open) },
           { label: 'Delete open valuation', hint: open ? `Sends every line in ${valRef(open.number)} back to live` : 'No open valuation', danger: true, disabled: !open,
             confirm: open ? `Delete ${valRef(open.number)}? Its lines go back to live — nothing else is lost.` : '', onClick: () => open && onDeleteOpen(open) },
-        ]} />
-      </div>
-      <Progress certified={certified} current={current?.gross ?? 0} total={target} />
+        ]} />} />
+      <SumStrip label="Valuation summary" progress={pct} cells={[
+        { label: 'Contract + VOs', value: money(target), note: `${pct}% claimed incl. this valuation` },
+        { label: 'Certified', value: money(certified), note: `${issued.length} valuation${issued.length === 1 ? '' : 's'} issued`, nil: !issued.length },
+        { label: 'Paid', value: money(paid), note: 'as received', nil: !paid },
+        { label: 'Owed', value: money(owed), note: overdue ? `${overdue} overdue` : 'incl. VAT once invoiced', hot: owed > 0, nil: !owed },
+      ]} />
 
       {open && current ? (
         <div className="card" style={{ padding: 12 }}>
@@ -98,15 +87,14 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             <span className="badge b-amber">Open</span><span className="grow" />
             <span className="muted" style={{ fontSize: 12 }}>started {ukDate(open.createdAt)}</span>
           </div>
-          <div style={{ marginLeft: '-12%' }}>
-            <TitleBlock sheetRef={job.contractRef || valRef(open.number)}
-              head={['This valuation (incl. uplifts)', money(current.gross)]}
-              rows={[
-                [['Scope', money(current.scopeBase)], ['Variations', money(current.voBase), 'var(--copper)']],
-                [['Base total', money(current.base)], ['Uplifts', `${job.uplift1}% + ${job.uplift2}%`]],
-                [['Previously certified', money(certified)], ['Cumulative', money(certified + current.gross), 'var(--copper)']],
-              ]} />
-          </div>
+          <SumStrip label={`${valRef(open.number)} figures`} cells={[
+            { label: 'This valuation', value: money(current.gross), note: 'incl. uplifts, excl. VAT', hot: true },
+            { label: 'Cumulative', value: money(certified + current.gross), note: `${money(certified)} previously certified` },
+            { label: 'Scope', value: money(current.scopeBase), note: 'base rates', nil: !current.scopeBase },
+            { label: 'Variations', value: money(current.voBase), note: 'base rates', nil: !current.voBase },
+            { label: 'Base total', value: money(current.base) },
+            { label: 'Uplifts', value: `${job.uplift1}% + ${job.uplift2}%` },
+          ]} />
           {current.lines === 0 && <div className="muted" style={{ fontSize: 13, padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
           <div className="stack" style={{ marginTop: 14 }}>
@@ -133,33 +121,42 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         </div>
       )}
 
-      {issued.length > 0 && <div className="label" style={{ marginTop: 8 }}>Issued</div>}
-      {issued.map(v => {
-        const t = valTotals(job, v.id, scope, vos)
-        return (
-          <div key={v.id} className="card" style={{ cursor: 'pointer' }} onClick={() => setExpanded(expanded === v.id ? null : v.id)}>
-            <div className="row">
-              <span className="ref-roman" style={{ color: 'var(--copper)', fontWeight: 500 }}>{valRef(v.number)}</span>
-              <span className="badge b-slate">🔒 Issued</span>
-              <span className="grow muted" style={{ fontSize: 12 }}>{v.issuedAt ? ukDate(v.issuedAt) : ''}</span>
-              <span className="mono">{money(t.gross)}</span>
-            </div>
-            <div style={{ marginTop: 6 }}><CourtLine c={valCourt(v, job, scope, vos)} /></div>
-            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t.lines} line{t.lines === 1 ? '' : 's'} · base {money(t.base)} · tap to {expanded === v.id ? 'hide' : 'show'}</div>
-            {v.invoiceNumber
-              ? <div className="row" style={{ marginTop: 10, gap: 8 }}>
-                  <span className="grow" style={{ fontSize: 13 }}>Invoice <b className="mono" style={{ color: 'var(--copper-ink)' }}>{v.invoiceNumber}</b> · {money(invoiceAmounts(job, v, scope, vos).total)} incl. VAT</span>
-                  <button className="btn btn-primary" style={{ minHeight: 42, width: 'auto', padding: '0 16px' }} disabled={making === 'inv' + v.id} onClick={async e => { e.stopPropagation(); setMaking('inv' + v.id); try { await onInvoicePdf(v) } finally { setMaking(null) } }}>{making === 'inv' + v.id ? 'Preparing…' : 'Invoice PDF'}</button>
+      {issued.length > 0 && (
+        <div className="card vo-list">
+          <div className="vo-head"><span>Val</span><span>Issued · status</span><span>Value</span></div>
+          {issued.map(v => {
+            const t = valTotals(job, v.id, scope, vos)
+            const isOpen = expanded === v.id
+            return (
+              <div key={v.id} className={'vo-row-wrap' + (isOpen ? ' open' : '')}>
+                <div className="vo-row" onClick={() => setExpanded(isOpen ? null : v.id)}>
+                  <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span><small>🔒 Issued</small></div>
+                  <div className="vo-main">
+                    <div className="vo-desc">{v.issuedAt ? ukDate(v.issuedAt) : 'Issued'}</div>
+                    <div className="vo-meta">{t.lines} line{t.lines === 1 ? '' : 's'} · base {money(t.base)}</div>
+                    {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {money(invoiceAmounts(job, v, scope, vos).total)} incl. VAT</div>}
+                    <div className="vo-status"><CourtLine c={courts.get(v.id)!} /></div>
+                  </div>
+                  <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}>▸</span></div>
                 </div>
-              : <button className="btn btn-primary" style={{ marginTop: 10, minHeight: 44 }} onClick={e => { e.stopPropagation(); onCreateInvoice(v) }}>Create invoice</button>}
-            <div className="row" style={{ marginTop: 10 }}>
-              <button className="btn btn-secondary" style={{ minHeight: 44, flex: 1 }} disabled={making === v.id} onClick={e => { e.stopPropagation(); cert(v) }}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>
-              <button className="btn btn-secondary" style={{ minHeight: 44, flex: 1 }} onClick={e => { e.stopPropagation(); setPaying(v) }}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>
-            </div>
-            {expanded === v.id && <Lines val={v} scope={scope} vos={vos} />}
-          </div>
-        )
-      })}
+                {isOpen && (
+                  <div className="vo-actions" onClick={e => e.stopPropagation()}>
+                    {v.invoiceNumber
+                      ? <button className="btn btn-primary" disabled={making === 'inv' + v.id} onClick={async () => { setMaking('inv' + v.id); try { await onInvoicePdf(v) } finally { setMaking(null) } }}>{making === 'inv' + v.id ? 'Preparing…' : 'Invoice PDF'}</button>
+                      : <button className="btn btn-primary" onClick={() => onCreateInvoice(v)}>Create invoice</button>}
+                    <div className="row">
+                      <button className="btn btn-secondary" style={{ flex: 1 }} disabled={making === v.id} onClick={() => cert(v)}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>
+                      <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setPaying(v)}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>
+                    </div>
+                    <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setShowLines(showLines === v.id ? null : v.id)}>{showLines === v.id ? 'Hide lines' : `Show ${t.lines} line${t.lines === 1 ? '' : 's'}`}</button>
+                    {showLines === v.id && <Lines val={v} scope={scope} vos={vos} />}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
       {paying && <PaidSheet v={paying} gross={paying.invoiceNumber ? invoiceAmounts(job, paying, scope, vos).total : valTotals(job, paying.id, scope, vos).gross} onClose={() => setPaying(null)} onSave={x => { onPaid(x); setPaying(null) }} />}
     </div>
   )

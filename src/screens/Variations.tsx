@@ -5,6 +5,7 @@ import { lockedIn } from '../lib/valuation'
 import { CourtLine, voCourt } from '../lib/chase'
 import { TabMenu } from '../components/TabMenu'
 import { registerSummary } from '../lib/voRegister'
+import { SumStrip, TabHead } from '../components/Register'
 import { ukDate as ukd } from '../lib/format'
 import { Field, Sheet } from '../components/Ui'
 import { lineValue } from '../lib/valuation'
@@ -123,24 +124,11 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
   const short: Record<string, string> = { claimed: 'Claimed', ready: 'Ready to claim', instructed: 'Instructed', awaiting: 'With council', rejected: 'Rejected' }
   return (
     <div className="stack">
-      <div className="row"><div className="grow"><div className="label bracket">Variations</div><h1 style={{ fontSize: 22 }}>{job.name}</h1></div>
-        <TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }]} /></div>
-      {sorted.length > 0 && (
-        <div className="vo-sum" aria-label="Variation summary">
-          {sum.rows.map(r => (
-            <div key={r.key} className={'vo-sum-cell' + (r.count ? '' : ' nil')}>
-              <div className="label">{short[r.key]}</div>
-              <div className="mono n">{money(r.base)}</div>
-              <small>{r.count} VO{r.count === 1 ? '' : 's'}{r.unpriced ? ` · ${r.unpriced} unpriced` : ''}</small>
-            </div>
-          ))}
-          <div className="vo-sum-cell total">
-            <div className="label">Total incl. uplifts</div>
-            <div className="mono n">{money(sum.gross)}</div>
-            <small>{money(sum.base)} base{sum.overdue ? ` · ${sum.overdue} overdue` : ''}</small>
-          </div>
-        </div>
-      )}
+      <TabHead label="Variations" title={job.name} menu={<TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }]} />} />
+      {sorted.length > 0 && <SumStrip label="Variation summary" cells={[
+        ...sum.rows.map(r => ({ key: r.key, label: short[r.key], value: money(r.base), note: `${r.count} VO${r.count === 1 ? '' : 's'}${r.unpriced ? ` · ${r.unpriced} unpriced` : ''}`, nil: !r.count })),
+        { label: 'Total incl. uplifts', value: money(sum.gross), note: `${money(sum.base)} base${sum.overdue ? ` · ${sum.overdue} overdue` : ''}`, hot: true },
+      ]} />}
       <div className="row" style={{ gap: 8 }}>
         <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
         {sorted.length > 0 && <button className="btn btn-secondary" style={{ flex: '0 0 auto', width: 'auto' }} onClick={onRegister}>Register PDF</button>}

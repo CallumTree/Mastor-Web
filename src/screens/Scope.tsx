@@ -6,6 +6,7 @@ import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
 import { IconPlus, IconScope } from '../components/Icons'
 import { TabMenu } from '../components/TabMenu'
+import { SumStrip, TabHead } from '../components/Register'
 
 export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; onClick: () => void }) {
   return (
@@ -23,7 +24,7 @@ export function ValBadge({ val }: { val?: Valuation }) {
 
 type Filter = 'all' | 'live' | 'claimed'
 
-export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport }: {
+export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport }: {
   job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
 }) {
   const [filter, setFilter] = useState<Filter>('all')
@@ -70,9 +71,7 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
 
   return (
     <div className="stack">
-      <div className="row">
-        <div className="grow"><div className="label bracket">Scope</div></div>
-        <TabMenu title="Scope" actions={[
+      <TabHead label="Scope" meta={`${scope.length} items`} title={job.name} menu={<TabMenu title="Scope" actions={[
           { label: 'Import BoQ / works order', hint: 'PDF or Excel', onClick: onImport },
           { label: 'Add item', hint: 'One line, by hand', onClick: onAdd },
           ...(hasProps ? [{ label: openProps.size ? 'Collapse all' : 'Expand all properties', onClick: () => setOpenProps(openProps.size ? new Set() : new Set(properties)) }] : []),
@@ -80,20 +79,13 @@ export function ScopeTab({ scope, vals, onToggle, onToggleMany, onClearUnclaimed
             confirm: `Remove ${unclaimed.length} unclaimed lines? Anything in a valuation stays.`, onClick: () => onClearUnclaimed(unclaimed) },
           { label: 'Delete entire scope', hint: lockedCount ? `Wrong spec? ${lockedCount} certified line${lockedCount === 1 ? '' : 's'} will stay (issued valuations are locked)` : 'Wrong spec? Removes every line so you can import again', danger: true, disabled: lockedCount === scope.length,
             confirm: lockedCount ? `Delete ${scope.length - lockedCount} lines? The ${lockedCount} certified on issued valuations stay.` : `Delete all ${scope.length} lines from this job? This can't be undone.`, onClick: () => onDeleteAll(scope.filter(i => !lockedIn(i, vals))) },
-        ]} />
-        <div className="mono muted" style={{ fontSize: 13 }}>{scope.length} items</div>
-      </div>
+        ]} />} />
 
-      {scope.length > 0 && (
-        <div className="card-dark">
-          <div className="row" style={{ alignItems: 'baseline' }}>
-            <div className="grow"><div className="label">Claimed</div><div className="mono" style={{ fontSize: 22, fontWeight: 300, color: 'var(--copper)' }}>{money(claimed)}</div></div>
-            <div style={{ textAlign: 'right' }}><div className="label">Scope total</div><div className="mono" style={{ fontSize: 16, fontWeight: 300 }}>{money(total)}</div></div>
-          </div>
-          <div className="scalebar" style={{ marginTop: 10 }}><div style={{ width: total ? `${(claimed / total) * 100}%` : 0 }} /></div>
-          <div style={{ fontSize: 12, color: 'var(--cream-muted)', marginTop: 6 }}>{total ? Math.round((claimed / total) * 100) : 0}% of scope claimed · base rates, before uplifts</div>
-        </div>
-      )}
+      {scope.length > 0 && <SumStrip label="Scope summary" cols={3} progress={total ? (claimed / total) * 100 : 0} cells={[
+        { label: 'Scope total', value: money(total), note: 'base rates' },
+        { label: 'Claimed', value: money(claimed), note: `${total ? Math.round((claimed / total) * 100) : 0}% of scope`, hot: true, nil: !claimed },
+        { label: 'Still to do', value: money(total - claimed), note: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'}`, nil: !unclaimed.length },
+      ]} />}
 
       <div className="chips">
         {(['all', 'live', 'claimed'] as Filter[]).map(f => (
