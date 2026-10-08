@@ -10,6 +10,7 @@ import { keepStorage, makeBackup, downloadBackup, restoreBackup } from './lib/ba
 import { JobForm } from './screens/JobForm'
 import { JobView } from './screens/JobView'
 import { EditVariation, LogVariation } from './screens/Variations'
+import { buildVoRegister, registerFileName } from './lib/voRegister'
 import { ScopeForm } from './screens/Scope'
 import { savePhoto, saveVideo, saveImageBlob } from './lib/photos'
 import { buildCertificate, certificateFileName, shareOrDownload } from './lib/certificate'
@@ -80,6 +81,10 @@ export default function App() {
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
           onImportVo={() => setVoImport(true)}
+          onVoRegister={async () => {
+            const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name
+            await shareOrDownload(await buildVoRegister({ job, vos: jobVos, vals: jobVals, company }), registerFileName(job))
+          }}
           onCreateInvoice={v => setInvoicing(v)}
           onInvoicePdf={async v => { if (!settings) return; await shareOrDownload(await buildInvoice({ job, val: v, scope: jobScope, vos: jobVos, settings }), invoiceFileName(job, v)) }}
           onCertificate={async v => {

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "tsx tests/valuation.test.ts && tsx tests/boq.test.ts && tsx tests/sheet.test.ts && tsx tests/pdftable.test.ts && tsx tests/money.test.ts && tsx tests/portfolio.test.ts && tsx tests/chase.test.ts && tsx tests/certificate.test.ts && tsx tests/invoice.test.ts && tsx tests/vo.test.ts && vitest run"
+    "test": "tsx tests/valuation.test.ts && tsx tests/boq.test.ts && tsx tests/sheet.test.ts && tsx tests/pdftable.test.ts && tsx tests/money.test.ts && tsx tests/portfolio.test.ts && tsx tests/chase.test.ts && tsx tests/certificate.test.ts && tsx tests/invoice.test.ts && tsx tests/vo.test.ts && tsx tests/voregister.test.ts && vitest run"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",

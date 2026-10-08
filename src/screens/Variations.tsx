@@ -115,13 +115,14 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
 
 const statusClass: Record<VoStatus, string> = { Identified: 'b-amber', Instructed: 'b-slate', Complete: 'b-green', Rejected: 'b-red' }
 
-export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo }: { job: Job; vos: Variation[]; vals: Valuation[]; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void }) {
+export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister }: { job: Job; vos: Variation[]; vals: Valuation[]; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
   const sorted = [...vos].sort((a, b) => a.number - b.number)
   return (
     <div className="stack">
       <div className="row"><div className="grow"><div className="label bracket">Variations</div><h1 style={{ fontSize: 22 }}>{job.name}</h1></div>
-        <TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }]} /></div>
+        <TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }]} /></div>
       <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
+      {sorted.length > 0 && <button className="btn btn-secondary" onClick={onRegister}>Variation register (PDF)</button>}
       {sorted.length === 0 && <div className="card empty">No variations yet. Log extras the moment you spot them.</div>}
       {sorted.map(v => {
         const priced = v.qty != null && v.rate != null
