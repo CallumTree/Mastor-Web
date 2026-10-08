@@ -90,7 +90,7 @@ describe('College Park, end to end', () => {
     click(screen.getByText('Replace rotten joists under bath'))
     type('Qty', '2'); type('Rate (£)', '85.50'); type('SoR code', '3051AB')
     click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(screen.queryByText(/^price it$/i)).toBeNull())
+    await waitFor(() => expect(screen.queryByText(/next: price it/i)).toBeNull())
     click(screen.getByRole('button', { name: /add to valuation/i }))
     await waitFor(() => expect(screen.getAllByText('VAL II').length).toBeGreaterThan(0))
     nav('vals')

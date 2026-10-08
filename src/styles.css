@@ -424,3 +424,32 @@ body {
 .wordmark { display: inline-flex; align-items: baseline; justify-content: center; }
 .wordmark > span { display: inline-block; }
 .splash-word .wm-glyph { margin-right: 0; }
+
+/* ---- Variations: reads like the Variation Register ---- */
+.vo-sum { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--ink); background: var(--paper-2); }
+@media (min-width: 560px) { .vo-sum { grid-template-columns: repeat(3, 1fr); } }
+.vo-sum-cell { padding: 9px 12px 10px; border-right: 1px solid var(--ink-line); border-bottom: 1px solid var(--ink-line); min-width: 0; }
+.vo-sum-cell .label { font-size: 9px; }
+.vo-sum-cell .n { font-size: 16px; margin-top: 3px; color: var(--ink); }
+.vo-sum-cell small { display: block; font-size: 11px; color: var(--ink-muted); margin-top: 1px; }
+.vo-sum-cell.nil .n { color: var(--ink-muted); }
+.vo-sum-cell.total { background: rgba(201,123,63,.07); }
+.vo-sum-cell.total .n { color: var(--copper-ink); font-weight: 600; }
+.vo-list { padding: 0 !important; overflow: hidden; }
+.vo-head { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; padding: 9px 14px 7px; border-bottom: 1px solid var(--ink); font-family: var(--classic); font-weight: 600; font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-muted); }
+.vo-head span:last-child { text-align: right; }
+.vo-row { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; padding: 12px 14px; cursor: pointer; }
+.vo-row + .vo-row { border-top: 1px solid var(--ink-line); }
+.vo-row:active { background: rgba(201,123,63,.06); }
+.vo-row.rejected { opacity: .55; }
+.vo-row.rejected .vo-desc { text-decoration: line-through; text-decoration-color: var(--ink-line); }
+.vo-ref { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.vo-ref .ref-roman { color: var(--copper-ink); font-size: 14px; }
+.vo-ref small { font-size: 10px; color: var(--ink-muted); }
+.vo-main { min-width: 0; }
+.vo-desc { font-weight: 600; line-height: 1.3; }
+.vo-meta { font-size: 12px; color: var(--ink-muted); margin-top: 3px; }
+.vo-cref { color: var(--ink); font-weight: 600; }
+.vo-status { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 7px; }
+.vo-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
+.vo-amt .mono { font-size: 14px; white-space: nowrap; }

@@ -4,6 +4,7 @@ import { Tick, ValBadge } from './Scope'
 import { lockedIn } from '../lib/valuation'
 import { CourtLine, voCourt } from '../lib/chase'
 import { TabMenu } from '../components/TabMenu'
+import { registerSummary } from '../lib/voRegister'
 import { ukDate as ukd } from '../lib/format'
 import { Field, Sheet } from '../components/Ui'
 import { lineValue } from '../lib/valuation'
@@ -115,36 +116,69 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
 
 const statusClass: Record<VoStatus, string> = { Identified: 'b-amber', Instructed: 'b-slate', Complete: 'b-green', Rejected: 'b-red' }
 
+/** The VO tab reads like the Variation Register: summary strip, then one ruled schedule. */
 export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister }: { job: Job; vos: Variation[]; vals: Valuation[]; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
   const sorted = [...vos].sort((a, b) => a.number - b.number)
+  const sum = registerSummary(job, vos, vals)
+  const short: Record<string, string> = { claimed: 'Claimed', ready: 'Ready to claim', instructed: 'Instructed', awaiting: 'With council', rejected: 'Rejected' }
   return (
     <div className="stack">
       <div className="row"><div className="grow"><div className="label bracket">Variations</div><h1 style={{ fontSize: 22 }}>{job.name}</h1></div>
         <TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }]} /></div>
-      <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
-      {sorted.length > 0 && <button className="btn btn-secondary" onClick={onRegister}>Variation register (PDF)</button>}
-      {sorted.length === 0 && <div className="card empty">No variations yet. Log extras the moment you spot them.</div>}
-      {sorted.map(v => {
-        const priced = v.qty != null && v.rate != null
-        return (
-          <div key={v.id} className="card" style={{ cursor: 'pointer' }} onClick={() => onEdit(v)}>
-            <div className="row">
-              {priced && v.status !== 'Rejected' && <Tick on={!!v.valuationId} locked={!!lockedIn(v, vals)} onClick={() => onToggle(v)} />}
-              <span className="ref-roman" style={{ color: 'var(--copper)', fontWeight: 500 }}>{voRef(v.number)}</span>
-              <span className={'badge ' + statusClass[v.status]}>{v.status}</span>
-              <ValBadge val={vals.find(x => x.id === v.valuationId)} />
-              <span className="grow" />
-              <span className="mono" style={{ color: priced ? 'var(--ink)' : 'var(--ink-muted)' }}>{priced ? money(lineValue(v.qty, v.rate)) : '—'}</span>
+      {sorted.length > 0 && (
+        <div className="vo-sum" aria-label="Variation summary">
+          {sum.rows.map(r => (
+            <div key={r.key} className={'vo-sum-cell' + (r.count ? '' : ' nil')}>
+              <div className="label">{short[r.key]}</div>
+              <div className="mono n">{money(r.base)}</div>
+              <small>{r.count} VO{r.count === 1 ? '' : 's'}{r.unpriced ? ` · ${r.unpriced} unpriced` : ''}</small>
             </div>
-            <div style={{ fontWeight: 600, marginTop: 6 }}>{v.description}</div>
-            <div className="muted" style={{ fontSize: 13 }}>
-              {v.room} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{v.rate != null ? ` @ ${money(v.rate)}` : ''} · {ukDate(v.dateRaised)}
-            </div>
-            <div style={{ marginTop: 6 }}><CourtLine c={voCourt(v, vals)} /></div>
-            {v.photoIds.length > 0 && <div className="thumbs" style={{ marginTop: 8 }}>{v.photoIds.map(id => <Thumb key={id} id={id} />)}</div>}
+          ))}
+          <div className="vo-sum-cell total">
+            <div className="label">Total incl. uplifts</div>
+            <div className="mono n">{money(sum.gross)}</div>
+            <small>{money(sum.base)} base{sum.overdue ? ` · ${sum.overdue} overdue` : ''}</small>
           </div>
-        )
-      })}
+        </div>
+      )}
+      <div className="row" style={{ gap: 8 }}>
+        <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
+        {sorted.length > 0 && <button className="btn btn-secondary" style={{ flex: '0 0 auto', width: 'auto' }} onClick={onRegister}>Register PDF</button>}
+      </div>
+      {sorted.length === 0 && <div className="card empty">No variations yet. Log extras the moment you spot them.</div>}
+      {sorted.length > 0 && (
+        <div className="card vo-list">
+          <div className="vo-head"><span>VO</span><span>Description · status</span><span>Value</span></div>
+          {sorted.map(v => {
+            const priced = v.qty != null && v.rate != null
+            const c = voCourt(v, vals)
+            const evidence = [v.photoIds.length ? `${v.photoIds.length} photo${v.photoIds.length === 1 ? '' : 's'}` : '', (v.attachments?.length ?? 0) ? `${v.attachments!.length} doc${v.attachments!.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')
+            return (
+              <div key={v.id} className={'vo-row' + (v.status === 'Rejected' ? ' rejected' : '')} onClick={() => onEdit(v)}>
+                <div className="vo-ref">
+                  <span className="ref-roman">{voRef(v.number)}</span>
+                  {v.code && <small className="mono">{v.code}</small>}
+                  {priced && v.status !== 'Rejected' && <Tick on={!!v.valuationId} locked={!!lockedIn(v, vals)} onClick={() => onToggle(v)} />}
+                </div>
+                <div className="vo-main">
+                  <div className="vo-desc clamp2">{v.description}</div>
+                  <div className="vo-meta">
+                    {v.room || '—'} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced'}
+                  </div>
+                  <div className="vo-meta">
+                    <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef || 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
+                  </div>
+                  <div className="vo-status"><span className={'badge ' + statusClass[v.status]}>{v.status}</span>{v.status !== 'Rejected' && <CourtLine c={c.who === 'us' ? { ...c, who: 'none', text: 'Next: ' + c.text.replace(/^(Complete|Instructed) — /, '').replace(/^./, x => x.toLowerCase()) } : c} />}</div>
+                </div>
+                <div className="vo-amt">
+                  <span className="mono">{priced ? money(lineValue(v.qty, v.rate)) : '—'}</span>
+                  <ValBadge val={vals.find(x => x.id === v.valuationId)} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
