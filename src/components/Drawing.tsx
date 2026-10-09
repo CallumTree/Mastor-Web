@@ -15,13 +15,15 @@ export function Drawing({ id, type, active, bare = false, paper = false }: { id:
   // Each type's first drawing is its detailed sketch-style one
   const drawing = set[0]
   const fid = 'glow' + hash(id)
-  // Constant travel speed (~120 drawing units/sec) and a fixed-size head/tail, whatever the line length.
+  // The survey: the light travels the linework ONCE (2.4–3.6s whatever the line length), then fades.
+  // It replays only when the drawing is mounted again (a different job), never on a loop.
   const len = drawing.length
-  const dur = Math.max(10, len / 120)
-  const dash = (2.5 / len) * 1000            // head segment ~2.5 units long, in pathLength units
+  const dur = Math.min(3.6, Math.max(2.4, len / 450))
+  const dash = ((paper ? 7 : 2.5) / len) * 1000   // head length in drawing units (longer on paper, where light reads less)
   const dasharray = `${dash} ${1000 - dash}`
   const tail = 12
-  const step = dur * (dash / 1000)           // one dash-length of time between tail segments
+  const step = dur * (dash / 1000) * 3       // spacing between tail segments (scaled with the faster pass)
+  const run = (delay: number) => ({ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `${delay}s` })
 
   return (
     <svg viewBox="0 0 400 200" preserveAspectRatio={bare ? 'xMidYMax meet' : 'xMidYMid slice'} aria-hidden>
@@ -41,13 +43,13 @@ export function Drawing({ id, type, active, bare = false, paper = false }: { id:
           <defs>
             <filter id={fid} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" /></filter>
           </defs>
-          <path d={drawing.d} pathLength={1000} className="beam" fill="none" stroke={paper ? "#E8A868" : "#FFD29A"} strokeOpacity={paper ? .7 : 1} strokeWidth="3.5" strokeLinecap="round"
-            filter={`url(#${fid})`} style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${tail * step}s` }} />
+          <path d={drawing.d} pathLength={1000} className="beam" fill="none" stroke={paper ? "#C97B3F" : "#FFD29A"} strokeOpacity={paper ? .55 : 1} strokeWidth={paper ? 5 : 3.5} strokeLinecap="round"
+            filter={`url(#${fid})`} style={run(0)} />
           {Array.from({ length: tail + 1 }, (_, k) => (
             <path key={k} d={drawing.d} pathLength={1000} className="beam" fill="none"
-              stroke={k === tail ? (paper ? '#C97B3F' : '#FFF4E4') : (paper ? '#D98A4C' : '#E8A868')} strokeOpacity={k === tail ? 1 : 0.08 + 0.6 * (k / tail)}
-              strokeWidth={k === tail ? 1.3 : 0.9} strokeLinecap="round" strokeLinejoin="round"
-              style={{ strokeDasharray: dasharray, animationDuration: `${dur}s`, animationDelay: `-${k * step}s` }} />
+              stroke={k === tail ? (paper ? '#8F4E1F' : '#FFF4E4') : (paper ? '#C97B3F' : '#E8A868')} strokeOpacity={k === tail ? 1 : 0.08 + 0.6 * (k / tail)}
+              strokeWidth={k === tail ? (paper ? 2 : 1.3) : (paper ? 1.4 : 0.9)} strokeLinecap="round" strokeLinejoin="round"
+              style={run((tail - k) * step)} />
           ))}
         </>
       )}

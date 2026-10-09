@@ -26,4 +26,11 @@ function Root() {
   return <>{<Gate><App /></Gate>}{splash && <Splash onDone={() => setSplash(false)} />}<UpdateBar /></>
 }
 window.addEventListener('hashchange', () => location.reload())
+// The beam goes once round a main button when it's pressed — motion that means "got it", not decoration
+document.addEventListener('pointerdown', e => {
+  const b = (e.target as Element | null)?.closest?.('.btn-primary:not(:disabled)')
+  if (!b || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  b.classList.remove('sweep'); void (b as HTMLElement).offsetWidth; b.classList.add('sweep')
+}, { capture: true, passive: true })
+document.addEventListener('animationend', e => { if (e.animationName === 'spinAng') (e.target as Element).classList.remove('sweep') }, true)
 createRoot(document.getElementById('root')!).render(<StrictMode><Root /></StrictMode>)

@@ -155,9 +155,9 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 .tile.warn .n { color: var(--copper-light); }
 .tile-dark { background: rgba(26,26,46,.55); }
 
-/* Tracing beam: a dash travels the full length of the drawing's linework and loops */
-@keyframes trace { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
-.beam { animation: trace linear infinite; stroke-dasharray: 3 997; }
+/* The survey: a light travels the drawing's linework once, then fades — the house has been surveyed */
+@keyframes trace { 0% { stroke-dashoffset: 1000; opacity: 0; } 4% { opacity: 1; } 88% { opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.beam { animation: trace cubic-bezier(.45, .05, .35, 1) 1 both; stroke-dasharray: 3 997; }
 @media (prefers-reduced-motion: reduce) { .beam { animation: none; display: none; } }
 /* reading indicator — the beam, on its own */
 @keyframes orbit { from { transform: rotate(0deg) translateX(22px) rotate(0deg); } to { transform: rotate(360deg) translateX(22px) rotate(-360deg); } }
@@ -189,7 +189,7 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 
 /* B · Beam — a bright point runs the edge of the primary button */
 @property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
-@keyframes spinAng { to { --ang: 360deg; } }
+@keyframes spinAng { from { --ang: 200deg; } to { --ang: 560deg; } }
 .dB { position: relative; min-height: 52px; padding: 0 22px; border-radius: 12px; border: none; font-weight: 600; font-size: 15px; background: var(--charcoal-mid); color: var(--cream-text); isolation: isolate; }
 .dB::before { content: ""; position: absolute; inset: -1.5px; border-radius: 13.5px; z-index: -2;
   background: conic-gradient(from var(--ang), transparent 0 78%, rgba(232,168,104,.15) 84%, #E8A868 94%, #FFF4E4 97%, transparent 100%); animation: spinAng 3.2s linear infinite; }
@@ -250,7 +250,8 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 .btn-primary { background: transparent; color: #1A1A2E; border: none; }
 .btn-primary::before { content: ""; position: absolute; inset: -1.5px; border-radius: 13.5px; z-index: -2;
   background: conic-gradient(from var(--ang), transparent 0 78%, rgba(232,168,104,.15) 84%, #E8A868 94%, #FFF4E4 97%, transparent 100%);
-  animation: spinAng 3.2s linear infinite; }
+  --ang: 200deg; }   /* the edge light rests at the lower left… */
+.btn-primary.sweep::before { animation: spinAng .75s cubic-bezier(.16, 1, .3, 1) 1; }   /* …and goes once round when pressed */
 .btn-primary::after { content: ""; position: absolute; inset: 0; border-radius: var(--r-md); z-index: -1; background: linear-gradient(180deg, #D98A4C, #C07034); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
 .btn-primary:disabled { opacity: .45; } .btn-primary:disabled::before { animation: none; background: none; }
 @media (prefers-reduced-motion: reduce) { .btn-primary::before { animation: none; } }
@@ -413,7 +414,7 @@ body {
 .splash-arch .draw { fill: none; stroke: #C97B3F; stroke-width: 1.6; stroke-linecap: square; stroke-dasharray: 1; stroke-dashoffset: 1; animation: sp-draw .95s cubic-bezier(.6,.05,.3,1) forwards; }
 .splash-arch .d2 { stroke-width: 1; animation-delay: .1s; animation-duration: .7s; }
 .splash-arch .d3 { stroke-width: .8; stroke-opacity: .55; animation-delay: .3s; }
-.splash-arch .keystone { fill: #C97B3F; opacity: 0; transform: translateY(-26px); animation: sp-key .42s cubic-bezier(.3,1.4,.5,1) .92s forwards; filter: drop-shadow(0 0 6px rgba(232,168,104,.55)); }
+.splash-arch .keystone { fill: #C97B3F; opacity: 0; transform: translateY(-26px); animation: sp-key .38s cubic-bezier(.55,0,.85,.35) .92s forwards; filter: drop-shadow(0 0 6px rgba(232,168,104,.55)); }
 .splash-word { display: flex; gap: .34em; font-family: var(--classic, 'Cinzel', Georgia, serif); font-weight: 600; font-size: 34px; color: #F5F0E8; padding-left: .34em; }
 .splash-word span { opacity: 0; transform: translateY(14px); animation: sp-rise .55s cubic-bezier(.2,.8,.2,1) forwards; }
 .splash-dim { position: relative; display: flex; align-items: center; width: 230px; height: 14px; margin-top: 16px; }
@@ -562,3 +563,18 @@ span.tick-col { pointer-events: none !important; }
 label.row { cursor: pointer; }
 .update-bar { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: var(--paper-2); color: var(--ink); border: 1px solid var(--ink); box-shadow: 0 8px 24px -10px rgba(26,26,46,.35); font-size: 14px; font-weight: 600; }
 .update-bar .btn { width: auto; min-height: 44px; padding: 0 16px; }
+
+/* ================= MOTION =================
+   Forms rise from the bottom edge they're anchored to; the backdrop dims with them. Exits are instant. */
+@keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes dim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.sheet-bg { animation: dim-in .2s ease-out both; }
+.sheet { animation: sheet-in .28s cubic-bezier(.16, 1, .3, 1) both; }
+.tick:active .tick-box { transform: scale(.92); }
+.tick-box { transition: box-shadow .2s, background .2s, transform .1s; }
+@media (prefers-reduced-motion: reduce) {
+  .sheet { animation: fade-in .15s ease-out both; }
+  .btn-primary.sweep::before { animation: none; }
+  .tick:active .tick-box { transform: none; }
+}

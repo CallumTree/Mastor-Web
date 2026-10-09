@@ -23,7 +23,7 @@ function Backdrop({ job }: { job: Job | null }) {
       {bg.loaded && !jobPhoto && <div style={{ position: 'absolute', zIndex: 3, right: 10, bottom: 4, fontSize: 11, color: 'rgba(245,240,232,.7)' }}>Photo: {PHOTOS.cover.credit}</div>}
       {!bg.loaded && (
         <div className="bg-drawing">
-          <Drawing id={job?.id ?? 'mastor'} type="PPR" active={job ? job.status === 'Active' : true} bare />
+          <Drawing key={job?.id ?? 'mastor'} id={job?.id ?? 'mastor'} type="PPR" active={job ? job.status === 'Active' : true} bare />
         </div>
       )}
       {bg.trying && bg.img && <><img className={'bg-photo' + (bg.loaded ? '' : ' pending')} src={bg.img.src} onLoad={bg.img.onLoad} onError={bg.img.onError} alt="" />{bg.loaded && <div className="shade" />}</>}
