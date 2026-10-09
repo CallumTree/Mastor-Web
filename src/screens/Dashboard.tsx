@@ -10,7 +10,7 @@ import { IconBack } from '../components/Icons'
  * green = certified (done), yellow = in a valuation (needs doing), outline = still to claim.
  */
 // site-sign palette: green = certified, yellow = in valuation, ink outline = still to claim
-const INK = '#121316', MUTED = '#5B6068', HAIR = 'rgba(18,19,22,.16)', COPPER = '#0B7A3E', COPPER_INK = '#121316'
+const INK = '#121316', MUTED = '#565B63', HAIR = 'rgba(18,19,22,.16)', COPPER = '#0B7A3E', COPPER_INK = '#121316'
 const k = (n: number) => (Math.abs(n) >= 1e6 ? `£${(n / 1e6).toFixed(2)}m` : Math.abs(n) >= 1e4 ? `£${(n / 1e3).toFixed(1)}k` : money(n).replace(/\.00$/, ''))
 
 const Hatch = ({ id }: { id: string }) => (

@@ -1,0 +1,553 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T20:41:29+00:00",
+  "title": "Design System: Mastor",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Site Ink",
+        "canonical": "#121316",
+        "oklch": "oklch(18.7% 0.006 271)",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#232427",
+          "#3E4043",
+          "#5C5D61",
+          "#7C7D81",
+          "#9D9EA2",
+          "#C2C4C8",
+          "#EDEEF3"
+        ],
+        "cssVar": "--ink"
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Slate Ink",
+        "canonical": "#33373D",
+        "oklch": "oklch(33.5% 0.012 258)",
+        "tonalRamp": [
+          "#080B10",
+          "#21242A",
+          "#3C4046",
+          "#5A5E64",
+          "#797E84",
+          "#9A9FA6",
+          "#BFC4CC",
+          "#EAEFF7"
+        ],
+        "cssVar": "--ink-2"
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#565B63",
+        "oklch": "oklch(47.0% 0.014 260)",
+        "tonalRamp": [
+          "#080B11",
+          "#20242B",
+          "#3B4048",
+          "#595E66",
+          "#787E86",
+          "#999FA8",
+          "#BFC4CE",
+          "#E9EFF8"
+        ],
+        "cssVar": "--ink-muted"
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Concrete",
+        "canonical": "#E9ECEE",
+        "oklch": "oklch(94.1% 0.004 236)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#222426",
+          "#3E4042",
+          "#5B5E60",
+          "#7B7E7F",
+          "#9C9FA1",
+          "#C2C4C6",
+          "#ECEFF1"
+        ],
+        "cssVar": "--ground"
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel White",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#7D7D7D",
+          "#9E9E9E",
+          "#C4C4C4",
+          "#EEEEEE"
+        ],
+        "cssVar": "--panel"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#C9CED3",
+        "oklch": "oklch(84.9% 0.009 248)",
+        "tonalRamp": [
+          "#080C0F",
+          "#212428",
+          "#3C4044",
+          "#5A5E62",
+          "#797E82",
+          "#9A9FA4",
+          "#C0C5CA",
+          "#EAEFF4"
+        ],
+        "cssVar": "--line"
+      },
+      "row-open": {
+        "role": "neutral",
+        "displayName": "Open Row",
+        "canonical": "#F3F5F6",
+        "oklch": "oklch(96.9% 0.003 229)",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232425",
+          "#3E4041",
+          "#5C5E5F",
+          "#7C7D7E",
+          "#9D9FA0",
+          "#C2C4C5",
+          "#EDEFF0"
+        ],
+        "cssVar": "--row-open"
+      },
+      "shell": {
+        "role": "neutral",
+        "displayName": "Shell Black",
+        "canonical": "#121316",
+        "oklch": "oklch(18.7% 0.006 271)",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#232427",
+          "#3E4043",
+          "#5C5D61",
+          "#7C7D81",
+          "#9D9EA2",
+          "#C2C4C8",
+          "#EDEEF3"
+        ],
+        "cssVar": "--shell"
+      },
+      "shell-2": {
+        "role": "neutral",
+        "displayName": "Shell Raised",
+        "canonical": "#1D2024",
+        "oklch": "oklch(24.2% 0.009 256)",
+        "tonalRamp": [
+          "#090B0F",
+          "#212428",
+          "#3D4044",
+          "#5A5E63",
+          "#7A7E83",
+          "#9B9FA4",
+          "#C0C4CA",
+          "#EBEFF4"
+        ],
+        "cssVar": "--shell-2"
+      },
+      "shell-line": {
+        "role": "neutral",
+        "displayName": "Shell Rule",
+        "canonical": "#33373D",
+        "oklch": "oklch(33.5% 0.012 258)",
+        "tonalRamp": [
+          "#080B10",
+          "#21242A",
+          "#3C4046",
+          "#5A5E64",
+          "#797E84",
+          "#9A9FA6",
+          "#BFC4CC",
+          "#EAEFF7"
+        ],
+        "cssVar": "--shell-line"
+      },
+      "shell-muted": {
+        "role": "neutral",
+        "displayName": "Shell Muted",
+        "canonical": "#B4B9C0",
+        "oklch": "oklch(78.4% 0.011 257)",
+        "tonalRamp": [
+          "#080B10",
+          "#21242A",
+          "#3C4046",
+          "#5A5E64",
+          "#797E84",
+          "#9A9FA6",
+          "#BFC4CC",
+          "#EAEFF6"
+        ],
+        "cssVar": "--shell-muted"
+      },
+      "sign-yellow": {
+        "role": "secondary",
+        "displayName": "Sign Yellow",
+        "canonical": "#FFCD00",
+        "oklch": "oklch(86.7% 0.177 91)",
+        "tonalRamp": [
+          "#1D0200",
+          "#3D1A00",
+          "#603600",
+          "#835400",
+          "#A57500",
+          "#C69800",
+          "#E8C041",
+          "#FFEC8D"
+        ],
+        "cssVar": "--yellow"
+      },
+      "sign-red": {
+        "role": "secondary",
+        "displayName": "Stop Red",
+        "canonical": "#C1121F",
+        "oklch": "oklch(51.6% 0.202 26)",
+        "tonalRamp": [
+          "#2D0000",
+          "#560000",
+          "#810003",
+          "#AE121C",
+          "#D83D3B",
+          "#F66D65",
+          "#FF9C92",
+          "#FFCFC4"
+        ],
+        "cssVar": "--red"
+      },
+      "sign-green": {
+        "role": "secondary",
+        "displayName": "Done Green",
+        "canonical": "#0B7A3E",
+        "oklch": "oklch(50.9% 0.130 152)",
+        "tonalRamp": [
+          "#001600",
+          "#003300",
+          "#005117",
+          "#007136",
+          "#329355",
+          "#57B575",
+          "#7FDC9A",
+          "#B0FFC7"
+        ],
+        "cssVar": "--green"
+      },
+      "sign-blue": {
+        "role": "primary",
+        "displayName": "Next-Step Blue",
+        "canonical": "#0A55B5",
+        "oklch": "oklch(46.8% 0.167 258)",
+        "tonalRamp": [
+          "#00003C",
+          "#001966",
+          "#003793",
+          "#1059B9",
+          "#367BDE",
+          "#589DFF",
+          "#87C5FF",
+          "#BCF1FF"
+        ],
+        "cssVar": "--blue"
+      },
+      "sign-blue-press": {
+        "role": "primary",
+        "displayName": "Pressed Blue",
+        "canonical": "#08458F",
+        "oklch": "oklch(40.2% 0.136 257)",
+        "tonalRamp": [
+          "#00003C",
+          "#001B63",
+          "#003C85",
+          "#245CA8",
+          "#457DCC",
+          "#65A0F1",
+          "#8AC6FF",
+          "#BBF1FF"
+        ],
+        "cssVar": "--blue-press"
+      },
+      "disabled": {
+        "role": "neutral",
+        "displayName": "Disabled Grey",
+        "canonical": "#D9DDE1",
+        "oklch": "oklch(89.6% 0.007 248)",
+        "tonalRamp": [
+          "#090B0E",
+          "#212427",
+          "#3D4043",
+          "#5B5E61",
+          "#7A7E81",
+          "#9B9FA3",
+          "#C1C5C8",
+          "#EBEFF3"
+        ]
+      },
+      "arch-copper": {
+        "role": "tertiary",
+        "displayName": "Arch Copper",
+        "canonical": "#C97B3F",
+        "oklch": "oklch(65.5% 0.123 56)",
+        "tonalRamp": [
+          "#2A0000",
+          "#4C0300",
+          "#6D2700",
+          "#904700",
+          "#B36729",
+          "#D8894D",
+          "#FFAF73",
+          "#FFDA9F"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Job name in the black job bar."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Uppercase tab titles."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Big condensed money figures on job home, summary strips and the dashboard board."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Action-plate headings, VO descriptions, button text."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text, hints and metadata."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase condensed labels, column heads, nav labels; section headings at 15px in ink."
+      },
+      "plate": {
+        "displayName": "Plate",
+        "purpose": "Sign plates and badges (13px)."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "JetBrains Mono for contract refs, SoR codes and council refs only."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "Cinzel 600, the MΛSTΘR wordmark and opening titles only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "outline-inset",
+        "value": "inset 0 0 0 1.5px #121316",
+        "purpose": "Stroke for the neutral wait plate and slate badge only; not elevation. The system has no drop shadows."
+      },
+      {
+        "name": "scrim",
+        "value": "rgba(12,13,15,.6)",
+        "purpose": "Sheet backdrop."
+      }
+    ],
+    "motion": [
+      {
+        "name": "press",
+        "value": "transform translateY(1px) .08s",
+        "purpose": "Button press; off under reduced motion."
+      },
+      {
+        "name": "state",
+        "value": "background .12s",
+        "purpose": "Button and tick-box fill changes."
+      },
+      {
+        "name": "sheet-in",
+        "value": ".26s cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Sheets rise from the bottom edge on a phone; fade-and-lift 16px on desktop; plain .15s fade under reduced motion."
+      },
+      {
+        "name": "scrim-in",
+        "value": ".2s ease-out",
+        "purpose": "Sheet backdrop fade."
+      },
+      {
+        "name": "arch-draw",
+        "value": ".95s cubic-bezier(.6,.05,.3,1)",
+        "purpose": "Opening titles: copper arch stroke draw, keystone drop, letters rise, yellow dimension line grows."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "zoom",
+        "value": "300px"
+      },
+      {
+        "name": "narrow",
+        "value": "360px"
+      },
+      {
+        "name": "register-indent",
+        "value": "420px"
+      },
+      {
+        "name": "strip-wide",
+        "value": "560px"
+      },
+      {
+        "name": "desktop-rail",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Next-Step Blue; the one main action in a view.",
+      "html": "<button class=\"ds-btn ds-btn-primary\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M10 4v12M4 10h12\" stroke=\"currentColor\" stroke-width=\"2.4\" fill=\"none\"/></svg>New job</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 18px; border-radius: 4px; border: 2px solid transparent; font-family: Barlow, system-ui, sans-serif; font-weight: 700; font-size: 16px; letter-spacing: .01em; cursor: pointer; transition: background .12s, transform .08s; } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid var(--blue, #0A55B5); outline-offset: 2px; } .ds-btn-primary { background: var(--blue, #0A55B5); color: #fff; } .ds-btn-primary:hover { background: var(--blue-press, #08458F); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "White with a 2px ink outline; every action that is not the main one.",
+      "html": "<button class=\"ds-btn-secondary\">Register PDF</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 18px; border-radius: 4px; border: 2px solid var(--ink, #121316); background: var(--panel, #fff); color: var(--ink, #121316); font-family: Barlow, system-ui, sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; transition: background .12s, transform .08s; } .ds-btn-secondary:hover { background: var(--row-open, #F3F5F6); } .ds-btn-secondary:active { transform: translateY(1px); } .ds-btn-secondary:focus-visible { outline: 3px solid var(--blue, #0A55B5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Sign Plates",
+      "kind": "chip",
+      "refersTo": "plate-do",
+      "description": "Status as a site sign: stop, warn, ok, the blue next step, and the outlined wait plate.",
+      "html": "<div class=\"ds-plates\"><span class=\"ds-plate ds-plate-stop\"><svg viewBox=\"0 0 20 20\" width=\"14\" height=\"14\" aria-hidden=\"true\"><circle cx=\"10\" cy=\"10\" r=\"9.5\" fill=\"#fff\"/><rect x=\"4.5\" y=\"8.4\" width=\"11\" height=\"3.2\" fill=\"#C1121F\"/></svg><span>Overdue 11 days</span></span><span class=\"ds-plate ds-plate-warn\"><svg viewBox=\"0 0 20 20\" width=\"14\" height=\"14\" aria-hidden=\"true\"><path d=\"M10 1.2 19.2 18H.8z\" fill=\"#FFCD00\" stroke=\"#121316\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/><rect x=\"9.1\" y=\"6.6\" width=\"1.8\" height=\"6\" fill=\"#121316\"/><rect x=\"9.1\" y=\"14\" width=\"1.8\" height=\"1.8\" fill=\"#121316\"/></svg><span>2 unpriced VOs</span></span><span class=\"ds-plate ds-plate-ok\"><svg viewBox=\"0 0 20 20\" width=\"14\" height=\"14\" aria-hidden=\"true\"><rect x=\".5\" y=\".5\" width=\"19\" height=\"19\" rx=\"2\" fill=\"#fff\"/><path d=\"M5.2 10.2 8.4 13.4 14.8 6.8\" fill=\"none\" stroke=\"#0B7A3E\" stroke-width=\"2.2\" stroke-linecap=\"square\"/></svg><span>Claimed in VAL I</span></span><span class=\"ds-plate ds-plate-do\"><svg viewBox=\"0 0 20 20\" width=\"14\" height=\"14\" aria-hidden=\"true\"><path d=\"M3 10h11M10 5.5 14.5 10 10 14.5\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2.4\" stroke-linecap=\"square\"/></svg><span>Price it</span></span><span class=\"ds-plate ds-plate-wait\"><span>With client · 4 days</span></span></div>",
+      "css": ".ds-plates { display: flex; flex-wrap: wrap; gap: 6px; } .ds-plate { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 3px 6px; border-radius: 3px; font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; line-height: 1.2; } .ds-plate-stop { background: var(--red, #C1121F); color: #fff; } .ds-plate-warn { background: var(--yellow, #FFCD00); color: var(--ink, #121316); } .ds-plate-ok { background: var(--green, #0B7A3E); color: #fff; } .ds-plate-do { background: var(--blue, #0A55B5); color: #fff; } .ds-plate-wait { background: var(--panel, #fff); color: var(--ink, #121316); box-shadow: inset 0 0 0 1.5px var(--ink, #121316); padding-left: 9px; }"
+    },
+    {
+      "name": "Action Plate",
+      "kind": "custom",
+      "refersTo": "action-plate",
+      "description": "Full-width tappable sign under \"Action needed\": red first, then yellow, then green.",
+      "html": "<div class=\"ds-acts\"><button class=\"ds-act ds-act-stop\"><svg viewBox=\"0 0 20 20\" width=\"22\" height=\"22\" aria-hidden=\"true\"><circle cx=\"10\" cy=\"10\" r=\"9.5\" fill=\"#fff\"/><rect x=\"4.5\" y=\"8.4\" width=\"11\" height=\"3.2\" fill=\"#C1121F\"/></svg><span class=\"ds-act-txt\"><b>No PO number</b><small>Invoices will be rejected without it</small></span><svg width=\"10\" height=\"16\" viewBox=\"0 0 10 16\" aria-hidden=\"true\"><path d=\"M2 2l6 6-6 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"square\"/></svg></button><button class=\"ds-act ds-act-warn\"><svg viewBox=\"0 0 20 20\" width=\"22\" height=\"22\" aria-hidden=\"true\"><path d=\"M10 1.2 19.2 18H.8z\" fill=\"#FFCD00\" stroke=\"#121316\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/><rect x=\"9.1\" y=\"6.6\" width=\"1.8\" height=\"6\" fill=\"#121316\"/><rect x=\"9.1\" y=\"14\" width=\"1.8\" height=\"1.8\" fill=\"#121316\"/></svg><span class=\"ds-act-txt\"><b>2 variations unpriced</b><small>Add SoR code and rate so they can be claimed</small></span><svg width=\"10\" height=\"16\" viewBox=\"0 0 10 16\" aria-hidden=\"true\"><path d=\"M2 2l6 6-6 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"square\"/></svg></button></div>",
+      "css": ".ds-acts { display: grid; gap: 4px; } .ds-act { display: flex; width: 100%; align-items: center; gap: 12px; padding: 14px; min-height: 64px; border: none; border-radius: 4px; text-align: left; font-family: Barlow, system-ui, sans-serif; cursor: pointer; } .ds-act:hover { filter: brightness(.94); } .ds-act:focus-visible { outline: 3px solid var(--blue, #0A55B5); outline-offset: 2px; } .ds-act-stop { background: var(--red, #C1121F); color: #fff; } .ds-act-warn { background: var(--yellow, #FFCD00); color: var(--ink, #121316); } .ds-act-txt { flex: 1; min-width: 0; } .ds-act-txt b { display: block; font-weight: 700; font-size: 16px; line-height: 1.25; } .ds-act-txt small { display: block; font-size: 14px; font-weight: 500; margin-top: 2px; }"
+    },
+    {
+      "name": "Figures Strip",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Three ruled condensed figures on a white panel, with an honest \"not priced\" note.",
+      "html": "<div class=\"ds-figs\"><div class=\"ds-fig\"><div class=\"ds-fig-n\">£48,250</div><div class=\"ds-fig-l\">Contract</div></div><div class=\"ds-fig\"><div class=\"ds-fig-n\">£2,973</div><div class=\"ds-fig-l\">Certified</div></div><div class=\"ds-fig\"><div class=\"ds-fig-n\">£119</div><div class=\"ds-fig-l\">Variations</div><span class=\"ds-fig-note\">+ 2 not priced</span></div></div>",
+      "css": ".ds-figs { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); background: var(--panel, #fff); border: 1px solid var(--line, #C9CED3); border-radius: 6px; color: var(--ink, #121316); } .ds-fig { padding: 12px 12px 13px; } .ds-fig + .ds-fig { border-left: 1px solid var(--line, #C9CED3); } .ds-fig-n { font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-weight: 700; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.01em; } .ds-fig-l { font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted, #565B63); margin-top: 6px; } .ds-fig-note { display: inline-block; margin-top: 6px; padding: 2px 7px 1px; border-radius: 3px; background: var(--yellow, #FFCD00); color: var(--ink, #121316); font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "White input, 2px hairline border turning ink on focus, label above.",
+      "html": "<label class=\"ds-field\"><span>PO number</span><input placeholder=\"Not set\" /></label>",
+      "css": ".ds-field { display: block; font-family: Barlow, system-ui, sans-serif; } .ds-field span { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2, #33373D); margin-bottom: 6px; } .ds-field input { width: 100%; box-sizing: border-box; padding: 12px; min-height: 48px; border: 2px solid var(--line, #C9CED3); border-radius: 4px; background: var(--panel, #fff); color: var(--ink, #121316); font: inherit; font-size: 16px; } .ds-field input:focus { border-color: var(--ink, #121316); outline: 3px solid var(--blue, #0A55B5); outline-offset: 1px; }"
+    },
+    {
+      "name": "Chips",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Outlined choice chips; selected fills ink.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-on\">Sign in</button><button class=\"ds-chip\">Create account</button></div>",
+      "css": ".ds-chips { display: flex; gap: 8px; flex-wrap: wrap; } .ds-chip { min-height: 44px; padding: 0 14px; border-radius: 4px; border: 2px solid var(--ink, #121316); background: var(--panel, #fff); color: var(--ink, #121316); font-family: Barlow, system-ui, sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; } .ds-chip:hover { background: var(--row-open, #F3F5F6); } .ds-chip-on, .ds-chip-on:hover { background: var(--ink, #121316); color: #fff; } .ds-chip:focus-visible { outline: 3px solid var(--blue, #0A55B5); outline-offset: 2px; }"
+    },
+    {
+      "name": "Job Bar",
+      "kind": "nav",
+      "refersTo": "job-bar",
+      "description": "Black bar: back, mono ref, job name, client and address, setup.",
+      "html": "<header class=\"ds-jbar\"><button class=\"ds-ibtn\" aria-label=\"All jobs\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path d=\"M12.5 4 6.5 10l6 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg></button><div class=\"ds-jbar-t\"><div class=\"ds-jbar-ref\">PCC/PPR/2026/114</div><div class=\"ds-jbar-name\">51 Precelly Place</div><div class=\"ds-jbar-sub\">Pembrokeshire County Council · Haverfordwest</div></div><button class=\"ds-ibtn\" aria-label=\"Job setup\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" aria-hidden=\"true\"><circle cx=\"10\" cy=\"10\" r=\"3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg></button></header>",
+      "css": ".ds-jbar { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px 18px; background: var(--shell, #121316); color: #fff; font-family: Barlow, system-ui, sans-serif; } .ds-jbar-t { flex: 1; min-width: 0; padding-top: 2px; } .ds-jbar-ref { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: var(--shell-muted, #B4B9C0); } .ds-jbar-name { font-weight: 700; font-size: 28px; line-height: 1.08; letter-spacing: -.005em; margin-top: 3px; } .ds-jbar-sub { font-size: 15px; color: var(--shell-muted, #B4B9C0); margin-top: 6px; } .ds-ibtn { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 2px solid var(--shell-line, #33373D); border-radius: 4px; background: transparent; color: #fff; cursor: pointer; } .ds-ibtn:hover { border-color: #fff; } .ds-ibtn:focus-visible { outline: 3px solid var(--yellow, #FFCD00); outline-offset: 2px; }"
+    },
+    {
+      "name": "Bottom Nav",
+      "kind": "nav",
+      "refersTo": "nav-bar",
+      "description": "Black bar, condensed labels, yellow active bar and the yellow capture key.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-b ds-on\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 11 12 4l8 7v9H4z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/></svg>Home</button><button class=\"ds-nav-b\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"6\" y=\"3\" width=\"12\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/></svg>Diary</button><button class=\"ds-nav-cap\" aria-label=\"Capture\"><span><svg width=\"22\" height=\"22\" viewBox=\"0 0 22 22\" aria-hidden=\"true\"><path d=\"M11 3v16M3 11h16\" stroke=\"currentColor\" stroke-width=\"2.6\"/></svg></span></button><button class=\"ds-nav-b\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 4h14v16H5zM8 9h8M8 13h8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/></svg>VOs</button><button class=\"ds-nav-b\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12v18H6zM9 8h6M9 12h6M9 16h3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/></svg>Vals</button></nav>",
+      "css": ".ds-nav { display: flex; height: 68px; background: var(--shell, #121316); border-top: 1px solid var(--shell-line, #33373D); } .ds-nav-b { flex: 1; position: relative; background: none; border: none; color: var(--shell-muted, #B4B9C0); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; } .ds-nav-b:hover { color: #fff; } .ds-nav-b.ds-on { color: #fff; } .ds-nav-b.ds-on::before { content: \"\"; position: absolute; top: 0; left: 16%; right: 16%; height: 4px; background: var(--yellow, #FFCD00); } .ds-nav-cap { flex: 0 0 72px; background: none; border: none; display: grid; place-items: center; cursor: pointer; } .ds-nav-cap span { width: 56px; height: 52px; border-radius: 4px; display: grid; place-items: center; background: var(--yellow, #FFCD00); color: var(--ink, #121316); } .ds-nav-cap:active span { transform: scale(.94); } .ds-nav button:focus-visible { outline: 3px solid var(--yellow, #FFCD00); outline-offset: -3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Every Status Is a Site Sign",
+    "overview": "Mastor speaks the UK safety-sign language that everyone on a building site already reads without training. Yellow means it needs doing, red means it is overdue or missing, green means it is done, and blue means the one thing to do next. A site manager squinting at a phone in glare, wearing gloves, should know what is wrong, what is owed and what to do next before reading a sentence. The world is flat and hard-edged: black shell bars, a cool concrete ground, white work panels, and solid colour plates set in condensed highway-sign capitals.\n\nDensity is working density, not airy marketing density. Figures are big and condensed, rows are ruled with hairlines, and every tap target is at least 44px (most are 48 to 64px). Nothing is decorative: no texture, no gradients, no glow, no drop shadows. Depth comes from the contrast between black bars and the white panels on concrete.\n\nThree things carry over from Mastor's earlier classical world at the user's request and live only where named: the MΛSTΘR wordmark in Cinzel, the copper Roman arch on the opening titles, and Roman numerals for valuation and VO references (VAL III, VO XII). Paper, grid backgrounds, beige, serif capitals elsewhere, and the photographic house header are retired.",
+    "keyCharacteristics": [
+      "Black shell bars (job bar, cover head, bottom nav or desktop rail) over concrete ground with white panels.",
+      "Status told by solid ISO-style sign plates, by shape as well as colour, with a spoken word for screen readers.",
+      "One blue next-step plate per record; blue buttons for the primary action only.",
+      "Barlow for reading, Barlow Condensed capitals for labels, figures and plates; JetBrains Mono only for codes and refs; Cinzel only in the wordmark.",
+      "Square-ish corners (3 to 6px), 2px ink outlines on secondary controls, no shadows."
+    ],
+    "rules": [
+      {
+        "name": "The Sign Meaning Rule",
+        "body": "Yellow is needs doing, red is overdue or missing, green is done, blue is the next step. A colour never appears for any other reason; if it isn't a status or an action, it is ink, white or concrete.",
+        "section": "colors"
+      },
+      {
+        "name": "The Yellow Is a Plate Rule",
+        "body": "Yellow is a surface, never a text colour. \"Needs doing\" as text is ink beside a yellow sign.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Blue Rule",
+        "body": "Each record carries at most one blue next-step plate, and each view region one blue primary button. Everything else is an ink outline.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three Voices Rule",
+        "body": "Barlow reads, Barlow Condensed signs, Mono codes. Cinzel exists only inside the wordmark and the opening titles.",
+        "section": "typography"
+      },
+      {
+        "name": "The Roman Ref Rule",
+        "body": "VO and valuation references are Roman numerals set in Barlow Condensed 700 (VO XII, VAL III), never in Mono and never in Cinzel.",
+        "section": "typography"
+      },
+      {
+        "name": "The Condensed Money Rule",
+        "body": "Money amounts are Barlow Condensed with tabular figures, even where the markup says mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Board Rule",
+        "body": "Nothing floats. If something needs to stand out, it gets a sign colour or a black bar, not a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** use a sign colour only for its meaning: yellow needs doing, red overdue or missing, green done, blue the next step or primary action.",
+      "**Do** put ink text on yellow and white text on red, green and blue.",
+      "**Do** pair every status colour with its shape mark (circle-bar, triangle, square-tick, circle-arrow) and a spoken word for screen readers.",
+      "**Do** give each record one blue next-step plate that names the action in plain words.",
+      "**Do** show unknowns honestly: \"Unpriced\", \"not measured\", an em dash, or a yellow \"+ N not priced\" note, never £0.",
+      "**Do** keep tap targets at 44px minimum and primary controls at 48-64px.",
+      "**Do** keep corners between 3px and 6px and outline secondary controls in 2px ink.",
+      "**Do** set money and big figures in Barlow Condensed 700 with tabular figures, and VO/VAL refs as Roman numerals in the same face."
+    ],
+    "donts": [
+      "**Don't** use drop shadows, glows, gradients or texture; the board is flat.",
+      "**Don't** use yellow as a text colour.",
+      "**Don't** use blue for status, decoration or chart fills.",
+      "**Don't** use Cinzel outside the MΛSTΘR wordmark and opening titles, or Mono for anything but codes and references.",
+      "**Don't** use copper anywhere but the opening-titles arch.",
+      "**Don't** bring back paper, grid backgrounds, beige, serif capitals or the photographic house header.",
+      "**Don't** set text below 12px, or uppercase labels below 13px; this is read outdoors in glare."
+    ]
+  }
+}

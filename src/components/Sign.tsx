@@ -19,5 +19,5 @@ export const SIGN_WORD: Record<SignKind, string> = { stop: 'Urgent', warn: 'To d
 
 /** A sign plate: solid colour, condensed capitals. `wait` is the neutral outline plate (waiting on someone else). */
 export function Plate({ kind, children }: { kind: SignKind | 'wait'; children: ReactNode }) {
-  return <span className={'plate plate-' + kind}>{kind !== 'wait' && kind !== 'do' && <SignMark kind={kind} size={14} />}{kind === 'do' && <span aria-hidden="true" className="plate-arrow">➜</span>}<span>{children}</span></span>
+  return <span className={'plate plate-' + kind}>{kind !== 'wait' && kind !== 'do' && <SignMark kind={kind} size={14} />}{kind === 'do' && <svg aria-hidden="true" className="plate-arrow" width="12" height="12" viewBox="0 0 12 12"><path d="M1 6h8.5M6 2.2 9.8 6 6 9.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" /></svg>}<span>{children}</span></span>
 }
