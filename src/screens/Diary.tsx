@@ -138,9 +138,9 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         </div>
         <div className="row" style={{ marginTop: 12 }}>
           <span className="grow" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)' }}>Labour on site</span>
-          <button aria-label="Fewer operatives" onClick={() => { const n = Math.max(0, (labour ?? 0) - 1); setLabour(n); saveDay({ labour: n }) }} style={{ width: 40, height: 40, border: '1px solid var(--ink-line)', background: 'var(--paper-2)', borderRadius: 3, fontSize: 18 }}>−</button>
+          <button aria-label="Fewer operatives" onClick={() => { const n = Math.max(0, (labour ?? 0) - 1); setLabour(n); saveDay({ labour: n }) }} className="step-btn">−</button>
           <span className="mono" style={{ width: 44, textAlign: 'center', fontSize: 20 }}>{labour ?? '—'}</span>
-          <button aria-label="More operatives" onClick={() => { const n = (labour ?? 0) + 1; setLabour(n); saveDay({ labour: n }) }} style={{ width: 40, height: 40, border: '1px solid var(--ink-line)', background: 'var(--paper-2)', borderRadius: 3, fontSize: 18 }}>+</button>
+          <button aria-label="More operatives" onClick={() => { const n = (labour ?? 0) + 1; setLabour(n); saveDay({ labour: n }) }} className="step-btn">+</button>
         </div>
         <div style={{ marginTop: 12 }}>
           <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate">

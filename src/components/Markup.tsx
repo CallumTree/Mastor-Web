@@ -78,10 +78,10 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
       </div>
       <div style={{ padding: '10px 12px calc(12px + env(safe-area-inset-bottom))', background: '#1A1A2E' }}>
         <div className="row" style={{ justifyContent: 'center', gap: 10, marginBottom: 10 }}>
-          {COLOURS.map(c => <button key={c} aria-label={`Colour ${c}`} onClick={() => setColor(c)} style={{ width: 30, height: 30, borderRadius: '50%', background: c, border: color === c ? '3px solid #F5F0E8' : '2px solid #34345A' }} />)}
+          {COLOURS.map(c => <button key={c} aria-label={`Colour ${c}`} onClick={() => setColor(c)} style={{ width: 44, height: 44, borderRadius: '50%', background: c, border: color === c ? '3px solid #F5F0E8' : '2px solid #34345A' }} />)}
         </div>
         <div className="row" style={{ gap: 6, marginBottom: 10 }}>
-          {tools.map(([t, label]) => <button key={t} onClick={() => setTool(t)} style={{ flex: 1, minHeight: 42, borderRadius: 8, border: `1px solid ${tool === t ? '#C97B3F' : '#34345A'}`, background: tool === t ? 'rgba(201,123,63,.2)' : 'transparent', color: '#F5F0E8', fontSize: 13 }}>{label}</button>)}
+          {tools.map(([t, label]) => <button key={t} onClick={() => setTool(t)} style={{ flex: 1, minHeight: 48, borderRadius: 8, border: `1px solid ${tool === t ? '#C97B3F' : '#34345A'}`, background: tool === t ? 'rgba(201,123,63,.2)' : 'transparent', color: '#F5F0E8', fontSize: 13 }}>{label}</button>)}
         </div>
         <button className="btn btn-primary" disabled={!ready || saving} onClick={() => { setSaving(true); canvas.current!.toBlob(b => b && onSave(b), 'image/jpeg', 0.85) }}>{saving ? 'Saving…' : 'Save mark-up'}</button>
       </div>

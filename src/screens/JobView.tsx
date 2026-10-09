@@ -119,7 +119,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       }} />}
       <div className="row" style={{ margin: '18px 0 8px' }}>
         <div className="label bracket grow">Notes &amp; decisions</div>
-        <button className="linkish" style={{ color: 'var(--copper-ink)', fontSize: 13 }} onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length} ›` : '+ Add'}</button>
+        <button className="linkish tap" style={{ color: 'var(--copper-ink)', fontSize: 14 }} onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length} ›` : '+ Add'}</button>
       </div>
       <div className="panel" style={{ padding: '0 14px' }}>
         {notes.length === 0 && <button onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', color: 'var(--ink-muted)', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}
@@ -182,7 +182,7 @@ export function JobView(p: {
           <Fragment key={t}>{i === 2 && (
             <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span>+</span></button>
           )}
-          <button className={tab === t ? 'on' : ''} onClick={() => { setFocusNote(false); setTab(t) }}><Icon />{label}</button></Fragment>
+          <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>
         ))}
       </nav>
       {quickNote && <NoteEditor job={job} onClose={() => setQuickNote(false)} onSave={n => { p.onSaveDiary(n); setQuickNote(false) }} />}

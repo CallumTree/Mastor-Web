@@ -2,9 +2,14 @@ import { useState } from 'react'
 import { blankSettings, type CompanySettings } from '../lib/types'
 import { Field, Sheet } from '../components/Ui'
 import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
+import { SignOutButton } from '../components/SyncBadge'
 
-/** Company details for invoices. Saved for the whole company and synced to every device. */
-export function SettingsSheet({ settings, onSave, onClose }: { settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void }) {
+/** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
+export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro }: {
+  settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
+  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void
+}) {
+  const [msg, setMsg] = useState<string | null>(null)
   const [s, setS] = useState<CompanySettings>(settings ?? blankSettings())
   const [nextText, setNextText] = useState(String(s.nextInvoiceNumber || 1))
   const set = <K extends keyof CompanySettings>(k: K, v: CompanySettings[K]) => setS(x => ({ ...x, [k]: v }))
@@ -15,7 +20,7 @@ export function SettingsSheet({ settings, onSave, onClose }: { settings?: Compan
     <Field label={label}><input value={String(s[k] ?? '')} onChange={e => set(k, e.target.value as never)} {...props} /></Field>
   )
   return (
-    <Sheet onClose={onClose}>
+    <Sheet onClose={onClose} label="Settings">
       <div className="stack">
         <div className="label bracket">Company settings</div>
         <div className="muted" style={{ fontSize: 13 }}>Used on your VAT invoices. Shared with everyone in your company.</div>
@@ -42,6 +47,22 @@ export function SettingsSheet({ settings, onSave, onClose }: { settings?: Compan
         <div className="panel" style={{ padding: '10px 14px', fontSize: 13 }}>Your next invoice will be <b className="mono" style={{ color: 'var(--copper-ink)' }}>{formatInvoiceNo(preview, nextN)}</b></div>
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>
+
+        <div className="label bracket" style={{ marginTop: 22 }}>This device</div>
+        <div className="muted" style={{ fontSize: 13 }}>A backup is a file of every job on this phone or computer — keep one before changing devices.</div>
+        <div className="row">
+          <button className="btn btn-secondary" style={{ flex: 1 }} onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>
+          <label className="btn btn-secondary" style={{ flex: 1, cursor: 'pointer' }} data-keep-clean>Restore…
+            <input type="file" hidden accept=".json,application/json" onChange={async e => {
+              const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
+              try { const text = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsText(f) }); const n = await onRestore(text); setMsg(`Restored ${n} job${n === 1 ? '' : 's'}`) }
+              catch (err) { setMsg((err as Error).message || 'Couldn’t restore that file — is it a Mastor backup?') }
+            }} />
+          </label>
+        </div>
+        {msg && <div className="flag" role="status">{msg}</div>}
+        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onPlayIntro}>▶ Play the opening titles</button>
+        <SignOutButton />
       </div>
     </Sheet>
   )

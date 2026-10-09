@@ -102,7 +102,7 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
   return (
     <div className="page" style={{ paddingBottom: 48 }}>
       <div className="row" style={{ marginBottom: 20 }}>
-        <button onClick={onBack} aria-label="Back" style={{ background: '#FFFDF8', border: `1px solid ${HAIR}`, color: INK, width: 40, height: 40, borderRadius: 4, display: 'grid', placeItems: 'center' }}><IconBack size={20} /></button>
+        <button className="icon-btn" onClick={onBack} aria-label="Back to jobs"><IconBack size={20} /></button>
         <div className="grow">
           <div className="label" style={{ letterSpacing: '.3em' }}>Director</div>
           <div style={{ fontWeight: 700, fontSize: 20, color: INK }}>{year} at a glance</div>

@@ -8,11 +8,13 @@ import { IconPlus, IconScope } from '../components/Icons'
 import { TabMenu } from '../components/TabMenu'
 import { SumStrip, TabHead } from '../components/Register'
 
+/** Valuation tick. 44px to hit with a glove; the visible box sits inside. */
 export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; onClick: () => void }) {
   return (
-    <button onClick={e => { e.stopPropagation(); onClick() }} disabled={locked} aria-label={on ? 'Remove from valuation' : 'Add to valuation'}
-      style={{ width: 30, height: 30, flex: 'none', borderRadius: 9, border: `1.5px solid ${on ? 'var(--copper)' : 'rgba(201,123,63,.45)'}`, background: on ? 'linear-gradient(180deg, #D98A4C, #C07034)' : '#FFFCF7', color: '#FFF4E4', display: 'grid', placeItems: 'center', opacity: locked ? .6 : 1, boxShadow: on && !locked ? '0 0 12px -2px #E8A868' : 'none', transition: 'box-shadow .2s, background .2s' }}>
-      {on && (locked ? '🔒' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M5 12l5 5L19 7" /></svg>)}
+    <button className="tick" onClick={e => { e.stopPropagation(); onClick() }} disabled={locked} aria-pressed={on} aria-label={on ? (locked ? 'In an issued valuation (locked)' : 'Remove from valuation') : 'Add to valuation'}>
+      <span className={'tick-box' + (on ? ' on' : '') + (locked ? ' locked' : '')}>
+        {on && (locked ? '🔒' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M5 12l5 5L19 7" /></svg>)}
+      </span>
     </button>
   )
 }
@@ -51,7 +53,10 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
     const locked = !!lockedIn(i, vals)
     return (
       <div key={i.id} onClick={() => onEdit(i)} className="row" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--ink-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer' }}>
-        {isPriced(i) || i.valuationId ? <Tick on={!!i.valuationId} locked={locked} onClick={() => onToggle(i)} /> : <span style={{ width: 30, flex: 'none' }} />}
+        {/* the whole left strip of the row is the tick, so a near miss ticks rather than opening the editor */}
+        {isPriced(i) || i.valuationId
+          ? <div className="tick-col" onClick={e => { e.stopPropagation(); if (!locked) onToggle(i) }}><Tick on={!!i.valuationId} locked={locked} onClick={() => onToggle(i)} /></div>
+          : <span className="tick-col" aria-hidden="true" />}
         <div className="grow" style={{ minWidth: 0 }}>
           <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
             {i.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{i.code}</span>}
@@ -64,7 +69,7 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
           </div>
           {!isPriced(i) && <div className="flag">{i.rate == null ? 'NO RATE' : 'NO QTY'} — tap to fix</div>}
         </div>
-        <div className="mono" style={{ fontSize: 14, color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
+        <div className="mono" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap', color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
       </div>
     )
   }

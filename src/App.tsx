@@ -20,6 +20,7 @@ import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
+import { Splash } from './components/Splash'
 
 export default function App() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -40,6 +41,7 @@ export default function App() {
   const [importing, setImporting] = useState(false)
   const [ready, setReady] = useState(false)
   const [showDash, setShowDash] = useState(false)
+  const [intro, setIntro] = useState(false)
 
   const reload = useCallback(async () => {
     const js = await db.jobs()
@@ -64,7 +66,7 @@ export default function App() {
 
   return (
     <>
-      {ready && job && <div className="banner"><SyncBadge /></div>}
+      {ready && job && <div className="banner"><SyncBadge dark={false} /></div>}
       {!ready ? null : showDash && !job ? (
         <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
       ) : job ? (
@@ -106,9 +108,7 @@ export default function App() {
           }}
           onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)}
-          onBackup={async () => downloadBackup(await makeBackup())}
-          onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }} />
+        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
       {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}
@@ -132,7 +132,11 @@ export default function App() {
           }
           setVoImport(false); await reload()
         }} />}
-      {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }} />}
+      {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }}
+        onBackup={async () => downloadBackup(await makeBackup())}
+        onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
+        onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} />}
+      {intro && <Splash onDone={() => setIntro(false)} />}
       {invoicing && job && (() => {
         const rate = settings?.vatRate ?? 20
         const a = invoiceAmounts(job, invoicing, jobScope, jobVos, rate)

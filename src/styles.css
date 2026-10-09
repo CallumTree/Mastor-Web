@@ -37,7 +37,7 @@ input, textarea, select { font: inherit; }
 .btn-primary { background: var(--copper); color: var(--cream); }
 .btn-secondary { background: transparent; color: var(--copper); border-color: var(--copper); }
 .btn-dark { background: var(--charcoal); color: var(--cream); }
-.btn-ghost { background: none; border: none; color: var(--ink-muted); min-height: 40px; width: auto; }
+.btn-ghost { background: none; border: none; color: var(--ink-muted); min-height: 44px; width: auto; }
 .btn:disabled { opacity: .45; }
 .btn-vellum { background: rgba(245,240,232,.30); border: 1px solid rgba(245,240,232,.55); color: var(--ink); backdrop-filter: none; min-height: 44px; font-size: 14px; }
 
@@ -136,7 +136,7 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 .dots span.on { background: var(--cream-text); }
 .imm-actions { position: absolute; z-index: 3; left: 16px; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; gap: 10px; max-width: 688px; margin: 0 auto; }
 .btn-glass { background: rgba(245,240,232,.10); border: 1px solid rgba(245,240,232,.22); color: var(--cream-text); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-.imm-banner { position: relative; z-index: 2; font-size: 10px; text-align: center; color: var(--cream-muted); letter-spacing: .12em; text-transform: uppercase; padding-top: 10px; }
+.imm-banner { position: relative; z-index: 2; font-size: 12px; padding-inline: 64px; text-align: center; color: var(--cream-muted); letter-spacing: .12em; text-transform: uppercase; padding-top: 10px; }
 
 /* ---------- Job home (Waterfall-style) ---------- */
 .bleed { width: 100vw; margin-left: calc(50% - 50vw); }
@@ -269,7 +269,7 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
 
 /* D · Dimension — chips: the selected one sits on a dimension line */
 .chips { gap: 4px 14px; }
-.chip { position: relative; background: none; border: none; border-radius: 0; padding: 8px 2px 10px; font-size: 14px; color: var(--ink-muted); }
+.chip { position: relative; background: none; border: none; border-radius: 0; padding: 8px 4px 10px; min-height: 44px; min-width: 44px; font-size: 14px; color: var(--ink-muted); }
 .chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 1px; background: rgba(201,123,63,.25); }
 .chip.on { background: none; color: var(--copper); font-weight: 700; }
 .chip.on::after { height: 1.5px; background: var(--copper); }
@@ -368,7 +368,7 @@ body {
 /* long SoR descriptions: two lines in lists, full text on tap */
 .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* ⋯ tab options — same small square on every tab */
-.tabmenu-btn { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border: 1px solid var(--ink-line); border-radius: 4px; background: var(--paper-2); color: var(--ink); }
+.tabmenu-btn { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1px solid var(--ink-line); border-radius: 4px; background: var(--paper-2); color: var(--ink); }
 .tabmenu-btn:active { background: rgba(201,123,63,.12); border-color: var(--copper); }
 .tabmenu-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 13px 14px; background: none; border: none; text-align: left; font: inherit; }
 .tabmenu-item:active { background: rgba(201,123,63,.08); }
@@ -436,10 +436,11 @@ body {
 /* ---- Variations: reads like the Variation Register ---- */
 .sum { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--ink); background: var(--paper-2); position: relative; }
 .sum-3 { grid-template-columns: repeat(3, 1fr); }
-@media (min-width: 560px) { .sum-2 { grid-template-columns: repeat(3, 1fr); } }
+/* wider screens: four figures sit in one row, six in two rows of three — never three-and-an-orphan */
+@media (min-width: 560px) { .sum-2[data-n="4"] { grid-template-columns: repeat(4, 1fr); } .sum-2[data-n="6"], .sum-2[data-n="3"] { grid-template-columns: repeat(3, 1fr); } }
 .sum-cell { padding: 9px 12px 10px; border-right: 1px solid var(--ink-line); border-bottom: 1px solid var(--ink-line); min-width: 0; }
 .sum-cell .label { font-size: 9px; }
-.sum-cell .n { font-size: 16px; margin-top: 3px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sum-cell .n { font-size: 16px; margin-top: 3px; color: var(--ink); }  /* money is never cut off with an ellipsis — the grid reflows instead */
 .sum-cell small { display: block; font-size: 11px; color: var(--ink-muted); margin-top: 1px; }
 .sum-cell.nil .n { color: var(--ink-muted); }
 .sum-caption { font-size: 11px; color: var(--ink-muted); margin-top: 5px; }
@@ -472,3 +473,39 @@ body {
 .vo-status { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 7px; }
 .vo-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
 .vo-amt .mono { font-size: 14px; white-space: nowrap; }
+
+/* ================= SITE-PROOF TARGETS (gloves, glare) =================
+   44px is the floor for anything tappable; 48px for the things used on site. */
+.tick { width: 44px; height: 44px; flex: none; display: grid; place-items: center; padding: 0; border: none; background: none; }
+.tick-box { width: 32px; height: 32px; border-radius: 9px; border: 1.5px solid rgba(168,94,40,.55); background: #FFFCF7; color: #FFF4E4; display: grid; place-items: center; transition: box-shadow .2s, background .2s; }
+.tick-box.on { border-color: var(--copper); background: linear-gradient(180deg, #D98A4C, #C07034); box-shadow: 0 0 12px -2px #E8A868; }
+.tick-box.locked { opacity: .6; box-shadow: none; }
+.tick:disabled { opacity: 1; }
+.tick-col { flex: none; align-self: stretch; width: 56px; margin: -12px 0 -12px -12px; padding: 12px 0 0 12px; display: flex; align-items: flex-start; cursor: pointer; }
+span.tick-col { cursor: auto; }
+.jhero-top button { width: 44px; height: 44px; }
+.icon-btn { width: 44px; height: 44px; flex: none; display: grid; place-items: center; padding: 0; border: 1px solid var(--ink-line); border-radius: 4px; background: var(--paper-2); color: var(--ink); }
+.step-btn { width: 48px; height: 48px; flex: none; border: 1px solid var(--ink-line); background: var(--paper-2); border-radius: 3px; font-size: 20px; color: var(--ink); }
+.linkish.tap { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin: -12px -6px; }
+
+/* ================= NARROW SCREENS & ZOOM =================
+   200% zoom on a phone is a ~195px-wide page. Everything reflows; nothing is clipped. */
+.tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tile { min-width: 0; }
+.tile .n { font-size: clamp(15px, 5.2vw, 21px); }
+.jhero-title h2 { font-size: clamp(20px, 6.6vw, 26px); overflow-wrap: break-word; }
+.nav button { min-width: 0; }
+.nav-l { max-width: 100%; overflow-wrap: anywhere; }
+.sum-cell .n { font-size: clamp(13px, 4.2vw, 16px); }
+.wordmark { font-size: clamp(22px, 9vw, 34px); }
+.jhero-top .label { min-width: 0; text-align: center; overflow-wrap: anywhere; }
+@media (max-width: 360px) { .sum-cell { padding: 8px 8px 9px; } .nav button { letter-spacing: .04em; } .tiles { gap: 6px; } .tile { padding: 10px 8px; } }
+@media (max-width: 300px) {
+  .sum, .sum-3 { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: 1fr; margin-top: -24px; }
+  .nav-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }  /* icons only; names stay for screen readers */
+  .vo-row { grid-template-columns: 52px 1fr; } .vo-row .vo-amt { grid-column: 2; }
+  .vo-head { display: none; }
+  .val-line { flex-wrap: wrap; } .val-line > .grow { flex: 1 1 100%; }
+  .row:has(> .btn), .imm-actions { flex-wrap: wrap; } .row > .btn, .imm-actions > .btn { flex: 1 1 100% !important; }
+}

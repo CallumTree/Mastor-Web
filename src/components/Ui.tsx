@@ -9,6 +9,8 @@ export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose
   const [dirty, setDirty] = useState(false)
   const [asking, setAsking] = useState(false)
   const box = useRef<HTMLDivElement>(null)
+  // typing marks the sheet as holding work; controls inside [data-keep-clean] (e.g. a file picker that acts at once) don't
+  const markDirty = (e: { target: EventTarget }) => { if (!(e.target as HTMLElement).closest?.('[data-keep-clean]')) setDirty(true) }
   const ask = () => { if (locked) return; if (dirty && !keepsWork) setAsking(true); else onClose() }
   const latest = useRef({ ask, asking }); latest.current = { ask, asking }
 
@@ -34,7 +36,7 @@ export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose
   return (
     <div className="sheet-bg" onClick={ask}>
       <div ref={box} className="sheet" role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}
-        onClick={e => e.stopPropagation()} onInputCapture={() => setDirty(true)} onChangeCapture={() => setDirty(true)}>
+        onClick={e => e.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty}>
         <div className="sheet-top">
           <div className="sheet-handle" />
           {!locked && <button className="sheet-x" aria-label="Close" onClick={ask}>×</button>}

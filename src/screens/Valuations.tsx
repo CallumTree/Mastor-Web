@@ -16,14 +16,14 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => byProp ? (a.property ?? '').localeCompare(b.property ?? '', 'en', { numeric: true }) || a.order - b.order : a.room.localeCompare(b.room) || a.order - b.order)
   const o = vos.filter(x => x.valuationId === val.id).sort((a, b) => a.number - b.number)
   const row = (key: string, ref: string, desc: string, sub: string, value: number, onRemove?: () => void) => (
-    <div key={key} className="row" style={{ padding: '10px 0', borderTop: '1px solid var(--cream-line)', alignItems: 'flex-start' }}>
+    <div key={key} className="row val-line" style={{ padding: '10px 0', borderTop: '1px solid var(--cream-line)', alignItems: 'flex-start' }}>
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="row" style={{ gap: 6 }}>{ref && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{ref}</span>}</div>
         <div style={{ fontWeight: 500 }}>{desc}</div>
         <div className="muted" style={{ fontSize: 12 }}>{sub}</div>
       </div>
-      <div className="mono" style={{ fontSize: 14 }}>{money(value)}</div>
-      {onRemove && <button onClick={onRemove} aria-label="Remove from valuation" style={{ background: 'none', border: '1px solid var(--cream-line)', borderRadius: 6, width: 30, height: 30, color: 'var(--ink-muted)', flex: 'none' }}>×</button>}
+      <div className="mono" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap' }}>{money(value)}</div>
+      {onRemove && <button className="icon-btn" onClick={onRemove} aria-label="Remove from valuation" style={{ color: 'var(--ink-muted)', fontSize: 20 }}>×</button>}
     </div>
   )
   return (
@@ -117,7 +117,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
       ) : (
         <div className="card empty">
           <div style={{ fontWeight: 600, color: 'var(--ink)', marginBottom: 6 }}>No open valuation</div>
-          Tick completed items in <a onClick={() => go('scope')} style={{ color: 'var(--copper)', cursor: 'pointer' }}>Scope</a> or priced <a onClick={() => go('vos')} style={{ color: 'var(--copper)', cursor: 'pointer' }}>VOs</a> to start {valRef(nextNo)}.
+          Tick completed items in <button className="linkish tap" style={{ color: 'var(--copper-ink)' }} onClick={() => go('scope')}>Scope</button> or priced <button className="linkish tap" style={{ color: 'var(--copper-ink)' }} onClick={() => go('vos')}>VOs</button> to start {valRef(nextNo)}.
         </div>
       )}
 

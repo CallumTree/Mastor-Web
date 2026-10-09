@@ -21,7 +21,7 @@ export interface SumCell { label: string; value: string; note?: string; hot?: bo
 /** Boxed figures strip. A `nil` cell (nothing in it) reads "—", never £0.00. `progress` (0–100) draws a scale bar along the foot, like a drawing's scale. */
 export function SumStrip({ cells, cols = 2, progress, label, caption }: { cells: SumCell[]; cols?: 2 | 3; progress?: number; label: string; caption?: string }) {
   const strip = (
-    <div className={'sum sum-' + cols} aria-label={label}>
+    <div className={'sum sum-' + cols} data-n={cells.length} aria-label={label}>
       {cells.map(c => (
         <div key={c.key ?? c.label} className={'sum-cell' + (c.hot ? ' hot' : '') + (c.nil ? ' nil' : '')}>
           <div className="label">{c.label}</div>

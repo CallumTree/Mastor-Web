@@ -6,7 +6,6 @@ import { usePhotoUrl } from '../lib/photos'
 import { money } from '../lib/format'
 import { IconChart, IconPlus, IconSettings } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
-import { Splash } from '../components/Splash'
 import { getLook, PHOTOS, useBackdrop } from '../lib/look'
 
 /**
@@ -32,12 +31,9 @@ function Backdrop({ job }: { job: Job | null }) {
   )
 }
 
-export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, onBackup, onRestore }: {
+export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: {
   jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
-  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>
 }) {
-  const [msg, setMsg] = useState<string | null>(null)
-  const [intro, setIntro] = useState(false)
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const [idx, setIdx] = useState(0)
   const track = useRef<HTMLDivElement>(null)
@@ -54,18 +50,8 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, on
   return (
     <div className="immersive">
       <Backdrop job={current} />
-      <div className="imm-banner">
-        <button className="linkish" onClick={() => setIntro(true)}>▶ Play intro</button>{' · '}
-        <SyncBadge />{' · '}
-        <button className="linkish" onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>{' · '}
-        <label className="linkish">Restore<input type="file" hidden accept=".json,application/json" onChange={async e => {
-          const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
-          try { const t = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsText(f) }); const n = await onRestore(t); setMsg(`Restored ${n} job${n === 1 ? '' : 's'}`) }
-          catch (err) { setMsg((err as Error).message || 'Couldn’t restore that file') }
-        }} /></label>
-        {msg && <div style={{ color: 'var(--copper-light)', marginTop: 4 }}>{msg}</div>}
-      </div>
-      <button onClick={onSettings} aria-label="Company settings" className="btn-glass"
+      <div className="imm-banner"><SyncBadge /></div>
+      <button onClick={onSettings} aria-label="Settings" className="btn-glass"
         style={{ position: 'absolute', zIndex: 4, top: 34, left: 14, width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center', padding: 0 }}>
         <IconSettings size={22} />
       </button>
@@ -120,7 +106,6 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, on
           <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
         )}
       </div>
-      {intro && <Splash onDone={() => setIntro(false)} />}
     </div>
   )
 }
