@@ -23,7 +23,7 @@ export function PhotoPicker() {
             </div>
             <div style={{ padding: '8px 10px 10px' }}>
               <div style={{ fontSize: 12, fontWeight: 600 }}>{c.what}</div>
-              <div style={{ fontSize: 10, color: '#B0A898', marginTop: 2 }}>{c.credit} · Unsplash</div>
+              <div style={{ fontSize: 11, color: '#B0A898', marginTop: 2 }}>{c.credit} · Unsplash</div>
               {pick === c.id && <div style={{ fontSize: 11, color: '#E8A868', marginTop: 4, fontWeight: 700 }}>✓ Trying this on your cover</div>}
             </div>
           </button>

@@ -91,7 +91,7 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
           <div className="grow"><Field label="Qty"><input inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} placeholder="Not measured" /></Field></div>
           <div className="grow"><Field label="Rate (£)"><input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="Unpriced" /></Field></div>
         </div>
-        <div className="mono" style={{ fontSize: 20, color: qv && rv ? 'var(--copper)' : 'var(--ink-muted)', fontWeight: 300 }}>
+        <div className="mono" style={{ fontSize: 20, color: qv && rv ? 'var(--copper-ink)' : 'var(--ink-muted)', fontWeight: 300 }}>
           {qv && rv ? money(lineValue(qv, rv)) : 'Add qty and rate to price'}
         </div>
         {qv && rv && v.status === 'Identified' && !v.clientRef && (

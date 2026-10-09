@@ -28,32 +28,35 @@ function SheetLabel({ children, no }: { children: string; no: string }) {
   )
 }
 
-/** Certified per month: hatched bars, ink running-total line with a dimension-style end tick. */
+/**
+ * Certified per month: hatched bars, ink running-total line with a dimension-style end tick.
+ * Drawn narrow (300 units) so its text stays ≥11px even on a 320px phone; the figures themselves
+ * live in the ruled schedule underneath, where they can be read rather than squeezed over the bars.
+ */
 function MonthChart({ data }: { data: { label: string; value: number }[] }) {
-  const W = 360, H = 150, pad = { l: 4, r: 4, t: 18, b: 22 }
+  const W = 300, H = 156, pad = { l: 4, r: 4, t: 28, b: 26 }
   const cum = data.reduce<number[]>((a, d) => [...a, (a.length ? a[a.length - 1] : 0) + d.value], [])
   const max = Math.max(1, ...cum)
   const bw = (W - pad.l - pad.r) / Math.max(1, data.length)
   const y = (v: number) => pad.t + (H - pad.t - pad.b) * (1 - v / max)
   const last = cum.length - 1
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Certified per month this year">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Certified per month this year, ${k(cum[last] ?? 0)} in total`}>
       <defs><Hatch id="hm" /></defs>
+      <text x={pad.l} y="15" fontSize="14" fill={INK} fontFamily="Mono">Σ {k(cum[last] ?? 0)} this year</text>
       <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} stroke={INK} strokeWidth="1" />
       {data.map((d, i) => {
-        const h = (H - pad.t - pad.b) * (d.value / max), x = pad.l + bw * i + bw * 0.25, w = bw * 0.5
+        const h = (H - pad.t - pad.b) * (d.value / max), x = pad.l + bw * i + bw * 0.22, w = bw * 0.56
         return (
           <g key={i}>
             <line x1={pad.l + bw * i + bw / 2} x2={pad.l + bw * i + bw / 2} y1={H - pad.b} y2={H - pad.b + 3} stroke={INK} strokeWidth=".8" />
             {d.value > 0 && <rect x={x} y={H - pad.b - h} width={w} height={h} fill="url(#hm)" stroke={COPPER_INK} strokeWidth="1" />}
-            {d.value > 0 && <text x={x + w / 2} y={H - pad.b - h - 4} textAnchor="middle" fontSize="8" fill={MUTED} fontFamily="Mono">{k(d.value)}</text>}
-            <text x={pad.l + bw * i + bw / 2} y={H - 6} textAnchor="middle" fontSize="8.5" fill={MUTED} fontFamily="Inter" letterSpacing=".5">{d.label.toUpperCase()}</text>
+            <text x={pad.l + bw * i + bw / 2} y={H - 7} textAnchor="middle" fontSize="13" fill={MUTED} fontFamily="Inter">{d.label.slice(0, 3)}</text>
           </g>
         )
       })}
       <polyline points={cum.map((v, i) => `${pad.l + bw * i + bw / 2},${y(v)}`).join(' ')} fill="none" stroke={INK} strokeWidth="1" strokeDasharray="3 2" />
-      {last >= 0 && <><line x1={pad.l + bw * last + bw / 2 - 5} x2={pad.l + bw * last + bw / 2 + 5} y1={y(cum[last])} y2={y(cum[last])} stroke={INK} strokeWidth="1.4" />
-        <text x={pad.l + bw * last + bw / 2 - 8} y={y(cum[last]) - 5} textAnchor="end" fontSize="8.5" fill={INK} fontFamily="Mono">Σ {k(cum[last])}</text></>}
+      {last >= 0 && <line x1={pad.l + bw * last + bw / 2 - 5} x2={pad.l + bw * last + bw / 2 + 5} y1={y(cum[last])} y2={y(cum[last])} stroke={INK} strokeWidth="1.4" />}
     </svg>
   )
 }
@@ -64,7 +67,7 @@ function BookBar({ certified, inVal, remaining }: { certified: number; inVal: nu
   const W = 360, x0 = 4, w = W - 8
   const a = (certified / total) * w, b = (inVal / total) * w
   return (
-    <svg viewBox={`0 0 ${W} 86`} width="100%" role="img" aria-label="Book of work">
+    <svg viewBox={`0 0 ${W} 92`} width="100%" role="img" aria-label="Book of work">
       <defs><Hatch id="hb" /></defs>
       <rect x={x0} y="10" width={w} height="22" fill="none" stroke={INK} strokeWidth="1" />
       <rect x={x0} y="10" width={a} height="22" fill={COPPER} />
@@ -73,9 +76,9 @@ function BookBar({ certified, inVal, remaining }: { certified: number; inVal: nu
       <line x1={x0} x2={x0 + w} y1="50" y2="50" stroke={INK} strokeWidth=".8" />
       <line x1={x0} x2={x0} y1="42" y2="58" stroke={INK} strokeWidth=".8" /><line x1={x0 + w} x2={x0 + w} y1="42" y2="58" stroke={INK} strokeWidth=".8" />
       <path d={`M${x0} 50 l6 -3 v6 z M${x0 + w} 50 l-6 -3 v6 z`} fill={INK} />
-      <rect x={W / 2 - 58} y="42" width="116" height="16" fill="#FFFDF8" />
-      <text x={W / 2} y="54" textAnchor="middle" fontSize="10" fill={INK} fontFamily="Mono">{k(total)} total</text>
-      <text x={x0} y="78" fontSize="9" fill={MUTED} fontFamily="Inter">{Math.round(((certified + inVal) / total) * 100)}% claimed</text>
+      <rect x={W / 2 - 78} y="40" width="156" height="21" fill="#FFFDF8" />
+      <text x={W / 2} y="56" textAnchor="middle" fontSize="16" fill={INK} fontFamily="Mono">{k(total)} total</text>
+      <text x={x0} y="84" fontSize="16" fill={MUTED} fontFamily="Inter">{Math.round(((certified + inVal) / total) * 100)}% claimed</text>
     </svg>
   )
 }
@@ -121,8 +124,11 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
 
       <SheetLabel no="1">Certified by month</SheetLabel>
       <div className="panel" style={{ padding: 14 }}>
-        {p.certifiedThisYear > 0 ? <MonthChart data={p.byMonth} /> : <div className="muted" style={{ fontSize: 13 }}>Nothing issued yet this year.</div>}
-        <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Hatched bars: each month · dashed line: running total</div>
+        {p.certifiedThisYear > 0 ? <>
+          <MonthChart data={p.byMonth} />
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Hatched bars: each month · dashed line: running total</div>
+          {p.byMonth.filter(m => m.value > 0).reverse().map(m => <Key key={m.label} swatch="hatch" label={m.label} value={money(m.value)} />)}
+        </> : <div className="muted" style={{ fontSize: 13 }}>Nothing issued yet this year.</div>}
       </div>
 
       <SheetLabel no="2">Book of work</SheetLabel>
@@ -135,7 +141,7 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
 
       <SheetLabel no="3">Job schedule</SheetLabel>
       <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-        <div className="row" style={{ padding: '8px 14px', borderBottom: `1px solid ${INK}`, fontSize: 9, fontWeight: 700, letterSpacing: '.18em', color: MUTED, textTransform: 'uppercase' }}>
+        <div className="row" style={{ padding: '8px 14px', borderBottom: `1px solid ${INK}`, fontSize: 11, fontWeight: 700, letterSpacing: '.18em', color: MUTED, textTransform: 'uppercase' }}>
           <span className="grow">Job</span><span style={{ width: 88, textAlign: 'right' }}>Claimed</span><span style={{ width: 44, textAlign: 'right' }}>%</span>
         </div>
         {sorted.length === 0 && <div className="muted" style={{ padding: 14 }}>No jobs yet.</div>}

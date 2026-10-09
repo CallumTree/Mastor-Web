@@ -20,8 +20,8 @@ function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : <img src={url} alt={e.note || 'Site photo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
       {e.type === 'video' && <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 26, textShadow: '0 1px 6px rgba(0,0,0,.6)' }}>▶</span>}
-      {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4, fontSize: 9 }}>Marked up</span>}
-      {e.voId && <span className="badge b-slate" style={{ position: 'absolute', right: 4, top: 4, fontSize: 9 }}>VO</span>}
+      {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4, fontSize: 11 }}>Marked up</span>}
+      {e.voId && <span className="badge b-slate" style={{ position: 'absolute', right: 4, top: 4, fontSize: 11 }}>VO</span>}
     </button>
   )
 }

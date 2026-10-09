@@ -1,11 +1,11 @@
-@font-face { font-family: Inter; src: url(/fonts/inter_light.ttf); font-weight: 300; font-display: swap; }
-@font-face { font-family: Inter; src: url(/fonts/inter_regular.ttf); font-weight: 400; font-display: swap; }
-@font-face { font-family: Inter; src: url(/fonts/inter_medium.ttf); font-weight: 500; font-display: swap; }
-@font-face { font-family: Inter; src: url(/fonts/inter_semi_bold.ttf); font-weight: 600; font-display: swap; }
-@font-face { font-family: Inter; src: url(/fonts/inter_bold.ttf); font-weight: 700; font-display: swap; }
-@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_light.ttf); font-weight: 300; font-display: swap; }
-@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_regular.ttf); font-weight: 400; font-display: swap; }
-@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_medium.ttf); font-weight: 500; font-display: swap; }
+@font-face { font-family: Inter; src: url(/fonts/inter_light.woff2) format("woff2"); font-weight: 300; font-display: swap; }
+@font-face { font-family: Inter; src: url(/fonts/inter_regular.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: Inter; src: url(/fonts/inter_medium.woff2) format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: Inter; src: url(/fonts/inter_semi_bold.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: Inter; src: url(/fonts/inter_bold.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_light.woff2) format("woff2"); font-weight: 300; font-display: swap; }
+@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_regular.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_medium.woff2) format("woff2"); font-weight: 500; font-display: swap; }
 
 :root {
   --copper: #C97B3F; --copper-light: #E8A868; --copper-subtle: #F5E6D3;
@@ -526,3 +526,18 @@ span.tick-col { cursor: auto; }
 .vo-row.rejected { opacity: 1; }
 .vo-row.rejected .vo-desc { text-decoration: line-through; text-decoration-thickness: 1px; color: var(--ink-muted); }
 .vo-row.rejected .ref-roman, .vo-row.rejected .vo-amt .mono { color: var(--ink-muted); }
+
+/* ================= TYPE ROLES =================
+   Cinzel carries labels, headings and nav (its lowercase are small capitals, so it needs size more than
+   tracking); Inter carries reading text; Mono carries figures. Nothing renders below 11px.
+   label 11 · meta 11–12 · body 15 · input 16 · figure 14–16 · title 22–26 */
+:root { --t-label: 11px; --t-label-track: .14em; }
+.label, .bracket, .imm-sub, .tb-label, .sum-cell .label, .tile .l, .vo-head { font-size: var(--t-label); letter-spacing: var(--t-label-track); }
+.tb-label { line-height: 1.25; }
+.sum-cell .label { line-height: 1.25; }
+.tile .l { margin-top: 5px; }
+.nav button { font-size: 11px; }
+.vo-ref small { font-size: 11px; }
+.sum-cell small, .sum-caption { font-size: 12px; }
+.mono, .tb-val, .tile .n, .sum-cell .n { font-variant-numeric: tabular-nums; }
+@media (max-width: 360px) { .nav button { letter-spacing: .06em; } }

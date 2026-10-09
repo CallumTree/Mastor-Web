@@ -55,7 +55,7 @@ export function CourtLine({ c }: { c: Court }) {
   return (
     <div style={{ fontSize: 12, fontWeight: 600, color: toneColour[c.tone], display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
       <span style={{ width: 7, height: 7, borderRadius: 4, background: toneColour[c.tone], flex: 'none' }} />
-      {who && <span style={{ letterSpacing: '.08em', textTransform: 'uppercase', fontSize: 10 }}>{who} ·</span>}
+      {who && <span style={{ letterSpacing: '.08em', textTransform: 'uppercase', fontSize: 11 }}>{who} ·</span>}
       <span>{c.text}</span>
     </div>
   )

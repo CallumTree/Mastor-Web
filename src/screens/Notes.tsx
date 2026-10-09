@@ -21,7 +21,7 @@ export function NoteRow({ n, onOpen }: { n: DiaryEntry; onOpen: () => void }) {
   return (
     <button onClick={onOpen} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '10px 0', color: 'var(--ink)' }}>
       <div className="row" style={{ gap: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: catColour[n.category ?? 'Other'] }}>{n.category ?? 'Other'}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: catColour[n.category ?? 'Other'] }}>{n.category ?? 'Other'}</span>
         {n.pinned && <span style={{ fontSize: 11 }} aria-label="Pinned">📌</span>}
         <span className="grow" />
         <span className="muted" style={{ fontSize: 11 }}>{prettyDay(n.date)} · {time(n.createdAt)}</span>

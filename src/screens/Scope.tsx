@@ -219,7 +219,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           <div style={{ width: '22%' }}><Field label="Unit"><input disabled={locked} value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} /></Field></div>
           <div className="grow"><Field label="Rate (£)"><input disabled={locked} inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="No rate" /></Field></div>
         </div>
-        <div className="mono" style={{ fontSize: 20, fontWeight: 300, color: n(qty) && n(rate) ? 'var(--copper)' : 'var(--ink-muted)' }}>
+        <div className="mono" style={{ fontSize: 20, fontWeight: 300, color: n(qty) && n(rate) ? 'var(--copper-ink)' : 'var(--ink-muted)' }}>
           {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}
         </div>
         {!locked && <button className="btn btn-primary" disabled={!f.description.trim()} onClick={() => onSave({ ...f, description: f.description.trim(), room: f.room.trim() || 'General', code: f.code.trim(), qty: n(qty), rate: n(rate) })}>{item ? 'Save' : 'Add item'}</button>}
