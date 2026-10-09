@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Job, WorkType } from '../lib/types'
-import { Field, Sheet } from '../components/Ui'
+import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { uid } from '../lib/db'
 import { savePhoto, usePhotoUrl } from '../lib/photos'
 import { IconCamera } from '../components/Icons'
@@ -18,7 +18,6 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
   const [u1, setU1] = useState(job ? String(job.uplift1) : '')
   const [u2, setU2] = useState(job ? String(job.uplift2) : '')
   const [terms, setTerms] = useState(job?.paymentTermsDays ? String(job.paymentTermsDays) : '30')
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const photoUrl = usePhotoUrl(f.photoId)
   const set = (k: keyof Job) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
   const num = (s: string) => { const n = parseFloat(s.replace(/[£,\s]/g, '')); return isFinite(n) && n > 0 ? n : 0 }
@@ -66,9 +65,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
           onClick={() => onSave({ ...f, name: f.name.trim(), contractValue: num(valueText), uplift1: num(u1), uplift2: num(u2), paymentTermsDays: Math.round(num(terms)) || 30 })}>
           {job ? 'Save' : 'Create job'}
         </button>
-        {onDelete && (confirmDelete
-          ? <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={onDelete}>Delete job and all its variations</button>
-          : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirmDelete(true)}>Delete job…</button>)}
+        {onDelete && <ConfirmDelete label="Delete job…" confirmLabel={<>Delete job and all its variations</>} onConfirm={onDelete} />}
       </div>
     </Sheet>
   )

@@ -1,16 +1,13 @@
 /**
  * Shared "register" pieces so Scope, Variations and Valuations read like the same set of drawings:
- * one header, one boxed summary strip (like the Variation Register PDF), ruled schedules below.
+ * one header (the tab's name — the job is named in the page header above), one boxed summary strip (like the Variation Register PDF), ruled schedules below.
  */
 import type { ReactNode } from 'react'
 
-export function TabHead({ label, title, meta, menu }: { label: string; title: string; meta?: ReactNode; menu?: ReactNode }) {
+export function TabHead({ label, meta, menu }: { label: string; title?: string; meta?: ReactNode; menu?: ReactNode }) {
   return (
-    <div className="row" style={{ alignItems: 'flex-start' }}>
-      <div className="grow" style={{ minWidth: 0 }}>
-        <div className="label bracket">{label}{meta != null && <span className="tab-meta">{meta}</span>}</div>
-        <h2 className="tab-title"><span className="sr-only">{label}: </span>{title}</h2>
-      </div>
+    <div className="row" style={{ alignItems: 'center' }}>
+      <h2 className="tab-title grow">{label}{meta != null && <span className="tab-meta">{meta}</span>}</h2>
       {menu}
     </div>
   )

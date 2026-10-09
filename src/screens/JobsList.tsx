@@ -4,7 +4,7 @@ import type { Job, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
 import { money } from '../lib/format'
-import { IconChart, IconPlus, IconSettings } from '../components/Icons'
+import { IconChart, IconCog, IconPlus } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
 import { getLook, PHOTOS, useBackdrop } from '../lib/look'
 
@@ -54,7 +54,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
       <div className="imm-banner"><SyncBadge /></div>
       <button onClick={onSettings} aria-label="Settings" className="btn-glass"
         style={{ position: 'absolute', zIndex: 4, top: 34, left: 14, width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center', padding: 0 }}>
-        <IconSettings size={22} />
+        <IconCog size={22} />
       </button>
       {sorted.length > 0 && (
         <button onClick={onDashboard} aria-label="Director dashboard" className="btn-glass"

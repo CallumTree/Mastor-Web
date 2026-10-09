@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DiaryEntry, Job, Variation } from '../lib/types'
-import { Field, Sheet } from '../components/Ui'
+import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { Markup } from '../components/Markup'
 import { TabMenu } from '../components/TabMenu'
 import { usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
 import { weatherFor } from '../lib/weather'
 import { voRef } from '../lib/format'
-import { IconBack, IconCamera, IconFlag } from '../components/Icons'
+import { IconBack, IconCamera, IconFlag, IconMarkup, IconVideo } from '../components/Icons'
 
 export const dayId = (jobId: string, date: string) => `day:${jobId}:${date}`
 export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayId(jobId, date), jobId, date, type: 'day', note: '', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
@@ -35,7 +35,6 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
   const [caption, setCaption] = useState(e.note)
   const [room, setRoom] = useState(e.room)
   const [marking, setMarking] = useState(false)
-  const [confirm, setConfirm] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
   const vo = vos.find(v => v.id === e.voId)
   const close = () => { if (caption !== e.note || room !== e.room) onSave({ ...e, note: caption.trim(), room: room.trim() }); onClose() }
@@ -51,13 +50,11 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
         <Field label="Caption" hint="Tip: tap the mic on your keyboard to dictate"><input value={caption} onChange={x => setCaption(x.target.value)} placeholder="What does this show?" /></Field>
         <Field label="Room / area"><input value={room} onChange={x => setRoom(x.target.value)} list="diary-rooms" /></Field>
         <datalist id="diary-rooms">{rooms.map(r => <option key={r} value={r} />)}</datalist>
-        {e.type === 'photo' && <button className="btn btn-secondary" onClick={() => setMarking(true)}>✎ {e.originalMediaId ? 'Mark up again' : 'Mark up'}</button>}
+        {e.type === 'photo' && <button className="btn btn-secondary" onClick={() => setMarking(true)}><IconMarkup /> {e.originalMediaId ? 'Mark up again' : 'Mark up'}</button>}
         {vo ? <div className="flag">Evidence for {voRef(vo.number)} — {vo.description}</div>
           : e.type === 'photo' && <button className="btn btn-secondary" onClick={() => { onSave({ ...e, note: caption.trim(), room: room.trim() }); onRaiseVo({ ...e, note: caption.trim(), room: room.trim() }) }}><IconFlag /> Raise VO from this photo</button>}
         <button className="btn btn-primary" onClick={close}>Done</button>
-        {confirm
-          ? <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={onDelete}>Delete this {e.type}</button>
-          : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirm(true)}>Delete…</button>}
+        <ConfirmDelete label="Delete…" confirmLabel={<>Delete this {e.type}</>} onConfirm={onDelete} />
       </div>
     </Sheet>
   )
@@ -113,7 +110,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   const add = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setErr(null); setBusy(true)
-    try { await onAddMedia(f, kind, date) } catch (x) { setErr((x as Error).message) } finally { setBusy(false) }
+    try { await onAddMedia(f, kind, date) } catch (x) { setErr(`Couldn’t add that ${kind} — ${(x as Error).message || 'unknown problem'}. Try again, or pick a smaller file.`) } finally { setBusy(false) }
   }
   const recent = [...new Set(entries.filter(e => e.type !== 'note').map(e => e.date))].filter(d => d !== date).sort().reverse().slice(0, 7)
 
@@ -125,11 +122,11 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <div className="label">{date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : 'Site diary'}</div>
           <div style={{ fontWeight: 700, fontSize: 17 }}>{prettyDay(date)}</div>
         </div>
+        <button aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ width: 44, height: 44, border: '1px solid var(--ink-line)', background: 'var(--paper-2)', borderRadius: 3, color: 'var(--ink)', opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
         <TabMenu title="Diary" actions={[
           { label: 'Go to today', disabled: date === today, onClick: () => setDate(today) },
           { label: 'Write a note for this day', onClick: () => noteRef.current?.focus() },
         ]} />
-        <button aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ width: 44, height: 44, border: '1px solid var(--ink-line)', background: 'var(--paper-2)', borderRadius: 3, color: 'var(--ink)', opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
       </div>
 
       <div className="panel" style={{ padding: 14 }}>
@@ -164,7 +161,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <input type="file" accept="image/*" capture="environment" hidden onChange={e => { add(e.target.files?.[0], 'photo'); e.target.value = '' }} />
         </label>
         <label className="btn btn-secondary" style={{ flex: 1 }}>
-          ▶ Video
+          <IconVideo /> Video
           <input type="file" accept="video/*" capture="environment" hidden onChange={e => { add(e.target.files?.[0], 'video'); e.target.value = '' }} />
         </label>
         <label className="btn btn-secondary" style={{ flex: 1 }}>

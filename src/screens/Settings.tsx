@@ -61,7 +61,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
           </label>
         </div>
         {msg && <div className="flag" role="status">{msg}</div>}
-        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onPlayIntro}>▶ Play the opening titles</button>
+        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onPlayIntro}>Play the opening titles</button>
         <SignOutButton />
       </div>
     </Sheet>

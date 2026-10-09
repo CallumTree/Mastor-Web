@@ -90,3 +90,18 @@ export function TitleBlock({ head, rows, sheetRef, progress }: {
     </div>
   )
 }
+
+/** Delete with a second step that can be backed out of: "Delete…" → Cancel | Delete X. One pattern everywhere. */
+export function ConfirmDelete({ label = 'Delete…', confirmLabel, onConfirm, note }: { label?: string; confirmLabel: ReactNode; onConfirm: () => void; note?: string }) {
+  const [asking, setAsking] = useState(false)
+  if (!asking) return <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setAsking(true)}>{label}</button>
+  return (
+    <div role="group" aria-label="Confirm delete">
+      {note && <div style={{ fontSize: 13, marginBottom: 8 }}>{note}</div>}
+      <div className="row">
+      <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setAsking(false)} autoFocus>Cancel</button>
+      <button className="btn btn-danger" style={{ flex: 1.4 }} onClick={() => { setAsking(false); onConfirm() }}>{confirmLabel}</button>
+      </div>
+    </div>
+  )
+}

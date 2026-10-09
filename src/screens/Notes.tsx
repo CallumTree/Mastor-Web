@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { DiaryEntry, Job, NoteCategory } from '../lib/types'
+import { IconPin } from '../components/Icons'
 import { NOTE_CATEGORIES } from '../lib/types'
-import { Field, Sheet } from '../components/Ui'
+import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { uid } from '../lib/db'
 import { dayKey, prettyDay } from '../lib/dates'
 
@@ -15,16 +16,17 @@ export const newNote = (job: Job, text: string, category: NoteCategory, pinned =
 })
 
 const catColour: Record<NoteCategory, string> = { Client: '#2F6DB5', Commercial: 'var(--copper-ink)', Site: 'var(--ink)', 'H&S': 'var(--red)', Other: 'var(--ink-muted)' }
-const time = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+// a note saved without a time (imported, back-dated) shows the day only — never a made-up 00:00
+const time = (t: number) => { const d = new Date(t); return d.getHours() || d.getMinutes() ? ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '' }
 
 export function NoteRow({ n, onOpen }: { n: DiaryEntry; onOpen: () => void }) {
   return (
     <button onClick={onOpen} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '10px 0', color: 'var(--ink)' }}>
       <div className="row" style={{ gap: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: catColour[n.category ?? 'Other'] }}>{n.category ?? 'Other'}</span>
-        {n.pinned && <span style={{ fontSize: 11 }} aria-label="Pinned">📌</span>}
+        {n.pinned && <span role="img" aria-label="Pinned" style={{ color: 'var(--copper-ink)', display: 'inline-flex' }}><IconPin size={14} /></span>}
         <span className="grow" />
-        <span className="muted" style={{ fontSize: 11 }}>{prettyDay(n.date)} · {time(n.createdAt)}</span>
+        <span className="muted" style={{ fontSize: 11 }}>{prettyDay(n.date)}{time(n.createdAt)}</span>
       </div>
       <div style={{ fontSize: 14, marginTop: 3, whiteSpace: 'pre-wrap' }}>{n.note}</div>
     </button>
@@ -37,7 +39,6 @@ export function NoteEditor({ job, note, onSave, onDelete, onClose }: {
   const [text, setText] = useState(note?.note ?? '')
   const [cat, setCat] = useState<NoteCategory>(note?.category ?? 'Site')
   const [pinned, setPinned] = useState(!!note?.pinned)
-  const [confirm, setConfirm] = useState(false)
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
@@ -46,9 +47,7 @@ export function NoteEditor({ job, note, onSave, onDelete, onClose }: {
         <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate"><textarea rows={5} autoFocus value={text} onChange={e => setText(e.target.value)} placeholder="e.g. Dylan agreed the airing-cupboard partition can be claimed — email 2 Oct" /></Field>
         <label className="row" style={{ gap: 10, fontSize: 14 }}><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} style={{ width: 20, height: 20, accentColor: 'var(--copper)' }} /> Pin to the top of the job</label>
         <button className="btn btn-primary" disabled={!text.trim()} onClick={() => onSave(note ? { ...note, note: text.trim(), category: cat, pinned } : newNote(job, text.trim(), cat, pinned))}>{note ? 'Save' : 'Add note'}</button>
-        {onDelete && (confirm
-          ? <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={onDelete}>Delete this note</button>
-          : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirm(true)}>Delete…</button>)}
+        {onDelete && <ConfirmDelete label="Delete…" confirmLabel={<>Delete this note</>} onConfirm={onDelete} />}
       </div>
     </Sheet>
   )

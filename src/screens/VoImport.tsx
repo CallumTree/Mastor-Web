@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Job, Variation } from '../lib/types'
+import { IconCamera } from '../components/Icons'
 import { Sheet } from '../components/Ui'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { readVoFile, suggestVo, type ParsedVo } from '../lib/voIntake'
@@ -41,7 +42,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
             </div>
             <div style={{ fontSize: 13, marginTop: 8 }}>{[vo.description, vo.address, vo.issuedBy && `by ${vo.issuedBy}`].filter(Boolean).join(' · ')}</div>
             {vo.poNumber && <div style={{ fontSize: 13, marginTop: 6, fontWeight: 600, color: poOk ? 'var(--green)' : 'var(--red)' }}>
-              {poOk ? `✓ Varies order ${vo.poNumber} — this job` : `⚠ Varies order ${vo.poNumber}, but this job's PO is ${job.poNumber}. Check it's the right job.`}</div>}
+              {poOk ? `✓ Varies order ${vo.poNumber} — this job` : `Check: varies order ${vo.poNumber}, but this job's PO is ${job.poNumber}. Check it's the right job.`}</div>}
             <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>{vo.method === 'ai' ? 'Read by AI — check every number against the document' : 'Read exactly from the spreadsheet — no AI'}</div>
           </div>
           {vo.lines.map((l, i) => {
@@ -60,7 +61,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
                 </label>
                 {d.include && (
                   <select aria-label={`Line ${i + 1} goes to`} value={d.target} onChange={e => setDec(i, { target: e.target.value })} style={{ marginTop: 10, width: '100%' }}>
-                    <option value="new">➕ New variation</option>
+                    <option value="new">New variation</option>
                     {sug.map(v => <option key={v.id} value={v.id}>↳ {voRef(v.number)} — {v.description} (likely match)</option>)}
                     {open.filter(v => !sug.includes(v)).map(v => <option key={v.id} value={v.id}>↳ {voRef(v.number)} — {v.description}</option>)}
                   </select>
@@ -87,7 +88,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
           <>
             {stage.s === 'error' && <div className="card" style={{ color: 'var(--red)', fontSize: 14 }}>{stage.msg}</div>}
             <div className="muted" style={{ fontSize: 14 }}>A VO ticket, site instruction or works order — <b>photo, scan, screenshot, PDF or Excel</b>. Nothing's added until you check it.</div>
-            <label className="btn btn-primary">📷 Take a photo<input type="file" accept="image/*" capture="environment" hidden onChange={e => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = '' }} /></label>
+            <label className="btn btn-primary"><IconCamera /> Take a photo<input type="file" accept="image/*" capture="environment" hidden onChange={e => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = '' }} /></label>
             <label className="btn btn-secondary">Choose file<input type="file" hidden accept="image/*,.pdf,.xlsx,.xlsm,.xls,.csv,application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = '' }} /></label>
           </>
         )}

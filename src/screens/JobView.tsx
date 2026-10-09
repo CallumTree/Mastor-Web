@@ -5,7 +5,7 @@ import { usePhotoUrl } from '../lib/photos'
 import { getLook, PHOTOS, useBackdrop } from '../lib/look'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
-import { IconBack, IconCamera, IconDiary, IconFlag, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
+import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab } from './Diary'
@@ -194,12 +194,12 @@ export function JobView(p: {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <label className="btn btn-secondary"><IconCamera /> Photo
                 <input type="file" accept="image/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
-              <label className="btn btn-secondary">▶ Video
+              <label className="btn btn-secondary"><IconVideo /> Video
                 <input type="file" accept="video/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
-              <button className="btn btn-secondary" onClick={() => { setDiaryDate(dayKey()); setCapture(false); setFocusNote(true); setTab('diary') }}>✎ Diary note</button>
+              <button className="btn btn-secondary" onClick={() => { setDiaryDate(dayKey()); setCapture(false); setFocusNote(true); setTab('diary') }}><IconDiary /> Diary note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
-              <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onImportVo() }}>📄 Council VO</button>
-              <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}>📌 Job note</button>
+              <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onImportVo() }}><IconDoc /> Council VO</button>
+              <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Job note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
             <div className="muted" style={{ fontSize: 12 }}>Photos and video go into today’s diary.</div>

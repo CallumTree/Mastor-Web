@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import type { Job, ScopeItem, Valuation } from '../lib/types'
-import { Field, Sheet } from '../components/Ui'
+import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { money, qtyText } from '../lib/format'
 import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
-import { IconPlus, IconScope } from '../components/Icons'
+import { IconLock, IconPlus, IconScope } from '../components/Icons'
 import { TabMenu } from '../components/TabMenu'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 
@@ -13,7 +13,7 @@ export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; o
   return (
     <button className="tick" onClick={e => { e.stopPropagation(); onClick() }} disabled={locked} aria-pressed={on} aria-label={on ? (locked ? 'In an issued valuation (locked)' : 'Remove from valuation') : 'Add to valuation'}>
       <span className={'tick-box' + (on ? ' on' : '') + (locked ? ' locked' : '')}>
-        {on && (locked ? '🔒' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M5 12l5 5L19 7" /></svg>)}
+        {on && (locked ? <IconLock size={16} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M5 12l5 5L19 7" /></svg>)}
       </span>
     </button>
   )
@@ -21,7 +21,7 @@ export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; o
 
 export function ValBadge({ val }: { val?: Valuation }) {
   if (!val) return null
-  return <span className={'badge ' + (val.status === 'Issued' ? 'b-slate' : 'b-amber')}>{val.status === 'Issued' ? '🔒 ' : ''}{valRef(val.number)}</span>
+  return <span className={'badge ' + (val.status === 'Issued' ? 'b-slate' : 'b-amber')}>{val.status === 'Issued' && <IconLock size={12} />}{valRef(val.number)}</span>
 }
 
 type Filter = 'all' | 'live' | 'claimed'
@@ -77,7 +77,7 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
 
   return (
     <div className="stack">
-      <TabHead label="Scope" meta={`${scope.length} items`} title={job.name} menu={<TabMenu title="Scope" actions={[
+      <TabHead label="Scope" meta={`${scope.length} items`} menu={<TabMenu title="Scope" actions={[
           { label: 'Import BoQ / works order', hint: 'PDF or Excel', onClick: onImport },
           { label: 'Add item', hint: 'One line, by hand', onClick: onAdd },
           ...(hasProps ? [{ label: openProps.size ? 'Collapse all' : 'Expand all properties', onClick: () => setOpenProps(openProps.size ? new Set() : new Set(properties)) }] : []),
@@ -196,7 +196,6 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
   const [f, setF] = useState<ScopeItem>(item ?? { id: uid(), jobId, code: '', description: '', room: rooms[rooms.length - 1] ?? 'General', qty: null, unit: 'nr', rate: null, valuationId: null, order: nextOrder, createdAt: Date.now() })
   const [qty, setQty] = useState(item?.qty != null ? String(item.qty) : '')
   const [rate, setRate] = useState(item?.rate != null ? String(item.rate) : '')
-  const [confirm, setConfirm] = useState(false)
   const n = (s: string) => { const v = parseFloat(s.replace(/[£,]/g, '')); return isFinite(v) && v > 0 ? v : null }
   return (
     <Sheet onClose={onClose}>
@@ -224,9 +223,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}
         </div>
         {!locked && <button className="btn btn-primary" disabled={!f.description.trim()} onClick={() => onSave({ ...f, description: f.description.trim(), room: f.room.trim() || 'General', code: f.code.trim(), qty: n(qty), rate: n(rate) })}>{item ? 'Save' : 'Add item'}</button>}
-        {onDelete && !locked && (confirm
-          ? <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={onDelete}>Delete this item</button>
-          : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirm(true)}>Delete…</button>)}
+        {onDelete && !locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete this item</>} onConfirm={onDelete} />}
       </div>
     </Sheet>
   )

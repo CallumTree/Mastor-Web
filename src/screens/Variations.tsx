@@ -7,7 +7,7 @@ import { TabMenu } from '../components/TabMenu'
 import { groupValue, registerSummary, VO_GROUP_SHORT } from '../lib/voRegister'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { ukDate as ukd } from '../lib/format'
-import { Field, Sheet } from '../components/Ui'
+import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoUrl } from '../lib/photos'
@@ -72,7 +72,6 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
   const [v, setV] = useState(vo)
   const [qty, setQty] = useState(vo.qty != null ? String(vo.qty) : '')
   const [rate, setRate] = useState(vo.rate != null ? String(vo.rate) : '')
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const qn = parseFloat(qty.replace(',', '.')); const rn = parseFloat(rate.replace(/[£,]/g, ''))
   const qv = isFinite(qn) && qn > 0 ? qn : null; const rv = isFinite(rn) && rn > 0 ? rn : null
   return (
@@ -107,9 +106,7 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
         </fieldset>
         {v.photoIds.length > 0 && <div className="thumbs">{v.photoIds.map(id => <Thumb key={id} id={id} />)}</div>}
         {!locked && <button className="btn btn-primary" onClick={() => onSave({ ...v, qty: qv, rate: rv })}>Save</button>}
-        {!locked && (confirmDelete
-          ? <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={onDelete}>Delete {voRef(vo.number)}</button>
-          : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirmDelete(true)}>Delete…</button>)}
+        {!locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete {voRef(vo.number)}</>} onConfirm={onDelete} />}
       </div>
     </Sheet>
   )
@@ -123,7 +120,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
   const sum = registerSummary(job, vos, vals)
   return (
     <div className="stack">
-      <TabHead label="Variations" title={job.name} menu={<TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }]} />} />
+      <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }]} />} />
       {sorted.length > 0 && <SumStrip label="Variation summary" caption="Groups at base rates · total includes uplifts, excludes rejected" cells={[
         ...sum.rows.map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced), nil: !r.count,
           note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
@@ -155,7 +152,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
                     {v.room || '—'} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced'}
                   </div>
                   <div className="vo-meta">
-                    <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef || 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
+                    <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef ? `Council ref ${v.clientRef}` : 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
                   </div>
                   <div className="vo-status"><span className={'badge ' + statusClass[v.status]}>{v.status}</span>{v.status !== 'Rejected' && <CourtLine c={c.who === 'us' ? { ...c, who: 'none', text: 'Next: ' + c.text.replace(/^(Complete|Instructed) — /, '').replace(/^./, x => x.toLowerCase()) } : c} />}</div>
                 </div>

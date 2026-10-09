@@ -92,7 +92,7 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
               {off.length ? `Column totals differ: ${off.map(c => `${c.stream} sheet ${money(c.sheet)} vs read ${money(c.read)}`).join(' · ')}` : `✓ All ${boq.columnCheck.length} column totals match the sheet`}
             </div>
           })()}
-          {boq.truncated && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--copper-light)' }}>⚠ The document was very long and may have been cut short — check the last section.</div>}
+          {boq.truncated && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--copper-light)' }}>Check: the document was very long and may have been cut short — check the last section.</div>}
         </div>
 
         {flagged > 0 && (

@@ -8,11 +8,11 @@ const props = () => ({ onSave: vi.fn(), onClose: vi.fn(), onBackup: vi.fn(async 
 describe('settings: this device', () => {
   it('holds backup, restore, the opening titles and sign out (moved off the cover banner)', async () => {
     const p = props(); render(<SettingsSheet {...p} />)
-    for (const name of ['Back up', 'Sign out', '▶ Play the opening titles']) expect(screen.getByRole('button', { name })).toBeTruthy()
+    for (const name of ['Back up', 'Sign out', 'Play the opening titles']) expect(screen.getByRole('button', { name })).toBeTruthy()
     expect(screen.getByText('Restore…')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Back up' }))
     await screen.findByText('Backup saved to your Downloads')
-    fireEvent.click(screen.getByRole('button', { name: '▶ Play the opening titles' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Play the opening titles' }))
     expect(p.onPlayIntro).toHaveBeenCalled()
   })
 

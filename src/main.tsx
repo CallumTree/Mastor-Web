@@ -4,7 +4,6 @@ import '@fontsource/cinzel/500.css'
 import '@fontsource/cinzel/600.css'
 import '@fontsource/cinzel/700.css'
 import App from './App'
-import { ButtonLab } from './screens/ButtonLab'
 import { PhotoPicker } from './screens/PhotoPicker'
 import { Gate } from './screens/Gate'
 import { Splash, shouldPlaySplash } from './components/Splash'
@@ -17,10 +16,9 @@ const HOME = 'mastor-web.vercel.app'
 if (location.hostname.endsWith('.vercel.app') && location.hostname !== HOME) {
   location.replace(`https://${HOME}${location.pathname}${location.search}${location.hash}`)
 }
-// #lab = style lab (design experiments), everything else = the app
+// #photos = cover photo picker, everything else = the app
 function Root() {
   const [splash, setSplash] = useState(() => !location.hash && shouldPlaySplash())
-  if (location.hash === '#lab') return <ButtonLab />
   if (location.hash === '#photos') return <PhotoPicker />
   // the app loads underneath while the opening titles play
   return <>{<Gate><App /></Gate>}{splash && <Splash onDone={() => setSplash(false)} />}<UpdateBar /></>

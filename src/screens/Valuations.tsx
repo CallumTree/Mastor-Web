@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
+import { IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { lineValue, valRef, valTotals } from '../lib/valuation'
 import { CourtLine, valCourt } from '../lib/chase'
-import { Field, Sheet } from '../components/Ui'
+import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
 import { invoiceAmounts } from '../lib/invoice'
 
@@ -31,7 +32,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
       {s.length > 0 && <div className="label" style={{ marginTop: 8 }}>Scope</div>}
       {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <div className="label" style={{ marginTop: 10, color: 'var(--copper-ink)' }}>No. {i.property || '—'}</div>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
       {o.length > 0 && <div className="label" style={{ marginTop: 12 }}>Variations</div>}
-      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v))))}
+      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v))))}
     </div>
   )
 }
@@ -47,7 +48,6 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   const cert = async (v: Valuation) => { setMaking(v.id); try { await onCertificate(v) } finally { setMaking(null) } }
   const [paying, setPaying] = useState<Valuation | null>(null)
   const [confirmIssue, setConfirmIssue] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const [expandedPick, setExpanded] = useState<string | null | undefined>(undefined) // undefined = newest issued open by default
   const [showLines, setShowLines] = useState<string | null>(null)
   const sorted = [...vals].sort((a, b) => b.number - a.number)
@@ -68,7 +68,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
 
   return (
     <div className="stack">
-      <TabHead label="Valuations" title={job.name} menu={<TabMenu title="Valuations" actions={[
+      <TabHead label="Valuations" menu={<TabMenu title="Valuations" actions={[
           { label: 'Preview certificate', hint: open ? `${valRef(open.number)} as a draft PDF` : 'No open valuation', disabled: !open || !current?.lines, onClick: () => open && cert(open) },
           { label: 'Delete open valuation', hint: open ? `Sends every line in ${valRef(open.number)} back to live` : 'No open valuation', danger: true, disabled: !open,
             confirm: open ? `Delete ${valRef(open.number)}? Its lines go back to live — nothing else is lost.` : '', onClick: () => open && onDeleteOpen(open) },
@@ -109,9 +109,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             ) : (
               <button className="btn btn-primary" disabled={current.lines === 0} onClick={() => setConfirmIssue(true)}>Issue {valRef(open.number)}</button>
             )}
-            {confirmDelete
-              ? <button className="btn" style={{ background: 'var(--red)', color: '#fff' }} onClick={() => { setConfirmDelete(false); onDeleteOpen(open) }}>Delete {valRef(open.number)} — send all lines back to live</button>
-              : <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setConfirmDelete(true)}>Delete this valuation…</button>}
+            <ConfirmDelete label="Delete this valuation…" confirmLabel={<>Delete {valRef(open.number)}</>} note={`Every line in ${valRef(open.number)} goes back to live. Nothing else is lost.`} onConfirm={() => onDeleteOpen(open)} />
           </div>
         </div>
       ) : (
@@ -131,7 +129,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
               <div key={v.id} className={'vo-row-wrap' + (isOpen ? ' open' : '')}>
                 <div className="vo-row has-hit">
                   <RowHit label={`${valRef(v.number)}, issued${v.issuedAt ? ' ' + ukDate(v.issuedAt) : ''} — ${isOpen ? 'hide' : 'show'} actions`} expanded={isOpen} onClick={() => setExpanded(isOpen ? null : v.id)} />
-                  <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span><small>🔒 Issued</small></div>
+                  <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span><small><IconLock size={12} /> Issued</small></div>
                   <div className="vo-main">
                     <div className="vo-desc">{v.issuedAt ? ukDate(v.issuedAt) : 'Issued'}</div>
                     <div className="vo-meta">{t.lines} line{t.lines === 1 ? '' : 's'} · base {money(t.base)}</div>

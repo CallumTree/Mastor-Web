@@ -20,6 +20,9 @@ beforeAll(() => {
   }))
 })
 
+// issued = locked: the lock is a drawn icon next to the text
+const lockedText = (text: string) => (_: string, el: Element | null) => !!el && el.textContent?.trim() === text && !!el.querySelector(':scope > svg')
+
 describe('College Park, end to end', () => {
   it('create job → import BoQ → scope → valuations → issue → VAL II → VOs → survives reload', async () => {
     render(<App />)
@@ -70,9 +73,9 @@ describe('College Park, end to end', () => {
     nav('vals')
     click(await screen.findByRole('button', { name: 'Issue VAL I' }))
     click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findByText('🔒 Issued')
+    await screen.findByText(lockedText('Issued'))
     nav('scope')
-    const locked = await screen.findByText('🔒 VAL I')
+    const locked = await screen.findByText(lockedText('VAL I'))
     expect(locked).toBeTruthy()
 
     // --- next tick opens VAL II
@@ -102,7 +105,7 @@ describe('College Park, end to end', () => {
     click(await screen.findByRole('button', { name: /open job/i }))
     nav('scope')
     await screen.findByText('58 items')
-    expect(screen.getAllByText('🔒 VAL I').length).toBe(1)
+    expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)
     expect(screen.getAllByText('VAL II').length).toBe(1)
 
     // --- director dashboard reflects it
