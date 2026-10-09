@@ -98,7 +98,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         <div className="glass tile tile-dark"><div className="n" style={{ color: 'var(--copper-light)' }}>{money(certified).replace(/\.\d\d$/, '')}</div><div className="l">Certified</div></div>
         <div className="glass tile tile-dark"><div className="n">{money(voGross).replace(/\.\d\d$/, '')}</div><div className="l">Variations</div></div>
       </div>
-      <div className="label bracket" style={{ marginBottom: 8, color: actions.length ? 'var(--copper)' : 'var(--green)' }}>
+      <div className="label bracket" style={{ marginBottom: 8, color: actions.length ? 'var(--copper-ink)' : 'var(--green)' }}>
         {actions.length ? `Action needed (${actions.length})` : 'All clear'}
       </div>
       <div className="card-dark" style={{ padding: actions.length ? '6px 16px' : 16 }}>

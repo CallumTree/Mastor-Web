@@ -7,7 +7,7 @@ import { outbox, wipeLocal } from '../lib/db'
 export function SyncBadge({ dark = true }: { dark?: boolean }) {
   const [s, setS] = useState<SyncStatus>({ state: 'idle', pending: 0 })
   useEffect(() => onSyncStatus(setS), [])
-  const colour = s.state === 'error' ? '#FCA5A5' : s.state === 'offline' ? 'var(--copper-light)' : dark ? 'var(--cream-muted)' : 'var(--ink-muted)'
+  const colour = s.state === 'error' ? (dark ? '#FCA5A5' : 'var(--red)') : s.state === 'offline' ? (dark ? 'var(--copper-light)' : 'var(--copper-ink)') : dark ? 'var(--cream-muted)' : 'var(--ink-muted)'
   const text =
     s.state === 'synced' ? `Synced ✓${s.pending ? ` · ${s.pending} waiting` : ''}` :
     s.state === 'syncing' ? 'Syncing…' :

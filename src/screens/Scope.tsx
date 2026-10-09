@@ -59,7 +59,7 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
           : <span className="tick-col" aria-hidden="true" />}
         <div className="grow" style={{ minWidth: 0 }}>
           <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-            {i.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{i.code}</span>}
+            {i.code && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{i.code}</span>}
             {showRoom && <span className="muted" style={{ fontSize: 11 }}>{i.room}</span>}
             <ValBadge val={val} />
           </div>

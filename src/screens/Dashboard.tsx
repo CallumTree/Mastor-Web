@@ -9,7 +9,7 @@ import { IconBack } from '../components/Icons'
  * Director dashboard, drawn as a drawing sheet: title block for the headline figures,
  * hatched bars (how a drawing shows a cut section), dimension lines, and a ruled schedule.
  */
-const INK = '#1A1A2E', MUTED = '#5A5A7A', HAIR = 'rgba(26,26,46,.16)', COPPER = '#C97B3F', COPPER_INK = '#A85E28'
+const INK = '#1A1A2E', MUTED = '#5A5A7A', HAIR = 'rgba(26,26,46,.16)', COPPER = '#C97B3F', COPPER_INK = '#8F4E1F'
 const k = (n: number) => (Math.abs(n) >= 1e6 ? `£${(n / 1e6).toFixed(2)}m` : Math.abs(n) >= 1e4 ? `£${(n / 1e3).toFixed(1)}k` : money(n).replace(/\.00$/, ''))
 
 const Hatch = ({ id }: { id: string }) => (
@@ -114,7 +114,7 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         rows={[
           [['In valuations now', k(p.inValuation)], ['Pipeline to claim', k(p.pipeline)]],
           [['Paid this year', k(p.paidThisYear)], ['Owed to you', k(p.owed)]],
-          [['Overdue', p.overdueCount ? `${k(p.overdue)} · ${p.overdueCount}` : '—', p.overdueCount ? '#DC2626' : undefined], ['Variations', k(p.variations)]],
+          [['Overdue', p.overdueCount ? `${k(p.overdue)} · ${p.overdueCount}` : '—', p.overdueCount ? 'var(--red)' : undefined], ['Variations', k(p.variations)]],
           [['Active jobs', `${p.active} · ${k(p.revised)}`], ['', '']],
         ]} />
       <div className="muted" style={{ fontSize: 11, marginTop: 6, marginLeft: '12%' }}>Certified = issued valuations incl. uplifts{p.unpricedVos ? ` · ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not included` : ''}</div>

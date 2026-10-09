@@ -18,7 +18,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   const row = (key: string, ref: string, desc: string, sub: string, value: number, onRemove?: () => void) => (
     <div key={key} className="row val-line" style={{ padding: '10px 0', borderTop: '1px solid var(--cream-line)', alignItems: 'flex-start' }}>
       <div className="grow" style={{ minWidth: 0 }}>
-        <div className="row" style={{ gap: 6 }}>{ref && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{ref}</span>}</div>
+        <div className="row" style={{ gap: 6 }}>{ref && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{ref}</span>}</div>
         <div style={{ fontWeight: 500 }}>{desc}</div>
         <div className="muted" style={{ fontSize: 12 }}>{sub}</div>
       </div>
@@ -83,7 +83,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
       {open && current ? (
         <div className="card" style={{ padding: 12 }}>
           <div className="row" style={{ marginBottom: 10 }}>
-            <span className="ref-roman" style={{ color: 'var(--copper)', fontWeight: 500 }}>{valRef(open.number)}</span>
+            <span className="ref-roman" style={{ color: 'var(--copper-ink)', fontWeight: 500 }}>{valRef(open.number)}</span>
             <span className="badge b-amber">Open</span><span className="grow" />
             <span className="muted" style={{ fontSize: 12 }}>started {ukDate(open.createdAt)}</span>
           </div>

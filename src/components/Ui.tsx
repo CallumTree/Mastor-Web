@@ -72,7 +72,7 @@ export function TitleBlock({ head, rows, sheetRef, progress }: {
     <div className="tb-wrap">
       <div className="tb">
         <div className="tb-cell tb-head">
-          <div className="row"><div className="tb-label grow">{head[0]}</div>{sheetRef && <div className="tb-label" style={{ opacity: .6 }}>{sheetRef}</div>}</div>
+          <div className="row"><div className="tb-label grow">{head[0]}</div>{sheetRef && <div className="tb-label">{sheetRef}</div>}</div>
           <div className="tb-val">{head[1]}</div>
         </div>
         {rows.map((r, i) => (

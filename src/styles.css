@@ -287,7 +287,7 @@ h1 { font-size: 26px; margin: 4px 0 0; letter-spacing: -.01em; }
    ===================================================================== */
 :root {
   --paper: #F7F3EB; --paper-2: #FFFDF8; --ink-line: rgba(26,26,46,.16); --ink-hair: rgba(26,26,46,.08);
-  --copper-ink: #A85E28;
+  --copper-ink: #8F4E1F;  /* copper for TEXT: 5.8:1 on paper. #C97B3F stays for fills, lines, the primary button */
 }
 body { background: var(--paper); }
 body {
@@ -344,7 +344,7 @@ body {
 
 /* ---- nav + banner: light ---- */
 .nav { background: rgba(255,253,248,.94); border-top: 1px solid var(--ink); backdrop-filter: blur(10px); }
-.nav button { color: var(--ink-muted); opacity: .75; }
+.nav button { color: var(--ink-muted); opacity: 1; }
 .nav button.on { color: var(--copper-ink); opacity: 1; }
 .banner { background: var(--paper-2); color: var(--ink-muted); border-bottom: 1px solid var(--ink-line); }
 .banner .linkish { color: var(--copper-ink); }
@@ -509,3 +509,20 @@ span.tick-col { cursor: auto; }
   .val-line { flex-wrap: wrap; } .val-line > .grow { flex: 1 1 100%; }
   .row:has(> .btn), .imm-actions { flex-wrap: wrap; } .row > .btn, .imm-actions > .btn { flex: 1 1 100% !important; }
 }
+
+/* ================= TEXT ROLES (contrast for glare) =================
+   On the paper sheets every colour used for words reaches 4.5:1. Status hues are deepened for text;
+   the cover (.immersive, dark) keeps its light tints. Measured on #F7F3EB / #FFFDF8. */
+:root {
+  --green: #166534;   /* 6.4:1 — done, claimed, paid */
+  --amber: #B45309;   /* 4.5:1 — due, needs doing (distinct from copper-ink: more orange) */
+  --red: #B91C1C;     /* 5.9:1 — overdue, missing, destructive; white on it 6.4:1 */
+}
+.immersive { --green: #4ADE80; --amber: #FBBF24; --red: #FCA5A5; }
+.linkish { color: var(--copper-ink); }
+.immersive .linkish { color: var(--copper-light); }
+.chip.on { color: var(--copper-ink); }
+.immersive .chip.on { color: var(--copper-light); }
+.vo-row.rejected { opacity: 1; }
+.vo-row.rejected .vo-desc { text-decoration: line-through; text-decoration-thickness: 1px; color: var(--ink-muted); }
+.vo-row.rejected .ref-roman, .vo-row.rejected .vo-amt .mono { color: var(--ink-muted); }

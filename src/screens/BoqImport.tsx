@@ -79,7 +79,7 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
             {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''}{withUplift - base > 0.005 ? ` · incl. uplifts ${money(withUplift)}` : ''}
           </div>
           {job.contractValue > 0 && (
-            <div style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: match ? 'var(--green)' : 'var(--copper-light)' }}>
+            <div style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: match ? 'var(--green)' : 'var(--copper-ink)' }}>
               {match === 'base' && '✓ Matches your contract value'}
               {match === 'uplift' && '✓ Matches your contract value once uplifts are applied'}
               {!match && `Contract value is ${money(job.contractValue)} — ${money(Math.abs(job.contractValue - base))} difference. Check for missed or flagged lines.`}
@@ -88,7 +88,7 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
           {boq.method && <div style={{ fontSize: 12, color: 'var(--cream-muted)', marginTop: 6 }}>{boq.method === 'ai' ? 'Read by AI — check the flagged lines' : `Read exactly from the ${boq.method === 'table' ? 'PDF table' : 'spreadsheet'} — no AI`}</div>}
           {boq.columnCheck && boq.columnCheck.length > 0 && (() => {
             const off = boq.columnCheck.filter(c => Math.abs(c.sheet - c.read) > 0.05)
-            return <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600, color: off.length ? 'var(--copper-light)' : 'var(--green)' }}>
+            return <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600, color: off.length ? 'var(--copper-ink)' : 'var(--green)' }}>
               {off.length ? `Column totals differ: ${off.map(c => `${c.stream} sheet ${money(c.sheet)} vs read ${money(c.read)}`).join(' · ')}` : `✓ All ${boq.columnCheck.length} column totals match the sheet`}
             </div>
           })()}
@@ -129,7 +129,7 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
                   <div key={i} className="row" onClick={() => toggle(i)} style={{ padding: '10px 12px', borderTop: n ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer', opacity: l.include ? 1 : .45, background: l.issues.length ? 'rgba(217,119,6,.07)' : undefined }}>
                     <input type="checkbox" checked={l.include} readOnly style={{ width: 20, height: 20, accentColor: 'var(--copper)', marginTop: 2 }} />
                     <div className="grow" style={{ minWidth: 0 }}>
-                      {l.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{l.code}</span>}
+                      {l.code && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{l.code}</span>}
                       <div style={{ fontWeight: 500, fontSize: 14 }}>{l.description}</div>
                       <div className="muted" style={{ fontSize: 12 }}>{l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty'}{l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate'}</div>
                       {l.issues.length > 0 && <div className="flag" style={{ fontWeight: 600 }}>{l.issues.join(' · ')}</div>}
@@ -153,7 +153,7 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
                   <div key={i} className="row" onClick={() => toggle(i)} style={{ padding: '10px 12px', borderTop: n ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer', opacity: l.include ? 1 : .45, background: l.issues.length ? 'rgba(217,119,6,.07)' : undefined }}>
                     <input type="checkbox" checked={l.include} readOnly style={{ width: 20, height: 20, accentColor: 'var(--copper)', marginTop: 2 }} />
                     <div className="grow" style={{ minWidth: 0 }}>
-                      {l.code && <span className="mono" style={{ color: 'var(--copper)', fontSize: 12 }}>{l.code}</span>}
+                      {l.code && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{l.code}</span>}
                       <div style={{ fontWeight: 500, fontSize: 14 }}>{l.description}</div>
                       <div className="muted" style={{ fontSize: 12 }}>{l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty'}{l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate'}</div>
                       {l.issues.length > 0 && <div className="flag" style={{ fontWeight: 600 }}>{l.issues.join(' · ')}</div>}
