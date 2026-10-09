@@ -10,12 +10,12 @@ import { Splash, shouldPlaySplash } from './components/Splash'
 import { UpdateBar } from './components/UpdateBar'
 import { useState } from 'react'
 import './styles.css'
-// Data is stored per web address, so there must only ever be ONE address. Vercel's deployment and
-// branch links (mastor-xxxx-callumtree-1200.vercel.app) would open an empty app — send them home.
-const HOME = 'mastor-web.vercel.app'
-if (location.hostname.endsWith('.vercel.app') && location.hostname !== HOME) {
+import { HOME, isBranchPreview, shouldGoHome } from './lib/host'
+// One live address; branch previews stay where they are so changes can be checked before merging
+if (shouldGoHome(location.hostname)) {
   location.replace(`https://${HOME}${location.pathname}${location.search}${location.hash}`)
 }
+if (isBranchPreview(location.hostname)) document.title = 'Preview · Mastor'
 // #photos = cover photo picker, everything else = the app
 function Root() {
   const [splash, setSplash] = useState(() => !location.hash && shouldPlaySplash())
