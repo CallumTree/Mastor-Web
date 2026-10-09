@@ -1,8 +1,5 @@
 import { Fragment, useState } from 'react'
 import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
-import { Drawing } from '../components/Drawing'
-import { usePhotoUrl } from '../lib/photos'
-import { getLook, PHOTOS, useBackdrop } from '../lib/look'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
 import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo } from '../components/Icons'
@@ -12,35 +9,31 @@ import { DiaryTab } from './Diary'
 import { NoteEditor, NoteRow, NotesSheet, newNote, sortNotes } from './Notes'
 import { dayKey } from '../lib/dates'
 import { Sheet, TitleBlock } from '../components/Ui'
+import { SignMark, SIGN_WORD, type SignKind } from '../components/Sign'
 import { ValuationsTab } from './Valuations'
 import { pennies, upliftAmounts, valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
 import { valCourt, voCourt, VO_CHASE_AMBER } from '../lib/chase'
 
+/** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
+const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
+
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
+/** The job's black bar: where you are, and the way back. No decoration — the work starts underneath it. */
 function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; onBack: () => void; onSetup: () => void }) {
-  const jobPhoto = usePhotoUrl(job.photoId)
-  const bg = useBackdrop(jobPhoto ?? (getLook() === 'photo' ? PHOTOS.job.src : null))
   return (
-    <div className={'jhero bleed' + (bg.loaded ? ' has-photo' : '')} style={{ height: compact ? 150 : 300 }}>
-      <div className="sky" />
-      {!bg.loaded && (
-        <div className="bg-drawing" style={compact ? { bottom: '-30%', opacity: .7 } : undefined}>
-          <Drawing id={job.id} type={job.workType} active={job.status === 'Active'} bare paper />
+    <header className={'jbar bleed' + (compact ? ' compact' : '')}>
+      <div className="jbar-in">
+        <button className="icon-btn on-dark" onClick={onBack} aria-label="All jobs"><IconBack size={20} /></button>
+        <div className="jbar-title">
+          <div className="jbar-ref mono">{job.contractRef || job.workType}{job.status !== 'Active' ? ` · ${job.status}` : ''}</div>
+          <h1 className="jbar-name">{job.name}</h1>
+          {!compact && (job.client || job.address) && <div className="jbar-sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
         </div>
-      )}
-      {bg.trying && bg.img && <><img className={'bg-photo' + (bg.loaded ? '' : ' pending')} src={bg.img.src} onLoad={bg.img.onLoad} onError={bg.img.onError} alt="" />{bg.loaded && <div className="shade" />}</>}
-      <div className="jhero-top">
-        <button onClick={onBack} aria-label="All jobs"><IconBack size={20} /></button>
-        <span className="label bracket" style={{ color: 'var(--cream-muted)' }}>{job.contractRef || job.workType}</span>
-        <button onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button>
+        <button className="icon-btn on-dark" onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button>
       </div>
-      <div className="jhero-title" style={compact ? { top: 60 } : undefined}>
-        <h1 className="jhero-name" style={compact ? { fontSize: 20 } : undefined}>{job.name}</h1>
-        {!compact && <div className="sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
-      </div>
-    </div>
+    </header>
   )
 }
 
@@ -93,24 +86,24 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
 
   return (
     <div>
-      <div className="tiles">
-        <div className="glass tile tile-dark"><div className="n">{job.contractValue ? money(job.contractValue).replace(/\.\d\d$/, '') : '—'}</div><div className="l">Contract</div></div>
-        <div className="glass tile tile-dark"><div className="n" style={{ color: 'var(--copper-light)' }}>{money(certified).replace(/\.\d\d$/, '')}</div><div className="l">Certified</div></div>
-        <div className="glass tile tile-dark"><div className="n">{money(voGross).replace(/\.\d\d$/, '')}</div><div className="l">Variations</div></div>
+      <div className="figs">
+        <div className="fig"><div className="fig-n">{job.contractValue ? pounds(job.contractValue) : '—'}</div><div className="fig-l">Contract</div></div>
+        <div className="fig"><div className="fig-n">{pounds(certified)}</div><div className="fig-l">Certified</div></div>
+        <div className="fig"><div className="fig-n">{pounds(voGross)}</div><div className="fig-l">Variations</div>{(unpriced || unmeasured) > 0 && <div className="fig-note">+ {Math.max(unpriced, unmeasured)} not priced</div>}</div>
       </div>
-      <div className="label bracket" style={{ marginBottom: 8, color: actions.length ? 'var(--copper-ink)' : 'var(--green)' }}>
-        {actions.length ? `Action needed (${actions.length})` : 'All clear'}
-      </div>
-      <div className="card-dark" style={{ padding: actions.length ? '6px 16px' : 16 }}>
-        {actions.length === 0 && <div>Nothing outstanding on this job.</div>}
-        {actions.map((a, i) => (
-          <button key={i} onClick={a.onClick} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 12, padding: '12px 0', background: 'none', border: 'none', borderTop: i ? '1px solid var(--charcoal-line)' : 'none', color: 'inherit', textAlign: 'left' }}>
-            {/* urgency by shape as well as colour: urgent = diamond, everything else = dot */}
-            <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: a.colour === 'var(--red)' ? 1 : 5, transform: a.colour === 'var(--red)' ? 'rotate(45deg) scale(.9)' : undefined, background: a.colour, flex: 'none' }} />
-            <span className="grow"><span className="sr-only">{a.colour === 'var(--red)' ? 'Urgent: ' : a.colour === 'var(--green)' ? 'Ready: ' : 'To do: '}</span><div style={{ fontWeight: 600 }}>{a.text}</div><div style={{ fontSize: 12, color: 'var(--cream-muted)' }}>{a.hint}</div></span>
-            <span aria-hidden="true" style={{ color: 'var(--cream-muted)', fontSize: 20 }}>›</span>
-          </button>
-        ))}
+      <h2 className="sec-h">{actions.length ? `Action needed · ${actions.length}` : 'All clear'}</h2>
+      <div className="acts">
+        {actions.length === 0 && <div className="act act-clear"><SignMark kind="ok" size={22} /><span>Nothing outstanding on this job.</span></div>}
+        {actions.map((a, i) => {
+          const kind: SignKind = a.colour === 'var(--red)' ? 'stop' : a.colour === 'var(--green)' ? 'ok' : 'warn'
+          return (
+            <button key={i} className={'act act-' + kind} onClick={a.onClick}>
+              <SignMark kind={kind} size={22} />
+              <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{a.text}</span><span className="act-h">{a.hint}</span></span>
+              <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
+            </button>
+          )
+        })}
       </div>
       {poNote && <div className="panel" style={{ padding: '10px 14px', marginTop: 10, fontSize: 12 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish" style={{ color: 'var(--copper-ink)' }} onClick={() => setGapOpen(true)}>review</button></div>}
       {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => {
@@ -119,8 +112,8 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         if (j.poGapAccepted) onSaveNote(newNote(job, `PO difference of ${money(Math.abs(j.poGapAccepted.diff))} accepted (BoQ ${j.poGapAccepted.diff > 0 ? 'over' : 'under'} PO): ${j.poGapAccepted.note}`, 'Commercial'))
       }} />}
       <div className="row" style={{ margin: '18px 0 8px' }}>
-        <div className="label bracket grow">Notes &amp; decisions</div>
-        <button className="linkish tap" style={{ color: 'var(--copper-ink)', fontSize: 14 }} onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length} ›` : '+ Add'}</button>
+        <h2 className="sec-h grow" style={{ margin: 0 }}>Notes &amp; decisions</h2>
+        <button className="linkish tap" style={{ color: 'var(--copper-ink)', fontSize: 14 }} onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length}` : '+ Add'}</button>
       </div>
       <div className="panel" style={{ padding: '0 14px' }}>
         {notes.length === 0 && <button onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', color: 'var(--ink-muted)', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}

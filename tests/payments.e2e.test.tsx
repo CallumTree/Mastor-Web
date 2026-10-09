@@ -38,7 +38,7 @@ describe('payments and chasing', () => {
     nav('vals')
     click(await screen.findByRole('button', { name: 'Issue VAL I' }))
     click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findByText(/^Due /)
+    await screen.findAllByText(/^With client · Due /)
 
     // part payment → still owed; then paid in full
     click(screen.getByRole('button', { name: /mark as paid/i }))

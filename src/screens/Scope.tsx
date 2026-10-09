@@ -70,7 +70,7 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
           </div>
           {!isPriced(i) && <div className="flag">{i.rate == null ? 'NO RATE' : 'NO QTY'} — tap to fix</div>}
         </div>
-        <div className="mono" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap', color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
+        <div className="amt" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap', color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
       </div>
     )
   }
@@ -152,11 +152,11 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
                   return (
                     <div key={key} style={{ borderTop: '1px solid var(--ink-line)' }}>
                       <button onClick={() => toggleGroup(key)} aria-expanded={gOpen} aria-label={`No. ${p} ${g}`}
-                        className="row" style={{ width: '100%', background: gOpen ? 'rgba(201,123,63,.06)' : 'none', border: 'none', padding: '10px 14px 10px 30px', color: 'var(--ink)', textAlign: 'left' }}>
+                        className="row" style={{ width: '100%', background: gOpen ? 'var(--row-open)' : 'none', border: 'none', padding: '10px 14px 10px 30px', color: 'var(--ink)', textAlign: 'left' }}>
                         <span style={{ width: 12, color: 'var(--copper-ink)', fontSize: 11, transition: 'transform .2s', transform: gOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
                         <span className="grow" style={{ fontWeight: 600, fontSize: 14 }}>{g} <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>· {gall.length}</span></span>
-                        <span className="mono" style={{ fontSize: 13 }}>{money(gt)}</span>
-                        <span className="mono" style={{ fontSize: 11, width: 36, textAlign: 'right', color: gpct === 100 ? 'var(--green)' : 'var(--copper-ink)' }}>{gpct}%</span>
+                        <span className="amt" style={{ fontSize: 13 }}>{money(gt)}</span>
+                        <span className="amt" style={{ fontSize: 13, width: 40, textAlign: 'right', color: gpct === 100 ? 'var(--green)' : 'var(--copper-ink)' }}>{gpct}%</span>
                       </button>
                       {gOpen && (
                         <div style={{ paddingLeft: 18 }}>
@@ -219,7 +219,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           <div style={{ width: '22%' }}><Field label="Unit"><input disabled={locked} value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} /></Field></div>
           <div className="grow"><Field label="Rate (£)"><input disabled={locked} inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="No rate" /></Field></div>
         </div>
-        <div className="mono" style={{ fontSize: 20, fontWeight: 300, color: n(qty) && n(rate) ? 'var(--copper-ink)' : 'var(--ink-muted)' }}>
+        <div className="amt" style={{ fontSize: 20, fontWeight: 700, color: n(qty) && n(rate) ? 'var(--copper-ink)' : 'var(--ink-muted)' }}>
           {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}
         </div>
         {!locked && <button className="btn btn-primary" disabled={!f.description.trim()} onClick={() => onSave({ ...f, description: f.description.trim(), room: f.room.trim() || 'General', code: f.code.trim(), qty: n(qty), rate: n(rate) })}>{item ? 'Save' : 'Add item'}</button>}

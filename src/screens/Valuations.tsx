@@ -23,7 +23,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
         <div style={{ fontWeight: 500 }}>{desc}</div>
         <div className="muted" style={{ fontSize: 12 }}>{sub}</div>
       </div>
-      <div className="mono" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap' }}>{money(value)}</div>
+      <div className="amt" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap' }}>{money(value)}</div>
       {onRemove && <button className="icon-btn" onClick={onRemove} aria-label="Remove from valuation" style={{ color: 'var(--ink-muted)', fontSize: 20 }}>×</button>}
     </div>
   )
@@ -141,7 +141,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                 {isOpen && (
                   <div className="vo-actions" onClick={e => e.stopPropagation()}>
                     {v.invoiceNumber
-                      ? <button className="btn btn-primary" disabled={making === 'inv' + v.id} onClick={async () => { setMaking('inv' + v.id); try { await onInvoicePdf(v) } finally { setMaking(null) } }}>{making === 'inv' + v.id ? 'Preparing…' : 'Invoice PDF'}</button>
+                      ? <button className="btn btn-secondary" disabled={making === 'inv' + v.id} onClick={async () => { setMaking('inv' + v.id); try { await onInvoicePdf(v) } finally { setMaking(null) } }}>{making === 'inv' + v.id ? 'Preparing…' : 'Invoice PDF'}</button>
                       : <button className="btn btn-primary" onClick={() => onCreateInvoice(v)}>Create invoice</button>}
                     <div className="row">
                       <button className="btn btn-secondary" style={{ flex: 1 }} disabled={making === v.id} onClick={() => cert(v)}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>

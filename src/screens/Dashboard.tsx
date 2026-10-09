@@ -6,22 +6,22 @@ import { TitleBlock } from '../components/Ui'
 import { IconBack } from '../components/Icons'
 
 /**
- * Director dashboard, drawn as a drawing sheet: title block for the headline figures,
- * hatched bars (how a drawing shows a cut section), dimension lines, and a ruled schedule.
+ * Director dashboard: a black board of headline figures, then flat bars in sign colours —
+ * green = certified (done), yellow = in a valuation (needs doing), outline = still to claim.
  */
-const INK = '#1A1A2E', MUTED = '#5A5A7A', HAIR = 'rgba(26,26,46,.16)', COPPER = '#C97B3F', COPPER_INK = '#8F4E1F'
+// site-sign palette: green = certified, yellow = in valuation, ink outline = still to claim
+const INK = '#121316', MUTED = '#5B6068', HAIR = 'rgba(18,19,22,.16)', COPPER = '#0B7A3E', COPPER_INK = '#121316'
 const k = (n: number) => (Math.abs(n) >= 1e6 ? `£${(n / 1e6).toFixed(2)}m` : Math.abs(n) >= 1e4 ? `£${(n / 1e3).toFixed(1)}k` : money(n).replace(/\.00$/, ''))
 
 const Hatch = ({ id }: { id: string }) => (
   <pattern id={id} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-    <line x1="0" y1="0" x2="0" y2="5" stroke={COPPER} strokeWidth="1.3" />
+    <rect width="5" height="5" fill="#FFCD00" />
   </pattern>
 )
 
 function SheetLabel({ children, no }: { children: string; no: string }) {
   return (
     <div className="row" style={{ margin: '28px 0 10px', gap: 10 }}>
-      <span className="mono" style={{ fontSize: 11, color: COPPER_INK, border: `1px solid ${COPPER_INK}`, borderRadius: '50%', width: 22, height: 22, display: 'grid', placeItems: 'center' }}>{no}</span>
       <span className="label bracket" style={{ color: INK }}>{children}</span>
       <span className="grow" style={{ height: 1, background: HAIR }} />
     </div>
@@ -43,15 +43,15 @@ function MonthChart({ data }: { data: { label: string; value: number }[] }) {
   return (
     <svg className="chart-month" viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Certified per month this year, ${k(cum[last] ?? 0)} in total`}>
       <defs><Hatch id="hm" /></defs>
-      <text x={pad.l} y="15" fontSize="14" fill={INK} fontFamily="Mono">Σ {k(cum[last] ?? 0)} this year</text>
+      <text x={pad.l} y="15" fontSize="14" fill={INK} fontFamily="Barlow Condensed" fontWeight="600">Σ {k(cum[last] ?? 0)} this year</text>
       <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} stroke={INK} strokeWidth="1" />
       {data.map((d, i) => {
         const h = (H - pad.t - pad.b) * (d.value / max), x = pad.l + bw * i + bw * 0.22, w = bw * 0.56
         return (
           <g key={i}>
             <line x1={pad.l + bw * i + bw / 2} x2={pad.l + bw * i + bw / 2} y1={H - pad.b} y2={H - pad.b + 3} stroke={INK} strokeWidth=".8" />
-            {d.value > 0 && <rect x={x} y={H - pad.b - h} width={w} height={h} fill="url(#hm)" stroke={COPPER_INK} strokeWidth="1" />}
-            <text x={pad.l + bw * i + bw / 2} y={H - 7} textAnchor="middle" fontSize="13" fill={MUTED} fontFamily="Inter">{d.label.slice(0, 3)}</text>
+            {d.value > 0 && <rect x={x} y={H - pad.b - h} width={w} height={h} fill={COPPER} stroke={COPPER_INK} strokeWidth="1" />}
+            <text x={pad.l + bw * i + bw / 2} y={H - 7} textAnchor="middle" fontSize="13" fill={MUTED} fontFamily="Barlow Condensed">{d.label.slice(0, 3)}</text>
           </g>
         )
       })}
@@ -76,9 +76,9 @@ function BookBar({ certified, inVal, remaining }: { certified: number; inVal: nu
       <line x1={x0} x2={x0 + w} y1="50" y2="50" stroke={INK} strokeWidth=".8" />
       <line x1={x0} x2={x0} y1="42" y2="58" stroke={INK} strokeWidth=".8" /><line x1={x0 + w} x2={x0 + w} y1="42" y2="58" stroke={INK} strokeWidth=".8" />
       <path d={`M${x0} 50 l6 -3 v6 z M${x0 + w} 50 l-6 -3 v6 z`} fill={INK} />
-      <rect x={W / 2 - 78} y="40" width="156" height="21" fill="#FFFDF8" />
-      <text x={W / 2} y="56" textAnchor="middle" fontSize="16" fill={INK} fontFamily="Mono">{k(total)} total</text>
-      <text x={x0} y="84" fontSize="16" fill={MUTED} fontFamily="Inter">{Math.round(((certified + inVal) / total) * 100)}% claimed</text>
+      <rect x={W / 2 - 78} y="40" width="156" height="21" fill="#FFFFFF" />
+      <text x={W / 2} y="56" textAnchor="middle" fontSize="16" fill={INK} fontFamily="Barlow Condensed" fontWeight="600">{k(total)} total</text>
+      <text x={x0} y="84" fontSize="16" fill={MUTED} fontFamily="Barlow Condensed">{Math.round(((certified + inVal) / total) * 100)}% claimed</text>
     </svg>
   )
 }
@@ -88,7 +88,7 @@ function Key({ swatch, label, value }: { swatch: 'solid' | 'hatch' | 'open'; lab
     <div className="row" style={{ padding: '7px 0', borderBottom: `1px solid ${HAIR}`, fontSize: 13 }}>
       <span className={swatch === 'hatch' ? 'hatch' : ''} style={{ width: 16, height: 10, flex: 'none', border: `1px solid ${swatch === 'open' ? INK : COPPER_INK}`, background: swatch === 'solid' ? COPPER : undefined }} />
       <span className="grow" style={{ color: MUTED }}>{label}</span>
-      <span className="mono">{value}</span>
+      <span className="amt">{value}</span>
     </div>
   )
 }
@@ -111,7 +111,7 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         </div>
       </div>
 
-      <TitleBlock sheetRef={`Sheet 01 · ${year}`}
+      <TitleBlock
         head={['Certified this year', money(p.certifiedThisYear)]}
         rows={[
           [['In valuations now', k(p.inValuation)], ['Pipeline to claim', k(p.pipeline)]],
@@ -127,8 +127,8 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
       <div className="panel" style={{ padding: 14 }}>
         {p.certifiedThisYear > 0 ? <>
           <MonthChart data={p.byMonth} />
-          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Hatched bars: each month · dashed line: running total</div>
-          {p.byMonth.filter(m => m.value > 0).reverse().map(m => <Key key={m.label} swatch="hatch" label={m.label} value={money(m.value)} />)}
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Bars: each month · dashed line: running total</div>
+          {p.byMonth.filter(m => m.value > 0).reverse().map(m => <Key key={m.label} swatch="solid" label={m.label} value={money(m.value)} />)}
         </> : <div className="muted" style={{ fontSize: 13 }}>Nothing issued yet this year.</div>}
       </div>
 
@@ -159,8 +159,8 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
                   <span style={{ fontWeight: 600 }}>{j.job.name}</span>
                   {j.job.contractRef && <span className="mono" style={{ fontSize: 11, color: COPPER_INK, marginLeft: 8 }}>{j.job.contractRef}</span>}
                 </span>
-                <span className="mono" style={{ width: 88, textAlign: 'right', fontSize: 13 }}>{k(j.certified + j.inValuation)}</span>
-                <span className="mono" style={{ width: 44, textAlign: 'right', fontSize: 13, color: COPPER_INK }}>{Math.round(pct(j.certified + j.inValuation))}</span>
+                <span className="amt" style={{ width: 88, textAlign: 'right', fontSize: 13 }}>{k(j.certified + j.inValuation)}</span>
+                <span className="amt" style={{ width: 44, textAlign: 'right', fontSize: 13, color: COPPER_INK }}>{Math.round(pct(j.certified + j.inValuation))}</span>
               </div>
               <div style={{ display: 'flex', height: 6, marginTop: 7, border: `1px solid ${HAIR}` }}>
                 <div style={{ width: `${pct(j.certified)}%`, background: COPPER }} />
@@ -180,10 +180,10 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
           <div key={g.key} style={{ padding: '8px 0', borderBottom: `1px solid ${HAIR}` }}>
             <div className="row" style={{ fontSize: 13 }}>
               <span className="grow">{g.label} <span className="muted">({g.count}{g.unpriced && g.unpriced < g.count ? ` · ${g.unpriced} unpriced` : ''})</span></span>
-              <span className="mono" style={{ color: g.count && g.unpriced === g.count ? COPPER_INK : undefined }}>{groupValue(g.value, g.count, g.unpriced, k)}</span>
+              <span className="amt" style={{ color: g.count && g.unpriced === g.count ? COPPER_INK : undefined }}>{groupValue(g.value, g.count, g.unpriced, k)}</span>
             </div>
             <div style={{ height: 5, marginTop: 5, border: `1px solid ${HAIR}` }}>
-              <div className={g.key === 'claimed' ? '' : 'hatch'} style={{ height: '100%', width: `${(g.value / voMax) * 100}%`, background: g.key === 'claimed' ? COPPER : undefined, opacity: g.key === 'rejected' ? .35 : 1 }} />
+              <div className={g.key === 'claimed' || g.key === 'rejected' ? '' : 'hatch'} style={{ height: '100%', width: `${(g.value / voMax) * 100}%`, background: g.key === 'claimed' ? COPPER : g.key === 'rejected' ? 'var(--line)' : undefined }} />
             </div>
           </div>
         ))}

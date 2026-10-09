@@ -93,7 +93,7 @@ describe('College Park, end to end', () => {
     click(screen.getByRole('button', { name: /Replace rotten joists under bath/ }))
     type('Qty', '2'); type('Rate (£)', '85.50'); type('SoR code', '3051AB')
     click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(screen.queryByText(/next: price it/i)).toBeNull())
+    await waitFor(() => expect(screen.queryByText(/^price it$/i)).toBeNull())
     click(screen.getByRole('button', { name: /add to valuation/i }))
     await waitFor(() => expect(screen.getAllByText('VAL II').length).toBeGreaterThan(0))
     nav('vals')
@@ -102,7 +102,7 @@ describe('College Park, end to end', () => {
     // --- everything survives a full reload
     cleanup()
     render(<App />)
-    click(await screen.findByRole('button', { name: /open job/i }))
+    click(await screen.findByRole('button', { name: /32 College Park/ }))
     nav('scope')
     await screen.findByText('58 items')
     expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)

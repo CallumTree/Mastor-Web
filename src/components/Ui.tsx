@@ -80,7 +80,7 @@ export function TitleBlock({ head, rows, sheetRef, progress }: {
             {r.map(([l, v, c], j) => (
               <div className="tb-cell" key={j}>
                 <div className="tb-label">{l}</div>
-                <div className="tb-val" style={c ? { color: c } : undefined}>{v}</div>
+                <div><span className={'tb-val' + (c ? ' tb-alert' : '')}>{v}</span></div>
               </div>
             ))}
           </div>

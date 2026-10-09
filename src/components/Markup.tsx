@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
  */
 type Tool = 'pen' | 'arrow' | 'circle' | 'text'
 type Shape = { tool: Tool; color: string; pts: [number, number][]; text?: string }
-const COLOURS = ['#E53935', '#FFD600', '#C97B3F', '#FFFFFF', '#1A1A2E']
+const COLOURS = ['#C1121F', '#FFCD00', '#0A55B5', '#FFFFFF', '#121316']
 
 export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blob) => void; onCancel: () => void }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -44,7 +44,7 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
       }
       if (s.tool === 'circle' && s.pts.length > 1) { g.beginPath(); g.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.abs(b[0] - a[0]) / 2 + 1, Math.abs(b[1] - a[1]) / 2 + 1, 0, 0, Math.PI * 2); g.stroke() }
       if (s.tool === 'text' && s.text) {
-        g.shadowBlur = 0; g.font = `700 ${Math.round(c.width / 22)}px Inter, sans-serif`; g.lineWidth = lw * 1.4
+        g.shadowBlur = 0; g.font = `700 ${Math.round(c.width / 22)}px Barlow, sans-serif`; g.lineWidth = lw * 1.4
         g.strokeStyle = s.color === '#1A1A2E' ? '#FFFFFF' : '#1A1A2E'; g.strokeText(s.text, a[0], a[1]); g.fillText(s.text, a[0], a[1])
       }
       g.shadowBlur = 0
@@ -66,22 +66,22 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
 
   const tools: [Tool, string][] = [['arrow', '↗ Arrow'], ['circle', '◯ Circle'], ['pen', '✎ Draw'], ['text', 'T Text']]
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: '#101020', display: 'flex', flexDirection: 'column' }}>
-      <div className="row" style={{ padding: '10px 12px', color: '#F5F0E8' }}>
-        <button className="btn-ghost" style={{ color: '#B0A898', background: 'none', border: 'none' }} onClick={onCancel}>Cancel</button>
-        <span className="grow" style={{ textAlign: 'center', fontSize: 11, letterSpacing: '.2em', textTransform: 'uppercase', fontWeight: 700 }}>Mark up</span>
-        <button className="btn-ghost" style={{ color: '#B0A898', background: 'none', border: 'none' }} disabled={!shapes.length} onClick={() => setShapes(s => s.slice(0, -1))}>Undo</button>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--shell)', display: 'flex', flexDirection: 'column' }}>
+      <div className="row" style={{ padding: '10px 12px', color: '#fff' }}>
+        <button className="btn-ghost" style={{ color: 'var(--shell-muted)', background: 'none', border: 'none' }} onClick={onCancel}>Cancel</button>
+        <span className="grow" style={{ textAlign: 'center', fontFamily: 'var(--cond)', fontSize: 15, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 700 }}>Mark up</span>
+        <button className="btn-ghost" style={{ color: 'var(--shell-muted)', background: 'none', border: 'none' }} disabled={!shapes.length} onClick={() => setShapes(s => s.slice(0, -1))}>Undo</button>
       </div>
       <div style={{ flex: 1, display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 8 }}>
         <canvas ref={canvas} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
-          style={{ maxWidth: '100%', maxHeight: '100%', touchAction: 'none', background: '#222' }} />
+          style={{ maxWidth: '100%', maxHeight: '100%', touchAction: 'none', background: 'var(--shell-2)' }} />
       </div>
-      <div style={{ padding: '10px 12px calc(12px + env(safe-area-inset-bottom))', background: '#1A1A2E' }}>
+      <div style={{ padding: '10px 12px calc(12px + env(safe-area-inset-bottom))', background: 'var(--shell-2)' }}>
         <div className="row" style={{ justifyContent: 'center', gap: 10, marginBottom: 10 }}>
-          {COLOURS.map(c => <button key={c} aria-label={`Colour ${c}`} onClick={() => setColor(c)} style={{ width: 44, height: 44, borderRadius: '50%', background: c, border: color === c ? '3px solid #F5F0E8' : '2px solid #34345A' }} />)}
+          {COLOURS.map(c => <button key={c} aria-label={`Colour ${c}`} onClick={() => setColor(c)} style={{ width: 44, height: 44, borderRadius: 'var(--r)', background: c, border: color === c ? '3px solid var(--yellow)' : '2px solid var(--shell-line)' }} />)}
         </div>
         <div className="row" style={{ gap: 6, marginBottom: 10 }}>
-          {tools.map(([t, label]) => <button key={t} onClick={() => setTool(t)} style={{ flex: 1, minHeight: 48, borderRadius: 8, border: `1px solid ${tool === t ? '#C97B3F' : '#34345A'}`, background: tool === t ? 'rgba(201,123,63,.2)' : 'transparent', color: '#F5F0E8', fontSize: 13 }}>{label}</button>)}
+          {tools.map(([t, label]) => <button key={t} onClick={() => setTool(t)} style={{ flex: 1, minHeight: 48, borderRadius: 'var(--r)', border: `2px solid ${tool === t ? 'var(--yellow)' : 'var(--shell-line)'}`, background: 'transparent', color: '#fff', fontSize: 15, fontWeight: 600 }}>{label}</button>)}
         </div>
         <button className="btn btn-primary" disabled={!ready || saving} onClick={() => { setSaving(true); canvas.current!.toBlob(b => b && onSave(b), 'image/jpeg', 0.85) }}>{saving ? 'Saving…' : 'Save mark-up'}</button>
       </div>

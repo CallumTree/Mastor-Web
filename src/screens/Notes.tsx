@@ -15,7 +15,7 @@ export const newNote = (job: Job, text: string, category: NoteCategory, pinned =
   room: '', voId: null, createdAt: Date.now(), category, pinned,
 })
 
-const catColour: Record<NoteCategory, string> = { Client: '#2F6DB5', Commercial: 'var(--copper-ink)', Site: 'var(--ink)', 'H&S': 'var(--red)', Other: 'var(--ink-muted)' }
+const catColour: Record<NoteCategory, string> = { Client: 'var(--blue)', Commercial: 'var(--ink)', Site: 'var(--ink)', 'H&S': 'var(--red)', Other: 'var(--ink-muted)' }
 // a note saved without a time (imported, back-dated) shows the day only — never a made-up 00:00
 const time = (t: number) => { const d = new Date(t); return d.getHours() || d.getMinutes() ? ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '' }
 

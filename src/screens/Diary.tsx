@@ -15,7 +15,7 @@ export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayI
 function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
   const url = usePhotoUrl(e.mediaId)
   return (
-    <button onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : 'Open photo'} style={{ position: 'relative', aspectRatio: '1', padding: 0, border: '1px solid var(--ink-line)', borderRadius: 3, overflow: 'hidden', background: '#E9E3D8' }}>
+    <button onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : 'Open photo'} style={{ position: 'relative', aspectRatio: '1', padding: 0, border: '1px solid var(--ink-line)', borderRadius: 3, overflow: 'hidden', background: 'var(--ground)' }}>
       {url && (e.type === 'video'
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : <img src={url} alt={e.note || 'Site photo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
@@ -45,7 +45,7 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
         <div className="label bracket">{e.type === 'video' ? 'Video' : 'Photo'} · {prettyDay(e.date)}</div>
         {url && (e.type === 'video'
           ? <video src={url} controls playsInline style={{ width: '100%', maxHeight: '52vh', background: '#000', borderRadius: 3 }} />
-          : <img src={showOriginal && originalUrl ? originalUrl : url} alt={caption || 'Site photo'} style={{ width: '100%', maxHeight: '52vh', objectFit: 'contain', background: '#E9E3D8', borderRadius: 3 }} />)}
+          : <img src={showOriginal && originalUrl ? originalUrl : url} alt={caption || 'Site photo'} style={{ width: '100%', maxHeight: '52vh', objectFit: 'contain', background: 'var(--ground)', borderRadius: 3 }} />)}
         {e.originalMediaId && <button className="chip" onClick={() => setShowOriginal(!showOriginal)}>{showOriginal ? 'Showing original — tap for marked-up' : 'Show original'}</button>}
         <Field label="Caption" hint="Tip: tap the mic on your keyboard to dictate"><input value={caption} onChange={x => setCaption(x.target.value)} placeholder="What does this show?" /></Field>
         <Field label="Room / area"><input value={room} onChange={x => setRoom(x.target.value)} list="diary-rooms" /></Field>
@@ -117,12 +117,12 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   return (
     <div className="stack">
       <div className="row">
-        <button aria-label="Previous day" onClick={() => setDate(addDays(date, -1))} style={{ width: 44, height: 44, border: '1px solid var(--ink-line)', background: 'var(--paper-2)', borderRadius: 3, color: 'var(--ink)' }}><IconBack size={18} /></button>
+        <button aria-label="Previous day" onClick={() => setDate(addDays(date, -1))} style={{ width: 44, height: 44, border: '2px solid var(--ink)', background: 'var(--panel)', borderRadius: 4, color: 'var(--ink)' }}><IconBack size={18} /></button>
         <div className="grow" style={{ textAlign: 'center' }}>
           <div className="label">{date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : 'Site diary'}</div>
           <div style={{ fontWeight: 700, fontSize: 17 }}>{prettyDay(date)}</div>
         </div>
-        <button aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ width: 44, height: 44, border: '1px solid var(--ink-line)', background: 'var(--paper-2)', borderRadius: 3, color: 'var(--ink)', opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
+        <button aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ width: 44, height: 44, border: '2px solid var(--ink)', background: 'var(--panel)', borderRadius: 4, color: 'var(--ink)', opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
         <TabMenu title="Diary" actions={[
           { label: 'Go to today', disabled: date === today, onClick: () => setDate(today) },
           { label: 'Write a note for this day', onClick: () => noteRef.current?.focus() },

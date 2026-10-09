@@ -66,7 +66,7 @@ describe('multi-property scheme', () => {
     nav('vals')
     click(await screen.findByRole('button', { name: 'Issue VAL I' }))
     click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findByText(/^Due /)
+    await screen.findAllByText(/^With client · Due /)
     nav('scope')
     click(await screen.findByRole('button', { name: 'Add item' }))
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Wrong spec line' } })

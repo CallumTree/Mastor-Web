@@ -1,3 +1,4 @@
+import { Plate } from '../components/Sign'
 /**
  * Ball in court: who each VO and valuation is waiting on, for how long, and whether it's late.
  * Pure functions (pass `now`) so they're easy to test.
@@ -49,14 +50,15 @@ export function valCourt(val: Valuation, job: Job, scope: ScopeItem[], vos: Vari
   return { who: 'client', text: `${prefix}Due ${ukDate(due)}`, tone: 'ok', days: left, owed }
 }
 
-export const toneColour: Record<Tone, string> = { ok: 'var(--ink-muted)', due: 'var(--amber)', late: 'var(--red)', done: 'var(--green)' }
+export const toneColour: Record<Tone, string> = { ok: 'var(--ink-muted)', due: 'var(--ink)', late: 'var(--red)', done: 'var(--green)' }
+/**
+ * Who has the ball, as a site sign: red = overdue, green = done, yellow = due soon,
+ * blue = the next thing WE do (the signature next-step plate), outline = waiting on the client.
+ */
 export function CourtLine({ c }: { c: Court }) {
-  const who = c.who === 'client' ? 'With client' : c.who === 'us' ? 'With us' : ''
-  return (
-    <div style={{ fontSize: 12, fontWeight: 600, color: toneColour[c.tone], display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-      <span style={{ width: 7, height: 7, borderRadius: 4, background: toneColour[c.tone], flex: 'none' }} />
-      {who && <span style={{ letterSpacing: '.08em', textTransform: 'uppercase', fontSize: 11 }}>{who} ·</span>}
-      <span>{c.text}</span>
-    </div>
-  )
+  const kind = c.tone === 'late' ? 'stop' : c.tone === 'done' ? 'ok' : c.who === 'us' ? 'do' : c.tone === 'due' ? 'warn' : 'wait'
+  const text = c.who === 'us' ? c.text.replace(/^(Complete|Instructed) — /, '') : c.text
+  const plate = <Plate kind={kind}>{c.who === 'client' ? `With client · ${text}` : text}</Plate>
+  // overdue with the client: the next step is ours — chase it
+  return c.tone === 'late' && c.who === 'client' ? <>{plate}<Plate kind="do">Chase the client</Plate></> : plate
 }

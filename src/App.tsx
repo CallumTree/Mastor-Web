@@ -66,7 +66,7 @@ export default function App() {
 
   return (
     <>
-      {ready && job && <div className="banner"><SyncBadge dark={false} /></div>}
+      {ready && job && <div className="banner"><SyncBadge dark /></div>}
       {!ready ? null : showDash && !job ? (
         <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
       ) : job ? (

@@ -83,7 +83,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
       <div className="stack">
         <div className="label bracket">Import council instruction</div>
         {stage.s === 'reading' ? (
-          <div className="card-dark" style={{ textAlign: 'center', padding: 28 }}><div className="beam-dot" /><div style={{ fontWeight: 600, marginTop: 14 }}>Reading {stage.name}</div></div>
+          <div className="panel" role="status" style={{ textAlign: 'center', padding: 28 }}><div className="loading-bar" /><div style={{ fontWeight: 600, marginTop: 14 }}>Reading {stage.name}</div></div>
         ) : (
           <>
             {stage.s === 'error' && <div className="card" style={{ color: 'var(--red)', fontSize: 14 }}>{stage.msg}</div>}

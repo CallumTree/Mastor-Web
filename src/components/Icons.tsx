@@ -3,7 +3,8 @@
  * Rules: 24-unit grid, 1.6 stroke, square caps, mitred joins, no rounded corners,
  * one solid copper accent per icon. Line colour follows currentColor.
  */
-const COPPER = '#C97B3F'
+// the small accent dot each icon carries: yellow on the black bars, blue on white
+const COPPER = 'var(--icon-dot, #0A55B5)'
 type P = { size?: number }
 const S = ({ size = 24, children }: P & { children: React.ReactNode }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="square" strokeLinejoin="miter">{children}</svg>

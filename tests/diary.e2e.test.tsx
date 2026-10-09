@@ -80,7 +80,7 @@ describe('site diary', () => {
 
     // --- survives a reload
     cleanup(); render(<App />)
-    click(await screen.findByRole('button', { name: /open job/i }))
+    click(await screen.findByRole('button', { name: /Diary Close/ }))
     nav('diary')
     expect(((await screen.findByPlaceholderText(/what happened on site today/i)) as HTMLTextAreaElement).value).toBe('Stripped out kitchen, skip swapped')
     expect(screen.getByText('2')).toBeTruthy()
