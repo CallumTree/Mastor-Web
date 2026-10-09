@@ -1,3 +1,4 @@
+import { useState } from 'react'
 /**
  * Look: 'photo' (default — real construction photography on the cover and job headers) or 'drawing'
  * (line drawings + beam).
@@ -35,4 +36,15 @@ const trial = () => CANDIDATES.find(c => c.id === coverPick())
 export const PHOTOS = {
   get cover() { const c = trial() ?? chosen; return { src: img(c.id), credit: `${c.credit} / Unsplash` } },
   get job() { const c = trial() ?? chosen; return { src: img(c.id), credit: `${c.credit} / Unsplash` } },
+}
+
+/**
+ * A backdrop photo that only takes over once it has actually loaded. Until then — and for good if it
+ * fails (no signal on site) — the line drawing stays, so the header never shows a broken image.
+ */
+export function useBackdrop(src: string | null) {
+  const [state, setState] = useState<Record<string, 'ok' | 'bad'>>({})
+  const s = src ? state[src] : undefined
+  const mark = (v: 'ok' | 'bad') => () => { if (src) setState(x => ({ ...x, [src]: v })) }
+  return { trying: !!src && s !== 'bad', loaded: s === 'ok', img: src ? { src, onLoad: mark('ok'), onError: mark('bad') } : null }
 }

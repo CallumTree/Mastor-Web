@@ -78,7 +78,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
     )
   }
   return (
-    <Sheet onClose={stage.s === 'reading' ? () => {} : onClose}>
+    <Sheet onClose={onClose} locked={stage.s === 'reading'} label="Import council instruction">
       <div className="stack">
         <div className="label bracket">Import council instruction</div>
         {stage.s === 'reading' ? (

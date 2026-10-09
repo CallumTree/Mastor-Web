@@ -41,7 +41,7 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
   const close = () => { if (caption !== e.note || room !== e.room) onSave({ ...e, note: caption.trim(), room: room.trim() }); onClose() }
   if (marking && url) return <Markup src={originalUrl ?? url} onCancel={() => setMarking(false)} onSave={b => { setMarking(false); onSave({ ...e, note: caption.trim(), room: room.trim() }, b) }} />
   return (
-    <Sheet onClose={close}>
+    <Sheet onClose={close} keepsWork label={e.type === 'video' ? 'Video' : 'Photo'}>
       <div className="stack">
         <div className="label bracket">{e.type === 'video' ? 'Video' : 'Photo'} · {prettyDay(e.date)}</div>
         {url && (e.type === 'video'
@@ -79,7 +79,13 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   const [busy, setBusy] = useState(false)
   const noteRef = useRef<HTMLTextAreaElement>(null)
 
-  useEffect(() => { setNote(day?.note ?? ''); setWeather(day?.weather ?? ''); setLabour(day?.labour ?? null) }, [date, day?.note, day?.weather, day?.labour])
+  // Refresh from storage (or another device) — but never overwrite the note while it's being typed
+  const shownDate = useRef(date)
+  useEffect(() => {
+    const sameDay = shownDate.current === date; shownDate.current = date
+    if (!(sameDay && document.activeElement === noteRef.current)) setNote(day?.note ?? '')
+    setWeather(day?.weather ?? ''); setLabour(day?.labour ?? null)
+  }, [date, day?.note, day?.weather, day?.labour])
   useEffect(() => { if (focusNote) noteRef.current?.focus() }, [focusNote])
   // Weather fills itself in for today and past days (free service; stays editable)
   useEffect(() => {
@@ -90,6 +96,20 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   }, [date, job.address])
 
   const saveDay = (patch: Partial<DiaryEntry>) => onSave({ ...(day ?? blankDay(job.id, date)), note: note.trim(), weather: weather.trim(), labour, ...patch })
+  // The note saves itself as you type (a call or a locked screen mid-sentence loses nothing)
+  const pending = useRef<{ timer: number; flush: () => void } | null>(null)
+  const flushNote = () => { if (pending.current) { clearTimeout(pending.current.timer); const f = pending.current.flush; pending.current = null; f() } }
+  const typeNote = (v: string) => {
+    setNote(v)
+    if (pending.current) clearTimeout(pending.current.timer)
+    const flush = () => { if (v.trim() !== (day?.note ?? '')) saveDay({ note: v.trim() }) }
+    pending.current = { timer: window.setTimeout(() => { pending.current = null; flush() }, 800), flush }
+  }
+  useEffect(() => {
+    const hide = () => { if (document.visibilityState === 'hidden') flushNote() }
+    document.addEventListener('visibilitychange', hide); window.addEventListener('pagehide', flushNote)
+    return () => { document.removeEventListener('visibilitychange', hide); window.removeEventListener('pagehide', flushNote); flushNote() }
+  }, [])
   const add = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setErr(null); setBusy(true)
@@ -124,7 +144,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         </div>
         <div style={{ marginTop: 12 }}>
           <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate">
-            <textarea ref={noteRef} rows={4} value={note} onChange={e => setNote(e.target.value)} onBlur={() => note !== (day?.note ?? '') && saveDay({ note: note.trim() })} placeholder="What happened on site today?" />
+            <textarea ref={noteRef} rows={4} value={note} onChange={e => typeNote(e.target.value)} onBlur={flushNote} placeholder="What happened on site today?" />
           </Field>
         </div>
       </div>

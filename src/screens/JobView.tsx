@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react'
 import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
-import { getLook, PHOTOS } from '../lib/look'
+import { getLook, PHOTOS, useBackdrop } from '../lib/look'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
 import { IconBack, IconCamera, IconDiary, IconFlag, IconHome, IconMarkup, IconScope, IconSettings, IconValuation } from '../components/Icons'
@@ -21,17 +21,16 @@ export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
 function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; onBack: () => void; onSetup: () => void }) {
   const jobPhoto = usePhotoUrl(job.photoId)
-  const photo = jobPhoto ?? (getLook() === 'photo' ? PHOTOS.job.src : null)
+  const bg = useBackdrop(jobPhoto ?? (getLook() === 'photo' ? PHOTOS.job.src : null))
   return (
-    <div className="jhero bleed" style={{ height: compact ? 150 : 300 }}>
+    <div className={'jhero bleed' + (bg.loaded ? ' has-photo' : '')} style={{ height: compact ? 150 : 300 }}>
       <div className="sky" />
-      {photo ? (
-        <><img className="bg-photo" src={photo} alt="" /><div className="shade" /></>
-      ) : (
+      {!bg.loaded && (
         <div className="bg-drawing" style={compact ? { bottom: '-30%', opacity: .7 } : undefined}>
           <Drawing id={job.id} type={job.workType} active={job.status === 'Active'} bare paper />
         </div>
       )}
+      {bg.trying && bg.img && <><img className={'bg-photo' + (bg.loaded ? '' : ' pending')} src={bg.img.src} onLoad={bg.img.onLoad} onError={bg.img.onError} alt="" />{bg.loaded && <div className="shade" />}</>}
       <div className="jhero-top">
         <button onClick={onBack} aria-label="All jobs"><IconBack size={20} /></button>
         <span className="label bracket" style={{ color: 'var(--cream-muted)' }}>{job.contractRef || job.workType}</span>

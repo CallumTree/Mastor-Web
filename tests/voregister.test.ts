@@ -1,4 +1,4 @@
-import { buildVoRegister, registerFileName, registerSummary } from '../src/lib/voRegister'
+import { buildVoRegister, groupValue, registerFileName, registerSummary } from '../src/lib/voRegister'
 import type { Job, Valuation, Variation } from '../src/lib/types'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
@@ -23,6 +23,11 @@ ok(r('rejected').count === 1, 'rejected listed')
 ok(s.base === 581, `total excludes rejected (got ${s.base})`)
 ok(s.gross === Math.round(581 * 1.2028 * 1.05 * 100) / 100, `uplifts applied once to the total (got ${s.gross})`)
 ok(s.overdue === 1, 'one instruction overdue')
+ok(r('awaiting').unsent === 1, 'awaiting: one not yet sent to the client (VO 5), one with them (VO 4)')
+ok(r('claimed').gross === Math.round(301 * 1.2028 * 1.05 * 100) / 100, `each group also carries its value incl. uplifts (got ${r('claimed').gross})`)
+ok(groupValue(0, 0, 0) === '—', 'empty group reads "—", not £0.00')
+ok(groupValue(0, 2, 2) === 'Unpriced', 'all-unpriced group reads "Unpriced", not £0.00')
+ok(groupValue(100, 2, 1) === '£100.00', 'part-priced group shows the priced value')
 ;(async () => {
   const blob = await buildVoRegister({ job, vos, vals: [val], company: 'Tree & Sons Ltd', now })
   const text = Buffer.from(await blob.arrayBuffer()).toString('latin1')

@@ -6,7 +6,7 @@ import { createCompany, myCompany, startSync, stopSync } from '../lib/sync'
 import { meta } from '../lib/db'
 import { Drawing } from '../components/Drawing'
 import { Field } from '../components/Ui'
-import { getLook, PHOTOS } from '../lib/look'
+import { getLook, PHOTOS, useBackdrop } from '../lib/look'
 
 /**
  * Sign-in gate. Signed in + company → the app (syncing). Works offline once signed in:
@@ -38,13 +38,13 @@ export function Gate({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe()
   }, [])
 
+  const bg = useBackdrop(getLook() === 'photo' ? PHOTOS.cover.src : null)
   if (stage.s === 'ready') return <>{children}</>
   return (
     <div className="immersive">
       <div className="sky" />
-      {getLook() === 'photo'
-        ? <><img className="bg-photo" src={PHOTOS.cover.src} alt="" /><div className="shade" /></>
-        : <div className="bg-drawing"><Drawing id="mastor" type="PPR" active bare /></div>}
+      {!bg.loaded && <div className="bg-drawing"><Drawing id="mastor" type="PPR" active bare /></div>}
+      {bg.trying && bg.img && <><img className={'bg-photo' + (bg.loaded ? '' : ' pending')} src={bg.img.src} onLoad={bg.img.onLoad} onError={bg.img.onError} alt="" />{bg.loaded && <div className="shade" />}</>}
       <div className="imm-top" style={{ paddingTop: 48 }}>
         <Wordmark />
         <div className="imm-sub">Site · Variations · Valuations</div>

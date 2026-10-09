@@ -7,7 +7,7 @@ import { money } from '../lib/format'
 import { IconChart, IconPlus, IconSettings } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
 import { Splash } from '../components/Splash'
-import { getLook, PHOTOS } from '../lib/look'
+import { getLook, PHOTOS, useBackdrop } from '../lib/look'
 
 /**
  * Jobs — Starlink-style. The job's drawing (or site photo) is the screen; swipe between jobs
@@ -17,18 +17,17 @@ import { getLook, PHOTOS } from '../lib/look'
 function Backdrop({ job }: { job: Job | null }) {
   const jobPhoto = usePhotoUrl(job?.photoId)
   const photoLook = getLook() === 'photo'
-  const photo = jobPhoto ?? (photoLook ? PHOTOS.cover.src : null)
+  const bg = useBackdrop(jobPhoto ?? (photoLook ? PHOTOS.cover.src : null))
   return (
     <>
       <div className="sky" />
-      {photoLook && !jobPhoto && <div style={{ position: 'absolute', zIndex: 3, right: 10, bottom: 4, fontSize: 9, color: 'rgba(245,240,232,.5)' }}>Photo: {PHOTOS.cover.credit}</div>}
-      {photo ? (
-        <><img className="bg-photo" src={photo} alt="" /><div className="shade" /></>
-      ) : (
+      {bg.loaded && !jobPhoto && <div style={{ position: 'absolute', zIndex: 3, right: 10, bottom: 4, fontSize: 9, color: 'rgba(245,240,232,.5)' }}>Photo: {PHOTOS.cover.credit}</div>}
+      {!bg.loaded && (
         <div className="bg-drawing">
           <Drawing id={job?.id ?? 'mastor'} type="PPR" active={job ? job.status === 'Active' : true} bare />
         </div>
       )}
+      {bg.trying && bg.img && <><img className={'bg-photo' + (bg.loaded ? '' : ' pending')} src={bg.img.src} onLoad={bg.img.onLoad} onError={bg.img.onError} alt="" />{bg.loaded && <div className="shade" />}</>}
     </>
   )
 }

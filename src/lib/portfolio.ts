@@ -3,6 +3,7 @@ import type { Job, ScopeItem, Valuation, Variation } from './types'
 import { upliftFactor } from './format'
 import { lineValue, valTotals } from './valuation'
 import { valCourt } from './chase'
+import { registerSummary, VO_GROUP_SHORT } from './voRegister'
 
 export interface JobFigures {
   job: Job
@@ -22,7 +23,8 @@ export interface Portfolio {
   certifiedThisYear: number
   paidThisYear: number; owed: number; overdue: number; overdueCount: number
   byMonth: { label: string; value: number }[]   // certified per month, this year
-  voByStatus: { status: string; value: number; count: number }[]
+  /** Variations in the same groups as each job's register (so the two always agree), valued incl. uplifts. */
+  voGroups: { key: string; label: string; value: number; count: number; unpriced: number }[]
 }
 
 export function portfolio(jobs: Job[], scope: ScopeItem[], vos: Variation[], vals: Valuation[], now = new Date()): Portfolio {
@@ -38,7 +40,7 @@ export function portfolio(jobs: Job[], scope: ScopeItem[], vos: Variation[], val
     const inValuation = open ? valTotals(job, open.id, scope, vos).gross : 0
     const revised = target + variations
     return { job, target, variations, revised, certified, inValuation, remaining: Math.max(0, revised - certified - inValuation),
-      unpricedVos: jv.filter(v => v.rate == null && v.status !== 'Rejected').length }
+      unpricedVos: registerSummary(job, jv, jvals, now.getTime()).unpriced }
   })
   const activeFigs = figures.filter(x => x.job.status === 'Active')
   const sum = (xs: JobFigures[], k: keyof Omit<JobFigures, 'job'>) => xs.reduce((t, x) => t + (x[k] as number), 0)
@@ -53,12 +55,14 @@ export function portfolio(jobs: Job[], scope: ScopeItem[], vos: Variation[], val
     months[d.getMonth()].value += valTotals(job, v.id, scope, vos).gross
   }
 
-  const statuses = ['Identified', 'Instructed', 'Complete', 'Rejected'] as const
-  const voByStatus = statuses.map(status => {
-    const list = vos.filter(v => v.status === status && jobs.some(j => j.id === v.jobId))
-    const value = list.reduce((t, v) => { const j = jobs.find(x => x.id === v.jobId)!; return t + lineValue(v.qty, v.rate) * upliftFactor(j.uplift1, j.uplift2) }, 0)
-    return { status, value, count: list.length }
-  })
+  const voGroups = Object.keys(VO_GROUP_SHORT).map(key => ({ key, label: VO_GROUP_SHORT[key], value: 0, count: 0, unpriced: 0 }))
+  for (const job of jobs) {
+    const jv = vos.filter(v => v.jobId === job.id); if (!jv.length) continue
+    for (const r of registerSummary(job, jv, vals.filter(v => v.jobId === job.id), now.getTime()).rows) {
+      const g = voGroups.find(x => x.key === r.key)!
+      g.value += r.gross; g.count += r.count; g.unpriced += r.unpriced
+    }
+  }
 
   let paidThisYear = 0, owed = 0, overdue = 0, overdueCount = 0
   for (const v of vals) {
@@ -74,6 +78,6 @@ export function portfolio(jobs: Job[], scope: ScopeItem[], vos: Variation[], val
     jobs: figures, active: activeFigs.length,
     revised: sum(activeFigs, 'revised'), certified: sum(figures, 'certified'), inValuation: sum(figures, 'inValuation'),
     pipeline: sum(activeFigs, 'remaining'), variations: sum(figures, 'variations'), unpricedVos: sum(figures, 'unpricedVos'),
-    certifiedThisYear: months.reduce((t, m) => t + m.value, 0), byMonth: months, voByStatus,
+    certifiedThisYear: months.reduce((t, m) => t + m.value, 0), byMonth: months, voGroups,
   }
 }

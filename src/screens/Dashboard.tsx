@@ -1,6 +1,7 @@
 import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { portfolio } from '../lib/portfolio'
 import { money } from '../lib/format'
+import { groupValue } from '../lib/voRegister'
 import { TitleBlock } from '../components/Ui'
 import { IconBack } from '../components/Icons'
 
@@ -96,7 +97,7 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
   const year = new Date().getFullYear()
   const activeCertified = p.jobs.filter(j => j.job.status === 'Active').reduce((t, j) => t + j.certified, 0)
   const sorted = [...p.jobs].sort((a, b) => (a.job.status === b.job.status ? b.revised - a.revised : a.job.status === 'Active' ? -1 : 1))
-  const voMax = Math.max(1, ...p.voByStatus.map(s => s.value))
+  const voMax = Math.max(1, ...p.voGroups.map(g => g.value))
 
   return (
     <div className="page" style={{ paddingBottom: 48 }}>
@@ -162,18 +163,19 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
 
       <SheetLabel no="4">Variation pipeline</SheetLabel>
       <div className="panel" style={{ padding: '6px 14px' }}>
-        {p.voByStatus.map(s => (
-          <div key={s.status} style={{ padding: '8px 0', borderBottom: `1px solid ${HAIR}` }}>
+        {p.voGroups.map(g => (
+          <div key={g.key} style={{ padding: '8px 0', borderBottom: `1px solid ${HAIR}` }}>
             <div className="row" style={{ fontSize: 13 }}>
-              <span className="grow">{s.status} <span className="muted">({s.count})</span></span>
-              <span className="mono">{k(s.value)}</span>
+              <span className="grow">{g.label} <span className="muted">({g.count}{g.unpriced && g.unpriced < g.count ? ` · ${g.unpriced} unpriced` : ''})</span></span>
+              <span className="mono" style={{ color: g.count && g.unpriced === g.count ? COPPER_INK : undefined }}>{groupValue(g.value, g.count, g.unpriced, k)}</span>
             </div>
             <div style={{ height: 5, marginTop: 5, border: `1px solid ${HAIR}` }}>
-              <div className={s.status === 'Complete' ? '' : 'hatch'} style={{ height: '100%', width: `${(s.value / voMax) * 100}%`, background: s.status === 'Complete' ? COPPER : undefined, opacity: s.status === 'Rejected' ? .35 : 1 }} />
+              <div className={g.key === 'claimed' ? '' : 'hatch'} style={{ height: '100%', width: `${(g.value / voMax) * 100}%`, background: g.key === 'claimed' ? COPPER : undefined, opacity: g.key === 'rejected' ? .35 : 1 }} />
             </div>
           </div>
         ))}
         {p.unpricedVos > 0 && <div style={{ fontSize: 12, color: COPPER_INK, padding: '8px 0' }}>+ {p.unpricedVos} unpriced — not counted until priced</div>}
+        <div className="muted" style={{ fontSize: 11, paddingTop: 8 }}>Same groups as each job’s Variation Register · values incl. uplifts</div>
       </div>
     </div>
   )

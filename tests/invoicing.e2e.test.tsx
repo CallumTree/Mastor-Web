@@ -45,9 +45,12 @@ describe('VAT invoicing', () => {
     await screen.findByText('TS-1042')
     expect(screen.getByText(/£1,200\.00 incl\. VAT/)).toBeTruthy()
 
-    // payment defaults to the invoice total incl. VAT
+    // payment is never assumed: blank, with one tap for 'paid in full' at the invoice total incl. VAT
     click(screen.getByRole('button', { name: /mark as paid/i }))
-    expect((screen.getByLabelText(/amount received/i) as HTMLInputElement).value).toBe('1200')
+    const amount = screen.getByLabelText(/amount received/i) as HTMLInputElement
+    expect(amount.value).toBe('')
+    click(screen.getByRole('button', { name: /paid in full · £1,200\.00/i }))
+    expect(amount.value).toBe('1200.00')
     fireEvent.click(document.querySelector('.sheet-bg')!); await closed()
 
     // second valuation → next number

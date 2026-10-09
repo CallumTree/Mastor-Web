@@ -15,8 +15,19 @@ const nextStep = (t: string) => { const x = t.replace(/^(Complete|Instructed) �
 
 const p2 = (x: number) => Math.round(x * 100 + 1e-7) / 100
 
-/** Group totals (base, before uplifts). Unpriced VOs are counted, never valued at £0. */
+/** Short names for the register groups, used on screen (the PDF spells them out). One set, everywhere. */
+export const VO_GROUP_SHORT: Record<string, string> = { claimed: 'Claimed', ready: 'Ready to claim', instructed: 'Instructed', awaiting: 'Awaiting instruction', rejected: 'Rejected' }
+
+/** A group's figure: "—" when the group is empty, "Unpriced" when nothing in it is priced. Never £0 for work that has no price. */
+export function groupValue(value: number, count: number, unpriced: number, fmt: (n: number) => string = money) {
+  if (!count) return '—'
+  if (unpriced === count) return 'Unpriced'
+  return fmt(value)
+}
+
+/** Group totals (base, before uplifts, plus `gross` incl. uplifts). Unpriced VOs are counted, never valued at £0. */
 export function registerSummary(job: Job, vos: Variation[], vals: Valuation[], now = Date.now()) {
+  const withUplifts = (b: number) => { const u = upliftAmounts(b, job.uplift1, job.uplift2); return p2(b + u.u1 + u.u2) }
   const rows = [
     { key: 'claimed', label: 'Claimed in a valuation', test: (v: Variation) => !!v.valuationId && v.status !== 'Rejected' },
     { key: 'ready', label: 'Complete — not yet claimed', test: (v: Variation) => !v.valuationId && v.status === 'Complete' },
@@ -27,13 +38,13 @@ export function registerSummary(job: Job, vos: Variation[], vals: Valuation[], n
     const set = vos.filter(r.test)
     const priced = set.filter(v => v.qty != null && v.rate != null)
     const base = p2(priced.reduce((s, v) => s + lineValue(v.qty, v.rate), 0))
-    return { ...r, count: set.length, unpriced: set.length - priced.length, base }
+    // unsent = still with us, not yet put to the client for instruction
+    return { ...r, count: set.length, unpriced: set.length - priced.length, unsent: set.filter(v => !v.submittedAt && v.status === 'Identified').length, base, gross: withUplifts(base) }
   })
   const live = rows.filter(r => r.key !== 'rejected')
   const base = p2(live.reduce((s, r) => s + r.base, 0))
-  const up = upliftAmounts(base, job.uplift1, job.uplift2)
   const overdue = vos.filter(v => voCourt(v, vals, now).tone === 'late').length
-  return { rows, base, gross: p2(base + up.u1 + up.u2), unpriced: live.reduce((s, r) => s + r.unpriced, 0), overdue }
+  return { rows, base, gross: withUplifts(base), unpriced: live.reduce((s, r) => s + r.unpriced, 0), overdue }
 }
 
 export async function buildVoRegister({ job, vos, vals, company, now = Date.now() }: RegisterInput): Promise<Blob> {

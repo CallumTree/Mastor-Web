@@ -39,7 +39,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
           <div className="grow"><Field label="Uplift 1 (%)"><input inputMode="decimal" value={u1} onChange={e => setU1(e.target.value)} placeholder="0" /></Field></div>
           <div className="grow"><Field label="Uplift 2 (%)"><input inputMode="decimal" value={u2} onChange={e => setU2(e.target.value)} placeholder="0" /></Field></div>
         </div>
-        <Field label="Payment terms (days from valuation issue)" hint="Used to show when each valuation is due and flag it when it's late"><input inputMode="numeric" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
+        <Field label="Payment terms (days)" hint="Counted from the invoice date, or from the valuation's issue date if it isn't invoiced yet. Flags it when it's late."><input inputMode="numeric" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
         <div>
           <div className="field"><span>Type of work</span></div>
           <div className="chips">{TYPES.map(t => <button key={t} className={'chip' + (f.workType === t ? ' on' : '')} onClick={() => setF({ ...f, workType: t })}>{t}</button>)}</div>

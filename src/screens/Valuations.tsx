@@ -165,7 +165,9 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
 function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number; onSave: (v: Valuation) => void; onClose: () => void }) {
   const toKey = (t: number) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
   const [date, setDate] = useState(toKey(v.paidAt ?? Date.now()))
-  const [amount, setAmount] = useState(String(v.paidAmount ?? Math.round(gross * 100) / 100))
+  // Blank until you say what landed — never assume it was paid in full
+  const [amount, setAmount] = useState(v.paidAmount != null ? String(v.paidAmount) : '')
+  const full = (Math.round(gross * 100) / 100).toFixed(2)
   const n = parseFloat(amount.replace(/[£,\s]/g, ''))
   return (
     <Sheet onClose={onClose}>
@@ -173,7 +175,8 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
         <div className="label bracket">Payment · {valRef(v.number)}</div>
         <div className="muted" style={{ fontSize: 13 }}>{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Enter what actually landed — a part payment leaves the rest showing as owed.</div>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
-        <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} /></Field>
+        <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
+        {amount !== full && <div className="chips"><button className="chip" onClick={() => setAmount(full)}>Paid in full · {money(gross)}</button></div>}
         {isFinite(n) && n < gross - 0.005 && <div className="flag">{money(gross - n)} will still show as owed</div>}
         <button className="btn btn-primary" disabled={!date || !isFinite(n) || n <= 0} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(n * 100) / 100 }) }}>Save payment</button>
         {v.paidAt && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...v, paidAt: null, paidAmount: null })}>Remove payment (not paid)</button>}

@@ -22,7 +22,7 @@ export function BoqImport({ job, existing, onImport, onClose }: {
   if (stage.s === 'review') return <Review job={job} existing={existing} boq={stage.boq} onImport={onImport} onBack={() => setStage({ s: 'pick' })} onClose={onClose} />
 
   return (
-    <Sheet onClose={stage.s === 'reading' ? () => {} : onClose}>
+    <Sheet onClose={onClose} locked={stage.s === 'reading'} label="Import BoQ">
       <div className="stack">
         <div className="label bracket">Import BoQ / works order</div>
         {stage.s === 'reading' ? (

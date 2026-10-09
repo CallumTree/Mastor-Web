@@ -1,4 +1,5 @@
 import { portfolio } from '../src/lib/portfolio'
+import { registerSummary } from '../src/lib/voRegister'
 import type { Job, ScopeItem, Valuation, Variation } from '../src/lib/types'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
@@ -28,4 +29,9 @@ ok(p.active === 2, 'complete job not counted as active')
 ok(close(p.certifiedThisYear, 440), 'certified this year excludes last year’s valuation')
 ok(close(p.byMonth[2].value, 440) && p.byMonth.length === 9, 'lands in March; months Jan→Sep')
 ok(p.unpricedVos === 1, 'counts unpriced VOs')
+const g = (k: string) => p.voGroups.find(x => x.key === k)!
+ok(close(g('instructed').value, 110) && g('instructed').count === 1, 'dashboard VO groups valued incl. uplifts')
+ok(g('awaiting').count === 1 && g('awaiting').unpriced === 1 && g('awaiting').value === 0, 'unpriced VO counted in its group, not valued')
+const regA = registerSummary(jobs[0], vos, vals.filter(v => v.jobId === 'A'), now.getTime())
+ok(regA.rows.every(r => g(r.key).count === r.count), 'dashboard groups match the job’s Variation Register exactly')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
