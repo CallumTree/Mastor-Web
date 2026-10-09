@@ -9,7 +9,7 @@ export function TabHead({ label, title, meta, menu }: { label: string; title: st
     <div className="row" style={{ alignItems: 'flex-start' }}>
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="label bracket">{label}{meta != null && <span className="tab-meta">{meta}</span>}</div>
-        <h1 style={{ fontSize: 22, margin: '2px 0 0' }}>{title}</h1>
+        <h2 className="tab-title"><span className="sr-only">{label}: </span>{title}</h2>
       </div>
       {menu}
     </div>
@@ -33,4 +33,13 @@ export function SumStrip({ cells, cols = 2, progress, label, caption }: { cells:
     </div>
   )
   return caption ? <div>{strip}<div className="sum-caption">{caption}</div></div> : strip
+}
+
+/**
+ * A whole-row target that is a real button: sits under the row's content, so the row is one keyboard
+ * stop with a proper name, and controls inside it (a tick) stay their own buttons.
+ * The row needs className "has-hit".
+ */
+export function RowHit({ label, onClick, expanded }: { label: string; onClick: () => void; expanded?: boolean }) {
+  return <button type="button" className="row-hit" aria-label={label} aria-expanded={expanded} onClick={onClick} />
 }

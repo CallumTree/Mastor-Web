@@ -37,7 +37,7 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
         <button onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button>
       </div>
       <div className="jhero-title" style={compact ? { top: 60 } : undefined}>
-        <h2 style={compact ? { fontSize: 20 } : undefined}>{job.name}</h2>
+        <h1 className="jhero-name" style={compact ? { fontSize: 20 } : undefined}>{job.name}</h1>
         {!compact && <div className="sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
       </div>
     </div>
@@ -105,9 +105,10 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         {actions.length === 0 && <div>Nothing outstanding on this job.</div>}
         {actions.map((a, i) => (
           <button key={i} onClick={a.onClick} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 12, padding: '12px 0', background: 'none', border: 'none', borderTop: i ? '1px solid var(--charcoal-line)' : 'none', color: 'inherit', textAlign: 'left' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 5, background: a.colour, flex: 'none' }} />
-            <span className="grow"><div style={{ fontWeight: 600 }}>{a.text}</div><div style={{ fontSize: 12, color: 'var(--cream-muted)' }}>{a.hint}</div></span>
-            <span style={{ color: 'var(--cream-muted)', fontSize: 20 }}>›</span>
+            {/* urgency by shape as well as colour: urgent = diamond, everything else = dot */}
+            <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: a.colour === 'var(--red)' ? 1 : 5, transform: a.colour === 'var(--red)' ? 'rotate(45deg) scale(.9)' : undefined, background: a.colour, flex: 'none' }} />
+            <span className="grow"><span className="sr-only">{a.colour === 'var(--red)' ? 'Urgent: ' : a.colour === 'var(--green)' ? 'Ready: ' : 'To do: '}</span><div style={{ fontWeight: 600 }}>{a.text}</div><div style={{ fontSize: 12, color: 'var(--cream-muted)' }}>{a.hint}</div></span>
+            <span aria-hidden="true" style={{ color: 'var(--cream-muted)', fontSize: 20 }}>›</span>
           </button>
         ))}
       </div>
@@ -165,7 +166,7 @@ export function JobView(p: {
   }
   return (
     <>
-      <div className="page">
+      <main className="page">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           notes={p.diary.filter(d => d.type === 'note')} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
@@ -176,7 +177,7 @@ export function JobView(p: {
         {tab === 'scope' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} />}
         {tab === 'vals' && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} />}
-      </div>
+      </main>
       <nav className="nav">
         {NAV.map(({ tab: t, label, Icon }, i) => (
           <Fragment key={t}>{i === 2 && (

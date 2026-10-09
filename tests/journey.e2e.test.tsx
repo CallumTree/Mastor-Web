@@ -87,7 +87,7 @@ describe('College Park, end to end', () => {
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!)
     await screen.findByText('VO I')
     expect(screen.getByText(/price it/i)).toBeTruthy()
-    click(screen.getByText('Replace rotten joists under bath'))
+    click(screen.getByRole('button', { name: /Replace rotten joists under bath/ }))
     type('Qty', '2'); type('Rate (£)', '85.50'); type('SoR code', '3051AB')
     click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.queryByText(/next: price it/i)).toBeNull())

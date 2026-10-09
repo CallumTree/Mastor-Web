@@ -48,7 +48,8 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
   }
 
   return (
-    <div className="immersive">
+    <main className="immersive">
+      <h1 className="sr-only">Mastor — your jobs</h1>
       <Backdrop job={current} />
       <div className="imm-banner"><SyncBadge /></div>
       <button onClick={onSettings} aria-label="Settings" className="btn-glass"
@@ -106,6 +107,6 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
           <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
         )}
       </div>
-    </div>
+    </main>
   )
 }

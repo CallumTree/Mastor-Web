@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
-import { SumStrip, TabHead } from '../components/Register'
+import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { lineValue, valRef, valTotals } from '../lib/valuation'
 import { CourtLine, valCourt } from '../lib/chase'
@@ -129,7 +129,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             const isOpen = expanded === v.id
             return (
               <div key={v.id} className={'vo-row-wrap' + (isOpen ? ' open' : '')}>
-                <div className="vo-row" onClick={() => setExpanded(isOpen ? null : v.id)}>
+                <div className="vo-row has-hit">
+                  <RowHit label={`${valRef(v.number)}, issued${v.issuedAt ? ' ' + ukDate(v.issuedAt) : ''} — ${isOpen ? 'hide' : 'show'} actions`} expanded={isOpen} onClick={() => setExpanded(isOpen ? null : v.id)} />
                   <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span><small>🔒 Issued</small></div>
                   <div className="vo-main">
                     <div className="vo-desc">{v.issuedAt ? ukDate(v.issuedAt) : 'Issued'}</div>

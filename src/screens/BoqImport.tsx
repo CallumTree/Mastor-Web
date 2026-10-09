@@ -126,8 +126,8 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
                   <div key={g}>
                     <div className="label" style={{ padding: '8px 14px', borderTop: '1px solid var(--ink-line)', color: 'var(--copper-ink)' }}>{g}</div>
                 {gRows.map(({ l, i }, n) => (
-                  <div key={i} className="row" onClick={() => toggle(i)} style={{ padding: '10px 12px', borderTop: n ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer', opacity: l.include ? 1 : .45, background: l.issues.length ? 'rgba(217,119,6,.07)' : undefined }}>
-                    <input type="checkbox" checked={l.include} readOnly style={{ width: 20, height: 20, accentColor: 'var(--copper)', marginTop: 2 }} />
+                  <label key={i} className="row" style={{ padding: '10px 12px', borderTop: n ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer', opacity: l.include ? 1 : .45, background: l.issues.length ? 'rgba(217,119,6,.07)' : undefined }}>
+                    <input type="checkbox" checked={l.include} onChange={() => toggle(i)} style={{ width: 22, height: 22, accentColor: 'var(--copper)', marginTop: 2, flex: 'none' }} />
                     <div className="grow" style={{ minWidth: 0 }}>
                       {l.code && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{l.code}</span>}
                       <div style={{ fontWeight: 500, fontSize: 14 }}>{l.description}</div>
@@ -135,7 +135,7 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
                       {l.issues.length > 0 && <div className="flag" style={{ fontWeight: 600 }}>{l.issues.join(' · ')}</div>}
                     </div>
                     <div className="mono" style={{ fontSize: 13 }}>{l.qty != null && l.rate != null ? money(lineValue(l.qty, l.rate)) : '—'}</div>
-                  </div>
+                  </label>
                 ))}
                   </div>
 )
@@ -150,8 +150,8 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
               <div className="label" style={{ marginBottom: 6 }}>{room}</div>
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 {rows.map(({ l, i }, n) => (
-                  <div key={i} className="row" onClick={() => toggle(i)} style={{ padding: '10px 12px', borderTop: n ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer', opacity: l.include ? 1 : .45, background: l.issues.length ? 'rgba(217,119,6,.07)' : undefined }}>
-                    <input type="checkbox" checked={l.include} readOnly style={{ width: 20, height: 20, accentColor: 'var(--copper)', marginTop: 2 }} />
+                  <label key={i} className="row" style={{ padding: '10px 12px', borderTop: n ? '1px solid var(--cream-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer', opacity: l.include ? 1 : .45, background: l.issues.length ? 'rgba(217,119,6,.07)' : undefined }}>
+                    <input type="checkbox" checked={l.include} onChange={() => toggle(i)} style={{ width: 22, height: 22, accentColor: 'var(--copper)', marginTop: 2, flex: 'none' }} />
                     <div className="grow" style={{ minWidth: 0 }}>
                       {l.code && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{l.code}</span>}
                       <div style={{ fontWeight: 500, fontSize: 14 }}>{l.description}</div>
@@ -159,7 +159,7 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
                       {l.issues.length > 0 && <div className="flag" style={{ fontWeight: 600 }}>{l.issues.join(' · ')}</div>}
                     </div>
                     <div className="mono" style={{ fontSize: 13 }}>{l.qty != null && l.rate != null ? money(lineValue(l.qty, l.rate)) : '—'}</div>
-                  </div>
+                  </label>
                 ))}
               </div>
             </div>

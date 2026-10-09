@@ -103,12 +103,12 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
   const voMax = Math.max(1, ...p.voGroups.map(g => g.value))
 
   return (
-    <div className="page" style={{ paddingBottom: 48 }}>
+    <main className="page" style={{ paddingBottom: 48 }}>
       <div className="row" style={{ marginBottom: 20 }}>
         <button className="icon-btn" onClick={onBack} aria-label="Back to jobs"><IconBack size={20} /></button>
         <div className="grow">
           <div className="label" style={{ letterSpacing: '.3em' }}>Director</div>
-          <div style={{ fontWeight: 700, fontSize: 20, color: INK }}>{year} at a glance</div>
+          <h1 style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 20, letterSpacing: 0, color: INK, margin: 0 }}>{year} at a glance</h1>
         </div>
       </div>
 
@@ -183,6 +183,6 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         {p.unpricedVos > 0 && <div style={{ fontSize: 12, color: COPPER_INK, padding: '8px 0' }}>+ {p.unpricedVos} unpriced — not counted until priced</div>}
         <div className="muted" style={{ fontSize: 11, paddingTop: 8 }}>Same groups as each job’s Variation Register · values incl. uplifts</div>
       </div>
-    </div>
+    </main>
   )
 }

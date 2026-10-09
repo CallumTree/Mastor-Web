@@ -5,7 +5,7 @@ import { lockedIn } from '../lib/valuation'
 import { CourtLine, voCourt } from '../lib/chase'
 import { TabMenu } from '../components/TabMenu'
 import { groupValue, registerSummary, VO_GROUP_SHORT } from '../lib/voRegister'
-import { SumStrip, TabHead } from '../components/Register'
+import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { ukDate as ukd } from '../lib/format'
 import { Field, Sheet } from '../components/Ui'
 import { lineValue } from '../lib/valuation'
@@ -142,7 +142,8 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
             const c = voCourt(v, vals)
             const evidence = [v.photoIds.length ? `${v.photoIds.length} photo${v.photoIds.length === 1 ? '' : 's'}` : '', (v.attachments?.length ?? 0) ? `${v.attachments!.length} doc${v.attachments!.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')
             return (
-              <div key={v.id} className={'vo-row' + (v.status === 'Rejected' ? ' rejected' : '')} onClick={() => onEdit(v)}>
+              <div key={v.id} className={'vo-row has-hit' + (v.status === 'Rejected' ? ' rejected' : '')}>
+                <RowHit label={`${voRef(v.number)}: ${v.description}`} onClick={() => onEdit(v)} />
                 <div className="vo-ref">
                   <span className="ref-roman">{voRef(v.number)}</span>
                   {v.code && <small className="mono">{v.code}</small>}

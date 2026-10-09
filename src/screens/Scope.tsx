@@ -6,7 +6,7 @@ import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
 import { IconPlus, IconScope } from '../components/Icons'
 import { TabMenu } from '../components/TabMenu'
-import { SumStrip, TabHead } from '../components/Register'
+import { RowHit, SumStrip, TabHead } from '../components/Register'
 
 /** Valuation tick. 44px to hit with a glove; the visible box sits inside. */
 export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; onClick: () => void }) {
@@ -52,7 +52,8 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
     const val = valById(i.valuationId)
     const locked = !!lockedIn(i, vals)
     return (
-      <div key={i.id} onClick={() => onEdit(i)} className="row" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--ink-line)' : 'none', alignItems: 'flex-start', cursor: 'pointer' }}>
+      <div key={i.id} className="row has-hit" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--ink-line)' : 'none', alignItems: 'flex-start' }}>
+        <RowHit label={`Edit ${i.code ? i.code + ' ' : ''}${i.description}`} onClick={() => onEdit(i)} />
         {/* the whole left strip of the row is the tick, so a near miss ticks rather than opening the editor */}
         {isPriced(i) || i.valuationId
           ? <div className="tick-col" onClick={e => { e.stopPropagation(); if (!locked) onToggle(i) }}><Tick on={!!i.valuationId} locked={locked} onClick={() => onToggle(i)} /></div>
