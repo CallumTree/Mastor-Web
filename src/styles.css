@@ -509,3 +509,52 @@ label.row { cursor: pointer; }
 .btn-primary:disabled { opacity: 1; color: var(--ink-muted); }
 .btn-primary:disabled::after { background: var(--paper-2); box-shadow: none; border: 1px dashed var(--ink-line); }
 .badge svg, .vo-ref small svg { vertical-align: -2px; margin-right: 3px; }
+
+/* ================= DESKTOP (≥1024px): the office QS's layout =================
+   Phone layouts are untouched. Job pages get a left rail instead of the bottom bar, a wider content
+   column the header lines up with, centred dialogs instead of bottom sheets, a two-column dashboard,
+   and the cover lists jobs as a ruled schedule instead of a swipe carousel. */
+@media (min-width: 1024px) {
+  :root { --rail-w: 104px; }
+  /* job pages */
+  .page.with-rail { max-width: none; margin: 0 0 0 var(--rail-w); padding: 16px 48px 64px; }
+  .page.with-rail > *:not(.jhero) { max-width: 960px; margin-left: auto; margin-right: auto; }
+  .page.with-rail > .stack, .page.with-rail > div:not(.jhero) { max-width: 960px; }
+  .with-rail .bleed { width: auto; margin-left: -48px; margin-right: -48px; }
+  .with-rail .jhero-top { left: max(48px, calc((100% - 960px) / 2)); right: max(48px, calc((100% - 960px) / 2)); }
+  .with-rail .jhero-title { left: max(48px, calc((100% - 960px) / 2)); right: max(48px, calc((100% - 960px) / 2)); }
+  .nav { top: 0; bottom: 0; right: auto; width: var(--rail-w); height: auto; padding: 72px 0 16px; flex-direction: column; justify-content: flex-start; gap: 4px;
+         border-top: none; border-right: 1px solid var(--ink); }
+  .nav button { flex: 0 0 72px; width: 100%; }
+  .nav button.on::before { top: 14px; bottom: 14px; left: 0; right: auto; width: 2px; height: auto; }
+  .nav .nav-capture { order: -1; flex: 0 0 80px; margin-bottom: 12px; }
+  .nav .nav-capture span { margin-top: 0; }
+  .banner { padding-left: calc(var(--rail-w) + 10px); }
+  .update-bar { bottom: 16px; }
+  /* dialogs, not bottom sheets */
+  .sheet-bg { align-items: center; padding: 32px; }
+  .sheet { max-width: 640px; max-height: 86vh; border: 1px solid var(--ink); border-radius: 6px; box-shadow: 0 24px 60px -24px rgba(10,10,20,.5); }
+  @keyframes sheet-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+  /* dashboard */
+  .page.dash { max-width: 1080px; padding: 24px 48px 64px; }
+  .dash .tb-wrap { margin-left: 0; max-width: 560px; }
+  .dash-secs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; align-items: start; }
+  /* the charts' text is sized for a 320px phone; in a wide panel it would scale up, so pin it near 12px */
+  .chart-month text { font-size: 8.5px; } .chart-month text:first-of-type { font-size: 9.5px; }
+  .chart-book text { font-size: 10px; }
+  /* cover: a ruled schedule of jobs */
+  .immersive.wide { overflow-y: auto; }
+  .job-sched { position: relative; z-index: 3; width: min(1040px, calc(100% - 96px)); margin: 32px auto 48px;
+    background: rgba(20,20,42,.78); border: 1px solid rgba(245,240,232,.22); backdrop-filter: blur(6px); color: var(--cream-text); }
+  .job-sched-head, .job-sched-row { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.6fr) 140px minmax(0, 1.3fr) 104px; gap: 16px; align-items: center; padding: 0 20px; }
+  .job-sched-head { min-height: 44px; border-bottom: 1px solid rgba(245,240,232,.5); font-family: var(--classic); font-weight: 600; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--cream-muted); }
+  .job-sched-row { width: 100%; min-height: 64px; background: none; border: 0; border-top: 1px solid rgba(245,240,232,.12); color: inherit; text-align: left; font: inherit; cursor: pointer; }
+  .job-sched-row:hover { background: rgba(232,168,104,.08); }
+  .job-sched-row:focus-visible { outline-offset: -3px; }
+  .job-sched .num { text-align: right; }
+  .js-job { display: flex; flex-direction: column; min-width: 0; } .js-job b { font-size: 16px; } .js-job small { font-size: 12px; color: var(--copper-light); }
+  .js-client, .js-needs { min-width: 0; font-size: 14px; color: var(--cream-muted); }
+  .js-needs { color: var(--copper-light); font-weight: 600; font-size: 13px; }
+  .job-sched-foot { display: flex; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid rgba(245,240,232,.12); }
+  .job-sched-foot .btn { width: auto; padding: 0 22px; min-height: 48px; }
+}

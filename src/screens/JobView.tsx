@@ -166,7 +166,7 @@ export function JobView(p: {
   }
   return (
     <>
-      <main className="page">
+      <main className="page with-rail">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           notes={p.diary.filter(d => d.type === 'note')} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}

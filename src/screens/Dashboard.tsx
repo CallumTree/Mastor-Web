@@ -41,7 +41,7 @@ function MonthChart({ data }: { data: { label: string; value: number }[] }) {
   const y = (v: number) => pad.t + (H - pad.t - pad.b) * (1 - v / max)
   const last = cum.length - 1
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Certified per month this year, ${k(cum[last] ?? 0)} in total`}>
+    <svg className="chart-month" viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Certified per month this year, ${k(cum[last] ?? 0)} in total`}>
       <defs><Hatch id="hm" /></defs>
       <text x={pad.l} y="15" fontSize="14" fill={INK} fontFamily="Mono">Σ {k(cum[last] ?? 0)} this year</text>
       <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} stroke={INK} strokeWidth="1" />
@@ -67,7 +67,7 @@ function BookBar({ certified, inVal, remaining }: { certified: number; inVal: nu
   const W = 360, x0 = 4, w = W - 8
   const a = (certified / total) * w, b = (inVal / total) * w
   return (
-    <svg viewBox={`0 0 ${W} 92`} width="100%" role="img" aria-label="Book of work">
+    <svg className="chart-book" viewBox={`0 0 ${W} 92`} width="100%" role="img" aria-label="Book of work">
       <defs><Hatch id="hb" /></defs>
       <rect x={x0} y="10" width={w} height="22" fill="none" stroke={INK} strokeWidth="1" />
       <rect x={x0} y="10" width={a} height="22" fill={COPPER} />
@@ -103,7 +103,7 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
   const voMax = Math.max(1, ...p.voGroups.map(g => g.value))
 
   return (
-    <main className="page" style={{ paddingBottom: 48 }}>
+    <main className="page dash" style={{ paddingBottom: 48 }}>
       <div className="row" style={{ marginBottom: 20 }}>
         <button className="icon-btn" onClick={onBack} aria-label="Back to jobs"><IconBack size={20} /></button>
         <div className="grow">
@@ -121,6 +121,8 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         ]} />
       <div className="muted" style={{ fontSize: 11, marginTop: 6, marginLeft: '12%' }}>Certified = issued valuations incl. uplifts{p.unpricedVos ? ` · ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not included` : ''}</div>
 
+      <div className="dash-secs">
+      <section>
       <SheetLabel no="1">Certified by month</SheetLabel>
       <div className="panel" style={{ padding: 14 }}>
         {p.certifiedThisYear > 0 ? <>
@@ -130,6 +132,8 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         </> : <div className="muted" style={{ fontSize: 13 }}>Nothing issued yet this year.</div>}
       </div>
 
+      </section>
+      <section>
       <SheetLabel no="2">Book of work</SheetLabel>
       <div className="panel" style={{ padding: 14 }}>
         <BookBar certified={activeCertified} inVal={p.inValuation} remaining={p.pipeline} />
@@ -138,6 +142,8 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         <Key swatch="open" label="Still to claim" value={k(p.pipeline)} />
       </div>
 
+      </section>
+      <section>
       <SheetLabel no="3">Job schedule</SheetLabel>
       <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="row" style={{ padding: '8px 14px', borderBottom: `1px solid ${INK}`, fontSize: 11, fontWeight: 700, letterSpacing: '.18em', color: MUTED, textTransform: 'uppercase' }}>
@@ -166,6 +172,8 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         })}
       </div>
 
+      </section>
+      <section>
       <SheetLabel no="4">Variation pipeline</SheetLabel>
       <div className="panel" style={{ padding: '6px 14px' }}>
         {p.voGroups.map(g => (
@@ -181,6 +189,8 @@ export function Dashboard({ jobs, scope, vos, vals, onBack, onOpenJob }: {
         ))}
         {p.unpricedVos > 0 && <div style={{ fontSize: 12, color: COPPER_INK, padding: '8px 0' }}>+ {p.unpricedVos} unpriced — not counted until priced</div>}
         <div className="muted" style={{ fontSize: 11, paddingTop: 8 }}>Same groups as each job’s Variation Register · values incl. uplifts</div>
+      </div>
+      </section>
       </div>
     </main>
   )

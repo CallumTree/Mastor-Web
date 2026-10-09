@@ -1,5 +1,5 @@
 import { Wordmark } from '../components/Wordmark'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Job, Variation } from '../lib/types'
 import { Drawing } from '../components/Drawing'
 import { usePhotoUrl } from '../lib/photos'
@@ -31,10 +31,23 @@ function Backdrop({ job }: { job: Job | null }) {
   )
 }
 
+/** Desktop (≥1024px) lists jobs as a ruled schedule; phones keep the swipe carousel. One or the other, never both. */
+function useWide() {
+  const q = '(min-width: 1024px)'
+  const [wide, setWide] = useState(() => typeof matchMedia === 'function' && matchMedia(q).matches)
+  useEffect(() => {
+    if (typeof matchMedia !== 'function') return
+    const m = matchMedia(q); const on = () => setWide(m.matches)
+    m.addEventListener('change', on); return () => m.removeEventListener('change', on)
+  }, [])
+  return wide
+}
+
 export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: {
   jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
 }) {
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
+  const wide = useWide()
   const [idx, setIdx] = useState(0)
   const track = useRef<HTMLDivElement>(null)
   const current = sorted[Math.min(idx, sorted.length - 1)] ?? null
@@ -48,7 +61,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
   }
 
   return (
-    <main className="immersive">
+    <main className={'immersive' + (wide ? ' wide' : '')}>
       <h1 className="sr-only">Mastor — your jobs</h1>
       <Backdrop job={current} />
       <div className="imm-banner"><SyncBadge /></div>
@@ -67,7 +80,29 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
         <div className="imm-sub">{sorted.length ? `${active} active job${active === 1 ? '' : 's'}` : 'Site · Variations · Valuations'}</div>
       </div>
 
-      {sorted.length > 0 ? (
+      {wide && sorted.length > 0 && (
+        <section className="job-sched" aria-label="Jobs">
+          <div className="job-sched-head">
+            <span>Job</span><span>Client</span><span className="num">Contract</span><span>Needs</span><span>Status</span>
+          </div>
+          {sorted.map(j => {
+            const unpriced = vos.filter(v => v.jobId === j.id && v.rate === null && v.status !== 'Rejected').length
+            const needs = [!j.poNumber && 'No PO', unpriced > 0 && `${unpriced} unpriced VO${unpriced === 1 ? '' : 's'}`].filter(Boolean).join(' · ')
+            return (
+              <button key={j.id} className="job-sched-row" onClick={() => onOpen(j)}>
+                <span className="js-job"><b>{j.name}</b><small className="mono">{j.contractRef || j.workType}</small></span>
+                <span className="js-client">{j.client || '—'}</span>
+                <span className="num mono">{j.contractValue > 0 ? money(j.contractValue) : '—'}</span>
+                <span className="js-needs">{needs || '—'}</span>
+                <span><span className={'badge ' + (j.status === 'Active' ? 'b-green' : 'b-slate')}>{j.status}</span></span>
+              </button>
+            )
+          })}
+          <div className="job-sched-foot"><button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button></div>
+        </section>
+      )}
+
+      {wide ? null : sorted.length > 0 ? (
         <>
           <div className="carousel" ref={track} onScroll={onScroll}>
             {sorted.map(j => {
@@ -97,7 +132,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
         </div>
       )}
 
-      <div className="imm-actions">
+      {!(wide && sorted.length > 0) && <div className="imm-actions">
         {sorted.length > 0 ? (
           <>
             <button className="btn btn-glass" onClick={onNew}><IconPlus /> New job</button>
@@ -106,7 +141,7 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
         ) : (
           <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
         )}
-      </div>
+      </div>}
     </main>
   )
 }
