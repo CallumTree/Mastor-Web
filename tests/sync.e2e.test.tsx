@@ -40,9 +40,9 @@ vi.mock('../src/lib/supabase', () => ({
   },
 }))
 
-import { db, outbox } from '../src/lib/db'
+import { db, outbox, rates } from '../src/lib/db'
 import { startSync, settle, onRemoteChange, onSyncStatus, fetchPhoto, type SyncStatus } from '../src/lib/sync'
-import type { Job } from '../src/lib/types'
+import { blankSettings, type Job, type RateItem } from '../src/lib/types'
 
 const CO = '11111111-1111-1111-1111-111111111111'
 const job = (id: string, name: string): Job => ({ id, name, client: '', address: '', contractRef: '', poNumber: '', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 0 })
@@ -111,6 +111,28 @@ describe('cloud sync', () => {
     const r = cloud.jobs.find(x => x.id === 'j3')!; r.deleted = true; r.updated_at = stamp()
     await settle()
     expect((await db.jobs()).find(j => j.id === 'j3')).toBeUndefined()
+  })
+
+  it('a rate book travels as one file; added and removed books follow the company list', async () => {
+    const line = (bookId: string, code: string, rate: number): RateItem => ({ bookId, code, short: code, long: '', unit: 'NO', rate, section: '', subsection: '' })
+    // imported here: the list goes in settings, the lines go up as one file
+    const book = { id: 'rb1', name: 'Planned v8', source: 'p.docx', notes: [], lines: 2, importedAt: 1 }
+    await db.putSettings({ ...blankSettings(), name: 'Tree & Sons', rateBooks: [book] })
+    await rates.put('rb1', [line('rb1', '0171AD', 133.91), line('rb1', '3051AB', 42.1)])
+    await settle()
+    const sent = bucket[`${CO}/rates/rb1.json`]
+    expect(sent).toBeTruthy()
+    // added on the laptop: its lines arrive here
+    bucket[`${CO}/rates/rb2.json`] = new Blob([JSON.stringify([line('rb2', '3710AA', 46.77)])], { type: 'application/json' })
+    const s = cloud.company_settings.find(r => r.id === 'company')!
+    s.data = { ...(s.data as object), rateBooks: [book, { ...book, id: 'rb2', name: 'Kitchen install only', lines: 1 }] }; s.updated_at = stamp()
+    await settle()
+    expect((await rates.byCode('3710AA'))[0]?.rate).toBe(46.77)
+    // removed on the laptop: its lines go from here too
+    s.data = { ...(s.data as object), rateBooks: [{ ...book, id: 'rb2', name: 'Kitchen install only', lines: 1 }] }; s.updated_at = stamp()
+    await settle()
+    expect(await rates.byCode('0171AD')).toEqual([])
+    expect((await rates.byCode('3710AA')).length).toBe(1)
   })
 
   it('a photo taken on another device is fetched from the cloud', async () => {

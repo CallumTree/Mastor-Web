@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { CompanySettings, DiaryEntry, Job, ScopeItem, Valuation, Variation } from './lib/types'
-import { db, nextVoNumber, uid } from './lib/db'
+import { blankSettings, type CompanySettings, type DiaryEntry, type Job, type ScopeItem, type Valuation, type Variation } from './lib/types'
+import { db, nextVoNumber, rates, uid } from './lib/db'
+import { RatesSheet } from './screens/Rates'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
@@ -31,6 +32,7 @@ export default function App() {
   const [logFrom, setLogFrom] = useState<DiaryEntry | null>(null)
   const [settings, setSettings] = useState<CompanySettings | undefined>(undefined)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [ratesOpen, setRatesOpen] = useState(false)
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -43,6 +45,7 @@ export default function App() {
   const [showDash, setShowDash] = useState(false)
   const [intro, setIntro] = useState(false)
 
+  const books = settings?.rateBooks ?? []
   const reload = useCallback(async () => {
     const js = await db.jobs()
     const [v, s, va, di] = await Promise.all([
@@ -108,7 +111,7 @@ export default function App() {
           }}
           onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
+        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
       )}
 
       {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}
@@ -135,7 +138,20 @@ export default function App() {
       {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }}
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
-        onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} />}
+        onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} />}
+      {ratesOpen && <RatesSheet books={books} onClose={() => setRatesOpen(false)}
+        onAddBooks={async (added, items) => {
+          // the book list goes in company settings (shared); then the lines, which sync as one file per book
+          const s = (await db.settings()) ?? blankSettings()
+          await db.putSettings({ ...s, rateBooks: [...(s.rateBooks ?? []), ...added], updatedAt: Date.now() })
+          for (let i = 0; i < added.length; i++) await rates.put(added[i].id, items[i])
+          await reload()
+        }}
+        onRemoveBook={async b => {
+          const s = (await db.settings()) ?? blankSettings()
+          await db.putSettings({ ...s, rateBooks: (s.rateBooks ?? []).filter(x => x.id !== b.id), updatedAt: Date.now() })
+          await rates.deleteBook(b.id); await reload()
+        }} />}
       {intro && <Splash onDone={() => setIntro(false)} />}
       {invoicing && job && (() => {
         const rate = settings?.vatRate ?? 20
@@ -174,7 +190,7 @@ export default function App() {
           }} />
       )}
       {editing && (
-        <EditVariation vo={editing} locked={!!lockedIn(editing, jobVals)} onClose={() => setEditing(null)}
+        <EditVariation vo={editing} books={books} locked={!!lockedIn(editing, jobVals)} onClose={() => setEditing(null)}
           onSave={async v => {
             // A VO that loses its price can't stay in a valuation
             const stillPriced = v.qty != null && v.rate != null && v.status !== 'Rejected'
@@ -194,7 +210,7 @@ export default function App() {
           }} />
       )}
       {scopeForm && job && (
-        <ScopeForm item={scopeForm === 'new' ? undefined : scopeForm} jobId={job.id}
+        <ScopeForm item={scopeForm === 'new' ? undefined : scopeForm} jobId={job.id} books={books}
           nextOrder={jobScope.reduce((m, s) => Math.max(m, s.order), 0) + 1}
           rooms={[...new Set(jobScope.map(s => s.room))]}
           props={[...new Set(jobScope.map(s => s.property).filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}

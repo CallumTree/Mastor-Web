@@ -253,7 +253,7 @@ label.row { cursor: pointer; }
 .cover-sync { text-align: center; font-size: 13px; color: var(--shell-muted); padding: 8px 16px 14px; }
 .cover-body { width: 100%; max-width: 1040px; margin: 0 auto; padding: 18px 16px 32px; flex: 1; }
 .cover-empty { text-align: center; color: var(--ink-muted); padding: 40px 16px; font-size: 17px; }
-.cover-actions { margin-top: 16px; }
+.cover-actions { margin-top: 16px; display: grid; gap: 10px; }
 .jobs { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
 .jobs-head { display: none; }
 .job-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "job value" "client client" "needs status"; gap: 4px 12px; align-items: center; padding: 16px; background: none; border: 0; text-align: left; color: var(--ink); font: inherit; }
@@ -389,6 +389,36 @@ label.row { cursor: pointer; }
   .jr-job, .jr-client, .jr-value, .jr-needs, .jr-status { grid-area: auto; margin: 0; }
   .jr-status { justify-self: start; }
   .jr-value { align-self: center; }
-  .cover-actions { display: flex; justify-content: flex-end; }
+  .cover-actions { display: flex; justify-content: flex-end; gap: 12px; }
   .cover-actions .btn { width: auto; padding: 0 24px; }
 }
+
+/* ---------- schedule of rates ---------- */
+.rate-list { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.rate + .rate { border-top: 1px solid var(--line); }
+.rate.open { background: var(--row-open); }
+.rate-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; width: 100%; min-height: 56px; padding: 12px 14px; background: none; border: 0; text-align: left; color: var(--ink); font: inherit; }
+.rate-head:hover { background: var(--row-open); }
+.rate-code { font-size: 14px; padding-top: 2px; }
+.rate-desc { font-weight: 600; font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+.rate-desc small { display: block; font-weight: 500; font-size: 13px; color: var(--ink-muted); margin-top: 3px; }
+.rate-amt { text-align: right; font-size: 18px; font-weight: 700; white-space: nowrap; line-height: 1.1; }
+.rate-amt small { display: block; font-family: var(--cond); font-size: 13px; font-weight: 700; letter-spacing: .05em; color: var(--ink-muted); }
+.rate-body { padding: 0 14px 14px; display: grid; gap: 10px; }
+.rate-body p { margin: 0; font-size: 15px; line-height: 1.45; }
+.rate-meta, .rate-sample { font-size: 13px; color: var(--ink-muted); }
+.rate-sample { display: grid; gap: 4px; }
+.book { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 12px 14px; }
+.book + .book { border-top: 1px solid var(--line); }
+.book b { display: block; }
+.book small { display: block; font-size: 13px; color: var(--ink-muted); margin-top: 2px; overflow-wrap: anywhere; }
+.book > :last-child { flex: none; width: auto; }
+.book .btn-ghost { width: auto !important; }
+.lookup { display: grid; gap: 8px; margin-top: -4px; }
+.lookup-hit { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--row-open); border: 1px solid var(--line); border-radius: var(--r); }
+.lookup-hit b { display: block; font-size: 15px; line-height: 1.3; }
+.lookup-hit small { display: block; font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
+.lookup-hit .btn { width: auto; flex: none; min-height: 44px; padding: 0 14px; }
+.lookup-miss { font-size: 14px; font-weight: 600; }
+.lookup .linkish.tap { justify-self: start; margin: -6px -6px; }
+@media (min-width: 1024px) { .rate-head { grid-template-columns: 96px minmax(0, 1fr) 120px; } }

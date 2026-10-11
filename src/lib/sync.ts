@@ -4,7 +4,8 @@
  * Rule: a cloud row never overwrites a local record that still has unsent changes.
  */
 import { supabase } from './supabase'
-import { db, local, meta, outbox, setQueueing, type RecordTable } from './db'
+import { db, local, meta, outbox, rates, setQueueing, type RecordTable } from './db'
+import type { RateItem } from './types'
 
 const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries', settings: 'company_settings' }
 const TABLES = Object.keys(CLOUD) as RecordTable[]
@@ -71,7 +72,8 @@ export async function syncNow() {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) { setStatus({ state: 'offline', pending: await outbox.count() }); return }
     setStatus({ state: 'syncing', pending: await outbox.count() })
     await push()
-    const changed = await pull()
+    const pulled = await pull()
+    const changed = (await syncRateBooks()) || pulled   // both always run
     if (changed) changeListeners.forEach(f => f())
     setStatus({ state: 'synced', pending: await outbox.count(), at: Date.now(), message: undefined })
   } catch (e) {
@@ -91,6 +93,13 @@ async function push() {
       const { error } = await supabase.from(CLOUD[op.table]).upsert(row, { onConflict: op.table === 'settings' ? 'company_id,id' : 'id' })  // settings: one row per company
       if (error && (op.table === 'diary' || op.table === 'settings') && /diary_entries|company_settings/.test(error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
       if (error) throw new Error(error.message)
+    } else if (op.kind === 'ratebook') {
+      const items = await rates.book(op.id)
+      if (items.length) {
+        const blob = new Blob([JSON.stringify(items)], { type: 'application/json' })
+        const { error } = await supabase.storage.from('photos').upload(rateBookPath(op.id), blob, { upsert: true, contentType: 'application/json' })
+        if (error) throw new Error(error.message)
+      }
     } else {
       const blob = await db.photo(op.id)
       if (blob) {
@@ -124,6 +133,32 @@ async function pull(): Promise<boolean> {
       await meta.set(`pulled:${companyId}:${t}`, since)
       if (data.length < 500) break
     }
+  }
+  return changed
+}
+
+const rateBookPath = (id: string) => `${companyId}/rates/${id}.json`
+
+/**
+ * Rate books follow the company's book list (kept in company settings): fetch the lines of any book
+ * added on another device, and drop the lines of any book removed there.
+ */
+async function syncRateBooks(): Promise<boolean> {
+  const books = (await db.settings())?.rateBooks ?? []
+  const pending = new Set((await outbox.all()).filter(o => o.kind === 'ratebook').map(o => o.id))
+  let changed = false
+  for (const b of books) {
+    if (pending.has(b.id) || (await rates.countBook(b.id)) > 0) continue
+    const { data, error } = await supabase.storage.from('photos').download(rateBookPath(b.id))
+    if (error || !data) continue // not uploaded yet — try again next sync
+    const text = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsText(data) })
+    const items = JSON.parse(text) as RateItem[]
+    await rates.putLocal(items.map(i => ({ ...i, bookId: b.id })))
+    changed = true
+  }
+  const keep = new Set(books.map(b => b.id))
+  for (const id of new Set((await rates.all()).map(i => i.bookId))) {
+    if (!keep.has(id) && !pending.has(id)) { await rates.deleteBook(id); changed = true }
   }
   return changed
 }

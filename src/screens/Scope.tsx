@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { RateBook } from '../lib/types'
+import { RateLookup } from './Rates'
 import type { Job, ScopeItem, Valuation } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { money, qtyText } from '../lib/format'
@@ -189,8 +191,8 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
   )
 }
 
-export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams = [], locked, onSave, onDelete, onClose }: {
-  item?: ScopeItem; jobId: string; nextOrder: number; rooms: string[]; props?: string[]; streams?: string[]; locked: boolean
+export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams = [], locked, books = [], onSave, onDelete, onClose }: {
+  item?: ScopeItem; jobId: string; nextOrder: number; rooms: string[]; props?: string[]; streams?: string[]; locked: boolean; books?: RateBook[]
   onSave: (i: ScopeItem) => void; onDelete?: () => void; onClose: () => void
 }) {
   const [f, setF] = useState<ScopeItem>(item ?? { id: uid(), jobId, code: '', description: '', room: rooms[rooms.length - 1] ?? 'General', qty: null, unit: 'nr', rate: null, valuationId: null, order: nextOrder, createdAt: Date.now() })
@@ -203,7 +205,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
         <div className="label bracket">{item ? 'Scope item' : 'Add scope item'}</div>
         {locked && <div className="flag">Claimed on an issued valuation — locked.</div>}
         <div className="row">
-          <div style={{ width: '38%' }}><Field label="SoR code"><input disabled={locked} value={f.code} onChange={e => setF({ ...f, code: e.target.value })} /></Field></div>
+          <div style={{ width: '38%' }}><Field label="SoR code"><input disabled={locked} value={f.code} autoCapitalize="characters" onChange={e => setF({ ...f, code: e.target.value, rateBook: undefined })} /></Field></div>
           <div className="grow"><Field label="Room / area"><input disabled={locked} value={f.room} onChange={e => setF({ ...f, room: e.target.value })} list="rooms" /></Field></div>
         </div>
         <div className="row">
@@ -213,11 +215,12 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           <datalist id="streams">{streams.map(r => <option key={r} value={r} />)}</datalist>
           <datalist id="rooms">{rooms.map(r => <option key={r} value={r} />)}</datalist>
         </div>
+        {!locked && <RateLookup code={f.code} books={books} onUse={(i, b) => { setF({ ...f, code: i.code, unit: i.unit, rateBook: b?.name, description: f.description.trim() ? f.description : i.short }); setRate(String(i.rate)) }} />}
         <Field label="Description *"><textarea disabled={locked} rows={2} value={f.description} onChange={e => setF({ ...f, description: e.target.value })} /></Field>
         <div className="row">
           <div className="grow"><Field label="Qty"><input disabled={locked} inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} placeholder="Not stated" /></Field></div>
           <div style={{ width: '22%' }}><Field label="Unit"><input disabled={locked} value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} /></Field></div>
-          <div className="grow"><Field label="Rate (£)"><input disabled={locked} inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="No rate" /></Field></div>
+          <div className="grow"><Field label="Rate (£)" hint={f.rateBook ? `From ${f.rateBook}` : undefined}><input disabled={locked} inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setF({ ...f, rateBook: undefined }) }} placeholder="No rate" /></Field></div>
         </div>
         <div className="amt" style={{ fontSize: 20, fontWeight: 700, color: n(qty) && n(rate) ? 'var(--copper-ink)' : 'var(--ink-muted)' }}>
           {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}

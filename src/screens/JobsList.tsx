@@ -1,7 +1,7 @@
 import { Wordmark } from '../components/Wordmark'
 import type { Job, Variation } from '../lib/types'
 import { money } from '../lib/format'
-import { IconChart, IconCog, IconPlus } from '../components/Icons'
+import { IconChart, IconCog, IconPlus, IconScope } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
 import { Plate } from '../components/Sign'
 
@@ -10,8 +10,8 @@ import { Plate } from '../components/Sign'
  * signs (red = blocks invoicing, yellow = needs doing). Same list on a phone and a laptop: rows on a
  * phone, a ruled schedule with columns from 1024px.
  */
-export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: {
-  jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
+export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, onRates }: {
+  jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void; onRates: () => void
 }) {
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const active = sorted.filter(j => j.status === 'Active').length
@@ -54,7 +54,10 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings }: 
         ) : (
           <div className="cover-empty">No jobs yet. Add your first job to get started.</div>
         )}
-        <div className="cover-actions"><button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button></div>
+        <div className="cover-actions">
+          <button className="btn btn-secondary" onClick={onRates}><IconScope /> Schedule of rates</button>
+          <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
+        </div>
       </div>
     </main>
   )

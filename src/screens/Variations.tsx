@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { RateBook } from '../lib/types'
+import { RateLookup } from './Rates'
 import type { Job, Valuation, Variation, VoStatus } from '../lib/types'
 import { Tick, ValBadge } from './Scope'
 import { lockedIn } from '../lib/valuation'
@@ -68,7 +70,7 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
 
 const STATUSES: VoStatus[] = ['Identified', 'Instructed', 'Complete', 'Rejected']
 
-export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: Variation; locked: boolean; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
+export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClose }: { vo: Variation; locked: boolean; books?: RateBook[]; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
   const [v, setV] = useState(vo)
   const [qty, setQty] = useState(vo.qty != null ? String(vo.qty) : '')
   const [rate, setRate] = useState(vo.rate != null ? String(vo.rate) : '')
@@ -83,14 +85,15 @@ export function EditVariation({ vo, locked, onSave, onDelete, onClose }: { vo: V
         <Field label="Description"><textarea rows={2} value={v.description} onChange={e => setV({ ...v, description: e.target.value })} /></Field>
         <Field label="Where"><input value={v.room} onChange={e => setV({ ...v, room: e.target.value })} /></Field>
         <div className="row">
-          <div className="grow"><Field label="SoR code"><input value={v.code} onChange={e => setV({ ...v, code: e.target.value })} /></Field></div>
+          <div className="grow"><Field label="SoR code"><input value={v.code} autoCapitalize="characters" onChange={e => setV({ ...v, code: e.target.value, rateBook: undefined })} /></Field></div>
           <div className="grow"><Field label="Unit"><input value={v.unit} onChange={e => setV({ ...v, unit: e.target.value })} /></Field></div>
         </div>
+        {!locked && <RateLookup code={v.code} books={books} onUse={(i, b) => { setV({ ...v, code: i.code, unit: i.unit, rateBook: b?.name }); setRate(String(i.rate)) }} />}
         <div className="row">
           <div className="grow"><Field label="Qty"><input inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} placeholder="Not measured" /></Field></div>
-          <div className="grow"><Field label="Rate (£)"><input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="Unpriced" /></Field></div>
+          <div className="grow"><Field label="Rate (£)" hint={v.rateBook ? `From ${v.rateBook}` : undefined}><input inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setV({ ...v, rateBook: undefined }) }} placeholder="Unpriced" /></Field></div>
         </div>
-        <div className="mono" style={{ fontSize: 20, color: qv && rv ? 'var(--copper-ink)' : 'var(--ink-muted)', fontWeight: 300 }}>
+        <div className="amt" style={{ fontSize: 20, color: qv && rv ? 'var(--ink)' : 'var(--ink-muted)', fontWeight: 700 }}>
           {qv && rv ? money(lineValue(qv, rv)) : 'Add qty and rate to price'}
         </div>
         {qv && rv && v.status === 'Identified' && !v.clientRef && (

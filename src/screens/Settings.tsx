@@ -5,9 +5,9 @@ import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
 import { SignOutButton } from '../components/SyncBadge'
 
 /** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
-export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro }: {
+export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates }: {
   settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
-  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void
+  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void; onRates: () => void
 }) {
   const [msg, setMsg] = useState<string | null>(null)
   const [s, setS] = useState<CompanySettings>(settings ?? blankSettings())
@@ -47,6 +47,10 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         <div className="panel" style={{ padding: '10px 14px', fontSize: 13 }}>Your next invoice will be <b className="mono" style={{ color: 'var(--copper-ink)' }}>{formatInvoiceNo(preview, nextN)}</b></div>
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>
+
+        <div className="label bracket" style={{ marginTop: 22 }}>Schedule of rates</div>
+        <div className="muted" style={{ fontSize: 13 }}>{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
+        <button className="btn btn-secondary" onClick={onRates}>Open schedule of rates</button>
 
         <div className="label bracket" style={{ marginTop: 22 }}>This device</div>
         <div className="muted" style={{ fontSize: 13 }}>A backup is a file of every job on this phone or computer — keep one before changing devices.</div>

@@ -31,6 +31,7 @@ export interface Variation {
   unit: string
   rate: number | null       // null = unpriced. Never shown as £0.
   code: string              // SoR code, blank until priced
+  rateBook?: string         // which rate book the rate came from, when looked up (e.g. "Planned Maint v8")
   reason: string
   clientRef: string         // client's VO reference, blank until issued
   status: VoStatus
@@ -56,6 +57,7 @@ export interface ScopeItem {
   property?: string          // multi-property schemes: the house/unit number, e.g. "1", "13"
   workstream?: string        // e.g. PPR Paint, Kitchen, Roofing, Scaffold, Decarb
   hours?: number | null      // labour hours from the schedule, if given
+  rateBook?: string          // which rate book the rate came from, when looked up
   createdAt: number
 }
 
@@ -111,6 +113,33 @@ export interface CompanySettings {
   invoicePad: number           // digits, e.g. 4 → 0042
   vatRate: number              // % (20)
   defaultTermsDays: number
+  rateBooks?: RateBook[]       // the company's schedules of rates; the lines themselves live in the 'rates' store
   updatedAt: number
+}
+
+/**
+ * A schedule of rates — a framework SoR (e.g. M3NHF v8 Planned), a client's additional rates, or your own.
+ * Imported whole and never edited: a new version comes in as a new book, so old jobs keep the rates
+ * they were priced on.
+ */
+export interface RateBook {
+  id: string
+  name: string                 // e.g. "Planned Maintenance v8 — PCC 2025–29"
+  source: string               // file it came from (and sheet, for spreadsheets)
+  notes: string[]              // conditions printed with the rates, e.g. "Install only — materials ordered by PCC"
+  lines: number
+  importedAt: number
+}
+/** One rate. Key: bookId + code. */
+export interface RateItem {
+  bookId: string
+  code: string
+  short: string                // short description, e.g. "FENCING:RENEW 1.8M BOARD - TIMBER POST"
+  long: string                 // full description from the schedule ('' if the book has none)
+  unit: string                 // as printed: NO, IT, SM, LM, Lm, Each…
+  rate: number                 // £, as printed (rounded to the penny)
+  section: string              // e.g. "FENCING AND GATES"
+  subsection: string           // e.g. "Fencing - Boarded"
+  priority?: string            // responsive schedules: R, E, U…
 }
 export const blankSettings = (): CompanySettings => ({ id: 'company', name: '', address: '', email: '', phone: '', vatNumber: '', companyNumber: '', bankName: '', accountName: '', sortCode: '', accountNumber: '', invoicePrefix: '', nextInvoiceNumber: 1, invoicePad: 0, vatRate: 20, defaultTermsDays: 30, updatedAt: 0 })
