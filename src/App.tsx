@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { blankSettings, type CompanySettings, type DiaryEntry, type Job, type ScopeItem, type Valuation, type Variation } from './lib/types'
 import { db, nextVoNumber, rates, uid } from './lib/db'
 import { RatesSheet } from './screens/Rates'
+import { TeamSheet } from './screens/Team'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
@@ -33,6 +34,7 @@ export default function App() {
   const [settings, setSettings] = useState<CompanySettings | undefined>(undefined)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [ratesOpen, setRatesOpen] = useState(false)
+  const [teamOpen, setTeamOpen] = useState(false)
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -138,7 +140,8 @@ export default function App() {
       {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }}
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
-        onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} />}
+        onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }} />}
+      {teamOpen && <TeamSheet company={settings?.name ?? ''} onClose={() => setTeamOpen(false)} />}
       {ratesOpen && <RatesSheet books={books} onClose={() => setRatesOpen(false)}
         onAddBooks={async (added, items) => {
           // the book list goes in company settings (shared); then the lines, which sync as one file per book

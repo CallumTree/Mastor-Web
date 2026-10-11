@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { createCompany, myCompany, startSync, stopSync } from '../lib/sync'
 import { meta } from '../lib/db'
+import { acceptInvites } from '../lib/team'
 import { Field } from '../components/Ui'
 
 /**
@@ -19,7 +20,8 @@ export function Gate({ children }: { children: ReactNode }) {
     if (!session) { stopSync(); setStage({ s: 'signedOut' }); return }
     const cached = await meta.get<{ id: string; name: string; user: string }>('company')
     try {
-      const c = await myCompany()
+      let c = await myCompany()
+      if (!c && (await acceptInvites())) c = await myCompany()   // invited by email: join that company
       if (!c) { setStage({ s: 'needCompany' }); return }
       await meta.set('company', { ...c, user: session.user.id })
       await startSync(c.id); setStage({ s: 'ready', company: c.name })
@@ -114,7 +116,8 @@ function CompanySetup({ onDone }: { onDone: () => void }) {
   return (
     <div className="panel stack" style={{ padding: 16 }}>
       <div style={{ fontWeight: 700 }}>Your company</div>
-      <div className="muted" style={{ fontSize: 14 }}>Jobs belong to your company, so people you invite later see the same jobs. Anything already on this phone comes with you.</div>
+      <div className="muted" style={{ fontSize: 14 }}>Jobs belong to your company, so people you add later see the same jobs. Anything already on this phone comes with you.</div>
+      <div className="muted" style={{ fontSize: 14 }}>Joining someone else’s company? Ask them to add your email under Settings → Team, then <button className="linkish" onClick={onDone}>check again</button>.</div>
       <Field label="Company name"><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Tree & Sons Ltd" /></Field>
       {err && <div role="alert" style={{ fontSize: 14, fontWeight: 600, color: 'var(--red)' }}>{err}</div>}
       <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={async () => {

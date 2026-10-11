@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import { SettingsSheet } from '../src/screens/Settings'
 
 afterEach(cleanup)
-const props = () => ({ onSave: vi.fn(), onClose: vi.fn(), onBackup: vi.fn(async () => {}), onRestore: vi.fn(async () => 3), onPlayIntro: vi.fn(), onRates: vi.fn() })
+const props = () => ({ onSave: vi.fn(), onClose: vi.fn(), onBackup: vi.fn(async () => {}), onRestore: vi.fn(async () => 3), onPlayIntro: vi.fn(), onRates: vi.fn(), onTeam: vi.fn() })
 
 describe('settings: this device', () => {
   it('holds backup, restore, the opening titles and sign out (moved off the cover banner)', async () => {

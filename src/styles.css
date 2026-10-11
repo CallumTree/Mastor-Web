@@ -422,3 +422,22 @@ label.row { cursor: pointer; }
 .lookup-miss { font-size: 14px; font-weight: 600; }
 .lookup .linkish.tap { justify-self: start; margin: -6px -6px; }
 @media (min-width: 1024px) { .rate-head { grid-template-columns: 96px minmax(0, 1fr) 120px; } }
+
+/* ---------- team ---------- */
+.person { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; }
+.person + .person { border-top: 1px solid var(--line); }
+.person > .grow { flex: 1 1 240px; }
+.person b { display: block; overflow-wrap: anywhere; }
+.person small { display: block; font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
+.person-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.person-ctl .field select { min-height: 44px; width: auto; }
+.person-ctl .btn { width: auto; min-height: 44px; padding: 0 14px; }
+.person-ctl .btn-ghost { width: auto !important; }
+.share-msg { margin: 0; padding: 12px; background: var(--row-open); border-radius: var(--r); font-size: 15px; white-space: pre-line; overflow-wrap: anywhere; }
+.roles { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.roles legend { font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; padding: 0; }
+.role { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; border: 2px solid var(--line); border-radius: var(--r); cursor: pointer; }
+.role.on { border-color: var(--ink); background: var(--row-open); }
+.role input { width: 22px; height: 22px; accent-color: var(--blue); flex: none; margin: 0; }
+.role b { display: block; }
+.role small { display: block; font-size: 13px; color: var(--ink-muted); }
