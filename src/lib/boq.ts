@@ -1,4 +1,5 @@
 import { readSchedule } from './sheet'
+import { authHeader } from './supabase'
 /** Turning an uploaded BoQ into reviewable lines. Nothing here saves anything. */
 export interface ParsedLine {
   include: boolean
@@ -153,7 +154,7 @@ export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'p
 export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
   const payload = await readBoqFile(file)
   if (payload.kind === 'parsed') return payload.boq   // spreadsheet read exactly — no AI needed
-  const r = await fetch('/api/parse-boq', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
+  const r = await fetch('/api/parse-boq', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) }, body: JSON.stringify(payload) })
   let data: { text?: string; truncated?: boolean; error?: string } = {}
   let gotJson = true
   try { data = await r.json() } catch { gotJson = false }

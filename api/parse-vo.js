@@ -5,6 +5,8 @@
  */
 export const config = { maxDuration: 120 }
 
+import { guard } from './_guard.js'
+
 const PROMPT = `This is a UK local-authority variation instruction / works order / site instruction sent to a building contractor.
 It may be handwritten, scanned, photographed or a screenshot. Read it carefully.
 
@@ -33,6 +35,7 @@ export default async function handler(req, res) {
   if (b?.kind === 'image' && b.data) doc = { type: 'image', source: { type: 'base64', media_type: b.mediaType || 'image/jpeg', data: b.data } }
   else if (b?.kind === 'pdf' && b.data) doc = { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b.data } }
   else return res.status(400).json({ error: 'No document received.' })
+  if (!(await guard(req, res, 'vo'))) return
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },

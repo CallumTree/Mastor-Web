@@ -5,6 +5,7 @@
  * Then matched to a job (by PO / address) and to any VO you'd already raised.
  */
 import type { Job, Variation } from './types'
+import { authHeader } from './supabase'
 import type { ParsedLine } from './boq'
 import { readSchedule } from './sheet'
 
@@ -131,7 +132,7 @@ export async function readVoFile(file: File): Promise<ParsedVo> {
   const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf'
   const blob = isPdf ? file : await shrinkImage(file)
   if (blob.size > 3_200_000) throw new Error('That file is over 3MB — try a smaller scan or photo.')
-  const r = await fetch('/api/parse-vo', { method: 'POST', headers: { 'content-type': 'application/json' },
+  const r = await fetch('/api/parse-vo', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) },
     body: JSON.stringify(isPdf ? { kind: 'pdf', data: b64(await asBuffer(blob)) } : { kind: 'image', mediaType: 'image/jpeg', data: b64(await asBuffer(blob)) }) })
   let data: { text?: string; error?: string } = {}
   try { data = await r.json() } catch { throw new Error('The connection dropped before the answer came back. Try again with better signal.') }

@@ -5,6 +5,8 @@
  *
  * The API key lives only in Vercel's environment (ANTHROPIC_API_KEY) — never in the app.
  */
+import { guard } from './_guard.js'
+
 export const config = { maxDuration: 300 }
 
 const PROMPT = `You are reading a UK construction Bill of Quantities / Schedule of Rates works order for a contractor.
@@ -56,6 +58,7 @@ export default async function handler(req, res) {
   } else {
     return res.status(400).json({ error: 'No document received.' })
   }
+  if (!(await guard(req, res, 'boq'))) return
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
