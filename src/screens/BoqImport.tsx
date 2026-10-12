@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import type { Job } from '../lib/types'
+import { useMemo, useState } from 'react'
+import type { Job, RateBook } from '../lib/types'
+import { RateVerdict, useRateCheck } from './RateCheck'
 import { Sheet } from '../components/Ui'
 import { money, qtyText, upliftFactor } from '../lib/format'
 import { parseBoqRemote, type ParsedBoq, type ParsedLine } from '../lib/boq'
@@ -8,8 +9,8 @@ import { IconScope } from '../components/Icons'
 
 type Stage = { s: 'pick' } | { s: 'reading'; name: string } | { s: 'review'; boq: ParsedBoq } | { s: 'error'; msg: string }
 
-export function BoqImport({ job, existing, onImport, onClose }: {
-  job: Job; existing: number; onImport: (lines: ParsedLine[], ref: string) => void; onClose: () => void
+export function BoqImport({ job, existing, books = [], onImport, onClose }: {
+  job: Job; existing: number; books?: RateBook[]; onImport: (lines: ParsedLine[], ref: string) => void; onClose: () => void
 }) {
   const [stage, setStage] = useState<Stage>({ s: 'pick' })
 
@@ -19,7 +20,7 @@ export function BoqImport({ job, existing, onImport, onClose }: {
     catch (e) { setStage({ s: 'error', msg: (e as Error).message }) }
   }
 
-  if (stage.s === 'review') return <Review job={job} existing={existing} boq={stage.boq} onImport={onImport} onBack={() => setStage({ s: 'pick' })} onClose={onClose} />
+  if (stage.s === 'review') return <Review job={job} books={books} existing={existing} boq={stage.boq} onImport={onImport} onBack={() => setStage({ s: 'pick' })} onClose={onClose} />
 
   return (
     <Sheet onClose={onClose} locked={stage.s === 'reading'} label="Import BoQ">
@@ -48,8 +49,8 @@ export function BoqImport({ job, existing, onImport, onClose }: {
   )
 }
 
-export function Review({ job, existing, boq, onImport, onBack, onClose }: {
-  job: Job; existing: number; boq: ParsedBoq; onImport: (lines: ParsedLine[], ref: string) => void; onBack: () => void; onClose: () => void
+export function Review({ job, existing, boq, books = [], onImport, onBack, onClose }: {
+  job: Job; existing: number; boq: ParsedBoq; books?: RateBook[]; onImport: (lines: ParsedLine[], ref: string) => void; onBack: () => void; onClose: () => void
 }) {
   const [lines, setLines] = useState(boq.lines)
   const [onlyIssues, setOnlyIssues] = useState(false)
@@ -62,6 +63,8 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
   const multi = props.length > 1
   const [openProps, setOpenProps] = useState<Set<string>>(new Set())
   const toggle = (idx: number) => setLines(ls => ls.map((l, i) => (i === idx ? { ...l, include: !l.include } : l)))
+  const checkLines = useMemo(() => chosen.map((l, i) => ({ id: String(i), code: l.code, description: l.description, qty: l.qty, unit: l.unit, rate: l.rate })), [lines])
+  const { result: rateCheck } = useRateCheck(checkLines, books)
   const near = (a: number, b: number) => b > 0 && Math.abs(a - b) / b < 0.005
   const match = job.contractValue > 0 ? (near(base, job.contractValue) ? 'base' : near(withUplift, job.contractValue) ? 'uplift' : null) : null
 
@@ -95,6 +98,12 @@ export function Review({ job, existing, boq, onImport, onBack, onClose }: {
           {boq.truncated && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--ink)', fontWeight: 600 }}>Check: the document was very long and may have been cut short — check the last section.</div>}
         </div>
 
+        {rateCheck && (
+          <div className="stack" style={{ marginTop: 0 }}>
+            <RateVerdict r={rateCheck} />
+            <div className="muted" style={{ fontSize: 13 }}>Checked against {rateCheck.book?.name}. After importing, Scope → ⋯ → Check rates lists every line.</div>
+          </div>
+        )}
         {flagged > 0 && (
           <div className="row">
             <div className="grow flag">{flagged} line{flagged === 1 ? '' : 's'} need checking</div>

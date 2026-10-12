@@ -28,8 +28,8 @@ export function ValBadge({ val }: { val?: Valuation }) {
 
 type Filter = 'all' | 'live' | 'claimed'
 
-export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport }: {
-  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void
+export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport, onCheckRates }: {
+  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void; onCheckRates?: () => void
 }) {
   const [filter, setFilter] = useState<Filter>('all')
   const total = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -48,6 +48,7 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
   const toggleGroup = (k: string) => setOpenGroups(s => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
   const unclaimed = scope.filter(i => !i.valuationId)
+  const unpricedLines = scope.filter(i => !isPriced(i)).length
   const lockedCount = scope.filter(i => !!lockedIn(i, vals)).length
   const toggleProp = (p: string) => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })
   const row = (i: ScopeItem, idx: number, showRoom: boolean) => {
@@ -79,9 +80,10 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
 
   return (
     <div className="stack">
-      <TabHead label="Scope" meta={`${scope.length} items`} menu={<TabMenu title="Scope" actions={[
+      <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? "" : "s"}`} menu={<TabMenu title="Scope" actions={[
           { label: 'Import BoQ / works order', hint: 'PDF or Excel', onClick: onImport },
           { label: 'Add item', hint: 'One line, by hand', onClick: onAdd },
+          ...(onCheckRates ? [{ label: 'Check rates against your SoR', hint: 'Lines that don’t follow the BoQ’s pattern, codes not in the schedule', disabled: !scope.length, onClick: onCheckRates }] : []),
           ...(hasProps ? [{ label: openProps.size ? 'Collapse all' : 'Expand all properties', onClick: () => setOpenProps(openProps.size ? new Set() : new Set(properties)) }] : []),
           { label: 'Clear unclaimed lines', hint: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'} not in any valuation`, danger: true, disabled: !unclaimed.length,
             confirm: `Remove ${unclaimed.length} unclaimed lines? Anything in a valuation stays.`, onClick: () => onClearUnclaimed(unclaimed) },
@@ -90,7 +92,7 @@ export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUncl
         ]} />} />
 
       {scope.length > 0 && <SumStrip label="Scope summary" cols={3} progress={total ? (claimed / total) * 100 : 0} cells={[
-        { label: 'Scope total', value: money(total), note: 'base rates' },
+        { label: 'Scope total', value: money(total), note: unpricedLines ? `base rates · + ${unpricedLines} unpriced` : 'base rates' },
         { label: 'Claimed', value: money(claimed), note: `${total ? Math.round((claimed / total) * 100) : 0}% of scope`, hot: true, nil: !claimed },
         { label: 'Still to do', value: money(total - claimed), note: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'}`, nil: !unclaimed.length },
       ]} />}

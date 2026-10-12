@@ -96,5 +96,11 @@ describe('schedule of rates', () => {
     type('Qty', '10')
     click(screen.getAllByRole('button', { name: 'Add item' }).at(-1)!)
     await waitFor(() => expect(screen.getAllByText('£421.00').length).toBeGreaterThan(0))
+
+    // --- check the scope's rates against the book
+    await screen.findByText('1 item')
+    click(screen.getByRole('button', { name: 'Scope options' }))
+    click(screen.getByRole('button', { name: /check rates against your sor/i }))
+    await screen.findByText('All 1 priced lines follow the SoR rates exactly')
   })
 })

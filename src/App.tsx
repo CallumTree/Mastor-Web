@@ -3,6 +3,7 @@ import { blankSettings, type CompanySettings, type DiaryEntry, type Job, type Sc
 import { db, nextVoNumber, rates, uid } from './lib/db'
 import { RatesSheet } from './screens/Rates'
 import { TeamSheet } from './screens/Team'
+import { RateCheckSheet } from './screens/RateCheck'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
@@ -35,6 +36,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [ratesOpen, setRatesOpen] = useState(false)
   const [teamOpen, setTeamOpen] = useState(false)
+  const [checking, setChecking] = useState(false)
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -83,7 +85,7 @@ export default function App() {
           onClaimMany={items => run(() => claimMany(items))()}
           onClearUnclaimed={items => run(async () => { for (const i of items) if (!i.valuationId) await db.deleteScope(i.id) })()}
           onDeleteScope={items => run(async () => { for (const i of items) if (!lockedIn(i, jobVals)) await db.deleteScope(i.id) })()}
-          onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)}
+          onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)} onCheckRates={books.length ? () => setChecking(true) : undefined}
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
@@ -141,6 +143,7 @@ export default function App() {
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
         onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }} />}
+      {checking && job && <RateCheckSheet books={books} lines={jobScope} onClose={() => setChecking(false)} />}
       {teamOpen && <TeamSheet company={settings?.name ?? ''} onClose={() => setTeamOpen(false)} />}
       {ratesOpen && <RatesSheet books={books} onClose={() => setRatesOpen(false)}
         onAddBooks={async (added, items) => {
@@ -202,7 +205,7 @@ export default function App() {
           onDelete={async () => { await db.deleteVariation(editing); setEditing(null); await reload() }} />
       )}
       {importing && job && (
-        <BoqImport job={job} existing={jobScope.length} onClose={() => setImporting(false)}
+        <BoqImport job={job} existing={jobScope.length} books={books} onClose={() => setImporting(false)}
           onImport={async (lines, ref) => {
             let order = jobScope.reduce((m, s) => Math.max(m, s.order), 0)
             for (const l of lines) {
