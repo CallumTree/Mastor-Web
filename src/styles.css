@@ -492,3 +492,9 @@ label.row { cursor: pointer; }
 .dash-amt { flex: none; text-align: right; font-weight: 700; font-size: 17px; white-space: nowrap; }
 .dash-amt small { display: block; font-family: var(--sans); font-weight: 500; font-size: 13px; color: var(--ink-muted); }
 .dash-amt.neg { color: var(--red); }
+
+/* ---------- job documents ---------- */
+.doc-row { align-items: center; }
+.doc-open { display: block; background: none; border: 0; padding: 4px 0; text-align: left; color: var(--ink); font: inherit; min-height: 48px; min-width: 0; overflow-wrap: anywhere; }
+.doc-open b { font-size: 15px; }
+.doc-open small { display: block; font-size: 13px; color: var(--ink-muted); margin-top: 3px; }

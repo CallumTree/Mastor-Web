@@ -14,7 +14,7 @@ import { AccessContext, accessFor } from './lib/access'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
-import { onRemoteChange } from './lib/sync'
+import { fetchPhoto, onRemoteChange } from './lib/sync'
 import { SyncBadge } from './components/SyncBadge'
 import { keepStorage, makeBackup, downloadBackup, restoreBackup } from './lib/backup'
 import { JobForm } from './screens/JobForm'
@@ -130,6 +130,15 @@ export default function App() {
             await shareOrDownload(blob, certificateFileName(job, v))
           }}
           onDayworks={(fresh: boolean) => setDwOpen(fresh ? 'new' : 'list')}
+          docs={jobDocs}
+          onAddDoc={async (file, kind, name) => { const fileId = uid(); await db.putPhoto(fileId, file); await db.put('docs', { id: uid(), jobId: job.id, name, kind, fileId, type: file.type || 'application/octet-stream', size: file.size, addedAt: Date.now() }); await reload() }}
+          onOpenDoc={async d => {
+            const blob = (await db.photo(d.fileId)) ?? (await fetchPhoto(d.fileId))
+            if (!blob) { alert('That document isn’t on this device yet and couldn’t be fetched — check signal and try again.'); return }
+            const ext = d.type === 'application/pdf' ? '.pdf' : ''
+            await shareOrDownload(new Blob([blob], { type: d.type }), d.name.replace(/[^A-Za-z0-9 _.-]+/g, '_') + ext)
+          }}
+          onDeleteDoc={async d => { await db.remove('docs', d); await db.deletePhoto(d.fileId); await reload() }}
           orders={jobOrders} onNewOrder={() => setOrderOpen('new')} onOpenOrder={setOrderOpen} onClaimOrders={lines => run(() => claimMany(lines))()}
           diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate} onCosts={() => setCostsOpen(true)}
           onSaveDiary={async (e, markedUp) => {

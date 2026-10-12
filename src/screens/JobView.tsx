@@ -1,8 +1,9 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
-import type { Cost, DiaryEntry, Job, ScopeItem, Valuation, Variation, WorkOrder } from '../lib/types'
+import type { Cost, DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder } from '../lib/types'
 import { OrdersTab, isOverdue } from './Orders'
+import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
 import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock } from '../components/Icons'
@@ -40,7 +41,7 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
   )
 }
 
-function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, margin, onCosts, orders }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[] }) {
+function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, margin, onCosts, orders, documents }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode }) {
   const [notesOpen, setNotesOpen] = useState(false)
   const [noteEdit, setNoteEdit] = useState<DiaryEntry | null>(null)
   const open = vals.find(v => v.status === 'Open')
@@ -138,6 +139,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         {notes.length === 0 && <button onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', color: 'var(--ink-muted)', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}
         {[...notes].sort(sortNotes).slice(0, 3).map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--ink-line)' : 'none' }}><NoteRow n={n} onOpen={() => setNoteEdit(n)} /></div>)}
       </div>
+      {documents}
       {notesOpen && <NotesSheet job={job} notes={notes} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} />}
       {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
       {seesMoney && <div className="muted" style={{ fontSize: 12, marginTop: 12 }}>
@@ -164,6 +166,7 @@ export function JobView(p: {
   onIssue: (v: Valuation) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
   costs: Cost[]; dayRate?: number | null; onCosts: () => void
   onDayworks: (fresh: boolean) => void
+  docs: JobDocument[]; onAddDoc: (file: File, kind: JobDocument['kind'], name: string) => Promise<void>; onOpenDoc: (d: JobDocument) => Promise<void>; onDeleteDoc: (d: JobDocument) => Promise<void>
   orders: WorkOrder[]; onNewOrder: () => void; onOpenOrder: (o: WorkOrder) => void; onClaimOrders: (lines: ScopeItem[]) => void
   diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
   onAddMedia: (file: File, kind: 'photo' | 'video', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
@@ -189,6 +192,7 @@ export function JobView(p: {
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
+          documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} />}
           notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
