@@ -2,8 +2,6 @@ import { useState } from 'react'
 import type { Job, WorkType } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { uid } from '../lib/db'
-import { savePhoto, usePhotoUrl } from '../lib/photos'
-import { IconCamera } from '../components/Icons'
 
 const TYPES: WorkType[] = ['PPR', 'Internal', 'External', 'Roofing', 'Commercial']
 
@@ -18,7 +16,6 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
   const [u1, setU1] = useState(job ? String(job.uplift1) : '')
   const [u2, setU2] = useState(job ? String(job.uplift2) : '')
   const [terms, setTerms] = useState(job?.paymentTermsDays ? String(job.paymentTermsDays) : '30')
-  const photoUrl = usePhotoUrl(f.photoId)
   const set = (k: keyof Job) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
   const num = (s: string) => { const n = parseFloat(s.replace(/[£,\s]/g, '')); return isFinite(n) && n > 0 ? n : 0 }
 
@@ -26,14 +23,22 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
     <Sheet onClose={onClose}>
       <div className="stack">
         <div className="label bracket">{job ? 'Job setup' : 'New job'}</div>
-        <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder="e.g. 32 College Park" /></Field>
+        <fieldset className="roles"><legend>What kind of work</legend>
+          {([['scheme', 'One scheme', 'A BoQ or works order for one job or a group of properties'], ['orders', 'Responsive or voids contract', 'Many small works orders, claimed together each month']] as const).map(([k, label, hint]) => (
+            <label key={k} className={'role' + ((f.kind ?? 'scheme') === k ? ' on' : '')}>
+              <input type="radio" name="job-kind" checked={(f.kind ?? 'scheme') === k} onChange={() => setF({ ...f, kind: k })} />
+              <span><b>{label}</b><small>{hint}</small></span>
+            </label>
+          ))}
+        </fieldset>
+        <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder={f.kind === 'orders' ? 'e.g. PCC Responsive 2026' : 'e.g. 32 College Park'} /></Field>
         <Field label="Client"><input value={f.client} onChange={set('client')} placeholder="e.g. Pembrokeshire County Council" /></Field>
         <Field label="Site address"><input value={f.address} onChange={set('address')} /></Field>
         <div className="row">
           <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CAP00290" /></Field></div>
           <div className="grow"><Field label="PO number" warn={!f.poNumber} hint={!f.poNumber ? 'Needed on invoices' : undefined}><input value={f.poNumber} onChange={set('poNumber')} /></Field></div>
         </div>
-        <Field label="PO value — all-in, incl. uplifts (£)" hint="Uplifts below should turn the BoQ total into this figure"><input inputMode="decimal" value={valueText} onChange={e => setValueText(e.target.value)} placeholder="From the purchase order" /></Field>
+        <Field label={f.kind === 'orders' ? 'Contract value (£, optional)' : 'PO value — all-in, incl. uplifts (£)'} hint={f.kind === 'orders' ? 'Leave blank for a call-off contract' : 'Uplifts below should turn the BoQ total into this figure'}><input inputMode="decimal" value={valueText} onChange={e => setValueText(e.target.value)} placeholder="From the purchase order" /></Field>
         <div className="row">
           <div className="grow"><Field label="Uplift 1 (%)"><input inputMode="decimal" value={u1} onChange={e => setU1(e.target.value)} placeholder="0" /></Field></div>
           <div className="grow"><Field label="Uplift 2 (%)"><input inputMode="decimal" value={u2} onChange={e => setU2(e.target.value)} placeholder="0" /></Field></div>
@@ -49,18 +54,6 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
             <div className="chips">{(['Active', 'Complete'] as const).map(s => <button key={s} className={'chip' + (f.status === s ? ' on' : '')} onClick={() => setF({ ...f, status: s })}>{s}</button>)}</div>
           </div>
         )}
-        <div>
-          <div className="field"><span>Site photo</span></div>
-          {photoUrl && <img src={photoUrl} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 12, marginBottom: 8 }} />}
-          <div className="row">
-            <label className="btn btn-secondary" style={{ flex: 1 }}>
-              <IconCamera /> {photoUrl ? 'Replace photo' : 'Add photo'}
-              <input type="file" accept="image/*" hidden onChange={async e => { const file = e.target.files?.[0]; if (file) setF({ ...f, photoId: await savePhoto(file) }) }} />
-            </label>
-            {photoUrl && <button className="btn btn-ghost" onClick={() => setF({ ...f, photoId: null })}>Remove</button>}
-          </div>
-          <div className="hint muted" style={{ fontSize: 12, marginTop: 4 }}>Without a photo, the job shows its drawing.</div>
-        </div>
         <button className="btn btn-primary" disabled={!f.name.trim()}
           onClick={() => onSave({ ...f, name: f.name.trim(), contractValue: num(valueText), uplift1: num(u1), uplift2: num(u2), paymentTermsDays: Math.round(num(terms)) || 30 })}>
           {job ? 'Save' : 'Create job'}

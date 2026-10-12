@@ -5,6 +5,7 @@ import { RatesSheet } from './screens/Rates'
 import { TeamSheet } from './screens/Team'
 import { RateCheckSheet } from './screens/RateCheck'
 import { CostsSheet } from './screens/Costs'
+import { OrderSheet } from './screens/Orders'
 import { AccessContext, accessFor } from './lib/access'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
@@ -38,6 +39,7 @@ export default function App() {
   const [dayworks, setDayworks] = useState<Dayworks[]>([])
   const [docs, setDocs] = useState<JobDocument[]>([])
   const [costsOpen, setCostsOpen] = useState(false)
+  const [orderOpen, setOrderOpen] = useState<WorkOrder | 'new' | null>(null)
   const [logFrom, setLogFrom] = useState<DiaryEntry | null>(null)
   const [settings, setSettings] = useState<CompanySettings | undefined>(undefined)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -121,6 +123,7 @@ export default function App() {
             const blob = await buildCertificate({ job, val: v, vals: jobVals, scope: jobScope, vos: jobVos, company })
             await shareOrDownload(blob, certificateFileName(job, v))
           }}
+          orders={jobOrders} onNewOrder={() => setOrderOpen('new')} onOpenOrder={setOrderOpen} onClaimOrders={lines => run(() => claimMany(lines))()}
           diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate} onCosts={() => setCostsOpen(true)}
           onSaveDiary={async (e, markedUp) => {
             // mark-up saves a NEW image; the first original is always kept
@@ -135,7 +138,7 @@ export default function App() {
           }}
           onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
+        <JobsList jobs={jobs} vos={vos} orders={orders} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
       )}
 
       {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}
@@ -163,6 +166,19 @@ export default function App() {
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
         onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }} />}
+      {orderOpen && job && <OrderSheet key={orderOpen === 'new' ? 'new' : orderOpen.id} job={job} order={orderOpen === 'new' ? undefined : orderOpen} scope={jobScope} vals={jobVals} books={books}
+        onClose={() => setOrderOpen(null)}
+        onSave={async (o, lines, removed) => {
+          await db.put('orders', o)
+          for (const l of lines) await db.putScope(l)
+          for (const l of removed) if (!lockedIn(l, jobVals)) await db.deleteScope(l.id)
+          setOrderOpen(null); await reload()
+        }}
+        onDelete={orderOpen !== 'new' ? async () => {
+          const o = orderOpen as WorkOrder
+          for (const l of jobScope.filter(i => i.orderId === o.id)) await db.deleteScope(l.id)
+          await db.remove('orders', o); setOrderOpen(null); await reload()
+        } : undefined} />}
       {costsOpen && job && <CostsSheet job={job} scope={jobScope} vos={jobVos} diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate}
         onClose={() => setCostsOpen(false)} onSave={async c => { await db.put('costs', c); await reload() }} onDelete={async c => { await db.remove('costs', c); await reload() }} />}
       {checking && job && <RateCheckSheet books={books} lines={jobScope} onClose={() => setChecking(false)} />}

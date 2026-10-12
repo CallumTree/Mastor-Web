@@ -472,3 +472,12 @@ label.row { cursor: pointer; }
 .cost-row { width: 100%; background: none; border: 0; text-align: left; color: var(--ink); font: inherit; align-items: center; min-height: 60px; }
 .cost-row:hover { background: var(--row-open); }
 .cost-row .amt { font-weight: 700; font-size: 16px; flex: none; }
+
+/* ---------- works orders ---------- */
+.order-row { width: 100%; background: none; border: 0; text-align: left; color: var(--ink); font: inherit; min-height: 64px; }
+.order-row:hover { background: var(--row-open); }
+.order-plates { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.order-line { align-items: center; }
+.order-line .field.qty { flex: none; width: 84px; }
+.order-line .field.qty input { min-height: 44px; padding: 8px 10px; }
+.order-line .icon-btn { font-size: 22px; }

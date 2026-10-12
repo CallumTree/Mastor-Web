@@ -1,5 +1,6 @@
 import { Wordmark } from '../components/Wordmark'
-import type { Job, Variation } from '../lib/types'
+import type { Job, Variation, WorkOrder } from '../lib/types'
+import { isOverdue } from './Orders'
 import { money } from '../lib/format'
 import { IconChart, IconCog, IconPlus, IconScope } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
@@ -11,8 +12,8 @@ import { useAccess } from '../lib/access'
  * signs (red = blocks invoicing, yellow = needs doing). Same list on a phone and a laptop: rows on a
  * phone, a ruled schedule with columns from 1024px.
  */
-export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, onRates }: {
-  jobs: Job[]; vos: Variation[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void; onRates: () => void
+export function JobsList({ jobs, vos, orders = [], onOpen, onNew, onDashboard, onSettings, onRates }: {
+  jobs: Job[]; vos: Variation[]; orders?: WorkOrder[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void; onRates: () => void
 }) {
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const active = sorted.filter(j => j.status === 'Active').length
@@ -46,6 +47,8 @@ export function JobsList({ jobs, vos, onOpen, onNew, onDashboard, onSettings, on
                   <span className="jr-value num">{m ? (j.contractValue > 0 ? money(j.contractValue) : '—') : ''}</span>
                   <span className="jr-needs">
                     {m && !j.poNumber && <Plate kind="stop">No PO</Plate>}
+                    {(() => { const late = orders.filter(o => o.jobId === j.id && isOverdue(o)).length; return late ? <Plate kind="stop">{late} overdue order{late === 1 ? '' : 's'}</Plate> : null })()}
+                    {j.kind === 'orders' && <Plate kind="wait">{orders.filter(o => o.jobId === j.id && o.status === 'open').length} open orders</Plate>}
                     {m && unpriced > 0 && <Plate kind="warn">{unpriced} unpriced VO{unpriced === 1 ? '' : 's'}</Plate>}
                   </span>
                   <span className="jr-status"><span className={'badge ' + (j.status === 'Active' ? 'b-green' : 'b-slate')}>{j.status}</span></span>
