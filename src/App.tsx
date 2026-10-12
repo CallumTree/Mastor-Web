@@ -102,7 +102,7 @@ export default function App() {
     <AccessContext.Provider value={access}>
       {ready && job && <div className="banner"><SyncBadge dark /></div>}
       {!ready ? null : showDash && !job ? (
-        <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
+        <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} costs={costs} diary={diary} orders={orders} dayRate={settings?.labourDayRate} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
       ) : job ? (
         <JobView job={job} vos={jobVos} scope={jobScope} vals={jobVals}
           onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')} onUpdateJob={j => run(() => db.putJob(j))()}

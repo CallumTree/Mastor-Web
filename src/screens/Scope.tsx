@@ -113,8 +113,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   return (
     <div className="stack">
       <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? "" : "s"}`} menu={<TabMenu title="Scope" actions={[
-          { label: 'Import BoQ / works order', hint: 'PDF or Excel', onClick: onImport },
-          { label: 'Add item', hint: 'One line, by hand', onClick: onAdd },
           ...(onEvidence ? [{ label: 'Completion evidence (PDF)', hint: 'Work claimed so far, by property, with the diary’s photos — no prices', disabled: !scope.some(i => i.valuationId), onClick: () => { void onEvidence() } }] : []),
           ...(onCheckRates ? [{ label: 'Check rates against your SoR', hint: 'Lines that don’t follow the BoQ’s pattern, codes not in the schedule', disabled: !scope.length, onClick: onCheckRates }] : []),
           ...(hasProps ? [{ label: openProps.size ? 'Collapse all' : 'Expand all properties', onClick: () => setOpenProps(openProps.size ? new Set() : new Set(properties)) }] : []),
@@ -142,6 +140,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         <>
           <div className="card empty">No scope yet. Import the BoQ / works order and every line is read for you to check.</div>
           <button className="btn btn-primary" onClick={onImport}><IconScope /> Import BoQ</button>
+          <button className="btn btn-secondary" onClick={onAdd}><IconPlus /> Add item</button>
         </>
       )}
 
@@ -219,7 +218,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
 
       <div className="row">
         {scope.length > 0 && <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onImport}><IconScope /> Import more</button>}
-        <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onAdd}><IconPlus /> Add item</button>
+        {scope.length > 0 && <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onAdd}><IconPlus /> Add item</button>}
       </div>
       {scope.length > 0 && <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>Tick an item to put it in the open valuation. Untick to send it back.</div>}
     </div>

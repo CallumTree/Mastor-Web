@@ -126,7 +126,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
   const { money: m } = useAccess()   // operatives: what and where, never what it's worth
   return (
     <div className="stack">
-      <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog },
+      <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[
         ...(onDayworks ? [{ label: 'Dayworks sheets', hint: 'Hours, materials and plant — signed, then claimed as a variation', onClick: onDayworks }] : []),
         ...(m ? [{ label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }] : [])]} />} />
       {m && sorted.length > 0 && <SumStrip label="Variation summary" caption="Groups at base rates · total includes uplifts, excludes rejected" cells={[

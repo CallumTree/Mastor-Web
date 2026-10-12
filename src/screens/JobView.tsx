@@ -217,14 +217,13 @@ export function JobView(p: {
                 <input type="file" accept="image/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
               <label className="btn btn-secondary"><IconVideo /> Video
                 <input type="file" accept="video/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
-              <button className="btn btn-secondary" onClick={() => { setDiaryDate(dayKey()); setCapture(false); setFocusNote(true); setTab('diary') }}><IconDiary /> Diary note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onDayworks(true) }}><IconClock /> Dayworks</button>
               {access.money && <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onImportVo() }}><IconDoc /> Council VO</button>}
-              <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Job note</button>
+              <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
-            <div className="muted" style={{ fontSize: 12 }}>Photos and video go into today’s diary.</div>
+            <div className="muted" style={{ fontSize: 13 }}>Photos and video go into today’s diary. Today’s site log (weather, labour, what happened) is on the Diary tab.</div>
           </div>
         </Sheet>
       )}

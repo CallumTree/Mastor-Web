@@ -112,8 +112,10 @@ describe('College Park, end to end', () => {
     cleanup()
     render(<App />)
     click(await screen.findByRole('button', { name: /director dashboard/i }))
-    await screen.findByText(/at a glance/i)
+    await screen.findByText('Needs action')
     expect(screen.getByText('Certified this year')).toBeTruthy()
-    expect(screen.getByText('32 College Park')).toBeTruthy()
+    // in Chase payment (VAL I is owed) and in the jobs list
+    expect(screen.getAllByText('32 College Park').length).toBe(2)
+    expect(screen.getByText(/Chase payment · 1/)).toBeTruthy()
   })
 })
