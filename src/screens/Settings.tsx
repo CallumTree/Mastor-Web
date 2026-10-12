@@ -47,6 +47,9 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
           <div className="grow"><Field label="Digits" hint="e.g. 4 → 0042"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} /></Field></div>
           <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>
         </div>
+        <Field label="Labour day rate (£)" hint="Your cost of one operative-day. Lets each job’s margin include the labour recorded in the diary, shown as an estimate. Leave blank to leave it out.">
+          <input inputMode="decimal" value={s.labourDayRate != null ? String(s.labourDayRate) : ''} onChange={e => { const v = parseFloat(e.target.value.replace(/[£,]/g, '')); set('labourDayRate', isFinite(v) && v > 0 ? v : null) }} placeholder="e.g. 180" />
+        </Field>
         <div className="panel" style={{ padding: '10px 14px', fontSize: 13 }}>Your next invoice will be <b className="mono" style={{ color: 'var(--copper-ink)' }}>{formatInvoiceNo(preview, nextN)}</b></div>
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>

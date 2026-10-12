@@ -244,3 +244,31 @@ do $$ declare f text; begin
     execute format('revoke all on function public.%s from public; grant execute on function public.%s to authenticated;', f, f);
   end loop;
 end $$;
+
+-- =====================================================================
+-- v6: costs and margin, small works orders, dayworks sheets, job documents.
+-- Same shape as the other record tables (company-only, synced by updated_at).
+-- =====================================================================
+do $$
+declare t text;
+begin
+  foreach t in array array['costs','work_orders','dayworks','job_documents'] loop
+    execute format($f$
+      create table if not exists public.%1$I (
+        id text primary key,
+        company_id uuid not null references public.companies(id) on delete cascade,
+        job_id text,
+        data jsonb not null,
+        deleted boolean not null default false,
+        updated_at timestamptz not null default now()
+      );
+      create index if not exists %1$s_company_updated on public.%1$I (company_id, updated_at);
+      alter table public.%1$I enable row level security;
+      drop policy if exists %1$s_member on public.%1$I;
+      create policy %1$s_member on public.%1$I for all to authenticated
+        using (public.is_member(company_id)) with check (public.is_member(company_id));
+      drop trigger if exists %1$s_touch on public.%1$I;
+      create trigger %1$s_touch before insert or update on public.%1$I for each row execute function public.touch_updated_at();
+    $f$, t);
+  end loop;
+end $$;

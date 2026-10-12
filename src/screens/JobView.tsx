@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { useAccess } from '../lib/access'
-import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
+import { jobMargin, type Margin } from '../lib/margin'
+import type { Cost, DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
 import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo } from '../components/Icons'
@@ -38,7 +39,7 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
   )
 }
 
-function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void }) {
+function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, margin, onCosts }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; margin: Margin; onCosts: () => void }) {
   const [notesOpen, setNotesOpen] = useState(false)
   const [noteEdit, setNoteEdit] = useState<DiaryEntry | null>(null)
   const open = vals.find(v => v.status === 'Open')
@@ -94,6 +95,11 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         <div className="fig"><div className="fig-n">{job.contractValue ? pounds(job.contractValue) : '—'}</div><div className="fig-l">Contract</div></div>
         <div className="fig"><div className="fig-n">{pounds(certified)}</div><div className="fig-l">Certified</div></div>
         <div className="fig"><div className="fig-n">{pounds(voGross)}</div><div className="fig-l">Variations</div>{(unpriced || unmeasured) > 0 && <div className="fig-note">+ {Math.max(unpriced, unmeasured)} not priced</div>}</div>
+        <button className="fig fig-btn" onClick={onCosts} aria-label={`Margin ${pounds(margin.margin)} — costs and margin`}>
+          <div className={'fig-n' + (margin.margin < 0 ? ' neg' : '')}>{margin.costs || margin.labourEstimate != null ? pounds(margin.margin) : '—'}</div>
+          <div className="fig-l">Margin ›</div>
+          {margin.costs || margin.labourEstimate != null ? (margin.pct != null && <div className="fig-sub">{margin.pct}% · costs {pounds(margin.costs)}</div>) : <div className="fig-sub">Add costs</div>}
+        </button>
       </div>}
       <h2 className="sec-h">{actions.length ? `Action needed · ${actions.length}` : 'All clear'}</h2>
       <div className="acts">
@@ -147,6 +153,7 @@ export function JobView(p: {
   onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onImportVo: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onClaimMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteScope: (items: ScopeItem[]) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void; onCheckRates?: () => void
   onIssue: (v: Valuation) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
+  costs: Cost[]; dayRate?: number | null; onCosts: () => void
   diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
   onAddMedia: (file: File, kind: 'photo' | 'video', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
 }) {
@@ -170,6 +177,7 @@ export function JobView(p: {
       <main className="page with-rail">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
+          margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts}
           notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}

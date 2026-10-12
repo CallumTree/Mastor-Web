@@ -3,10 +3,10 @@
  * Every change is also queued in the OUTBOX; sync.ts sends the queue to the cloud when it can.
  * Writes coming *from* the cloud use the `local` helpers, which don't queue anything.
  */
-import type { CompanySettings, DiaryEntry, Job, RateItem, ScopeItem, Valuation, Variation } from './types'
+import type { CompanySettings, Cost, Dayworks, DiaryEntry, Job, JobDocument, RateItem, ScopeItem, Valuation, Variation, WorkOrder } from './types'
 
 const DB_NAME = 'mastor'
-const VERSION = 6 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary · v5: company settings · v6: rate books
+const VERSION = 7 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary · v5: company settings · v6: rate books · v7: costs, orders, dayworks, documents
 let dbp: Promise<IDBDatabase> | null = null
 
 function open(): Promise<IDBDatabase> {
@@ -24,6 +24,7 @@ function open(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta')
       if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'id' })
       if (!db.objectStoreNames.contains('diary')) db.createObjectStore('diary', { keyPath: 'id' }).createIndex('jobId', 'jobId')
+      for (const s of JOB_STORES) if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, { keyPath: 'id' }).createIndex('jobId', 'jobId')
       if (!db.objectStoreNames.contains('rates')) {
         const r = db.createObjectStore('rates', { keyPath: ['bookId', 'code'] })
         r.createIndex('code', 'code'); r.createIndex('bookId', 'bookId')
@@ -47,7 +48,11 @@ function tx<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore) 
 export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36))
 
 // ---------- outbox (changes waiting to go to the cloud) ----------
-export type RecordTable = 'jobs' | 'scope' | 'variations' | 'valuations' | 'diary' | 'settings'
+export type RecordTable = 'jobs' | 'scope' | 'variations' | 'valuations' | 'diary' | 'settings' | JobStore
+/** Newer per-job records, all stored and synced the same way. */
+export const JOB_STORES = ['costs', 'orders', 'dayworks', 'docs'] as const
+export type JobStore = typeof JOB_STORES[number]
+type JobRecord = { costs: Cost; orders: WorkOrder; dayworks: Dayworks; docs: JobDocument }
 export type OutboxOp =
   | { seq?: number; kind: 'record'; table: RecordTable; id: string; jobId: string | null; data: unknown | null } // data null = delete
   | { seq?: number; kind: 'photo'; id: string }
@@ -89,6 +94,7 @@ export const db = {
     for (const s of await db.scope(id)) await db.deleteScope(s.id)
     for (const v of await db.valuations(id)) await db.deleteValuation(v.id)
     for (const d of await db.diary(id)) await db.deleteDiary(d)
+    for (const st of JOB_STORES) for (const r of await db.list(st, id)) await db.remove(st, r)
     await tx('jobs', 'readwrite', s => s.delete(id))
     await enqueue({ kind: 'record', table: 'jobs', id, jobId: id, data: null })
   },
@@ -112,6 +118,10 @@ export const db = {
     await tx('diary', 'readwrite', s => s.delete(d.id))
     await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: null })
   },
+  /** costs, orders, dayworks, docs: list for a job, save, delete */
+  list: <K extends JobStore>(store: K, jobId: string) => tx<JobRecord[K][]>(store, 'readonly', s => s.index('jobId').getAll(jobId)),
+  put: async <K extends JobStore>(store: K, r: JobRecord[K]) => { await tx(store, 'readwrite', s => s.put(r)); await enqueue({ kind: 'record', table: store, id: r.id, jobId: r.jobId, data: r }) },
+  remove: async <K extends JobStore>(store: K, r: JobRecord[K]) => { await tx(store, 'readwrite', s => s.delete(r.id)); await enqueue({ kind: 'record', table: store, id: r.id, jobId: r.jobId, data: null }) },
   settings: () => tx<CompanySettings | undefined>('settings', 'readonly', s => s.get('company')),
   putSettings: async (c: CompanySettings) => { await tx('settings', 'readwrite', s => s.put(c)); await enqueue({ kind: 'record', table: 'settings', id: c.id, jobId: null, data: c }) },
   putPhoto: async (id: string, blob: Blob) => { await tx('photos', 'readwrite', s => s.put(blob, id)); await enqueue({ kind: 'photo', id }) },
@@ -145,7 +155,7 @@ export const rates = {
 
 /** Sign-out: remove every local copy so the next person on this phone sees nothing of yours. */
 export async function wipeLocal() {
-  for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'settings', 'photos', 'rates', 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
+  for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'settings', 'photos', 'rates', ...JOB_STORES, 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
   rateCache = null
 }
 

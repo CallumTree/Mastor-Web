@@ -16,6 +16,8 @@ export interface Job {
   status: JobStatus
   photoId: string | null    // real site photo; replaces the drawing when set
   paymentTermsDays?: number // days from valuation issue to payment due (default 30)
+  /** 'scheme' (default): one BoQ / works order. 'orders': a responsive or voids contract made of many small works orders. */
+  kind?: 'scheme' | 'orders'
   /** You've accepted a difference between BoQ × uplifts and the PO (e.g. items added after the PO). Re-flags if the difference changes. */
   poGapAccepted?: { diff: number; note: string; at: number } | null
   createdAt: number
@@ -58,6 +60,7 @@ export interface ScopeItem {
   workstream?: string        // e.g. PPR Paint, Kitchen, Roofing, Scaffold, Decarb
   hours?: number | null      // labour hours from the schedule, if given
   rateBook?: string          // which rate book the rate came from, when looked up
+  orderId?: string           // small works orders: the order this line belongs to
   createdAt: number
 }
 
@@ -113,6 +116,7 @@ export interface CompanySettings {
   invoicePad: number           // digits, e.g. 4 → 0042
   vatRate: number              // % (20)
   defaultTermsDays: number
+  labourDayRate?: number | null // your cost of one operative-day, for the labour estimate on a job's costs (blank = not used)
   rateBooks?: RateBook[]       // the company's schedules of rates; the lines themselves live in the 'rates' store
   updatedAt: number
 }
@@ -143,3 +147,70 @@ export interface RateItem {
   priority?: string            // responsive schedules: R, E, U…
 }
 export const blankSettings = (): CompanySettings => ({ id: 'company', name: '', address: '', email: '', phone: '', vatNumber: '', companyNumber: '', bankName: '', accountName: '', sortCode: '', accountNumber: '', invoicePrefix: '', nextInvoiceNumber: 1, invoicePad: 0, vatRate: 20, defaultTermsDays: 30, updatedAt: 0 })
+
+/** A cost against a job: a subbie's quote or bill, labour, materials, plant. Net of VAT. */
+export type CostKind = 'subbie' | 'labour' | 'materials' | 'plant' | 'other'
+export type CostStatus = 'quote' | 'committed' | 'paid'
+export interface Cost {
+  id: string
+  jobId: string
+  kind: CostKind
+  status: CostStatus          // quotes are compared, not counted; committed and paid count against the margin
+  who: string                 // subbie / supplier
+  trade: string               // matches a scope workstream to compare against what the client pays for it (e.g. Roofing)
+  description: string
+  amount: number | null       // £ net; null = not known yet (never guessed)
+  date: number
+  createdAt: number
+}
+
+/** One small works order on a responsive / voids contract: one property, a few SoR lines (in scope, by orderId). */
+export type OrderStatus = 'open' | 'complete' | 'cancelled'
+export interface WorkOrder {
+  id: string
+  jobId: string
+  ref: string                 // the client's order number
+  address: string
+  priority: string            // e.g. Emergency, Urgent, Routine, Void
+  raisedAt: number
+  dueAt: number | null
+  status: OrderStatus
+  completedAt: number | null
+  note: string
+  beforeIds: string[]         // photos before work
+  afterIds: string[]          // photos after work
+  signedBy: string            // tenant / client rep who signed off, if anyone
+  createdAt: number
+}
+
+/** A dayworks sheet: work done on time and materials, priced from the framework's labour rates. */
+export interface DayworksLabour { trade: string; label: string; rate: number | null; hours: number | null }
+export interface DayworksItem { description: string; amount: number | null }
+export interface Dayworks {
+  id: string
+  jobId: string
+  number: number              // per job: DW 1, DW 2…
+  date: string                // YYYY-MM-DD
+  description: string
+  labour: DayworksLabour[]
+  materials: DayworksItem[]   // net cost
+  plant: DayworksItem[]
+  materialsPct: number        // the framework's addition on materials and plant (%)
+  signedBy: string
+  signedAt: number | null
+  voId: string | null         // the variation it's claimed through
+  createdAt: number
+}
+
+/** A document kept against a job: RAMS, programme, certificates, drawings. The file lives with the photos. */
+export interface JobDocument {
+  id: string
+  jobId: string
+  name: string
+  kind: 'RAMS' | 'Programme' | 'Certificate' | 'Drawing' | 'Other'
+  fileId: string
+  type: string
+  size: number
+  orderId?: string            // a certificate for one works order (e.g. an EICR)
+  addedAt: number
+}

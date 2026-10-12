@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { blankSettings, type CompanySettings, type DiaryEntry, type Job, type ScopeItem, type Valuation, type Variation } from './lib/types'
+import { blankSettings, type CompanySettings, type Cost, type Dayworks, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder } from './lib/types'
 import { db, nextVoNumber, rates, uid } from './lib/db'
 import { RatesSheet } from './screens/Rates'
 import { TeamSheet } from './screens/Team'
 import { RateCheckSheet } from './screens/RateCheck'
+import { CostsSheet } from './screens/Costs'
 import { AccessContext, accessFor } from './lib/access'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
@@ -32,6 +33,11 @@ export default function App() {
   const [scope, setScope] = useState<ScopeItem[]>([])
   const [vals, setVals] = useState<Valuation[]>([])
   const [diary, setDiary] = useState<DiaryEntry[]>([])
+  const [costs, setCosts] = useState<Cost[]>([])
+  const [orders, setOrders] = useState<WorkOrder[]>([])
+  const [dayworks, setDayworks] = useState<Dayworks[]>([])
+  const [docs, setDocs] = useState<JobDocument[]>([])
+  const [costsOpen, setCostsOpen] = useState(false)
   const [logFrom, setLogFrom] = useState<DiaryEntry | null>(null)
   const [settings, setSettings] = useState<CompanySettings | undefined>(undefined)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -60,9 +66,14 @@ export default function App() {
       Promise.all(js.map(j => db.valuations(j.id))),
       Promise.all(js.map(j => db.diary(j.id))),
     ])
+    const [co_, or_, dw_, dc_] = await Promise.all([
+      Promise.all(js.map(j => db.list('costs', j.id))), Promise.all(js.map(j => db.list('orders', j.id))),
+      Promise.all(js.map(j => db.list('dayworks', j.id))), Promise.all(js.map(j => db.list('docs', j.id))),
+    ])
     const [st, co] = await Promise.all([db.settings(), meta.get<{ role?: string }>('company')])
     // every state set together after the last await, so the screen updates in one go
     setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setDiary(di.flat()); setSettings(st)
+    setCosts(co_.flat()); setOrders(or_.flat()); setDayworks(dw_.flat()); setDocs(dc_.flat())
     setAccess(a => (a.role === (co?.role ?? null) ? a : accessFor(co?.role))); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
@@ -74,6 +85,10 @@ export default function App() {
   const jobScope = job ? scope.filter(s => s.jobId === job.id) : []
   const jobVals = job ? vals.filter(v => v.jobId === job.id) : []
   const jobDiary = job ? diary.filter(d => d.jobId === job.id) : []
+  const jobCosts = job ? costs.filter(c => c.jobId === job.id) : []
+  const jobOrders = job ? orders.filter(o => o.jobId === job.id) : []
+  const jobDayworks = job ? dayworks.filter(d => d.jobId === job.id) : []
+  const jobDocs = job ? docs.filter(d => d.jobId === job.id) : []
   const run = (fn: () => Promise<unknown>) => async () => { await fn(); await reload() }
 
   return (
@@ -106,7 +121,7 @@ export default function App() {
             const blob = await buildCertificate({ job, val: v, vals: jobVals, scope: jobScope, vos: jobVos, company })
             await shareOrDownload(blob, certificateFileName(job, v))
           }}
-          diary={jobDiary}
+          diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate} onCosts={() => setCostsOpen(true)}
           onSaveDiary={async (e, markedUp) => {
             // mark-up saves a NEW image; the first original is always kept
             if (markedUp) { const id = await saveImageBlob(markedUp); e = { ...e, originalMediaId: e.originalMediaId ?? e.mediaId, mediaId: id } }
@@ -148,6 +163,8 @@ export default function App() {
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
         onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }} />}
+      {costsOpen && job && <CostsSheet job={job} scope={jobScope} vos={jobVos} diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate}
+        onClose={() => setCostsOpen(false)} onSave={async c => { await db.put('costs', c); await reload() }} onDelete={async c => { await db.remove('costs', c); await reload() }} />}
       {checking && job && <RateCheckSheet books={books} lines={jobScope} onClose={() => setChecking(false)} />}
       {teamOpen && <TeamSheet company={settings?.name ?? ''} onClose={() => setTeamOpen(false)} />}
       {ratesOpen && <RatesSheet books={books} onClose={() => setRatesOpen(false)}

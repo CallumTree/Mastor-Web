@@ -4,10 +4,14 @@
  * Rule: a cloud row never overwrites a local record that still has unsent changes.
  */
 import { supabase } from './supabase'
-import { db, local, meta, outbox, rates, setQueueing, type RecordTable } from './db'
+import { db, JOB_STORES, local, meta, outbox, rates, setQueueing, type RecordTable } from './db'
 import type { RateItem } from './types'
 
-const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries', settings: 'company_settings' }
+const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries', settings: 'company_settings',
+  costs: 'costs', orders: 'work_orders', dayworks: 'dayworks', docs: 'job_documents' }
+/** Tables added after launch: until the database update has been run they're skipped (and kept queued), not fatal. */
+const OPTIONAL = new Set<RecordTable>(['diary', 'settings', ...JOB_STORES])
+const tableMissing = (t: RecordTable, msg: string) => OPTIONAL.has(t) && (msg.includes(CLOUD[t]) || /schema cache|does not exist/i.test(msg))
 const TABLES = Object.keys(CLOUD) as RecordTable[]
 
 export type SyncState = 'idle' | 'syncing' | 'synced' | 'offline' | 'error'
@@ -61,6 +65,11 @@ async function queueEverything() {
       for (const m of [d.mediaId, d.originalMediaId]) if (m) await outbox.add({ kind: 'photo', id: m })
     }
     if (j.photoId) await outbox.add({ kind: 'photo', id: j.photoId })
+    for (const st of JOB_STORES) for (const r of await db.list(st, j.id)) {
+      await outbox.add({ kind: 'record', table: st, id: r.id, jobId: j.id, data: r })
+      const files = 'fileId' in r ? [r.fileId] : 'beforeIds' in r ? [...r.beforeIds, ...r.afterIds] : []
+      for (const f of files) await outbox.add({ kind: 'photo', id: f })
+    }
   }
 }
 
@@ -91,7 +100,7 @@ async function push() {
     if (op.kind === 'record') {
       const row = { id: op.id, company_id: companyId, job_id: op.jobId, data: op.data ?? {}, deleted: op.data === null }
       const { error } = await supabase.from(CLOUD[op.table]).upsert(row, { onConflict: op.table === 'settings' ? 'company_id,id' : 'id' })  // settings: one row per company
-      if (error && (op.table === 'diary' || op.table === 'settings') && /diary_entries|company_settings/.test(error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
+      if (error && tableMissing(op.table, error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
       if (error) throw new Error(error.message)
     } else if (op.kind === 'ratebook') {
       const items = await rates.book(op.id)
@@ -119,7 +128,7 @@ async function pull(): Promise<boolean> {
     for (;;) {
       const { data, error } = await supabase.from(CLOUD[t]).select('id, data, deleted, updated_at')
         .eq('company_id', companyId!).gt('updated_at', since).order('updated_at', { ascending: true }).limit(500)
-      if (error && (t === 'diary' || t === 'settings') && /diary_entries|company_settings/.test(error.message)) { missingDiaryTable = true; break }
+      if (error && tableMissing(t, error.message)) { missingDiaryTable = true; break }
       if (error) throw new Error(error.message)
       if (!data?.length) break
       for (const row of data as { id: string; data: unknown; deleted: boolean; updated_at: string }[]) {
