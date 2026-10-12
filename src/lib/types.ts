@@ -116,6 +116,8 @@ export interface CompanySettings {
   invoicePad: number           // digits, e.g. 4 → 0042
   vatRate: number              // % (20)
   defaultTermsDays: number
+  accountsFormat?: 'xero' | 'quickbooks' // invoice export
+  accountsCode?: string        // Xero sales account code (default 200)
   labourDayRate?: number | null // your cost of one operative-day, for the labour estimate on a job's costs (blank = not used)
   rateBooks?: RateBook[]       // the company's schedules of rates; the lines themselves live in the 'rates' store
   updatedAt: number

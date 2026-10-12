@@ -6,6 +6,7 @@ import { TeamSheet } from './screens/Team'
 import { RateCheckSheet } from './screens/RateCheck'
 import { CostsSheet } from './screens/Costs'
 import { OrderSheet } from './screens/Orders'
+import { accountsCsv, invoiceRows, periods } from './lib/accounts'
 import { buildEvidence, evidenceFileName, orderEvidence, schemeEvidence } from './lib/evidence'
 import { AccessContext, accessFor } from './lib/access'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
@@ -167,7 +168,18 @@ export default function App() {
       {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }}
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
-        onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }} />}
+        onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }}
+        onExportInvoices={async (format, period, code) => {
+          const [from, to] = periods()[period]
+          const rows = invoiceRows(jobs, vals, scope, vos, from, to)
+          if (!rows.length) return 0
+          await db.putSettings({ ...(settings ?? blankSettings()), accountsFormat: format, accountsCode: code, updatedAt: Date.now() })
+          const a = document.createElement('a')
+          a.href = URL.createObjectURL(new Blob([accountsCsv(rows, format, code)], { type: 'text/csv' }))
+          a.download = `mastor-invoices-${format}-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+          setTimeout(() => URL.revokeObjectURL(a.href), 5000)
+          return rows.length
+        }} />}
       {orderOpen && job && <OrderSheet key={orderOpen === 'new' ? 'new' : orderOpen.id} job={job} order={orderOpen === 'new' ? undefined : orderOpen} scope={jobScope} vals={jobVals} books={books}
         onClose={() => setOrderOpen(null)}
         onEvidence={async o => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(orderEvidence(job, o, jobScope, company)), evidenceFileName(job, `Order ${o.ref}`)) }}

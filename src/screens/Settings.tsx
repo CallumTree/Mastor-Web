@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plate } from '../components/Sign'
 import { useAccess } from '../lib/access'
 import { blankSettings, type CompanySettings } from '../lib/types'
 import { Field, Sheet } from '../components/Ui'
@@ -6,11 +7,14 @@ import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
 import { SignOutButton } from '../components/SyncBadge'
 
 /** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
-export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam }: {
+export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices }: {
   settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
   onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void; onRates: () => void; onTeam: () => void
+  onExportInvoices?: (format: 'xero' | 'quickbooks', period: 'thisMonth' | 'lastMonth' | 'all', code: string) => Promise<number>
 }) {
   const { money: m } = useAccess()
+  const [period, setPeriod] = useState<'thisMonth' | 'lastMonth' | 'all'>('lastMonth')
+  const [exportMsg, setExportMsg] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const [s, setS] = useState<CompanySettings>(settings ?? blankSettings())
   const [nextText, setNextText] = useState(String(s.nextInvoiceNumber || 1))
@@ -61,6 +65,21 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
 
         {m && <>
+        <div className="label bracket" style={{ marginTop: 22 }}>Export invoices</div>
+        <div className="muted" style={{ fontSize: 13 }}>A CSV your accounts package imports, so invoices aren’t typed in twice. Only invoices you’ve created are included.</div>
+        <div className="chips" role="group" aria-label="Accounts package">
+          {(['xero', 'quickbooks'] as const).map(f => <button key={f} className={'chip' + ((s.accountsFormat ?? 'xero') === f ? ' on' : '')} aria-pressed={(s.accountsFormat ?? 'xero') === f} onClick={() => set('accountsFormat', f)}>{f === 'xero' ? 'Xero' : 'QuickBooks'}</button>)}
+        </div>
+        {(s.accountsFormat ?? 'xero') === 'xero' && <Field label="Xero sales account code" hint="Where the income goes in Xero — 200 (Sales) unless you use another"><input inputMode="numeric" value={s.accountsCode ?? '200'} onChange={e => set('accountsCode', e.target.value)} /></Field>}
+        <div className="chips" role="group" aria-label="Period">
+          {([['thisMonth', 'This month'], ['lastMonth', 'Last month'], ['all', 'All']] as const).map(([p, l]) => <button key={p} className={'chip' + (period === p ? ' on' : '')} aria-pressed={period === p} onClick={() => setPeriod(p)}>{l}</button>)}
+        </div>
+        <button className="btn btn-secondary" disabled={!onExportInvoices} onClick={async () => {
+          const n = await onExportInvoices!(s.accountsFormat ?? 'xero', period, (s.accountsCode ?? '200').trim() || '200')
+          setExportMsg(n ? `Downloaded ${n} invoice${n === 1 ? '' : 's'} for ${(s.accountsFormat ?? 'xero') === 'xero' ? 'Xero' : 'QuickBooks'}` : 'No invoices in that period')
+        }}>Download CSV</button>
+        {exportMsg && <div role="status"><Plate kind={exportMsg.startsWith('No') ? 'wait' : 'ok'}>{exportMsg}</Plate></div>}
+
         <div className="label bracket" style={{ marginTop: 22 }}>Schedule of rates</div>
         <div className="muted" style={{ fontSize: 13 }}>{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
         <button className="btn btn-secondary" onClick={onRates}>Open schedule of rates</button>
