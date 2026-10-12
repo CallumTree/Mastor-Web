@@ -6,6 +6,7 @@ import { TeamSheet } from './screens/Team'
 import { RateCheckSheet } from './screens/RateCheck'
 import { CostsSheet } from './screens/Costs'
 import { OrderSheet } from './screens/Orders'
+import { buildEvidence, evidenceFileName, orderEvidence, schemeEvidence } from './lib/evidence'
 import { AccessContext, accessFor } from './lib/access'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
@@ -108,6 +109,7 @@ export default function App() {
           onClearUnclaimed={items => run(async () => { for (const i of items) if (!i.valuationId) await db.deleteScope(i.id) })()}
           onDeleteScope={items => run(async () => { for (const i of items) if (!lockedIn(i, jobVals)) await db.deleteScope(i.id) })()}
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)} onCheckRates={books.length ? () => setChecking(true) : undefined}
+          onEvidence={async () => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(schemeEvidence(job, jobScope, jobVals, jobDiary, company)), evidenceFileName(job, 'scheme')) }}
           onIssue={v => run(() => issueValuation(v))()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
@@ -168,6 +170,7 @@ export default function App() {
         onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }} />}
       {orderOpen && job && <OrderSheet key={orderOpen === 'new' ? 'new' : orderOpen.id} job={job} order={orderOpen === 'new' ? undefined : orderOpen} scope={jobScope} vals={jobVals} books={books}
         onClose={() => setOrderOpen(null)}
+        onEvidence={async o => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(orderEvidence(job, o, jobScope, company)), evidenceFileName(job, `Order ${o.ref}`)) }}
         onSave={async (o, lines, removed) => {
           await db.put('orders', o)
           for (const l of lines) await db.putScope(l)

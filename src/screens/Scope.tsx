@@ -60,8 +60,8 @@ function SiteScope({ scope }: { scope: ScopeItem[]; vals: Valuation[] }) {
   )
 }
 
-function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport, onCheckRates }: {
-  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void; onCheckRates?: () => void
+function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport, onCheckRates, onEvidence }: {
+  job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void; onCheckRates?: () => void; onEvidence?: () => Promise<void>
 }) {
   const [filter, setFilter] = useState<Filter>('all')
   const total = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -115,6 +115,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
       <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? "" : "s"}`} menu={<TabMenu title="Scope" actions={[
           { label: 'Import BoQ / works order', hint: 'PDF or Excel', onClick: onImport },
           { label: 'Add item', hint: 'One line, by hand', onClick: onAdd },
+          ...(onEvidence ? [{ label: 'Completion evidence (PDF)', hint: 'Work claimed so far, by property, with the diary’s photos — no prices', disabled: !scope.some(i => i.valuationId), onClick: () => { void onEvidence() } }] : []),
           ...(onCheckRates ? [{ label: 'Check rates against your SoR', hint: 'Lines that don’t follow the BoQ’s pattern, codes not in the schedule', disabled: !scope.length, onClick: onCheckRates }] : []),
           ...(hasProps ? [{ label: openProps.size ? 'Collapse all' : 'Expand all properties', onClick: () => setOpenProps(openProps.size ? new Set() : new Set(properties)) }] : []),
           { label: 'Clear unclaimed lines', hint: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'} not in any valuation`, danger: true, disabled: !unclaimed.length,
