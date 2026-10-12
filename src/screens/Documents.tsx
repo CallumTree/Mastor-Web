@@ -4,7 +4,7 @@ import { useAccess } from '../lib/access'
 import { ukDate } from '../lib/format'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 
-const KINDS: JobDocument['kind'][] = ['RAMS', 'Programme', 'Certificate', 'Drawing', 'Other']
+const KINDS: JobDocument['kind'][] = ['Client pack', 'RAMS', 'Programme', 'Certificate', 'Drawing', 'Other']
 const size = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`)
 export const MAX_DOC_BYTES = 20 * 1024 * 1024
 
@@ -24,7 +24,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
   const [busy, setBusy] = useState(false)
   const [manage, setManage] = useState<JobDocument | null>(null)
   const sorted = [...docs].sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind) || b.addedAt - a.addedAt)
-  const guess = (f: File): JobDocument['kind'] => (/rams|method|risk/i.test(f.name) ? 'RAMS' : /programme|gantt/i.test(f.name) ? 'Programme' : /cert|eicr|gas|epc/i.test(f.name) ? 'Certificate' : /dwg|drawing|plan/i.test(f.name) ? 'Drawing' : 'Other')
+  const guess = (f: File): JobDocument['kind'] => (/pre-?construction|pci|spec|works? order|survey|hazard/i.test(f.name) ? 'Client pack' : /rams|method|risk/i.test(f.name) ? 'RAMS' : /programme|gantt/i.test(f.name) ? 'Programme' : /cert|eicr|gas|epc/i.test(f.name) ? 'Certificate' : /dwg|drawing|plan/i.test(f.name) ? 'Drawing' : 'Other')
 
   return (
     <>

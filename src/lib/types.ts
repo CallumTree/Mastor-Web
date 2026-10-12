@@ -20,6 +20,8 @@ export interface Job {
   kind?: 'scheme' | 'orders'
   /** You've accepted a difference between BoQ × uplifts and the PO (e.g. items added after the PO). Re-flags if the difference changes. */
   poGapAccepted?: { diff: number; note: string; at: number } | null
+  /** multi-property schemes: house number → full address, from the client's works orders */
+  properties?: Record<string, string>
   createdAt: number
 }
 
@@ -61,6 +63,7 @@ export interface ScopeItem {
   hours?: number | null      // labour hours from the schedule, if given
   rateBook?: string          // which rate book the rate came from, when looked up
   orderId?: string           // small works orders: the order this line belongs to
+  contract?: string          // the client's contract / works order ref for this line (packs with several), e.g. MH21180
   createdAt: number
 }
 
@@ -209,7 +212,7 @@ export interface JobDocument {
   id: string
   jobId: string
   name: string
-  kind: 'RAMS' | 'Programme' | 'Certificate' | 'Drawing' | 'Other'
+  kind: 'Client pack' | 'RAMS' | 'Programme' | 'Certificate' | 'Drawing' | 'Other'
   fileId: string
   type: string
   size: number

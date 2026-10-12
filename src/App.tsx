@@ -282,12 +282,20 @@ export default function App() {
       )}
       {importing && job && (
         <BoqImport job={job} existing={jobScope.length} books={books} onClose={() => setImporting(false)}
-          onImport={async (lines, ref) => {
+          onImport={async (lines, pack) => {
             let order = jobScope.reduce((m, s) => Math.max(m, s.order), 0)
             for (const l of lines) {
-              await db.putScope({ id: uid(), jobId: job.id, code: l.code, description: l.description, room: l.room, qty: l.qty, unit: l.unit, rate: l.rate, valuationId: null, order: ++order, createdAt: Date.now(), property: l.property || undefined, workstream: l.workstream || undefined, hours: l.hours })
+              await db.putScope({ id: uid(), jobId: job.id, code: l.code, description: l.description, room: l.room, qty: l.qty, unit: l.unit, rate: l.rate, valuationId: null, order: ++order, createdAt: Date.now(), property: l.property || undefined, workstream: l.workstream || undefined, hours: l.hours, contract: l.contract })
             }
-            if (ref && !job.contractRef) await db.putJob({ ...job, contractRef: ref })
+            // the pack itself stays with the job, so every line can be traced back to the page it came from
+            if (pack.files.length > 1) for (const f of pack.files) {
+              const fileId = uid(); await db.putPhoto(fileId, f.file)
+              await db.put('docs', { id: uid(), jobId: job.id, name: f.file.name.replace(/\.[^.]+$/, ''), kind: 'Client pack', fileId, type: f.file.type || 'application/octet-stream', size: f.file.size, addedAt: Date.now() })
+            }
+            const streets = Object.values(pack.addresses).map(a => a.replace(/^\s*(flat\s+)?\d+[a-z]?\s*,?\s*/i, '').replace(/,?\s*[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\s*$/i, '').trim())
+            const street = streets.sort((a, b) => streets.filter(x => x === b).length - streets.filter(x => x === a).length)[0]
+            const next = { ...job, contractRef: job.contractRef || pack.ref, address: job.address || street || '', properties: Object.keys(pack.addresses).length ? { ...job.properties, ...pack.addresses } : job.properties }
+            if (next.contractRef !== job.contractRef || next.address !== job.address || next.properties !== job.properties) await db.putJob(next)
             setImporting(false); await reload()
           }} />
       )}

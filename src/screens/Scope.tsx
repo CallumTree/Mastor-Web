@@ -158,7 +158,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
             <button className="prop-row" onClick={() => toggleProp(p)} aria-expanded={isOpen} aria-label={`Property ${p}`}>
               <span className="prop-no">{p === '—' ? '?' : p}</span>
               <span className="prop-main">
-                <span className="prop-name">{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
+                <span className="prop-name">{p === '—' ? 'Unassigned' : job.properties?.[p]?.split(',')[0] || `No. ${p}`}</span>
                 <span className="prop-meta" style={{ display: 'block' }}>{[...new Set(all.map(groupName))].join(' · ')}</span>
               </span>
               <span className="prop-amt"><span className="mono">{money(tot)}</span><small style={{ color: pct === 100 ? 'var(--green)' : undefined }}>{pct === 100 ? '✓ all claimed' : `${pct}% claimed`}</small></span>
