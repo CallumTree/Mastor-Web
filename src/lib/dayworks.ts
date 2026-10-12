@@ -35,7 +35,8 @@ export function dayworksVariation(d: Dayworks, job: Job, number: number, existin
 }
 
 /** Dayworks sheet PDF for the client to sign (or as the signed record). */
-export async function buildDayworksPdf(d: Dayworks, job: Job, company?: string): Promise<Blob> {
+/** `money: false` (operatives): hours, descriptions and the signature block — no rates, amounts or totals. */
+export async function buildDayworksPdf(d: Dayworks, job: Job, company?: string, showMoney = true): Promise<Blob> {
   const { jsPDF } = await import('jspdf')
   const autoTable = (await import('jspdf-autotable')).default
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
@@ -57,12 +58,19 @@ export async function buildDayworksPdf(d: Dayworks, job: Job, company?: string):
       footStyles: { fontStyle: 'bold', textColor: INK }, columnStyles: { [head.length - 1]: { halign: 'right' }, [head.length - 2]: { halign: 'right' } } })
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5
   }
-  table(['Labour', 'Hours', 'Rate', 'Amount'], d.labour.map(l => [l.label || l.trade, l.hours ?? '—', l.rate != null ? money(l.rate) : '—', l.hours != null && l.rate != null ? money(pennies(l.hours * l.rate)) : '—']), ['Labour', String(t.labourHours), '', money(t.labour)])
-  if (d.materials.length) table(['Materials (net cost)', '', 'Amount'], d.materials.map(m => [m.description, '', m.amount != null ? money(m.amount) : '—']), ['Materials', '', money(t.materials)])
-  if (d.plant.length) table(['Plant (net cost)', '', 'Amount'], d.plant.map(m => [m.description, '', m.amount != null ? money(m.amount) : '—']), ['Plant', '', money(t.plant)])
-  doc.setFontSize(9.5)
-  if (t.addition) { doc.text(`Addition on materials and plant at ${d.materialsPct}%`, M, y); doc.text(money(t.addition), W - M, y, { align: 'right' }); y += 6 }
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text('Total (excl. VAT)', M, y); doc.text(money(t.total), W - M, y, { align: 'right' }); y += 14
+  if (showMoney) {
+    table(['Labour', 'Hours', 'Rate', 'Amount'], d.labour.map(l => [l.label || l.trade, l.hours ?? '—', l.rate != null ? money(l.rate) : '—', l.hours != null && l.rate != null ? money(pennies(l.hours * l.rate)) : '—']), ['Labour', String(t.labourHours), '', money(t.labour)])
+    if (d.materials.length) table(['Materials (net cost)', '', 'Amount'], d.materials.map(m => [m.description, '', m.amount != null ? money(m.amount) : '—']), ['Materials', '', money(t.materials)])
+    if (d.plant.length) table(['Plant (net cost)', '', 'Amount'], d.plant.map(m => [m.description, '', m.amount != null ? money(m.amount) : '—']), ['Plant', '', money(t.plant)])
+    doc.setFontSize(9.5)
+    if (t.addition) { doc.text(`Addition on materials and plant at ${d.materialsPct}%`, M, y); doc.text(money(t.addition), W - M, y, { align: 'right' }); y += 6 }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text('Total (excl. VAT)', M, y); doc.text(money(t.total), W - M, y, { align: 'right' }); y += 14
+  } else {
+    table(['Labour', '', 'Hours'], d.labour.map(l => [l.label || l.trade, '', l.hours ?? '—']), ['Labour', '', String(t.labourHours)])
+    if (d.materials.length) table(['Materials', '', ''], d.materials.map(m => [m.description, '', '']), ['', '', ''])
+    if (d.plant.length) table(['Plant', '', ''], d.plant.map(m => [m.description, '', '']), ['', '', ''])
+    y += 6
+  }
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED)
   doc.text('Agreed on behalf of the client', M, y); doc.setDrawColor(...INK); doc.line(M, y + 14, M + 80, y + 14); doc.line(M + 100, y + 14, W - M, y + 14)
   doc.text(d.signedBy ? `Name: ${d.signedBy}` : 'Name', M, y + 19); doc.text(d.signedAt ? `Date: ${ukDate(d.signedAt)}` : 'Date', M + 100, y + 19)

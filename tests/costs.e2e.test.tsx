@@ -31,7 +31,8 @@ describe('costs and margin', () => {
     // client pays £2,200 for scaffold with uplifts; cheapest quote listed first
     expect(within(scaff).getAllByText(/Scaffolding|Access/)[0].textContent).toBe('Cleddau Access')
     expect(within(scaff).getByText('£950.00')).toBeTruthy()  // 2,200 − 1,250
-    click(within(scaff).getAllByRole('button', { name: 'Accept' })[0])
+    click(within(scaff).getAllByRole('button', { name: 'Accept…' })[0])
+    click(within(scaff).getByRole('button', { name: 'Accept quote' }))   // asks once: accepting changes the margin
     await waitFor(() => expect(screen.getByText('£2,050.00')).toBeTruthy())   // margin 3,300 − 1,250
     expect(screen.getByText('62.1% of value')).toBeTruthy()
   })

@@ -18,18 +18,20 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 
 ## Cut or slimmed
 
-- Dashboard leads with what needs action (owed, overdue, unpriced, margin), charts removed.
+- Dashboard leads with what needs action (owed, overdue, unpriced, margin — marked provisional while anything is unknown), charts removed.
 - Opening titles play once per device.
 - Job notes and diary notes are one thing; one way into each action.
 - RAMS and programme stay in the contractor's documents; Mastor stores them against the job.
 
 ## Before pilots (from the launch audit)
 
+0. Run `supabase/schema.sql` in Supabase (adds the AI limit, team, costs, orders, dayworks and documents tables — safe to re-run).
 1. Error monitoring and "Report a problem".
 2. Company data export and deletion request.
 3. Supabase Pro + backups, own email sender; Vercel Pro; domain; Anthropic spend limit.
 4. Privacy policy and terms; ICO fee if applicable.
 5. Restyle the PDFs to the signage language.
+6. Issuing a valuation: confirm sheet with certificate preview, then "Create invoice" as the next step (open from the second critique).
 
 ## Parked
 

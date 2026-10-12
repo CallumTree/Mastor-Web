@@ -24,6 +24,11 @@ ok(jobMargin(job, scope, vos, costs, diary).labourEstimate === null, 'no day rat
 m = jobMargin(job, scope, vos, costs, diary, 180)
 ok(m.labourEstimate === 900 && m.costs === 1600 && m.margin === 710, 'with a £180 day rate: 5 days = £900 estimate, included')
 
+ok(m.provisional.includes('1 unpriced'), 'unpriced lines make the margin provisional')
+ok(jobMargin(job, scope, vos, costs, diary).provisional.includes('diary labour not costed'), 'diary labour without a day rate makes it provisional')
+ok(jobMargin({ ...job, contractValue: 9999 } as Job, scope, vos, costs, diary, 180).provisional.includes('BoQ ≠ PO'), 'a BoQ that doesn’t reconcile with the PO makes it provisional')
+ok(jobMargin({ ...job, contractValue: 9999, poGapAccepted: { diff: 1, note: 'x', at: 1 } } as Job, [line('a', 10, 100)], [], costs, [], 180).provisional.length === 0, 'settled: no unknowns, PO difference accepted')
+
 console.log('By trade (subbie comparison)')
 const t = byTrade(job, scope, costs)
 const scaff = t.find(x => x.trade === 'Scaffold')!

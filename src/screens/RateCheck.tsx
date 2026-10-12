@@ -10,7 +10,8 @@ export function useRateCheck(lines: CheckLine[], books: RateBook[]) {
   const [items, setItems] = useState<RateItem[] | null>(null)
   const [bookId, setBookId] = useState<string | null>(null)
   useEffect(() => { let live = true; if (books.length) rates.all().then(a => { if (live) setItems(a) }); return () => { live = false } }, [books.length])
-  const book = useMemo(() => (items ? books.find(b => b.id === bookId) ?? bestBook(lines, books, items) : null), [items, bookId, books, lines])
+  // no codes in any book: still check against the first, so it says so rather than showing nothing
+  const book = useMemo(() => (items ? books.find(b => b.id === bookId) ?? bestBook(lines, books, items) ?? books[0] ?? null : null), [items, bookId, books, lines])
   const result = useMemo(() => (items && book ? checkRates(lines, book, items) : null), [items, book, lines])
   return { result, book, setBookId, loading: !!books.length && !items }
 }
@@ -62,12 +63,12 @@ export function RateCheckSheet({ lines, books, onClose }: { lines: CheckLine[]; 
         {r && (
           <>
             <RateVerdict r={r} />
-            <div className="panel stack">
+            {r.counts.match + r.counts.pattern + r.counts.off + r.counts.differs > 0 && <div className="panel stack">
               {r.pattern
                 ? <div>{r.pattern.lines} lines are priced at <b>{patternText(r.pattern)}</b> — that’s this BoQ’s pattern against {book?.name}. Lines that don’t follow it are listed below; they’re worth querying with the client.</div>
                 : <div>This BoQ doesn’t follow {book?.name} at one adjustment — it may be priced from an older SoR version or tendered rates. Nothing is called under- or over-priced; the differences are listed for you to judge.</div>}
               {r.boqTotal > 0 && <div className="muted" style={{ fontSize: 14 }}>Lines compared: <b className="amt">{money(r.boqTotal)}</b> at the BoQ’s rates, <b className="amt">{money(r.sorTotal)}</b> at {book?.name}.</div>}
-            </div>
+            </div>}
 
             {off.length > 0 && <><h2 className="sec-h">Don’t follow the pattern · {off.length}</h2><div className="panel chk">{off.map(line)}</div></>}
             {differs.length > 0 && (

@@ -23,6 +23,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
 }) {
   const [edit, setEdit] = useState<Cost | 'new' | null>(null)
   const [preset, setPreset] = useState<Partial<Cost>>({})
+  const [accepting, setAccepting] = useState<string | null>(null)
   const m = jobMargin(job, scope, vos, costs, diary, dayRate)
   const trades = byTrade(job, scope, costs)
   const streams = [...new Set(scope.map(i => i.workstream).filter((x): x is string => !!x))]
@@ -38,9 +39,10 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
         <SumStrip label="Margin" cols={3} cells={[
           { label: 'Job value', value: money(m.value), note: m.unpriced ? `incl. uplifts · + ${m.unpriced} unpriced` : 'incl. uplifts' },
           { label: 'Costs', value: money(m.costs), note: [m.labourEstimate != null ? 'incl. labour estimate' : '', m.unknownCosts ? `+ ${m.unknownCosts} without an amount` : '', m.quotes ? `${m.quotes} quote${m.quotes === 1 ? '' : 's'} not counted` : ''].filter(Boolean).join(' · ') || 'agreed + paid', nil: !m.costs },
-          { label: 'Margin', value: signed(m.margin), note: m.pct != null ? `${m.pct}% of value` : '—', hot: true },
+          { label: 'Margin', value: signed(m.margin), note: m.provisional.length ? 'provisional' : m.pct != null ? `${m.pct}% of value` : '—', hot: true },
         ]} />
         {m.margin < 0 && <Plate kind="stop">Costs are more than the job is worth</Plate>}
+        {m.provisional.length > 0 && <Plate kind="warn">Provisional: {m.provisional.join(' · ')}</Plate>}
         {m.unpriced > 0 && <div className="muted" style={{ fontSize: 14 }}>The value leaves out {m.unpriced} unpriced line{m.unpriced === 1 ? '' : 's'} — the margin will move when they’re priced.</div>}
 
         <div className="panel" style={{ fontSize: 15 }}>
@@ -66,10 +68,18 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
                   <div key={q.cost.id} className="trade-row">
                     <span className="grow"><b>{q.cost.who || 'Quote'}</b><small>{q.cost.description || 'Quote'} · {ukDate(q.cost.date)}</small></span>
                     <span className="amt">{q.cost.amount != null ? money(q.cost.amount) : '—'}</span>
-                    <span className={'amt trade-m' + ((q.marginValue ?? 0) < 0 ? ' neg' : '')}>
-                      {q.marginValue != null ? <>{signed(q.marginValue)}<small>{pctOf(q.marginValue, t.value)}% with uplifts · {q.marginBase != null ? `${pctOf(q.marginBase, t.base)}% on base` : ''}</small></> : '—'}
-                    </span>
-                    <button className="btn btn-secondary" onClick={() => onSave({ ...q.cost, status: 'committed' })}>Accept</button>
+                    {q.marginValue != null
+                      ? <span className={'amt trade-m' + (q.marginValue < 0 ? ' neg' : '')}>{signed(q.marginValue)}<small>{pctOf(q.marginValue, t.value)}% with uplifts · {q.marginBase != null ? `${pctOf(q.marginBase, t.base)}% on base` : ''}</small></span>
+                      : <span className="trade-none">No scope lines to compare</span>}
+                    {accepting === q.cost.id ? (
+                      <div className="trade-confirm">
+                        <span>Accept {q.cost.amount != null ? money(q.cost.amount) : 'this quote'} from {q.cost.who || 'this supplier'}? It counts against the margin.</span>
+                        <div className="row">
+                          <button className="btn btn-secondary" onClick={() => setAccepting(null)}>Cancel</button>
+                          <button className="btn btn-primary" onClick={() => { setAccepting(null); void onSave({ ...q.cost, status: 'committed' }) }}>Accept quote</button>
+                        </div>
+                      </div>
+                    ) : <button className="btn btn-secondary trade-accept" onClick={() => setAccepting(q.cost.id)}>Accept…</button>}
                   </div>
                 ))}
                 <button className="linkish tap" onClick={() => { setPreset({ trade: t.trade, kind: 'subbie', status: 'quote' }); setEdit('new') }}>+ Add a quote for {t.trade}</button>

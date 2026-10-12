@@ -108,7 +108,9 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         <button className="fig fig-btn" onClick={onCosts} aria-label={`Margin ${pounds(margin.margin)} — costs and margin`}>
           <div className={'fig-n' + (margin.margin < 0 ? ' neg' : '')}>{margin.costs || margin.labourEstimate != null ? pounds(margin.margin) : '—'}</div>
           <div className="fig-l">Margin ›</div>
-          {margin.costs || margin.labourEstimate != null ? (margin.pct != null && <div className="fig-sub">{margin.pct}% · costs {pounds(margin.costs)}</div>) : <div className="fig-sub">Add costs</div>}
+          {margin.costs || margin.labourEstimate != null
+            ? (margin.provisional.length ? <div className="fig-note">Provisional</div> : margin.pct != null && <div className="fig-sub">{margin.pct}% · costs {pounds(margin.costs)}</div>)
+            : <div className="fig-sub">Add costs</div>}
         </button>
       </div>}
       <h2 className="sec-h">{actions.length ? `Action needed · ${actions.length}` : 'All clear'}</h2>

@@ -45,6 +45,7 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
   const marginTotal = withCosts.reduce((t, w) => t + w.m.margin, 0)
   const valueTotal = withCosts.reduce((t, w) => t + w.m.value, 0)
   const unpricedTotal = work.reduce((t, w) => t + w.unpriced, 0)
+  const anyProvisional = withCosts.some(w => w.m.provisional.length)
 
   return (
     <main className="page dash" style={{ paddingBottom: 48 }}>
@@ -54,14 +55,14 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
       </div>
 
       <TitleBlock
-        head={['Owed to you', money(p.owed)]}
+        head={['Owed to you · incl. VAT', money(p.owed)]}
         rows={[
           [['Overdue', p.overdueCount ? `${k(p.overdue)} · ${p.overdueCount}` : '—', p.overdueCount ? 'var(--red)' : undefined], ['Ready to claim', k(p.inValuation)]],
-          [['Unpriced lines', unpricedTotal ? String(unpricedTotal) : '—'], ['Margin', withCosts.length ? `${signedK(marginTotal)}${valueTotal > 0 ? ` · ${Math.round((marginTotal / valueTotal) * 1000) / 10}%` : ''}` : '—']],
-          [['Certified this year', k(p.certifiedThisYear)], ['Paid this year', k(p.paidThisYear)]],
+          [['Unpriced lines', unpricedTotal ? String(unpricedTotal) : '—'], ['Margin', withCosts.length ? `${signedK(marginTotal)}${anyProvisional ? ' · provisional' : valueTotal > 0 ? ` · ${Math.round((marginTotal / valueTotal) * 1000) / 10}%` : ''}` : '—']],
+          [['Certified this year · excl. VAT', k(p.certifiedThisYear)], ['Paid this year', k(p.paidThisYear)]],
         ]} />
       <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
-        Values include uplifts.{p.unpricedVos ? ` ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not counted until priced.` : ''}{withCosts.length && withCosts.length < work.length ? ` Margin covers the ${withCosts.length} job${withCosts.length === 1 ? '' : 's'} with costs recorded.` : ''}
+        Owed includes VAT once invoiced; other values are net of VAT and include uplifts.{p.unpricedVos ? ` ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not counted until priced.` : ''}{withCosts.length && withCosts.length < work.length ? ` Margin covers the ${withCosts.length} job${withCosts.length === 1 ? '' : 's'} with costs recorded.` : ''}
       </div>
 
       <div className="dash-secs">
@@ -97,7 +98,7 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
                       {!w.ready && !w.unpriced && !w.lateOrders && <Plate kind="ok">Nothing waiting</Plate>}
                     </span>
                   </span>
-                  <span className={'amt dash-amt' + (w.hasCosts && w.m.margin < 0 ? ' neg' : '')}>{w.hasCosts ? <>{signedK(w.m.margin)}<small>{w.m.pct != null ? `${w.m.pct}% margin` : 'margin'}</small></> : <small>No costs yet</small>}</span>
+                  <span className={'amt dash-amt' + (w.hasCosts && w.m.margin < 0 ? ' neg' : '')}>{w.hasCosts ? <>{signedK(w.m.margin)}<small>{w.m.provisional.length ? `provisional · ${w.m.provisional.join(', ')}` : w.m.pct != null ? `${w.m.pct}% margin` : 'margin'}</small></> : <small>No costs yet</small>}</span>
                 </button>
               ))}
             </div>

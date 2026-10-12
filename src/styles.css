@@ -498,3 +498,14 @@ label.row { cursor: pointer; }
 .doc-open { display: block; background: none; border: 0; padding: 4px 0; text-align: left; color: var(--ink); font: inherit; min-height: 48px; min-width: 0; overflow-wrap: anywhere; }
 .doc-open b { font-size: 15px; }
 .doc-open small { display: block; font-size: 13px; color: var(--ink-muted); margin-top: 3px; }
+@media (max-width: 559px) {
+  .order-line { flex-wrap: wrap; }
+  .order-line .grow { flex: 1 1 calc(100% - 80px); }
+  .order-line .field.qty { margin-left: 76px; }
+  .dw-row > .grow:first-child { flex: 1 1 100%; }
+}
+.trade-none { font-size: 13px; color: var(--ink-muted); }
+.trade-row .trade-accept, .trade-confirm { flex: 1 1 100%; }
+.trade-row .trade-accept { width: 100%; }
+.trade-confirm { display: grid; gap: 8px; padding: 10px 12px; background: var(--row-open); border-radius: var(--r); font-size: 14px; font-weight: 600; }
+.trade-confirm .btn { width: auto; flex: 1; }

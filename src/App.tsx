@@ -210,7 +210,7 @@ export default function App() {
       {dwOpen && job && <DayworksSheet job={job} sheets={jobDayworks} vos={jobVos} books={books} startNew={dwOpen === 'new'} onClose={() => setDwOpen(null)}
         onSave={async d => { await db.put('dayworks', d); await reload() }}
         onDelete={async d => { await db.remove('dayworks', d); await reload() }}
-        onPdf={async d => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildDayworksPdf(d, job, company), `${(job.contractRef || job.name).replace(/[^A-Za-z0-9-]+/g, '_')}_${dwRef(d.number).replace(' ', '')}.pdf`) }}
+        onPdf={async d => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildDayworksPdf(d, job, company, access.money), `${(job.contractRef || job.name).replace(/[^A-Za-z0-9-]+/g, '_')}_${dwRef(d.number).replace(' ', '')}.pdf`) }}
         onClaim={async d => {
           // claimed through a variation: one item at the sheet's total, kept in step if the sheet changes before it's valued
           const existing = jobVos.find(v => v.id === d.voId)

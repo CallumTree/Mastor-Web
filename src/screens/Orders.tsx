@@ -7,7 +7,6 @@ import { money, ukDate } from '../lib/format'
 import { savePhoto, usePhotoUrl } from '../lib/photos'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { SumStrip, TabHead } from '../components/Register'
-import { TabMenu } from '../components/TabMenu'
 import { Plate } from '../components/Sign'
 import { IconCamera, IconPlus } from '../components/Icons'
 import { RateLookup } from './Rates'
@@ -41,11 +40,8 @@ export function OrdersTab({ job, orders, scope, vals, onNew, onOpen, onClaim }: 
 
   return (
     <div className="stack">
-      <TabHead label="Orders" meta={`${open.length} open`} menu={<TabMenu title="Orders" actions={[
-        { label: 'New order', hint: 'Order number, address, SoR lines', onClick: onNew },
-        ...(m ? [{ label: 'Claim completed orders', hint: claimable.length ? `${claimableOrders} order${claimableOrders === 1 ? '' : 's'} into the open valuation` : 'Nothing completed and unclaimed', disabled: !claimable.length, onClick: () => onClaim(claimable) }] : []),
-      ]} />} />
-      {m && live.length > 0 && <SumStrip label="Orders summary" cols={3} cells={[
+      <TabHead label="Orders" meta={`${open.length} open`} />
+      {m && live.length > 0 && <SumStrip label="Orders summary" cols={3} caption="At base rates — uplifts are added in the valuation" cells={[
         { label: 'Open', value: String(open.length), note: `${open.filter(o => isOverdue(o)).length} overdue · ${money(value(open.flatMap(o => orderLines(o, scope))))}`, nil: !open.length },
         { label: 'Done, not claimed', value: money(value(claimable)), note: `${claimableOrders} order${claimableOrders === 1 ? '' : 's'}${unpricedDone ? ` · + ${unpricedDone} unpriced line${unpricedDone === 1 ? '' : 's'}` : ''}`, hot: true, nil: !claimable.length },
         { label: 'Claimed', value: money(value(claimed)), note: `${new Set(claimed.map(i => i.orderId)).size} orders`, nil: !claimed.length },

@@ -14,6 +14,8 @@ export interface Margin {
   labourDays: number; labourEstimate: number | null
   costs: number            // committed + paid + labour estimate
   margin: number; pct: number | null
+  /** why the margin isn't settled yet (unpriced lines, BoQ ≠ PO, diary labour not costed) — empty when it is */
+  provisional: string[]
 }
 
 export function labourDays(diary: DiaryEntry[]) {
@@ -32,7 +34,15 @@ export function jobMargin(job: Job, scope: ScopeItem[], vos: Variation[], costs:
   const labourEstimate = dayRate && dayRate > 0 && days > 0 ? pennies(days * dayRate) : null
   const total = pennies(committed + paid + (labourEstimate ?? 0))
   const margin = pennies(value - total)
+  const provisional: string[] = []
+  if (unpriced) provisional.push(`${unpriced} unpriced`)
+  if (job.contractValue > 0 && !job.poGapAccepted) {
+    const scopeValue = upliftAmounts(pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), job.uplift1, job.uplift2).gross
+    if (Math.abs(scopeValue - job.contractValue) > Math.max(1, job.contractValue * 0.005)) provisional.push('BoQ ≠ PO')
+  }
+  if (days > 0 && labourEstimate == null) provisional.push('diary labour not costed')
   return {
+    provisional,
     base, value, unpriced, committed, paid,
     quotes: costs.filter(c => c.status === 'quote').length,
     unknownCosts: counted.filter(c => c.amount == null).length,
