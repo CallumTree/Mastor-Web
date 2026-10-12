@@ -104,9 +104,14 @@ export function readPack(specs: ParsedBoq[], orders: WorksOrder[]): PackRead {
       if (!zero(w)) line.issues.push(`on ${w.order.contract} only — not in the spec list`)
       out.set(w, line)
     }
+    // the works order is the contract: a spec list line it doesn't have is left out — unless the works
+    // order prints a total for this property but lists no lines, when the spec list is the only record of what it covers
+    const gap = orders.find(o => o.properties.some(x => x.property === p && !x.lines && (x.printedTotal ?? 0) > 0))
     for (const s of S) if (!usedS.has(s)) {
-      const line = { ...s, issues: [...s.issues] }
-      if (!zero(s)) line.issues.push('in the spec list only — not on any works order')
+      const line = { ...s, issues: [...s.issues], include: !!gap || zero(s) }
+      if (!zero(s)) line.issues.push(gap
+        ? `in the spec list only — ${label(gap)} prints a total for no. ${p} but lists no lines, so this is included as what it covers`
+        : 'in the spec list only — not on the works order, so left out (tick to include)')
       out.set(s, line)
     }
     // keep the works order's own order, with spec-only lines after
@@ -119,7 +124,9 @@ export function readPack(specs: ParsedBoq[], orders: WorksOrder[]): PackRead {
   for (const [k, ps] of codeDiffs) findings.push(`${k} — no${ps.length > 1 ? 's' : ''}. ${ps.join(', ')}`)
   const specOnly = lines.filter(l => !l.contract && l.issues.some(i => i.startsWith('in the spec list only')))
   const val = (ls: ParsedLine[]) => gbp(r2(ls.reduce((t, l) => t + (l.qty ?? 0) * (l.rate ?? 0), 0)))
-  if (specOnly.length) findings.push(`${specOnly.length} spec list line${specOnly.length === 1 ? '' : 's'} on no works order (${[...new Set(specOnly.map(l => `no. ${l.property}`))].join(', ')}), ${val(specOnly)} — included; check the council will pay for them`)
+  const filled = specOnly.filter(l => l.include), left = specOnly.filter(l => !l.include)
+  if (filled.length) findings.push(`${filled.length} spec list line${filled.length === 1 ? '' : 's'} (${[...new Set(filled.map(l => `no. ${l.property}`))].join(', ')}), ${val(filled)}, included where the works order prints a total but lists no lines — check them against that total`)
+  if (left.length) findings.push(`${left.length} spec list line${left.length === 1 ? '' : 's'} not on the works order (${[...new Set(left.map(l => `no. ${l.property}`))].join(', ')}), ${val(left)} — left out; tick them if the client confirms`)
   const woOnly = lines.filter(l => l.issues.some(i => / only — not in the spec list$/.test(i)))
   if (woOnly.length) findings.push(`${woOnly.length} works order line${woOnly.length === 1 ? '' : 's'} not in the spec list (${[...new Set(woOnly.map(l => `no. ${l.property}`))].join(', ')}), ${val(woOnly)}`)
   const qtys = lines.filter(l => l.issues.some(i => i.startsWith('qty: works order')))

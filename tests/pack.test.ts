@@ -62,7 +62,10 @@ ok(line('2032AA').qty === 60 && line('2032AA').issues.some(i => i === 'qty: work
 ok(line('841013').issues.some(i => /^code: works order 841013 at £378\.00, spec list 8410XA/.test(i)) && !r.lines.some(l => l.code === '8410XA'), 'different code for the same item: paired, not counted twice')
 ok(line('SCA005', 'MH2').issues.some(i => /also on MH1 \(Painting\) for no\. 3/.test(i)), 'the same scaffold on two contracts is flagged')
 ok(r.findings.some(f => /SCA005 on both MH1 \(Painting\) and MH2 \(WHQS\) for no\. 3 — £750\.00/.test(f)), 'and summarised with its value')
-ok(r.lines.filter(l => l.property === '4').length === 1 && r.lines.find(l => l.property === '4')!.issues.some(i => /spec list only/.test(i)), 'spec list line on no works order: kept and flagged')
+const four = r.lines.find(l => l.property === '4')!
+ok(four.include && four.issues.some(i => /MH1 \(Painting\) prints a total for no\. 4 but lists no lines/.test(i)), 'spec list line where the works order prints a total but no lines: included, and says why')
+const extra = readPack([{ ...spec, lines: [...spec.lines, L('3', '0030AB', 2, 98.21, 'Front', 'PPR Repairs')] }], [a, b]).lines.find(l => l.code === '0030AB')!
+ok(!extra.include && extra.issues.some(i => /not on the works order, so left out/.test(i)), 'spec list line the works order doesn’t have: left out (the works order is the contract), flagged')
 ok(r.addresses['3'] === '3 Elm Road, Pembroke, SA71 4PY' && r.ref === 'MH1 · MH2', 'addresses and contract refs for the job')
 ok(readPack([spec], []).lines.length === 6, 'spec list alone: read as before')
 

@@ -41,6 +41,7 @@ Not now (parked deliberately): formal CVR (accruals, cost codes, period locks, f
 ## Operating Context
 
 - Work arrives as framework works orders: a BoQ in Excel or PDF with SoR codes, quantities and rates and two uplift percentages (planned work), or a stream of small orders for one property each (responsive / voids).
+- A planned job's pack from the client: a spec list (all properties and workstreams), one works order per contract, the PCI and any surveys. **The works order is the source of truth** — it comes direct from the client and carries the contract value; the spec list is the cross-check.
 - The framework SoR (e.g. M3NHF v8 Planned and Responsive, plus client additional rates) is imported once into the company's rate books.
 - Variations are found on site, priced from the SoR, then sent for instruction. The client issues its own VO reference (scan, photo, handwritten ticket). VOs move Identified → Instructed → Complete or Rejected. Dayworks are priced from the SoR labour rates.
 - Valuations are numbered per job; one Open at a time; Issued ones are locked; each can have one VAT invoice. Terms run from the invoice date; part payments are tracked. Invoices export to Xero or QuickBooks.
