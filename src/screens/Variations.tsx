@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAccess } from '../lib/access'
 import type { RateBook } from '../lib/types'
 import { RateLookup } from './Rates'
 import type { Job, Valuation, Variation, VoStatus } from '../lib/types'
@@ -76,6 +77,7 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
   const [rate, setRate] = useState(vo.rate != null ? String(vo.rate) : '')
   const qn = parseFloat(qty.replace(',', '.')); const rn = parseFloat(rate.replace(/[£,]/g, ''))
   const qv = isFinite(qn) && qn > 0 ? qn : null; const rv = isFinite(rn) && rn > 0 ? rn : null
+  const { money: m } = useAccess()
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
@@ -85,31 +87,31 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
         <Field label="Description"><textarea rows={2} value={v.description} onChange={e => setV({ ...v, description: e.target.value })} /></Field>
         <Field label="Where"><input value={v.room} onChange={e => setV({ ...v, room: e.target.value })} /></Field>
         <div className="row">
-          <div className="grow"><Field label="SoR code"><input value={v.code} autoCapitalize="characters" onChange={e => setV({ ...v, code: e.target.value, rateBook: undefined })} /></Field></div>
+          {m && <div className="grow"><Field label="SoR code"><input value={v.code} autoCapitalize="characters" onChange={e => setV({ ...v, code: e.target.value, rateBook: undefined })} /></Field></div>}
           <div className="grow"><Field label="Unit"><input value={v.unit} onChange={e => setV({ ...v, unit: e.target.value })} /></Field></div>
         </div>
-        {!locked && <RateLookup code={v.code} books={books} onUse={(i, b) => { setV({ ...v, code: i.code, unit: i.unit, rateBook: b?.name }); setRate(String(i.rate)) }} />}
+        {m && !locked && <RateLookup code={v.code} books={books} onUse={(i, b) => { setV({ ...v, code: i.code, unit: i.unit, rateBook: b?.name }); setRate(String(i.rate)) }} />}
         <div className="row">
           <div className="grow"><Field label="Qty"><input inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} placeholder="Not measured" /></Field></div>
-          <div className="grow"><Field label="Rate (£)" hint={v.rateBook ? `From ${v.rateBook}` : undefined}><input inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setV({ ...v, rateBook: undefined }) }} placeholder="Unpriced" /></Field></div>
+          {m && <div className="grow"><Field label="Rate (£)" hint={v.rateBook ? `From ${v.rateBook}` : undefined}><input inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setV({ ...v, rateBook: undefined }) }} placeholder="Unpriced" /></Field></div>}
         </div>
-        <div className="amt" style={{ fontSize: 20, color: qv && rv ? 'var(--ink)' : 'var(--ink-muted)', fontWeight: 700 }}>
+        {m && <div className="amt" style={{ fontSize: 20, color: qv && rv ? 'var(--ink)' : 'var(--ink-muted)', fontWeight: 700 }}>
           {qv && rv ? money(lineValue(qv, rv)) : 'Add qty and rate to price'}
-        </div>
-        {qv && rv && v.status === 'Identified' && !v.clientRef && (
+        </div>}
+        {m && qv && rv && v.status === 'Identified' && !v.clientRef && (
           v.submittedAt
             ? <div className="row"><span className="grow flag">Sent to client {ukd(v.submittedAt)} — waiting on their instruction</span><button className="chip" onClick={() => setV({ ...v, submittedAt: null })}>Undo</button></div>
             : <button className="btn btn-secondary" onClick={() => setV({ ...v, submittedAt: Date.now() })}>Mark as sent to client for instruction</button>
         )}
-        <Field label="Client VO reference" hint="Once the client issues one"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value })} /></Field>
+        {m && <Field label="Client VO reference" hint="Once the client issues one"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value })} /></Field>}
         <div>
           <div className="field"><span>Status</span></div>
           <div className="chips">{STATUSES.map(s => <button key={s} className={'chip' + (v.status === s ? ' on' : '')} onClick={() => setV({ ...v, status: s })}>{s}</button>)}</div>
         </div>
         </fieldset>
         {v.photoIds.length > 0 && <div className="thumbs">{v.photoIds.map(id => <Thumb key={id} id={id} />)}</div>}
-        {!locked && <button className="btn btn-primary" onClick={() => onSave({ ...v, qty: qv, rate: rv })}>Save</button>}
-        {!locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete {voRef(vo.number)}</>} onConfirm={onDelete} />}
+        {!locked && <button className="btn btn-primary" onClick={() => onSave({ ...v, qty: qv, rate: m ? rv : vo.rate })}>Save</button>}
+        {m && !locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete {voRef(vo.number)}</>} onConfirm={onDelete} />}
       </div>
     </Sheet>
   )
@@ -121,22 +123,24 @@ const statusClass: Record<VoStatus, string> = { Identified: 'b-amber', Instructe
 export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister }: { job: Job; vos: Variation[]; vals: Valuation[]; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
   const sorted = [...vos].sort((a, b) => a.number - b.number)
   const sum = registerSummary(job, vos, vals)
+  const { money: m } = useAccess()   // operatives: what and where, never what it's worth
   return (
     <div className="stack">
-      <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog }, { label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }]} />} />
-      {sorted.length > 0 && <SumStrip label="Variation summary" caption="Groups at base rates · total includes uplifts, excludes rejected" cells={[
+      <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog },
+        ...(m ? [{ label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }] : [])]} />} />
+      {m && sorted.length > 0 && <SumStrip label="Variation summary" caption="Groups at base rates · total includes uplifts, excludes rejected" cells={[
         ...sum.rows.map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced), nil: !r.count,
           note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
         { label: 'Total incl. uplifts', value: money(sum.gross), note: [`${money(sum.base)} base`, sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · '), hot: true },
       ]} />}
       <div className="row" style={{ gap: 8 }}>
         <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
-        {sorted.length > 0 && <button className="btn btn-secondary" style={{ flex: '0 0 auto', width: 'auto' }} onClick={onRegister}>Register PDF</button>}
+        {m && sorted.length > 0 && <button className="btn btn-secondary" style={{ flex: '0 0 auto', width: 'auto' }} onClick={onRegister}>Register PDF</button>}
       </div>
       {sorted.length === 0 && <div className="card empty">No variations yet. Log extras the moment you spot them.</div>}
       {sorted.length > 0 && (
         <div className="card vo-list">
-          <div className="vo-head"><span>VO</span><span>Description · status</span><span>Value</span></div>
+          <div className="vo-head"><span>VO</span><span>Description · status</span><span>{m ? 'Value' : ''}</span></div>
           {sorted.map(v => {
             const priced = v.qty != null && v.rate != null
             const c = voCourt(v, vals)
@@ -147,22 +151,22 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
                 <div className="vo-ref">
                   <span className="ref-roman">{voRef(v.number)}</span>
                   {v.code && <small className="mono">{v.code}</small>}
-                  {priced && v.status !== 'Rejected' && <Tick on={!!v.valuationId} locked={!!lockedIn(v, vals)} onClick={() => onToggle(v)} />}
+                  {m && priced && v.status !== 'Rejected' && <Tick on={!!v.valuationId} locked={!!lockedIn(v, vals)} onClick={() => onToggle(v)} />}
                 </div>
                 <div className="vo-main">
                   <div className="vo-desc clamp2">{v.description}</div>
                   <div className="vo-meta">
-                    {v.room || '—'} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced'}
+                    {v.room || '—'} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{m ? (v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced') : ''}
                   </div>
                   <div className="vo-meta">
                     <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef ? `Council ref ${v.clientRef}` : 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
                   </div>
-                  <div className="vo-status"><span className={'badge ' + statusClass[v.status]}>{v.status}</span>{v.status !== 'Rejected' && <CourtLine c={c} />}</div>
+                  <div className="vo-status"><span className={'badge ' + statusClass[v.status]}>{v.status}</span>{m && v.status !== 'Rejected' && <CourtLine c={c} />}</div>
                 </div>
-                <div className="vo-amt">
+                {m ? <div className="vo-amt">
                   <span className="mono">{priced ? money(lineValue(v.qty, v.rate)) : '—'}</span>
                   <ValBadge val={vals.find(x => x.id === v.valuationId)} />
-                </div>
+                </div> : <div />}
               </div>
             )
           })}

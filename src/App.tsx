@@ -4,6 +4,7 @@ import { db, nextVoNumber, rates, uid } from './lib/db'
 import { RatesSheet } from './screens/Rates'
 import { TeamSheet } from './screens/Team'
 import { RateCheckSheet } from './screens/RateCheck'
+import { AccessContext, accessFor } from './lib/access'
 import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
@@ -37,6 +38,7 @@ export default function App() {
   const [ratesOpen, setRatesOpen] = useState(false)
   const [teamOpen, setTeamOpen] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [access, setAccess] = useState(accessFor(null))
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -58,7 +60,10 @@ export default function App() {
       Promise.all(js.map(j => db.valuations(j.id))),
       Promise.all(js.map(j => db.diary(j.id))),
     ])
-    setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setDiary(di.flat()); setSettings(await db.settings()); setReady(true)
+    const [st, co] = await Promise.all([db.settings(), meta.get<{ role?: string }>('company')])
+    // every state set together after the last await, so the screen updates in one go
+    setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setDiary(di.flat()); setSettings(st)
+    setAccess(a => (a.role === (co?.role ?? null) ? a : accessFor(co?.role))); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
   // changes made on another device arrive → refresh what's on screen
@@ -72,7 +77,7 @@ export default function App() {
   const run = (fn: () => Promise<unknown>) => async () => { await fn(); await reload() }
 
   return (
-    <>
+    <AccessContext.Provider value={access}>
       {ready && job && <div className="banner"><SyncBadge dark /></div>}
       {!ready ? null : showDash && !job ? (
         <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
@@ -229,6 +234,6 @@ export default function App() {
           }}
           onDelete={scopeForm !== 'new' ? async () => { await db.deleteScope((scopeForm as ScopeItem).id); setScopeForm(null); await reload() } : undefined} />
       )}
-    </>
+    </AccessContext.Provider>
   )
 }

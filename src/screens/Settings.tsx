@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAccess } from '../lib/access'
 import { blankSettings, type CompanySettings } from '../lib/types'
 import { Field, Sheet } from '../components/Ui'
 import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
@@ -9,6 +10,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
   settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
   onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void; onRates: () => void; onTeam: () => void
 }) {
+  const { money: m } = useAccess()
   const [msg, setMsg] = useState<string | null>(null)
   const [s, setS] = useState<CompanySettings>(settings ?? blankSettings())
   const [nextText, setNextText] = useState(String(s.nextInvoiceNumber || 1))
@@ -22,6 +24,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
   return (
     <Sheet onClose={onClose} label="Settings">
       <div className="stack">
+        {m && <>
         <div className="label bracket">Company settings</div>
         <div className="muted" style={{ fontSize: 13 }}>Used on your VAT invoices. Shared with everyone in your company.</div>
 
@@ -48,13 +51,18 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>
 
+        </>}
+
         <div className="label bracket" style={{ marginTop: 22 }}>Team</div>
         <div className="muted" style={{ fontSize: 13 }}>Add your office and site staff so they see the same jobs.</div>
         <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
 
+        {m && <>
         <div className="label bracket" style={{ marginTop: 22 }}>Schedule of rates</div>
         <div className="muted" style={{ fontSize: 13 }}>{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
         <button className="btn btn-secondary" onClick={onRates}>Open schedule of rates</button>
+
+        </>}
 
         <div className="label bracket" style={{ marginTop: 22 }}>This device</div>
         <div className="muted" style={{ fontSize: 13 }}>A backup is a file of every job on this phone or computer — keep one before changing devices.</div>

@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { useAccess } from '../lib/access'
 import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
@@ -31,7 +32,7 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
           <h1 className="jbar-name">{job.name}</h1>
           {!compact && (job.client || job.address) && <div className="jbar-sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
         </div>
-        <button className="icon-btn on-dark" onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button>
+        {useAccess().money ? <button className="icon-btn on-dark" onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button> : <span className="icon-gap" />}
       </div>
     </header>
   )
@@ -50,7 +51,8 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const voBase = priced.reduce((s, v) => s + lineValue(v.qty, v.rate), 0)
   const voGross = voBase * upliftFactor(job.uplift1, job.uplift2)
 
-  const actions: { text: string; hint: string; colour: string; onClick: () => void }[] = []
+  const { money: seesMoney } = useAccess()
+  const actions: { text: string; hint: string; colour: string; onClick: () => void; site?: boolean }[] = []
   // Uplifts must turn the BoQ into the PO's all-in figure. A known, accepted difference becomes a note;
   // if the difference changes after it was accepted, it's flagged again.
   const scopeBase = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -80,17 +82,19 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   if (toSend) actions.push({ text: `${toSend} priced VO${toSend === 1 ? '' : 's'} not sent to the client`, hint: 'Send for instruction so the clock starts', colour: 'var(--amber)', onClick: () => go('vos') })
   if (!job.poNumber) actions.push({ text: 'No PO number', hint: 'Invoices will be rejected without it', colour: 'var(--red)', onClick: onSetup })
   if (unpriced) actions.push({ text: `${unpriced} variation${unpriced === 1 ? '' : 's'} unpriced`, hint: 'Add SoR code and rate so they can be claimed', colour: 'var(--amber)', onClick: () => go('vos') })
-  if (unmeasured) actions.push({ text: `${unmeasured} variation${unmeasured === 1 ? '' : 's'} not measured`, hint: 'Measure on site', colour: 'var(--amber)', onClick: () => go('vos') })
+  if (unmeasured) actions.push({ text: `${unmeasured} variation${unmeasured === 1 ? '' : 's'} not measured`, hint: 'Measure on site', colour: 'var(--amber)', onClick: () => go('vos'), site: true })
   if (open && openTotals && openTotals.lines > 0) actions.push({ text: `${valRef(open.number)}: ${money(openTotals.gross)} ready`, hint: `${openTotals.lines} line${openTotals.lines === 1 ? '' : 's'} — review and issue`, colour: 'var(--green)', onClick: () => go('vals') })
-  if (scope.length === 0) actions.push({ text: 'No scope yet', hint: 'Add the works order items', colour: 'var(--amber)', onClick: () => go('scope') })
+  if (scope.length === 0) actions.push({ text: 'No scope yet', hint: 'Add the works order items', colour: 'var(--amber)', onClick: () => go('scope'), site: true })
+  // operatives: only the site actions — nothing about money, POs or the client
+  if (!seesMoney) for (let i = actions.length - 1; i >= 0; i--) if (!actions[i].site) actions.splice(i, 1)
 
   return (
     <div>
-      <div className="figs">
+      {seesMoney && <div className="figs">
         <div className="fig"><div className="fig-n">{job.contractValue ? pounds(job.contractValue) : '—'}</div><div className="fig-l">Contract</div></div>
         <div className="fig"><div className="fig-n">{pounds(certified)}</div><div className="fig-l">Certified</div></div>
         <div className="fig"><div className="fig-n">{pounds(voGross)}</div><div className="fig-l">Variations</div>{(unpriced || unmeasured) > 0 && <div className="fig-note">+ {Math.max(unpriced, unmeasured)} not priced</div>}</div>
-      </div>
+      </div>}
       <h2 className="sec-h">{actions.length ? `Action needed · ${actions.length}` : 'All clear'}</h2>
       <div className="acts">
         {actions.length === 0 && <div className="act act-clear"><SignMark kind="ok" size={22} /><span>Nothing outstanding on this job.</span></div>}
@@ -121,13 +125,15 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       </div>
       {notesOpen && <NotesSheet job={job} notes={notes} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} />}
       {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
-      <div className="muted" style={{ fontSize: 12, marginTop: 12 }}>
+      {seesMoney && <div className="muted" style={{ fontSize: 12, marginTop: 12 }}>
         PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts
-      </div>
+      </div>}
     </div>
   )
 }
 
+/** Tabs that are all money: operatives don't get them. */
+const MONEY_TABS: Tab[] = ['vals']
 const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Element }[] = [
   { tab: 'home', label: 'Home', Icon: IconHome },
   { tab: 'diary', label: 'Diary', Icon: IconDiary },
@@ -145,6 +151,8 @@ export function JobView(p: {
   onAddMedia: (file: File, kind: 'photo' | 'video', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
 }) {
   const { job, vos, scope, vals, onBack, onSetup, onLogVariation, onEditVariation } = p
+  const access = useAccess()
+  const nav = NAV.filter(n => access.money || !MONEY_TABS.includes(n.tab))
   const [tab, setTab] = useState<Tab>('home')
   const [diaryDate, setDiaryDate] = useState(dayKey())
   const [capture, setCapture] = useState(false)
@@ -162,17 +170,17 @@ export function JobView(p: {
       <main className="page with-rail">
         <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
-          notes={p.diary.filter(d => d.type === 'note')} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
+          notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
         {tab === 'scope' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} />}
-        {tab === 'vals' && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
+        {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} />}
       </main>
       <nav className="nav">
-        {NAV.map(({ tab: t, label, Icon }, i) => (
+        {nav.map(({ tab: t, label, Icon }, i) => (
           <Fragment key={t}>{i === 2 && (
             <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span>+</span></button>
           )}
@@ -191,7 +199,7 @@ export function JobView(p: {
                 <input type="file" accept="video/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
               <button className="btn btn-secondary" onClick={() => { setDiaryDate(dayKey()); setCapture(false); setFocusNote(true); setTab('diary') }}><IconDiary /> Diary note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
-              <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onImportVo() }}><IconDoc /> Council VO</button>
+              {access.money && <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onImportVo() }}><IconDoc /> Council VO</button>}
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Job note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}

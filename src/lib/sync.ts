@@ -173,13 +173,13 @@ export async function fetchPhoto(id: string): Promise<Blob | null> {
 }
 
 // ---------- account ----------
-export async function myCompany(): Promise<{ id: string; name: string } | null> {
-  const { data, error } = await supabase.from('memberships').select('company_id, companies(name)').limit(1)
+export async function myCompany(): Promise<{ id: string; name: string; role: string } | null> {
+  const { data, error } = await supabase.from('memberships').select('company_id, role, companies(name)').limit(1)
   if (error) throw new Error(error.message)
-  const row = data?.[0] as { company_id: string; companies: { name: string } | { name: string }[] | null } | undefined
+  const row = data?.[0] as { company_id: string; role: string; companies: { name: string } | { name: string }[] | null } | undefined
   if (!row) return null
   const c = Array.isArray(row.companies) ? row.companies[0] : row.companies
-  return { id: row.company_id, name: c?.name ?? '' }
+  return { id: row.company_id, name: c?.name ?? '', role: row.role }
 }
 export async function createCompany(name: string): Promise<string> {
   const { data, error } = await supabase.rpc('create_company', { p_name: name })

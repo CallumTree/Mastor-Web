@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAccess } from '../lib/access'
 import type { RateBook } from '../lib/types'
 import { RateLookup } from './Rates'
 import type { Job, ScopeItem, Valuation } from '../lib/types'
@@ -28,7 +29,38 @@ export function ValBadge({ val }: { val?: Valuation }) {
 
 type Filter = 'all' | 'live' | 'claimed'
 
-export function ScopeTab({ job, scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport, onCheckRates }: {
+type ScopeProps = Parameters<typeof OfficeScope>[0]
+/** Office staff get the priced, claimable scope; operatives get the work list — no rates, values or ticks. */
+export function ScopeTab(p: ScopeProps) {
+  return useAccess().money ? <OfficeScope {...p} /> : <SiteScope scope={p.scope} vals={p.vals} />
+}
+
+/** The scope as a work list: what, where, how much — grouped by property and room. */
+function SiteScope({ scope }: { scope: ScopeItem[]; vals: Valuation[] }) {
+  const groups = [...new Set(scope.map(i => [i.property ? `No. ${i.property}` : '', i.workstream || i.room || 'General'].filter(Boolean).join(' · ')))]
+  const key = (i: ScopeItem) => [i.property ? `No. ${i.property}` : '', i.workstream || i.room || 'General'].filter(Boolean).join(' · ')
+  return (
+    <div className="stack">
+      <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? '' : 's'}`} />
+      {scope.length === 0 && <div className="card empty">No scope on this job yet.</div>}
+      {groups.map(g => (
+        <section key={g}>
+          <h2 className="sec-h">{g}</h2>
+          <div className="panel chk">
+            {scope.filter(i => key(i) === g).map(i => (
+              <div key={i.id} className="chk-row">
+                <span className="mono">{i.code || '—'}</span>
+                <span className="grow">{i.description}<small>{i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated'}{i.room && i.workstream ? ` · ${i.room}` : ''}</small></span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
+
+function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaimed, onDeleteAll, onAdd, onEdit, onImport, onCheckRates }: {
   job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void; onCheckRates?: () => void
 }) {
   const [filter, setFilter] = useState<Filter>('all')
