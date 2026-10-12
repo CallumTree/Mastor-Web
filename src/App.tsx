@@ -6,6 +6,8 @@ import { TeamSheet } from './screens/Team'
 import { RateCheckSheet } from './screens/RateCheck'
 import { CostsSheet } from './screens/Costs'
 import { OrderSheet } from './screens/Orders'
+import { DayworksSheet } from './screens/Dayworks'
+import { buildDayworksPdf, dayworksVariation, dwRef } from './lib/dayworks'
 import { accountsCsv, invoiceRows, periods } from './lib/accounts'
 import { buildEvidence, evidenceFileName, orderEvidence, schemeEvidence } from './lib/evidence'
 import { AccessContext, accessFor } from './lib/access'
@@ -41,6 +43,7 @@ export default function App() {
   const [dayworks, setDayworks] = useState<Dayworks[]>([])
   const [docs, setDocs] = useState<JobDocument[]>([])
   const [costsOpen, setCostsOpen] = useState(false)
+  const [dwOpen, setDwOpen] = useState<'list' | 'new' | null>(null)
   const [orderOpen, setOrderOpen] = useState<WorkOrder | 'new' | null>(null)
   const [logFrom, setLogFrom] = useState<DiaryEntry | null>(null)
   const [settings, setSettings] = useState<CompanySettings | undefined>(undefined)
@@ -126,6 +129,7 @@ export default function App() {
             const blob = await buildCertificate({ job, val: v, vals: jobVals, scope: jobScope, vos: jobVos, company })
             await shareOrDownload(blob, certificateFileName(job, v))
           }}
+          onDayworks={(fresh: boolean) => setDwOpen(fresh ? 'new' : 'list')}
           orders={jobOrders} onNewOrder={() => setOrderOpen('new')} onOpenOrder={setOrderOpen} onClaimOrders={lines => run(() => claimMany(lines))()}
           diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate} onCosts={() => setCostsOpen(true)}
           onSaveDiary={async (e, markedUp) => {
@@ -194,6 +198,16 @@ export default function App() {
           for (const l of jobScope.filter(i => i.orderId === o.id)) await db.deleteScope(l.id)
           await db.remove('orders', o); setOrderOpen(null); await reload()
         } : undefined} />}
+      {dwOpen && job && <DayworksSheet job={job} sheets={jobDayworks} vos={jobVos} books={books} startNew={dwOpen === 'new'} onClose={() => setDwOpen(null)}
+        onSave={async d => { await db.put('dayworks', d); await reload() }}
+        onDelete={async d => { await db.remove('dayworks', d); await reload() }}
+        onPdf={async d => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildDayworksPdf(d, job, company), `${(job.contractRef || job.name).replace(/[^A-Za-z0-9-]+/g, '_')}_${dwRef(d.number).replace(' ', '')}.pdf`) }}
+        onClaim={async d => {
+          // claimed through a variation: one item at the sheet's total, kept in step if the sheet changes before it's valued
+          const existing = jobVos.find(v => v.id === d.voId)
+          const vo = dayworksVariation(d, job, existing?.number ?? await nextVoNumber(job.id), existing)
+          await db.putVariation(vo); await db.put('dayworks', { ...d, voId: vo.id }); await reload()
+        }} />}
       {costsOpen && job && <CostsSheet job={job} scope={jobScope} vos={jobVos} diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate}
         onClose={() => setCostsOpen(false)} onSave={async c => { await db.put('costs', c); await reload() }} onDelete={async c => { await db.remove('costs', c); await reload() }} />}
       {checking && job && <RateCheckSheet books={books} lines={jobScope} onClose={() => setChecking(false)} />}

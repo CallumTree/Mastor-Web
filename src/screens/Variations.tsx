@@ -120,13 +120,14 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
 const statusClass: Record<VoStatus, string> = { Identified: 'b-amber', Instructed: 'b-slate', Complete: 'b-green', Rejected: 'b-red' }
 
 /** The VO tab reads like the Variation Register: summary strip, then one ruled schedule. */
-export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister }: { job: Job; vos: Variation[]; vals: Valuation[]; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
+export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister, onDayworks }: { job: Job; vos: Variation[]; vals: Valuation[]; onDayworks?: () => void; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
   const sorted = [...vos].sort((a, b) => a.number - b.number)
   const sum = registerSummary(job, vos, vals)
   const { money: m } = useAccess()   // operatives: what and where, never what it's worth
   return (
     <div className="stack">
       <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[{ label: 'Log variation', hint: 'What, where, photo — price it later', onClick: onLog },
+        ...(onDayworks ? [{ label: 'Dayworks sheets', hint: 'Hours, materials and plant — signed, then claimed as a variation', onClick: onDayworks }] : []),
         ...(m ? [{ label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }] : [])]} />} />
       {m && sorted.length > 0 && <SumStrip label="Variation summary" caption="Groups at base rates · total includes uplifts, excludes rejected" cells={[
         ...sum.rows.map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced), nil: !r.count,

@@ -39,6 +39,9 @@ ok(d.rows.length === 1 && d.rows[0][1] === 'SCAFFOLDING:PROVIDE & ERECT' && d.ro
 ok(bookName(d.title, 'x.docx') === 'Planned Maintenance and Property Reinvestment Works v8', `book named from the cover (${bookName(d.title, 'x.docx')})`)
 ok(bookName([], 'CURRENT_2025-2029_-_Scaffolding_Rates.docx') === '2025-2029 - Scaffolding Rates', 'falls back to a tidy file name')
 
+const lab = rowsToRates([['Trade Code', 'Trade Description', 'Labour Rate (£)'], ['M', 'Multiskilled operative', '20.92'], ['M2', 'Multiskilled gang', '36.89']], 'b3')
+ok(lab.items.length === 2 && lab.items[0].code === 'M' && lab.items[0].rate === 20.92 && lab.items[0].unit === 'HR' && lab.items[0].section === 'LABOUR RATES', 'labour rates table read for dayworks (M £20.92/hr)')
+
 console.log('Rate spreadsheets (additional rates)')
 const kitchen = sheetToRates([
   ['Kitchen Install only prices'], ['Material to be ordered from Kitchen Fittings order sheet'], [],

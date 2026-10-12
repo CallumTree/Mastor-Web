@@ -19,6 +19,9 @@ const CODE = /^(?=.*\d)[0-9A-Z]{4,12}$/
 const isCode = (s: string) => CODE.test(s)
 const isHeadingCaps = (s: string) => /[A-Z]/.test(s) && s === s.toUpperCase()
 
+/** Section given to a schedule's hourly labour rates (M, M2, E, P…), which price dayworks. */
+export const LABOUR = 'LABOUR RATES'
+
 /** A book as read from a file, before it's saved. */
 export interface RateDraft { name: string; source: string; notes: string[]; items: RateItem[]; skipped: number }
 
@@ -59,6 +62,12 @@ export function rowsToRates(rows: string[][], bookId: string): { items: RateItem
   let section = '', subsection = '', prev: RateItem | null = null, skipped = 0
   for (const raw of rows) {
     const c = raw.map(norm)
+    // the schedule's labour rates table: [trade code, trade, £ per hour] — used to price dayworks
+    if (c.length === 3 && /^[A-Z]{1,2}\d?$/.test(c[0]) && money(c[2]) !== null && c[1]) {
+      const code = c[0]
+      if (!seen.has(code)) { seen.add(code); items.push({ bookId, code, short: c[1], long: '', unit: 'HR', rate: money(c[2])!, section: LABOUR, subsection: 'Dayworks labour' }) }
+      prev = null; continue
+    }
     if (c.length < 4) { prev = null; continue }
     const n = c.length, code = c[0].toUpperCase()
     if (isCode(code) && c[n - 3]) {

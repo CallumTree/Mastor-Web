@@ -481,3 +481,11 @@ label.row { cursor: pointer; }
 .order-line .field.qty { flex: none; width: 84px; }
 .order-line .field.qty input { min-height: 44px; padding: 8px 10px; }
 .order-line .icon-btn { font-size: 22px; }
+
+/* ---------- dayworks ---------- */
+.dw-row { flex-wrap: wrap; align-items: flex-end; }
+.dw-row .icon-btn { margin-bottom: 2px; font-size: 22px; }
+.dw-row .field select { width: 100%; min-height: 48px; padding: 0 10px; border: 2px solid var(--line); border-radius: var(--r); background: var(--panel); font-size: 16px; }
+.dw-totals { display: grid; gap: 6px; }
+.dw-totals > div { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; }
+.dw-totals .dw-total { border-top: 2px solid var(--ink); padding-top: 8px; font-size: 17px; font-weight: 700; }
