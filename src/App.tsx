@@ -259,7 +259,7 @@ export default function App() {
             }
             await db.putVariation({ ...data, id, jobId: job.id, number: await nextVoNumber(job.id), valuationId: null })
             if (logFrom) await db.putDiary({ ...logFrom, voId: id })   // the photo now shows it's evidence for this VO
-            setLogging(false); setLogFrom(null); await reload()
+            await reload(); setLogging(false); setLogFrom(null)   // close once the new VO is on screen
           }} />
       )}
       {editing && (
