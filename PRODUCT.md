@@ -30,12 +30,13 @@ Mastor runs the commercial side of SoR framework work from start to finish: work
 
 ## Positioning
 
+- **The master schedule, in one place — hence MΛSTΘR.** Built from a day-to-day sticking point: a job's money and record spread across endless spreadsheets, OneNote, planners and sticky notes. Mastor puts the job — scope, variations, diary, notes, documents, valuations, invoices — in one spot. For small and family-run firms that don't have a QS or haven't scaled yet: it does the intermediary work a QS would, simply and cheaply, and grows with the firm (team, roles, more jobs) without changing how it works.
 - **Replaces the SoR contractor's spreadsheet stack.** Trade job apps are built for domestic quotes and know nothing about SoR codes, uplifts, client VOs or valuations; enterprise construction software is priced and staffed for firms with a commercial department. Mastor sits in that gap.
 - **Never invents numbers.** Unmeasured quantities show as "not measured", lines without a rate as "unpriced" (never £0), a missing PO stays blank and flagged. Rates come from the contractor's own imported schedule, exactly as printed.
 - **Finds money.** Checks the client's BoQ rates against the framework SoR, and shows margin per job against subbie and labour costs.
 - **One way to do each thing.** Simple on purpose; capability is added without alternative paths.
 
-Not now (parked deliberately): JCT/NRM work led by private QSs and architects — retention, QS-issued interim certificates, payment and pay-less notices. The bridge, when the SoR corner is won, is importing a priced bill with lump sums and provisional sums. RAMS and programmes stay in the contractor's existing documents; Mastor only stores them against the job.
+Not now (parked deliberately): formal CVR (accruals, cost codes, period locks, forecast final accounts) — the margin view stays a simple "am I making money on this job", not a finance system. JCT/NRM work led by private QSs and architects — retention, QS-issued interim certificates, payment and pay-less notices. The bridge, when the SoR corner is won, is importing a priced bill with lump sums and provisional sums. RAMS and programmes stay in the contractor's existing documents; Mastor only stores them against the job.
 
 ## Operating Context
 

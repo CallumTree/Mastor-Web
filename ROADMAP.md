@@ -35,6 +35,8 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 
 ## Parked
 
+- Formal CVR. Mastor is the job's master schedule for firms without a QS; margin stays a plain answer, not month-end finance.
+- Older SoR versions: only the current framework book (v8) is loaded, so lookups and checks have one answer.
 - JCT/NRM work from private QSs and architects (retention, QS certificates, payment and pay-less notices). Bridge later: import a priced bill with lump sums and provisional sums.
 - Role permissions beyond "operatives see no money".
 - More than one company per person.
