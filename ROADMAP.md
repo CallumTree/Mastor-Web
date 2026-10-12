@@ -1,0 +1,39 @@
+# Mastor roadmap
+
+Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, subbie comparison, valuation tabs) for small social-housing maintenance contractors. Launch to 2–3 pilot firms doing council or housing-association framework work.
+
+## Built for launch
+
+| | What | Why it matters for this corner |
+|---|---|---|
+| ✓ | Schedule of rates library | Import the framework SoR once; price every code from it, exactly as printed |
+| ✓ | BoQ rate check against the SoR | Finds lines the client has priced below the framework — money found |
+| ✓ | Costs and margin per job | Subbie quotes, labour and materials against what the client pays (SoR × uplifts) |
+| ✓ | Small works orders (responsive / voids) | One property, a few SoR lines, photos, complete — then claimed together |
+| ✓ | Completion evidence pack | One PDF per property/order with lines, before/after photos and sign-off |
+| ✓ | Dayworks sheets | Hours and materials on site, priced from the SoR labour rates, signed |
+| ✓ | Operatives see no money | Rates, values, costs and invoices hidden for the operative role |
+| ✓ | Xero / QuickBooks invoice export | No typing invoices twice |
+| ✓ | Team invites, AI reading locked to members | Multi-user, and no one else can spend the AI credit |
+
+## Cut or slimmed
+
+- Dashboard leads with what needs action (owed, overdue, unpriced, margin), charts removed.
+- Opening titles play once per device.
+- Job notes and diary notes are one thing; one way into each action.
+- RAMS and programme stay in the contractor's documents; Mastor stores them against the job.
+
+## Before pilots (from the launch audit)
+
+1. Error monitoring and "Report a problem".
+2. Company data export and deletion request.
+3. Supabase Pro + backups, own email sender; Vercel Pro; domain; Anthropic spend limit.
+4. Privacy policy and terms; ICO fee if applicable.
+5. Restyle the PDFs to the signage language.
+
+## Parked
+
+- JCT/NRM work from private QSs and architects (retention, QS certificates, payment and pay-less notices). Bridge later: import a priced bill with lump sums and provisional sums.
+- Role permissions beyond "operatives see no money".
+- More than one company per person.
+- Card billing.

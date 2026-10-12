@@ -10,68 +10,72 @@ Installable PWA (portrait, standalone). Mobile web on site and desktop browser i
 
 ## Users
 
-Mastor is a product for small UK building contractors. Tree & Sons Ltd is the first user, and its work shapes the product, but the target market is small builders in general. The schema has been multi-company from day one.
+Mastor is for **small UK contractors doing social-housing maintenance under schedule-of-rates frameworks**: council and housing-association PPR, WHQS (Wales) / Decent Homes (England) programmes, responsive repairs and voids. Typically 2–30 people, no commercial department, currently running the money side in Excel (master schedule, subbie comparison, valuation tabs). Tree & Sons Ltd (Pembrokeshire County Council framework) is the first user and its work shapes the product.
 
 People who use it every day:
 
-- **Director / QS (office):** builds valuations, raises VAT invoices, keeps the variation register, and chases payment. Usually works on a laptop or desktop with long, careful sessions where the figures must hold up.
-- **Site manager (on site):** keeps the site diary, takes photos, and raises variations (VOs) as they are found. Uses a phone outdoors, often in glare and with gloves, sometimes with poor or no signal.
-- **Operatives:** trades on site who log work and photos. Visits are brief, and they shouldn't need any training.
+- **Director / QS (office):** prices work from the SoR, builds valuations and monthly applications, raises VAT invoices, keeps the variation register, watches margin and chases payment. Laptop or desktop, long careful sessions where the figures must hold up.
+- **Site manager (on site):** site diary, photos, variations and dayworks as they are found, completes small works orders. Phone outdoors, often in glare and gloves, sometimes no signal.
+- **Operatives:** log work, hours and photos. Brief visits, no training. **Never see rates, values or margins.**
 
 People who only see the outputs:
 
-- **Council client** (for example Pembrokeshire County Council): never opens the app, but receives its PDFs: the Variation Register, valuations and VAT invoices. These outputs are part of the product, and they have to pass a council QS's scrutiny.
+- **The client** (council or housing association, e.g. Pembrokeshire County Council): never opens the app but receives its PDFs — Variation Register, valuation certificates, VAT invoices, dayworks sheets and completion evidence packs. These have to pass a client QS's scrutiny.
 
-Membership roles in the schema: owner, director, qs, site_manager, operative.
+Membership roles: owner, director, qs, site_manager, operative. Owners and directors manage the team; operatives see no money.
 
 ## Product Purpose
 
-Mastor tracks a job's money from start to finish: works order / BoQ → site diary → variations → interim valuations → VAT invoice → payment. Each figure can be traced back to its source. Success means a contractor claims everything they are owed, can defend every line to a council, and isn't let down by the app on site.
+Mastor runs the commercial side of SoR framework work from start to finish: works order / BoQ priced against the framework SoR → site diary, dayworks and variations → completion evidence → interim valuation or monthly application → VAT invoice → payment, with cost and margin alongside. Each figure traces back to its source. Success means a contractor claims everything they're owed, knows what each job makes, can defend every line to the client, and isn't let down by the app on site.
 
 ## Positioning
 
-- **Never invents numbers.** If a quantity hasn't been measured, it shows as "not measured". If a line has no rate, it shows as "unpriced", never £0. A missing PO stays blank and flagged until the client issues one. The trail from BoQ line to VO to valuation to invoice holds up under a council audit.
-- **Built for council PPR/WHQS work.** It reads council BoQs and SoR codes, handles uplifts, and supports multi-property schemes (property and workstream per line). It can read VO instructions in any form the council sends them: Excel, PDF, photographed or scanned tickets, handwritten site instructions.
-- **One way to do each thing.** The app stays simple on purpose and avoids feature sprawl.
+- **Replaces the SoR contractor's spreadsheet stack.** Trade job apps are built for domestic quotes and know nothing about SoR codes, uplifts, client VOs or valuations; enterprise construction software is priced and staffed for firms with a commercial department. Mastor sits in that gap.
+- **Never invents numbers.** Unmeasured quantities show as "not measured", lines without a rate as "unpriced" (never £0), a missing PO stays blank and flagged. Rates come from the contractor's own imported schedule, exactly as printed.
+- **Finds money.** Checks the client's BoQ rates against the framework SoR, and shows margin per job against subbie and labour costs.
+- **One way to do each thing.** Simple on purpose; capability is added without alternative paths.
+
+Not now (parked deliberately): JCT/NRM work led by private QSs and architects — retention, QS-issued interim certificates, payment and pay-less notices. The bridge, when the SoR corner is won, is importing a priced bill with lump sums and provisional sums. RAMS and programmes stay in the contractor's existing documents; Mastor only stores them against the job.
 
 ## Operating Context
 
-- Jobs come in as council works orders: a BoQ in Excel or PDF with SoR codes, quantities and rates, and two uplift percentages.
-- Variations are found on site, priced, and then sent to the client for instruction. The council issues its own VO reference, sometimes as a scan, a photo or a handwritten ticket. VOs move through Identified → Instructed → Complete or Rejected.
-- Interim valuations are numbered sequentially per job. Only one is Open at a time, and Issued valuations are locked. Each issued valuation can have one VAT invoice. Payment terms are counted from the invoice date, and part payments are tracked.
-- Every output is a PDF in a drawing-sheet style that goes to the council.
-- Site use means a phone outdoors, intermittent signal and short sessions. Office use means a desktop, long sessions and close checking of figures.
+- Work arrives as framework works orders: a BoQ in Excel or PDF with SoR codes, quantities and rates and two uplift percentages (planned work), or a stream of small orders for one property each (responsive / voids).
+- The framework SoR (e.g. M3NHF v8 Planned and Responsive, plus client additional rates) is imported once into the company's rate books.
+- Variations are found on site, priced from the SoR, then sent for instruction. The client issues its own VO reference (scan, photo, handwritten ticket). VOs move Identified → Instructed → Complete or Rejected. Dayworks are priced from the SoR labour rates.
+- Valuations are numbered per job; one Open at a time; Issued ones are locked; each can have one VAT invoice. Terms run from the invoice date; part payments are tracked. Invoices export to Xero or QuickBooks.
+- Site use: phone outdoors, intermittent signal, short sessions. Office use: desktop, long sessions, close checking.
 
 ## Capabilities and Constraints
 
-- React 18 + Vite + TypeScript. Supabase handles auth and sync, with Row Level Security per company. IndexedDB is the on-device store, and the app keeps working offline once signed in, then syncs later. Vercel deploys from `main`. Serverless parsing lives in `api/parse-boq.js` and `api/parse-vo.js`.
-- Screens: Jobs list, Dashboard, Job view, Scope (BoQ), Diary, Variations, Valuations, Notes, Settings, BoQ import, VO import, photo picker, sign-in gate.
-- Business rules: VO numbers run sequentially per job (highest + 1) and are never reused. Invoice numbers are never reused, and the sequence can continue from the company's existing one. Valuations and VOs are shown in Roman numerals (VAL III, VO XII).
-- Terminology: VO (variation order), BoQ, SoR code, PO / vary-order PO, uplift, valuation (VAL), PPR, WHQS, works order, workstream, property.
-- Undecided: pricing, licensing, onboarding of outside companies, and any role-based restrictions beyond the schema roles.
+- React 18 + Vite + TypeScript. Supabase for auth, sync and team functions, Row Level Security per company. IndexedDB on device; works offline once signed in and syncs later. Vercel deploys from `main`; previews per branch. Serverless AI readers in `api/parse-boq.js` and `api/parse-vo.js`, gated to signed-in members with a daily limit per company.
+- Screens: Jobs board, Dashboard, Job view (Home, Diary, Scope, VOs, Vals, Costs), Notes, Settings, Team, Schedule of rates, BoQ import, VO import, Dayworks, sign-in gate.
+- Business rules: VO numbers per job (highest + 1), never reused. Invoice numbers never reused; the sequence can continue the company's existing one. Valuations and VOs in Roman numerals (VAL III, VO XII). Rate books are imported whole and never edited.
+- Terminology: SoR / schedule of rates, rate book, works order, BoQ, VO, dayworks, PO, uplift, valuation (VAL), application, PPR, WHQS, responsive, void, workstream, property, margin.
+- Undecided: pricing (pilots first), card billing.
 
 ## Brand Commitments
 
-- Name: **Mastor**. Wordmark **MΛSTΘR**: Cinzel Roman capitals, with a hand-drawn Λ and a Θ whose bar reads as a spirit level (`src/components/Wordmark.tsx`). The rest of the app uses normal letters.
-- App icon: a Roman masonry arch, copper on charcoal (`public/icon.svg`, generator `tools/make_icon.py`).
-- Classical thread: Roman numerals for valuations and VOs, plus an opening-titles sequence with the arch and keystone.
-- Voice: plain, direct builder's English (en-GB). It never overstates.
+- Name: **Mastor**. Wordmark **MΛSTΘR**: Cinzel Roman capitals, a hand-drawn Λ and a Θ whose bar reads as a spirit level (`src/components/Wordmark.tsx`). Everything else uses Barlow.
+- App icon: a Roman masonry arch, copper on charcoal (`public/icon.svg`).
+- Classical thread: Roman numerals for valuations and VOs; opening titles with the arch and keystone, played once on first open.
+- Visual language: site signage (see DESIGN.md) — every status is a sign.
+- Voice: plain, direct builder's English (en-GB). Never overstates.
 
 ## Evidence on Hand
 
-- Real fixtures: the 51 Precelly Place VO 5 Excel and BoQ data (`tests/prescelly.tsv`).
-- Cover photography: Unsplash-licensed construction photos (`src/lib/look.ts`), credited. Jobs can use their own site photos.
-- Generated line drawings of properties (`src/components/drawings.generated.ts`, `tools/drawings.source.json`).
+- Real fixtures: 51 Precelly Place VO 5 and BoQ (`tests/prescelly.tsv`), College Park BoQ (`tests/cap00290.tsv`).
+- The PCC 2025–2029 framework schedules (M3NHF v8 Planned, Responsive, Scaffolding, Appendix I additional rates) were used to build and verify the rates importer; they are licensed and not stored in the repository.
 - **Not on hand:** customer testimonials, outside users, usage metrics, pricing or press. These must not be fabricated.
 
 ## Product Principles
 
-1. **Truth over tidiness.** Show unknowns as unknown. A blank that is honest is better than a plausible number.
-2. **Every figure traces to its source.** A council QS should be able to follow any line back to the BoQ, the VO or the instruction behind it.
-3. **One way to do each thing.** Add capability without adding alternative paths.
-4. **Site-proof.** It has to work on a phone, outdoors, with no signal, for someone who hasn't been trained on it.
-5. **The outputs are the product.** The PDFs the client receives deserve as much care as the screens.
+1. **Truth over tidiness.** Show unknowns as unknown. An honest blank beats a plausible number.
+2. **Every figure traces to its source.** A client QS can follow any line back to the SoR, the BoQ, the VO or the instruction.
+3. **Find the money.** Underpaid rates, unclaimed variations, unpriced dayworks and thin margins are surfaced, not buried.
+4. **One way to do each thing.** Add capability without adding alternative paths.
+5. **Site-proof.** Works on a phone, outdoors, with no signal, for someone who hasn't been trained.
+6. **The outputs are the product.** The PDFs the client receives deserve as much care as the screens.
 
 ## Accessibility & Inclusion
 
-Outdoor phone use calls for legible contrast in bright light, large touch targets that work with gloves, and respect for reduced motion (the opening titles already turn off under reduced motion). No formal standard has been confirmed. WCAG 2.2 AA is the working assumption, not a requirement anyone has stated.
+Outdoor phone use calls for legible contrast in bright light, large touch targets that work with gloves, and respect for reduced motion. WCAG 2.2 AA is the working assumption.
