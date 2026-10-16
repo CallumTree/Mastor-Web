@@ -6,7 +6,7 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 
 | | What | Why it matters for this corner |
 |---|---|---|
-| ✓ | Read the client's pack | Spec list, works orders, PCI and surveys in one go: schedules read exactly, the documents checked against each other, every disagreement flagged, the pack kept with the job |
+| ✓ | Read the client's pack | Spec list, works orders, PCI and surveys in one go: schedules read exactly, the documents checked against each other, every disagreement flagged, the pack kept with the job. PCI and surveys read for site facts (to notes) and work the scope is missing (to VOs), every item quoted and the quote checked |
 | ✓ | Schedule of rates library | Import the framework SoR once; price every code from it, exactly as printed |
 | ✓ | BoQ rate check against the SoR | Finds lines the client has priced below the framework — money found |
 | ✓ | Costs and margin per job | Subbie quotes, labour and materials against what the client pays (SoR × uplifts) |
@@ -33,10 +33,6 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 4. Privacy policy and terms; ICO fee if applicable.
 5. Restyle the PDFs to the signage language.
 6. Issuing a valuation: confirm sheet with certificate preview, then "Create invoice" as the next step (open from the second critique).
-
-## Next for the pack
-
-- Read the PCI and surveys for site facts (dates, contacts, access, hazards) and for work they call for that isn't in the scope (e.g. a bat box per property) — AI-read, each fact cited to its page and confirmed before it's saved as a note.
 
 ## Parked
 

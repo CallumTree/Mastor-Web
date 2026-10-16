@@ -6,6 +6,7 @@ import { money, qtyText, upliftFactor } from '../lib/format'
 import type { ParsedLine } from '../lib/boq'
 import { readPackFiles, type PackResult } from '../lib/packIntake'
 import { Plate } from '../components/Sign'
+import type { PackFacts, Source } from '../lib/packFacts'
 import { lineValue } from '../lib/valuation'
 import { IconScope } from '../components/Icons'
 
@@ -56,6 +57,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
   job: Job; existing: number; boq: PackResult; books?: RateBook[]; onImport: ImportPack; onBack: () => void; onClose: () => void
 }) {
   const [lines, setLines] = useState(boq.lines)
+  const [facts, setFacts] = useState<PackFacts | undefined>(boq.facts)
   const [onlyIssues, setOnlyIssues] = useState(false)
   const chosen = lines.filter(l => l.include)
   const base = chosen.reduce((t, l) => t + lineValue(l.qty, l.rate), 0)
@@ -118,6 +120,8 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
             </>}
           </div>
         )}
+
+        {facts && <FromDocuments f={facts} onChange={setFacts} />}
 
         {boq.files.length > 1 && (
           <div className="panel" style={{ fontSize: 14 }}>
@@ -210,9 +214,53 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
         })}
 
         {existing > 0 && <div className="muted" style={{ fontSize: 12 }}>This adds to the {existing} item{existing === 1 ? '' : 's'} already in scope.</div>}
-        <button className="btn btn-primary" disabled={!chosen.length} onClick={() => onImport(chosen, boq)}>Import {chosen.length} item{chosen.length === 1 ? '' : 's'}</button>
+        <button className="btn btn-primary" disabled={!chosen.length} onClick={() => onImport(chosen, { ...boq, facts })}>Import {chosen.length} item{chosen.length === 1 ? '' : 's'}</button>
         <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onBack}>Choose different files</button>
       </div>
     </Sheet>
+  )
+}
+
+const cite = (s: Source) => `${s.document.replace(/^[0-9a-f]{8}-/, '').replace(/\.[^.]+$/, '').replace(/_/g, ' ')}${s.page ? `, p. ${s.page}` : ''}`
+
+/** What the PCI and surveys say: facts for the job notes, and work they call for that the scope doesn't have. Ticked = saved. */
+function FromDocuments({ f, onChange }: { f: PackFacts; onChange: (f: PackFacts) => void }) {
+  if (f.error) return <Plate kind="wait">Site facts not read: {f.error}</Plate>
+  if (!f.facts.length && !f.extras.length) return <div className="muted" style={{ fontSize: 14 }}>The other documents were read; nothing in them needs adding to the job.</div>
+  const unverified = [...f.facts, ...f.extras].filter(x => !x.verified).length
+  const row = (x: PackFacts['facts'][number] | PackFacts['extras'][number], toggle: () => void, head: string, extra?: string) => (
+    <label key={head + x.text} className="row pack-fact" style={{ padding: '10px 12px', borderTop: '1px solid var(--cream-line)', alignItems: 'flex-start', cursor: 'pointer', opacity: x.include ? 1 : .55 }}>
+      <input type="checkbox" checked={x.include} onChange={toggle} style={{ width: 22, height: 22, accentColor: 'var(--copper)', marginTop: 2, flex: 'none' }} />
+      <div className="grow" style={{ minWidth: 0 }}>
+        <div style={{ fontWeight: 500, fontSize: 14 }}>{x.text}{x.properties.length ? <span className="muted"> · no{x.properties.length > 1 ? 's' : ''}. {x.properties.join(', ')}</span> : null}</div>
+        {extra && <div className="muted" style={{ fontSize: 13 }}>{extra}</div>}
+        <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>“{x.quote}” — {cite(x)}</div>
+        {!x.verified && <div className="flag" style={{ fontWeight: 600 }}>Quote not found in the document — check it before ticking</div>}
+      </div>
+    </label>
+  )
+  const setFact = (i: number) => onChange({ ...f, facts: f.facts.map((x, j) => (j === i ? { ...x, include: !x.include } : x)) })
+  const setExtra = (i: number) => onChange({ ...f, extras: f.extras.map((x, j) => (j === i ? { ...x, include: !x.include } : x)) })
+  const cats = [...new Set(f.facts.map(x => x.category))]
+  return (
+    <div className="stack" style={{ marginTop: 0 }}>
+      <h2 className="sec-h">From the documents · read by AI</h2>
+      {f.extras.length > 0 && <>
+        <Plate kind="warn">{f.extras.length} piece{f.extras.length === 1 ? '' : 's'} of work the documents ask for that isn’t in the scope</Plate>
+        <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+          {f.extras.map((x, i) => row(x, () => setExtra(i), 'x', x.why))}
+        </div>
+        <div className="muted" style={{ fontSize: 13 }}>Ticked ones are raised as VOs (Identified, unpriced) for you to price and send.</div>
+      </>}
+      {f.facts.length > 0 && <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+        {cats.map(c => (
+          <div key={c}>
+            <div className="label" style={{ padding: '8px 14px', color: 'var(--copper-ink)' }}>{c}</div>
+            {f.facts.map((x, i) => (x.category === c ? row(x, () => setFact(i), 'f') : null))}
+          </div>
+        ))}
+      </div>}
+      <div className="muted" style={{ fontSize: 13 }}>Ticked facts are saved to the job notes with their quote and page. {unverified ? `${unverified} item${unverified === 1 ? '' : 's'} couldn’t be matched to the document word for word and ${unverified === 1 ? 'is' : 'are'} left unticked.` : 'Every quote was found in its document.'}{f.cut.length ? ` Too long to read whole: ${f.cut.join(', ')} — check the end of ${f.cut.length === 1 ? 'it' : 'them'} yourself.` : ''}</div>
+    </div>
   )
 }

@@ -49,7 +49,7 @@ Not now (parked deliberately): formal CVR (accruals, cost codes, period locks, f
 
 ## Capabilities and Constraints
 
-- React 18 + Vite + TypeScript. Supabase for auth, sync and team functions, Row Level Security per company. IndexedDB on device; works offline once signed in and syncs later. Vercel deploys from `main`; previews per branch. Serverless AI readers in `api/parse-boq.js` and `api/parse-vo.js`, gated to signed-in members with a daily limit per company.
+- React 18 + Vite + TypeScript. Supabase for auth, sync and team functions, Row Level Security per company. IndexedDB on device; works offline once signed in and syncs later. Vercel deploys from `main`; previews per branch. Serverless AI readers in `api/parse-boq.js`, `api/parse-vo.js` and `api/read-pack.js` (PCI and surveys: every item quotes its document and the quote is checked on the device), gated to signed-in members with a daily limit per company.
 - Screens: Jobs board, Dashboard, Job view (Home, Diary, Scope, VOs, Vals, Costs), Notes, Settings, Team, Schedule of rates, BoQ import, VO import, Dayworks, sign-in gate.
 - Business rules: VO numbers per job (highest + 1), never reused. Invoice numbers never reused; the sequence can continue the company's existing one. Valuations and VOs in Roman numerals (VAL III, VO XII). Rate books are imported whole and never edited.
 - Terminology: SoR / schedule of rates, rate book, works order, BoQ, VO, dayworks, PO, uplift, valuation (VAL), application, PPR, WHQS, responsive, void, workstream, property, margin.

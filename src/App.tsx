@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { blankSettings, type CompanySettings, type Cost, type Dayworks, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder } from './lib/types'
 import { db, nextVoNumber, rates, uid } from './lib/db'
+import { dayKey } from './lib/dates'
 import { RatesSheet } from './screens/Rates'
 import { TeamSheet } from './screens/Team'
 import { RateCheckSheet } from './screens/RateCheck'
@@ -296,6 +297,13 @@ export default function App() {
             const street = streets.sort((a, b) => streets.filter(x => x === b).length - streets.filter(x => x === a).length)[0]
             const next = { ...job, contractRef: job.contractRef || pack.ref, address: job.address || street || '', properties: Object.keys(pack.addresses).length ? { ...job.properties, ...pack.addresses } : job.properties }
             if (next.contractRef !== job.contractRef || next.address !== job.address || next.properties !== job.properties) await db.putJob(next)
+            // what the PCI and surveys say: ticked facts → job notes, ticked missing work → unpriced VOs, each with its quote
+            const from = (x: { document: string; page: number | null; quote: string }) => `${x.document.replace(/\.[^.]+$/, '')}${x.page ? `, p. ${x.page}` : ''}: “${x.quote}”`
+            const today = dayKey()
+            for (const x of pack.facts?.facts.filter(f => f.include) ?? [])
+              await db.putDiary({ id: uid(), jobId: job.id, date: today, type: 'note', note: `${x.text}${x.properties.length ? ` (no${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')})` : ''}\n— ${from(x)}`, labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: x.category, pinned: x.category === 'H&S', createdAt: Date.now() })
+            for (const x of pack.facts?.extras.filter(e => e.include) ?? [])
+              await db.putVariation({ id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: x.text, room: x.properties.length ? `No${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')}` : '', qty: null, unit: '', rate: null, code: '', reason: `${x.why ? x.why + ' ' : ''}— ${from(x)}`, clientRef: '', status: 'Identified', photoIds: [], dateRaised: Date.now(), valuationId: null })
             setImporting(false); await reload()
           }} />
       )}

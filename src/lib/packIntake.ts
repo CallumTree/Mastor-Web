@@ -1,12 +1,14 @@
 /**
  * Reading the client's whole pack at once: spec list, works orders, PCI, surveys. Each file is
  * sorted by what it actually is (not its name): schedules and works orders are read exactly; the
- * rest are kept with the job's documents. Only when nothing in the pack can be read exactly does
+ * rest are kept with the job’s documents and read by the AI for site facts and missing work
+ * (see packFacts.ts). Only when nothing in the pack can be read exactly does
  * the AI reader take a schedule — and then its lines are flagged for checking as before.
  */
 import { parseBoqRemote, readBoqFile, type ParsedBoq } from './boq'
 import { docxEvents, docxXml, readWorksOrder, type WorksOrder } from './worksOrder'
 import { readPack, type PackRead } from './pack'
+import { docText, readPackFacts, scopeSummary, type PackDoc, type PackFacts } from './packFacts'
 
 export type FileRole =
   | { role: 'spec'; detail: string }
@@ -15,7 +17,7 @@ export type FileRole =
   | { role: 'document'; detail: string }
 
 export interface PackFile { file: File; as: FileRole }
-export interface PackResult extends PackRead { files: PackFile[] }
+export interface PackResult extends PackRead { files: PackFile[]; facts?: PackFacts }
 
 const readAsBuffer = (f: Blob) => new Promise<ArrayBuffer>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as ArrayBuffer); r.onerror = () => rej(r.error); r.readAsArrayBuffer(f) })
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
@@ -61,5 +63,17 @@ export async function readPackFiles(files: File[], onProgress?: (name: string) =
     }
     if (!specs.length) throw lastErr ?? new Error('Nothing in these files reads as a schedule, BoQ or works order.')
   }
-  return { ...readPack(specs, orders), files: out, method: specs.some(s => s.method === 'ai') ? 'ai' : 'table' }
+  const pack = readPack(specs, orders)
+  // the rest of the pack (PCI, risk register, surveys): read for site facts and work the scope is missing
+  const docs: PackDoc[] = []
+  for (const f of out) {
+    if (f.as.role !== 'document') continue
+    try { const text = await docText(f.file); if (text && text.replace(/\s/g, '').length > 200) docs.push({ name: f.file.name, text }) } catch (e) { console.warn('pack text', f.file.name, e) }
+  }
+  let facts: PackFacts | undefined
+  if (docs.length) {
+    onProgress?.(docs.length === 1 ? docs[0].name : `${docs.length} documents for site facts`)
+    facts = await readPackFacts(docs, scopeSummary(pack.lines))
+  }
+  return { ...pack, files: out, facts, method: specs.some(s => s.method === 'ai') ? 'ai' : 'table' }
 }
