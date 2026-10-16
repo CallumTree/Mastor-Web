@@ -115,7 +115,7 @@ export default function App() {
           onDeleteScope={items => run(async () => { for (const i of items) if (!lockedIn(i, jobVals)) await db.deleteScope(i.id) })()}
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)} onCheckRates={books.length ? () => setChecking(true) : undefined}
           onEvidence={async () => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(schemeEvidence(job, jobScope, jobVals, jobDiary, company)), evidenceFileName(job, 'scheme')) }}
-          onIssue={v => run(() => issueValuation(v))()}
+          onIssue={async v => { const issued = await issueValuation(v); await reload(); return issued }}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
           onImportVo={() => setVoImport(true)}

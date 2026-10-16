@@ -3,7 +3,8 @@ import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
-import { lineValue, valRef, valTotals } from '../lib/valuation'
+import { issuePlan, lineValue, valRef, valTotals } from '../lib/valuation'
+import { Plate } from '../components/Sign'
 import { CourtLine, valCourt } from '../lib/chase'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
@@ -40,14 +41,14 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
 export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate, onCreateInvoice, onInvoicePdf }: {
   job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]
   onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
-  onIssue: (v: Valuation) => void; onDeleteOpen: (v: Valuation) => void; go: (t: 'scope' | 'vos') => void
+  onIssue: (v: Valuation) => Promise<Valuation>; onDeleteOpen: (v: Valuation) => void; go: (t: 'scope' | 'vos') => void
   onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>
   onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
 }) {
   const [making, setMaking] = useState<string | null>(null)
   const cert = async (v: Valuation) => { setMaking(v.id); try { await onCertificate(v) } finally { setMaking(null) } }
   const [paying, setPaying] = useState<Valuation | null>(null)
-  const [confirmIssue, setConfirmIssue] = useState(false)
+  const [issuing, setIssuing] = useState<Valuation | null>(null)
   const [expandedPick, setExpanded] = useState<string | null | undefined>(undefined) // undefined = newest issued open by default
   const [showLines, setShowLines] = useState<string | null>(null)
   const sorted = [...vals].sort((a, b) => b.number - a.number)
@@ -100,15 +101,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           <div className="stack" style={{ marginTop: 14 }}>
             {!job.poNumber && <div className="flag">No PO number on this job — add it in job setup before issuing.</div>}
             {current.lines > 0 && <button className="btn btn-secondary" disabled={making === open.id} onClick={() => cert(open)}>{making === open.id ? 'Preparing…' : 'Preview certificate (draft)'}</button>}
-            {confirmIssue ? (
-              <>
-                <div style={{ fontSize: 13 }}>Issuing locks every line in {valRef(open.number)}. They can't be unticked afterwards. Next ticks start {valRef(open.number + 1)}.</div>
-                <button className="btn btn-primary" onClick={() => { setConfirmIssue(false); onIssue(open) }}>Issue {valRef(open.number)} for {money(current.gross)}</button>
-                <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setConfirmIssue(false)}>Cancel</button>
-              </>
-            ) : (
-              <button className="btn btn-primary" disabled={current.lines === 0} onClick={() => setConfirmIssue(true)}>Issue {valRef(open.number)}</button>
-            )}
+            <button className="btn btn-primary" disabled={current.lines === 0} onClick={() => setIssuing(open)}>Issue {valRef(open.number)}</button>
             <ConfirmDelete label="Delete this valuation…" confirmLabel={<>Delete {valRef(open.number)}</>} note={`Every line in ${valRef(open.number)} goes back to live. Nothing else is lost.`} onConfirm={() => onDeleteOpen(open)} />
           </div>
         </div>
@@ -156,6 +149,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           })}
         </div>
       )}
+      {issuing && <IssueSheet job={job} val={issuing} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate}
+        onCreateInvoice={v => { setIssuing(null); onCreateInvoice(v) }} onClose={() => setIssuing(null)} />}
       {paying && <PaidSheet v={paying} gross={paying.invoiceNumber ? invoiceAmounts(job, paying, scope, vos).total : valTotals(job, paying.id, scope, vos).gross} onClose={() => setPaying(null)} onSave={x => { onPaid(x); setPaying(null) }} />}
     </div>
   )
@@ -179,6 +174,61 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
         {isFinite(n) && n < gross - 0.005 && <div className="flag">{money(gross - n)} will still show as owed</div>}
         <button className="btn btn-primary" disabled={!date || !isFinite(n) || n <= 0} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(n * 100) / 100 }) }}>Save payment</button>
         {v.paidAt && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...v, paidAt: null, paidAmount: null })}>Remove payment (not paid)</button>}
+      </div>
+    </Sheet>
+  )
+}
+
+/**
+ * Issuing a valuation: what it certifies (by property or trade, uplifts, running total), what the client's
+ * QS would query, a draft certificate to look at — then, once it's locked, the invoice as the next step.
+ */
+function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onCreateInvoice, onClose }: {
+  job: Job; val: Valuation; vals: Valuation[]; scope: ScopeItem[]; vos: Variation[]
+  onIssue: (v: Valuation) => Promise<Valuation>; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onClose: () => void
+}) {
+  const [done, setDone] = useState<Valuation | null>(null)
+  const [busy, setBusy] = useState<'issue' | 'cert' | null>(null)
+  const p = issuePlan(job, val, vals, scope, vos)
+  const ref = valRef(val.number)
+  const cert = async (v: Valuation) => { setBusy('cert'); try { await onCertificate(v) } finally { setBusy(null) } }
+  if (done) return (
+    <Sheet onClose={onClose} label={`${ref} issued`}>
+      <div className="stack">
+        <div className="label bracket">{ref} · issued</div>
+        <Plate kind="ok">{ref} issued for {money(p.totals.gross)} — locked</Plate>
+        <div className="muted" style={{ fontSize: 14 }}>{p.totals.lines} line{p.totals.lines === 1 ? '' : 's'} certified. {money(p.cumulative)} certified to date{p.pct != null ? ` (${p.pct}% of contract and VOs)` : ''}. Next ticks start {valRef(val.number + 1)}.</div>
+        <button className="btn btn-primary" onClick={() => onCreateInvoice(done)}>Create invoice</button>
+        <button className="btn btn-secondary" disabled={busy === 'cert'} onClick={() => cert(done)}>{busy === 'cert' ? 'Preparing…' : 'Certificate PDF'}</button>
+        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onClose}>Done — invoice later</button>
+      </div>
+    </Sheet>
+  )
+  return (
+    <Sheet onClose={onClose} locked={busy === 'issue'} label={`Issue ${ref}`}>
+      <div className="stack">
+        <div className="label bracket">Issue {ref}</div>
+        <div className="panel">
+          <div className="row" style={{ alignItems: 'baseline' }}>
+            <div className="grow"><div className="label">This valuation</div><div className="amt" style={{ fontSize: 28, fontWeight: 700 }}>{money(p.totals.gross)}</div></div>
+            <div style={{ textAlign: 'right' }}><div className="label">Lines</div><div className="amt" style={{ fontSize: 22, fontWeight: 700 }}>{p.totals.lines}</div></div>
+          </div>
+          <div className="muted" style={{ fontSize: 13 }}>incl. uplifts, excl. VAT{job.poNumber ? ` · PO ${job.poNumber}` : ''}</div>
+          <div className="issue-table" style={{ marginTop: 10, fontSize: 14 }}>
+            {p.groups.map(g => <div key={g.name} className="row"><span className="grow">{g.name} <small className="muted">· {g.lines} line{g.lines === 1 ? '' : 's'}</small></span><span className="amt">{money(g.base)}</span></div>)}
+            <div className="row" style={{ borderTop: '1px solid var(--cream-line)', paddingTop: 4, marginTop: 4 }}><span className="grow">Base</span><span className="amt">{money(p.totals.base)}</span></div>
+            {p.u1 !== 0 && <div className="row"><span className="grow">Uplift 1 · {job.uplift1}%</span><span className="amt">{money(p.u1)}</span></div>}
+            {p.u2 !== 0 && <div className="row"><span className="grow">Uplift 2 · {job.uplift2}%</span><span className="amt">{money(p.u2)}</span></div>}
+            <div className="row" style={{ fontWeight: 700 }}><span className="grow">This valuation</span><span className="amt">{money(p.totals.gross)}</span></div>
+            <div className="row muted"><span className="grow">Previously certified</span><span className="amt">{money(p.previous)}</span></div>
+            <div className="row" style={{ fontWeight: 600 }}><span className="grow">Cumulative{p.pct != null ? ` · ${p.pct}% of contract + VOs` : ''}</span><span className="amt">{money(p.cumulative)}</span></div>
+          </div>
+        </div>
+        {p.checks.map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
+        <button className="btn btn-secondary" disabled={busy !== null} onClick={() => cert(val)}>{busy === 'cert' ? 'Preparing…' : 'Preview certificate (draft)'}</button>
+        <div className="muted" style={{ fontSize: 13 }}>Issuing locks every line in {ref}: they can’t be unticked or edited afterwards.</div>
+        <button className="btn btn-primary" disabled={busy !== null} onClick={async () => { setBusy('issue'); try { setDone(await onIssue(val)) } finally { setBusy(null) } }}>Issue {ref} for {money(p.totals.gross)}</button>
+        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onClose}>Not yet</button>
       </div>
     </Sheet>
   )

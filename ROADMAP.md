@@ -14,6 +14,7 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 | ✓ | Completion evidence pack | One PDF per property/order with lines, before/after photos and sign-off |
 | ✓ | Dayworks sheets | Hours and materials on site, priced from the SoR labour rates, signed |
 | ✓ | Operatives see no money | Rates, values, costs and invoices hidden for the operative role |
+| ✓ | Issuing a valuation | One sheet: what it certifies by property or trade, uplifts and running total, what the client's QS would query (no PO, uninstructed VOs, over-claiming), a draft certificate — then Create invoice as the next step |
 | ✓ | Xero / QuickBooks invoice export | No typing invoices twice |
 | ✓ | Team invites, AI reading locked to members | Multi-user, and no one else can spend the AI credit |
 
@@ -32,7 +33,6 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 3. Supabase Pro + backups, own email sender; Vercel Pro; domain; Anthropic spend limit.
 4. Privacy policy and terms; ICO fee if applicable.
 5. Restyle the PDFs to the signage language.
-6. Issuing a valuation: confirm sheet with certificate preview, then "Create invoice" as the next step (open from the second critique).
 
 ## Parked
 
