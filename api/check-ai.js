@@ -60,18 +60,20 @@ export default async function handler(req, res) {
   else tasks.push(limit(gname, async () => {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}`, { headers: { 'x-goog-api-key': g } })
     if (!r.ok) return { name: gname, ok: false, detail: r.status === 404 ? `Model “${GEMINI_MODEL}” not found — set GEMINI_MODEL in Vercel to the name shown in Google AI Studio.` : r.status === 400 || r.status === 403 ? 'The Gemini key was refused — check GEMINI_API_KEY in Vercel.' : `Google said: ${await reason(r)}` }
-    await transcribe(silentWav(), 'audio/wav', g)
-    return { name: gname, ok: true, detail: `Key works; ${GEMINI_MODEL} transcribed a test clip.` }
-  }, 'The test clip didn’t go through'))
+    // key and model are proven; the test clip proves audio — but a slow answer isn't a broken setup
+    const clip = await limit(gname, async () => { await transcribe(silentWav(), 'audio/wav', g); return { name: gname, ok: true, detail: `Key works; ${GEMINI_MODEL} transcribed a test clip.` } }, 'The test clip didn’t go through')
+    if (/^Took too long/.test(clip.detail)) return { name: gname, ok: true, detail: `Key and model ${GEMINI_MODEL} work, but Gemini was slow to transcribe the test clip just now (over 20 seconds). Voice notes will still be read — just slower. Check again later to confirm.` }
+    return clip
+  }, 'Couldn’t reach Google from the server', limitMs() * 2.25))   // lookup + test clip
   checks.push(...await Promise.all(tasks))
   return res.status(200).json({ checks, build: buildInfo() })
 }
 
 const limitMs = () => Number(process.env.CHECK_LIMIT_MS) || 20_000
 /** Runs one check; a failure or a hang comes back as a red line instead of stopping the others. */
-async function limit(name, run, failPrefix) {
+async function limit(name, run, failPrefix, ms = limitMs()) {
   let timer
-  const slow = new Promise(r => { timer = setTimeout(() => r({ name, ok: false, detail: 'Took too long to answer (over 20 seconds) — the service may be busy. Try again in a minute.' }), limitMs()) })
+  const slow = new Promise(r => { timer = setTimeout(() => r({ name, ok: false, detail: `Took too long to answer (over ${Math.round(ms / 1000)} seconds) — the service may be busy. Try again in a minute.` }), ms) })
   try { return await Promise.race([run(), slow]) }
   catch (e) { return { name, ok: false, detail: `${failPrefix}: ${e.message}` } }
   finally { clearTimeout(timer) }
