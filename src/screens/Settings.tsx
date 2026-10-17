@@ -145,16 +145,18 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onC
 
 /** One tap: is every AI service Mastor uses set up and answering? Green or red, with what to fix. */
 function AiSetup() {
-  const [res, setRes] = useState<AiCheck[] | null>(null)
+  const [out, setOut] = useState<{ checks: AiCheck[]; build?: string } | null>(null)
+  const res = out?.checks ?? null
   const [busy, setBusy] = useState(false)
   return (
     <>
       <div className="label bracket" style={{ marginTop: 22 }}>AI setup</div>
       <div className="muted" style={{ fontSize: 13 }}>Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Uses one of today’s reads.</div>
-      <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setRes(null); try { setRes(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
+      <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setOut(null); try { setOut(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
       {res && <div className="stack" role="status" style={{ gap: 6 }}>
         {res.map(c => <div key={c.name}><Plate kind={c.ok ? 'ok' : 'stop'}>{c.name}</Plate><div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{c.detail}</div></div>)}
         {res.every(c => c.ok) && <div style={{ fontSize: 14, fontWeight: 600 }}>All working.</div>}
+        {out?.build && <div className="muted mono" style={{ fontSize: 12 }}>Checked on: {out.build}</div>}
       </div>}
     </>
   )

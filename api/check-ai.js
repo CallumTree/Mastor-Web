@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   const ok = await guard(req, capture, 'check')
   if (!ok && blocked?.status === 401) return res.status(401).json({ error: blocked.error })
   const checks = [{ name: 'Sign-in and daily AI limit', ok, detail: ok ? 'Working — reads are counted against your company’s daily limit.' : blocked?.error || 'Couldn’t check.' }]
-  if (!ok) return res.status(200).json({ checks })
+  if (!ok) return res.status(200).json({ checks, build: buildInfo() })
 
   // Anthropic: the key, and each model in use
   const key = process.env.ANTHROPIC_API_KEY
@@ -64,5 +64,13 @@ export default async function handler(req, res) {
       }
     } catch (e) { checks.push({ name: 'Gemini (voice and video)', ok: false, detail: `The test clip didn’t go through: ${e.message}` }) }
   }
-  return res.status(200).json({ checks })
+  return res.status(200).json({ checks, build: buildInfo() })
+}
+
+/** Which deployment answered — so "I redeployed" can be confirmed, not guessed. */
+function buildInfo() {
+  const env = process.env.VERCEL_ENV || 'local'
+  const sha = (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7)
+  const branch = process.env.VERCEL_GIT_COMMIT_REF || ''
+  return `${env}${branch ? ` · ${branch}` : ''}${sha ? ` · ${sha}` : ''}`
 }
