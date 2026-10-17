@@ -45,8 +45,8 @@ export default async function handler(req, res) {
       try {
         const r = await fetch(`https://api.anthropic.com/v1/models/${encodeURIComponent(m)}`, { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' } })
         checks.push(r.ok
-          ? { name: `Claude · ${what.join(', ')}`, ok: true, detail: `Key works; model ${m} is available.` }
-          : { name: `Claude · ${what.join(', ')}`, ok: false, detail: r.status === 401 ? `The Anthropic key was refused${key.startsWith('sk-ant-') ? '' : ' — it doesn’t look like an Anthropic API key (those start “sk-ant-”)'}. Make a new one at console.anthropic.com → API keys and paste it into ANTHROPIC_API_KEY.` : r.status === 404 ? `Model “${m}” not found — check the model name in Vercel.` : `Anthropic said: ${await reason(r)}` })
+          ? { name: `Claude · ${what.join(', ')}`, ok: true, detail: `Key ending “…${key.slice(-4)}” works; model ${m} is available.` }
+          : { name: `Claude · ${what.join(', ')}`, ok: false, detail: r.status === 401 ? `The Anthropic key ending “…${key.slice(-4)}” was refused${key.startsWith('sk-ant-') ? '' : ' — it doesn’t look like an Anthropic API key (those start “sk-ant-”)'}. Make a new one at console.anthropic.com → API keys and paste it into ANTHROPIC_API_KEY.` : r.status === 404 ? `Model “${m}” not found — check the model name in Vercel.` : `Anthropic said: ${await reason(r)}` })
       } catch { checks.push({ name: `Claude · ${what.join(', ')}`, ok: false, detail: 'Couldn’t reach Anthropic from the server.' }) }
     }
   }

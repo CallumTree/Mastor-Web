@@ -42,10 +42,10 @@ r = await call()
 ok(line(r, /BoQs/).detail === 'Model “claude-sonnet-5” not found — check the model name in Vercel.', 'wrong Claude model name: names it')
 anthropic = 401
 r = await call()
-ok(/key was refused — it doesn’t look like an Anthropic API key/.test(line(r, /BoQs/).detail), 'refused key that isn’t sk-ant-…: says it doesn’t look like one')
+ok(/was refused — it doesn’t look like an Anthropic API key/.test(line(r, /BoQs/).detail), 'refused key that isn’t sk-ant-…: says it doesn’t look like one')
 process.env.ANTHROPIC_API_KEY = '  "sk-ant-abc"\n'
 r = await call()
-ok(sentKey === 'sk-ant-abc' && /^The Anthropic key was refused\. Make a new one/.test(line(r, /BoQs/).detail), 'stray spaces, quotes and line breaks from pasting are stripped')
+ok(sentKey === 'sk-ant-abc' && /^The Anthropic key ending “…-abc” was refused\. Make a new one/.test(line(r, /BoQs/).detail), 'stray spaces, quotes and line breaks from pasting are stripped')
 anthropic = 200; geminiModel = 404
 r = await call()
 ok(/Model “gemini-3\.8-flash” not found — set GEMINI_MODEL/.test(line(r, /^Gemini/).detail), 'wrong Gemini model name: says where to fix it')
