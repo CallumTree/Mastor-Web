@@ -3,6 +3,8 @@ import check from '../api/check-ai.js'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
 
+process.env.CHECK_LIMIT_MS = '300'
+let hang = false
 let sentKey = ''
 let guardStatus = 200, anthropic = 200, geminiModel = 200, geminiGen = 200
 const hits: string[] = []
@@ -11,6 +13,7 @@ globalThis.fetch = (async (url: string, init: any = {}) => {
   if (url.includes('/rpc/use_ai')) { hits.push('guard'); return guardStatus === 200 ? new Response('3', { status: 200 }) : new Response(JSON.stringify({ code: 'PGRST202', message: 'Could not find the function' }), { status: 404 }) }
   if (url.includes('api.anthropic.com/v1/models/')) { sentKey = init.headers['x-api-key']; hits.push('claude:' + decodeURIComponent(url.split('/').pop()!)); return new Response(JSON.stringify(anthropic === 200 ? { id: 'x' } : { error: { message: 'nope' } }), { status: anthropic }) }
   if (url.includes(':generateContent')) { hits.push('gemini:gen'); return new Response(JSON.stringify(geminiGen === 200 ? { candidates: [{ content: { parts: [{ text: '(no speech)' }] } }] } : { error: { message: 'audio not supported' } }), { status: geminiGen }) }
+  if (url.includes('generativelanguage') && hang) return new Promise<Response>(() => {})
   if (url.includes('generativelanguage')) { hits.push('gemini:model'); return new Response('{}', { status: geminiModel }) }
   return new Response('{}', { status: 500 })
 }) as typeof fetch
@@ -52,6 +55,12 @@ ok(/Model “gemini-3\.8-flash” not found — set GEMINI_MODEL/.test(line(r, /
 geminiModel = 200; geminiGen = 400
 r = await call()
 ok(!line(r, /^Gemini/).ok && /audio not supported/.test(line(r, /^Gemini/).detail), 'key and model fine but audio fails: Google’s reason shown')
+
+geminiGen = 200; hang = true
+const t0 = Date.now()
+r = await call()
+ok(/Took too long/.test(line(r, /^Gemini/).detail) && line(r, /BoQs/).ok && Date.now() - t0 < 2000, 'a service that hangs: “took too long” on its line, the others still report')
+hang = false
 
 console.log(`\n${pass} passed, ${fail} failed`)
 if (fail) process.exit(1)
