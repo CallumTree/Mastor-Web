@@ -13,8 +13,8 @@ import { guard, SB_URL, SB_KEY } from './_guard.js'
 
 export const config = { maxDuration: 300 }
 
-const CLAUDE_MODEL = process.env.ANTHROPIC_SITE_MODEL || 'claude-opus-5-5'
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+export const CLAUDE_MODEL = process.env.ANTHROPIC_SITE_MODEL || 'claude-opus-5-5'
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 const GEMINI = 'https://generativelanguage.googleapis.com'
 const INLINE_MAX = 14 * 1024 * 1024   // larger clips go through Gemini's file upload
 
@@ -51,7 +51,7 @@ async function download(companyId, mediaId, token) {
 }
 
 /** Gemini: small files inline, larger ones through the resumable file upload. */
-async function transcribe(bytes, mime, key) {
+export async function transcribe(bytes, mime, key) {
   let part
   if (bytes.length <= INLINE_MAX) part = { inline_data: { mime_type: mime, data: bytes.toString('base64') } }
   else {

@@ -12,7 +12,7 @@ import { guard } from './_guard.js'
 
 export const config = { maxDuration: 300 }
 
-const MODEL = process.env.ANTHROPIC_PACK_MODEL || 'claude-opus-5-5'
+export const MODEL = process.env.ANTHROPIC_PACK_MODEL || 'claude-opus-5-5'
 const PER_DOC = 120_000, TOTAL = 360_000
 
 const SYSTEM = `You read the documents a UK social-housing client sends a maintenance contractor before a job starts:
