@@ -3,12 +3,13 @@ import check from '../api/check-ai.js'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
 
+let sentKey = ''
 let guardStatus = 200, anthropic = 200, geminiModel = 200, geminiGen = 200
 const hits: string[] = []
-globalThis.fetch = (async (url: string) => {
+globalThis.fetch = (async (url: string, init: any = {}) => {
   url = String(url)
   if (url.includes('/rpc/use_ai')) { hits.push('guard'); return guardStatus === 200 ? new Response('3', { status: 200 }) : new Response(JSON.stringify({ code: 'PGRST202', message: 'Could not find the function' }), { status: 404 }) }
-  if (url.includes('api.anthropic.com/v1/models/')) { hits.push('claude:' + decodeURIComponent(url.split('/').pop()!)); return new Response(JSON.stringify(anthropic === 200 ? { id: 'x' } : { error: { message: 'nope' } }), { status: anthropic }) }
+  if (url.includes('api.anthropic.com/v1/models/')) { sentKey = init.headers['x-api-key']; hits.push('claude:' + decodeURIComponent(url.split('/').pop()!)); return new Response(JSON.stringify(anthropic === 200 ? { id: 'x' } : { error: { message: 'nope' } }), { status: anthropic }) }
   if (url.includes(':generateContent')) { hits.push('gemini:gen'); return new Response(JSON.stringify(geminiGen === 200 ? { candidates: [{ content: { parts: [{ text: '(no speech)' }] } }] } : { error: { message: 'audio not supported' } }), { status: geminiGen }) }
   if (url.includes('generativelanguage')) { hits.push('gemini:model'); return new Response('{}', { status: geminiModel }) }
   return new Response('{}', { status: 500 })
@@ -41,10 +42,13 @@ r = await call()
 ok(line(r, /BoQs/).detail === 'Model “claude-sonnet-5” not found — check the model name in Vercel.', 'wrong Claude model name: names it')
 anthropic = 401
 r = await call()
-ok(/key was refused/.test(line(r, /BoQs/).detail), 'refused Anthropic key: says so')
+ok(/key was refused — it doesn’t look like an Anthropic API key/.test(line(r, /BoQs/).detail), 'refused key that isn’t sk-ant-…: says it doesn’t look like one')
+process.env.ANTHROPIC_API_KEY = '  "sk-ant-abc"\n'
+r = await call()
+ok(sentKey === 'sk-ant-abc' && /^The Anthropic key was refused\. Make a new one/.test(line(r, /BoQs/).detail), 'stray spaces, quotes and line breaks from pasting are stripped')
 anthropic = 200; geminiModel = 404
 r = await call()
-ok(/Model “gemini-2\.5-flash” not found — set GEMINI_MODEL/.test(line(r, /^Gemini/).detail), 'wrong Gemini model name: says where to fix it')
+ok(/Model “gemini-3\.8-flash” not found — set GEMINI_MODEL/.test(line(r, /^Gemini/).detail), 'wrong Gemini model name: says where to fix it')
 geminiModel = 200; geminiGen = 400
 r = await call()
 ok(!line(r, /^Gemini/).ok && /audio not supported/.test(line(r, /^Gemini/).detail), 'key and model fine but audio fails: Google’s reason shown')

@@ -10,6 +10,11 @@
  */
 export const SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://susecnvepvwmqhziferf.supabase.co'
 export const SB_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_BrmA2y4zsAablFTqNCWvPA_thOHgiGf'
+/** API keys from Vercel, with any stray spaces, quotes or line breaks from copy-and-paste removed. */
+export const envKey = name => (process.env[name] || '').trim().replace(/^["']|["']$/g, '').trim()
+export const anthropicKey = () => envKey('ANTHROPIC_API_KEY')
+export const geminiKey = () => envKey('GEMINI_API_KEY')
+
 export const MAX_BODY_CHARS = 4_400_000 // Vercel refuses request bodies over 4.5 MB anyway
 
 /** Returns true when the request may go ahead; otherwise it has already answered the request. */

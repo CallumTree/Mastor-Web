@@ -5,7 +5,7 @@
  *
  * The API key lives only in Vercel's environment (ANTHROPIC_API_KEY) — never in the app.
  */
-import { guard } from './_guard.js'
+import { guard, anthropicKey } from './_guard.js'
 
 export const config = { maxDuration: 300 }
 
@@ -43,7 +43,7 @@ RULES — accuracy matters more than completeness:
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' })
-  const key = process.env.ANTHROPIC_API_KEY
+  const key = anthropicKey()
   if (!key) return res.status(503).json({ error: 'AI is not set up yet — add ANTHROPIC_API_KEY in Vercel (Settings → Environment Variables), then redeploy.' })
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body

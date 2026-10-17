@@ -9,12 +9,12 @@
  * Body: { companyId, items: [{ key, kind, mediaId, note, room, date }], lines: [{ key, text, claimed }], vos: [text] }
  * Returns: { transcripts: { key: text }, suggestions: [...], failed: { key: reason } }
  */
-import { guard, SB_URL, SB_KEY } from './_guard.js'
+import { guard, SB_URL, SB_KEY, anthropicKey, geminiKey } from './_guard.js'
 
 export const config = { maxDuration: 300 }
 
 export const CLAUDE_MODEL = process.env.ANTHROPIC_SITE_MODEL || 'claude-opus-5-5'
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash'
 const GEMINI = 'https://generativelanguage.googleapis.com'
 const INLINE_MAX = 14 * 1024 * 1024   // larger clips go through Gemini's file upload
 
@@ -71,13 +71,13 @@ export async function transcribe(bytes, mime, key) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' })
-  const key = process.env.ANTHROPIC_API_KEY
+  const key = anthropicKey()
   if (!key) return res.status(503).json({ error: 'AI is not set up yet — add ANTHROPIC_API_KEY in Vercel, then redeploy.' })
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
   const items = Array.isArray(body?.items) ? body.items.slice(0, 12) : []
   if (!items.length || !body.companyId) return res.status(400).json({ error: 'Nothing to read.' })
   const needsAudio = items.some(i => i.kind === 'voice' || i.kind === 'video')
-  if (needsAudio && !process.env.GEMINI_API_KEY) return res.status(503).json({ error: 'Voice and video reading isn’t set up yet — add GEMINI_API_KEY in Vercel, then redeploy.' })
+  if (needsAudio && !geminiKey()) return res.status(503).json({ error: 'Voice and video reading isn’t set up yet — add GEMINI_API_KEY in Vercel, then redeploy.' })
   if (!(await guard(req, res, 'site'))) return
   const token = String(req.headers.authorization).slice(7).trim()
 
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
         content.push({ type: 'text', text: '</capture>' })
       } else {
         const mime = it.kind === 'voice' ? 'audio/wav' : (file.type.startsWith('video/') ? file.type : 'video/mp4')
-        const t = await transcribe(file.bytes, mime, process.env.GEMINI_API_KEY)
+        const t = await transcribe(file.bytes, mime, geminiKey())
         transcripts[it.key] = t
         content.push({ type: 'text', text: `${head}\nTranscript: ${t}${it.note ? `\nCaption: ${it.note}` : ''}\n</capture>` })
       }

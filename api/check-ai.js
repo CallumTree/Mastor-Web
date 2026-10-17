@@ -6,7 +6,7 @@
  *    which proves audio really goes through.
  * Nothing is checked for someone who isn't a signed-in member.
  */
-import { guard } from './_guard.js'
+import { guard, anthropicKey, geminiKey } from './_guard.js'
 import { MODEL as PACK_MODEL } from './read-pack.js'
 import { CLAUDE_MODEL as SITE_MODEL, GEMINI_MODEL, transcribe } from './read-site.js'
 
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   if (!ok) return res.status(200).json({ checks, build: buildInfo() })
 
   // Anthropic: the key, and each model in use
-  const key = process.env.ANTHROPIC_API_KEY
+  const key = anthropicKey()
   if (!key) checks.push({ name: 'Claude (reading documents and site captures)', ok: false, detail: 'ANTHROPIC_API_KEY isn’t set in Vercel. Add it, then redeploy.' })
   else {
     const uses = new Map()
@@ -46,13 +46,13 @@ export default async function handler(req, res) {
         const r = await fetch(`https://api.anthropic.com/v1/models/${encodeURIComponent(m)}`, { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' } })
         checks.push(r.ok
           ? { name: `Claude · ${what.join(', ')}`, ok: true, detail: `Key works; model ${m} is available.` }
-          : { name: `Claude · ${what.join(', ')}`, ok: false, detail: r.status === 401 ? 'The Anthropic key was refused — check ANTHROPIC_API_KEY in Vercel.' : r.status === 404 ? `Model “${m}” not found — check the model name in Vercel.` : `Anthropic said: ${await reason(r)}` })
+          : { name: `Claude · ${what.join(', ')}`, ok: false, detail: r.status === 401 ? `The Anthropic key was refused${key.startsWith('sk-ant-') ? '' : ' — it doesn’t look like an Anthropic API key (those start “sk-ant-”)'}. Make a new one at console.anthropic.com → API keys and paste it into ANTHROPIC_API_KEY.` : r.status === 404 ? `Model “${m}” not found — check the model name in Vercel.` : `Anthropic said: ${await reason(r)}` })
       } catch { checks.push({ name: `Claude · ${what.join(', ')}`, ok: false, detail: 'Couldn’t reach Anthropic from the server.' }) }
     }
   }
 
   // Gemini: key and model, then a real (tiny) transcription
-  const g = process.env.GEMINI_API_KEY
+  const g = geminiKey()
   if (!g) checks.push({ name: 'Gemini (voice and video)', ok: false, detail: 'GEMINI_API_KEY isn’t set in Vercel. Add it (tick Production and Preview), then redeploy.' })
   else {
     try {
