@@ -27,3 +27,4 @@ export const IconLock = (p: P) => <S {...p}><rect x="5" y="11" width="14" height
 export const IconPin = (p: P) => <S {...p}><path d="M8 3h8M10 3v6l-3 4h10l-3-4V3" /><path d="M12 13v8" /><circle cx="12" cy="9" r="1" fill={COPPER} stroke="none" /></S>
 export const IconDoc = (p: P) => <S {...p}><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4" /><path d="M9 12h7M9 15h7M9 18h4" strokeWidth={1.2} /><circle cx="9" cy="8" r="1" fill={COPPER} stroke="none" /></S>
 export const IconVideo = (p: P) => <S {...p}><rect x="3" y="7" width="13" height="11" /><path d="M16 11l5-3v9l-5-3" /><circle cx="6" cy="10" r="1" fill={COPPER} stroke="none" /></S>
+export const IconMic = (p: P) => <S {...p}><rect x="9" y="3" width="6" height="11" /><path d="M6 11v4h12v-4M12 15v5M8 20h8" /><circle cx="12" cy="7" r="1" fill={COPPER} stroke="none" /></S>

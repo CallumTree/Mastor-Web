@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
+import type { DiaryEntry, Job, ScopeItem, SiteSuggestion, Valuation, Variation } from '../lib/types'
+import { SiteReview } from './SiteReview'
 import { IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
@@ -38,12 +39,13 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   )
 }
 
-export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate, onCreateInvoice, onInvoicePdf }: {
+export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate, onCreateInvoice, onInvoicePdf, diary = [], onDecideSite }: {
   job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]
   onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
   onIssue: (v: Valuation) => Promise<Valuation>; onDeleteOpen: (v: Valuation) => void; go: (t: 'scope' | 'vos') => void
   onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>
   onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
+  diary?: DiaryEntry[]; onDecideSite?: (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => Promise<void>
 }) {
   const [making, setMaking] = useState<string | null>(null)
   const cert = async (v: Valuation) => { setMaking(v.id); try { await onCertificate(v) } finally { setMaking(null) } }
@@ -80,6 +82,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         { label: 'Paid', value: money(paid), note: 'as received', nil: !paid },
         { label: 'Owed', value: money(owed), note: overdue ? `${overdue} overdue` : 'incl. VAT once invoiced', hot: owed > 0, nil: !owed },
       ]} />
+
+      {onDecideSite && <SiteReview diary={diary} scope={scope} valLabel={valRef(open?.number ?? nextNo)} onDecide={onDecideSite} />}
 
       {open && current ? (
         <div className="card" style={{ padding: 12 }}>

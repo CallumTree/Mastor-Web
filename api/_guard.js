@@ -8,8 +8,8 @@
  * finds the company and counts the read.
  * (Files starting with "_" in /api are not routes on Vercel.)
  */
-const SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://susecnvepvwmqhziferf.supabase.co'
-const SB_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_BrmA2y4zsAablFTqNCWvPA_thOHgiGf'
+export const SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://susecnvepvwmqhziferf.supabase.co'
+export const SB_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_BrmA2y4zsAablFTqNCWvPA_thOHgiGf'
 export const MAX_BODY_CHARS = 4_400_000 // Vercel refuses request bodies over 4.5 MB anyway
 
 /** Returns true when the request may go ahead; otherwise it has already answered the request. */

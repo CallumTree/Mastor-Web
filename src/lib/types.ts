@@ -63,6 +63,7 @@ export interface ScopeItem {
   hours?: number | null      // labour hours from the schedule, if given
   rateBook?: string          // which rate book the rate came from, when looked up
   orderId?: string           // small works orders: the order this line belongs to
+  evidence?: string[]         // diary captures (photos, video, voice) that showed it done
   contract?: string          // the client's contract / works order ref for this line (packs with several), e.g. MH21180
   createdAt: number
 }
@@ -92,7 +93,7 @@ export interface DiaryEntry {
   id: string
   jobId: string
   date: string                 // YYYY-MM-DD (UK local day)
-  type: 'day' | 'photo' | 'video' | 'note'
+  type: 'day' | 'photo' | 'video' | 'voice' | 'note'
   note: string                 // day note, or the photo/video caption
   labour: number | null        // day only — operatives on site
   weather: string              // day only
@@ -102,7 +103,24 @@ export interface DiaryEntry {
   voId: string | null          // variation raised from this photo
   category?: NoteCategory      // job notes only
   pinned?: boolean             // job notes only
+  transcript?: string          // voice / video: what was said, transcribed when the day is read
+  read?: SiteRead              // what reading it against the scope suggested
   createdAt: number
+}
+
+/** One site capture read against the job's scope. Suggestions wait for a person in Vals. */
+export interface SiteRead { at: number; suggestions: SiteSuggestion[] }
+export interface SiteSuggestion {
+  id: string
+  kind: 'complete' | 'vo' | 'note'
+  text: string
+  lineIds: string[]            // complete: the scope lines it says are done
+  property: string; room: string
+  qty: number | null; unit: string; code: string   // vo: as said on site — never estimated
+  quote: string                // the words that support it ('' when it's from the picture alone)
+  basis: 'said' | 'seen' | 'both'
+  verified: boolean            // the quote was found in what was said or written
+  state: 'open' | 'approved' | 'rejected'
 }
 
 export type NoteCategory = 'Client' | 'Commercial' | 'Site' | 'H&S' | 'Other'

@@ -1,15 +1,15 @@
 import { Fragment, useState, type ReactNode } from 'react'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
-import type { Cost, DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder } from '../lib/types'
+import type { Cost, DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder, SiteSuggestion } from '../lib/types'
 import { OrdersTab, isOverdue } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
-import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock } from '../components/Icons'
+import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
-import { DiaryTab } from './Diary'
+import { DiaryTab, VoiceSheet } from './Diary'
 import { NoteEditor, NoteRow, NotesSheet, newNote, sortNotes } from './Notes'
 import { dayKey } from '../lib/dates'
 import { Sheet, TitleBlock } from '../components/Ui'
@@ -171,7 +171,9 @@ export function JobView(p: {
   docs: JobDocument[]; onAddDoc: (file: File, kind: JobDocument['kind'], name: string) => Promise<void>; onOpenDoc: (d: JobDocument) => Promise<void>; onDeleteDoc: (d: JobDocument) => Promise<void>
   orders: WorkOrder[]; onNewOrder: () => void; onOpenOrder: (o: WorkOrder) => void; onClaimOrders: (lines: ScopeItem[]) => void
   diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
-  onAddMedia: (file: File, kind: 'photo' | 'video', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
+  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
+  onReadSite?: (date: string) => Promise<string>
+  onDecideSite?: (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => Promise<void>
 }) {
   const { job, vos, scope, vals, onBack, onSetup, onLogVariation, onEditVariation } = p
   const access = useAccess()
@@ -182,6 +184,7 @@ export function JobView(p: {
   const [focusNote, setFocusNote] = useState(false)
   const [capErr, setCapErr] = useState<string | null>(null)
   const [quickNote, setQuickNote] = useState(false)
+  const [quickVoice, setQuickVoice] = useState(false)
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setCapErr(null)
@@ -199,11 +202,11 @@ export function JobView(p: {
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote}
-          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
+          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} onRead={p.onReadSite} />}
         {tab === 'scope' && job.kind === 'orders' && <OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
-          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} />}
+          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} />}
       </main>
       <nav className="nav">
         {nav.map(({ tab: t, label: navLabel, Icon }, i) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
@@ -214,6 +217,7 @@ export function JobView(p: {
         ) })}
       </nav>
       {quickNote && <NoteEditor job={job} onClose={() => setQuickNote(false)} onSave={n => { p.onSaveDiary(n); setQuickNote(false) }} />}
+      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); setDiaryDate(d); setTab('diary') }} />}
       {capture && (
         <Sheet onClose={() => setCapture(false)}>
           <div className="stack">
@@ -223,13 +227,14 @@ export function JobView(p: {
                 <input type="file" accept="image/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
               <label className="btn btn-secondary"><IconVideo /> Video
                 <input type="file" accept="video/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
+              <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickVoice(true) }}><IconMic /> Voice note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onDayworks(true) }}><IconClock /> Dayworks</button>
               {access.money && <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onImportVo() }}><IconDoc /> Council VO</button>}
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
-            <div className="muted" style={{ fontSize: 13 }}>Photos and video go into today’s diary. Today’s site log (weather, labour, what happened) is on the Diary tab.</div>
+            <div className="muted" style={{ fontSize: 13 }}>Photos, video and voice notes go into today’s diary. Today’s site log (weather, labour, what happened) is on the Diary tab.</div>
           </div>
         </Sheet>
       )}

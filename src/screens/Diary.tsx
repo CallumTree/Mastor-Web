@@ -7,7 +7,9 @@ import { usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
 import { weatherFor } from '../lib/weather'
 import { voRef } from '../lib/format'
-import { IconBack, IconCamera, IconFlag, IconMarkup, IconVideo } from '../components/Icons'
+import { IconBack, IconCamera, IconFlag, IconMarkup, IconMic, IconVideo } from '../components/Icons'
+import { MAX_VOICE_SECONDS, startRecording, type Recorder } from '../lib/voice'
+import { unread } from '../lib/siteRead'
 
 export const dayId = (jobId: string, date: string) => `day:${jobId}:${date}`
 export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayId(jobId, date), jobId, date, type: 'day', note: '', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
@@ -15,13 +17,15 @@ export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayI
 function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
   const url = usePhotoUrl(e.mediaId)
   return (
-    <button onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : 'Open photo'} style={{ position: 'relative', aspectRatio: '1', padding: 0, border: '1px solid var(--ink-line)', borderRadius: 3, overflow: 'hidden', background: 'var(--ground)' }}>
-      {url && (e.type === 'video'
+    <button onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : e.type === 'voice' ? 'Open voice note' : 'Open photo'} style={{ position: 'relative', aspectRatio: '1', padding: 0, border: '1px solid var(--ink-line)', borderRadius: 3, overflow: 'hidden', background: 'var(--ground)' }}>
+      {e.type === 'voice' ? <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 4, color: 'var(--ink)', fontSize: 12, fontWeight: 600 }}><IconMic size={30} />Voice note</span>
+        : url && (e.type === 'video'
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : <img src={url} alt={e.note || 'Site photo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
       {e.type === 'video' && <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 26, textShadow: '0 1px 6px rgba(0,0,0,.6)' }}>▶</span>}
       {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4, fontSize: 11 }}>Marked up</span>}
       {e.voId && <span className="badge b-slate" style={{ position: 'absolute', right: 4, top: 4, fontSize: 11 }}>VO</span>}
+      {e.read && <span className={'badge ' + (e.read.suggestions.some(x => x.state === 'open') ? 'b-amber' : 'b-green')} style={{ position: 'absolute', left: 4, top: 4, fontSize: 11 }}>{e.read.suggestions.some(x => x.state === 'open') ? `${e.read.suggestions.filter(x => x.state === 'open').length} to review` : 'Read'}</span>}
     </button>
   )
 }
@@ -40,12 +44,13 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
   const close = () => { if (caption !== e.note || room !== e.room) onSave({ ...e, note: caption.trim(), room: room.trim() }); onClose() }
   if (marking && url) return <Markup src={originalUrl ?? url} onCancel={() => setMarking(false)} onSave={b => { setMarking(false); onSave({ ...e, note: caption.trim(), room: room.trim() }, b) }} />
   return (
-    <Sheet onClose={close} keepsWork label={e.type === 'video' ? 'Video' : 'Photo'}>
+    <Sheet onClose={close} keepsWork label={e.type === 'video' ? 'Video' : e.type === 'voice' ? 'Voice note' : 'Photo'}>
       <div className="stack">
-        <div className="label bracket">{e.type === 'video' ? 'Video' : 'Photo'} · {prettyDay(e.date)}</div>
-        {url && (e.type === 'video'
+        <div className="label bracket">{e.type === 'video' ? 'Video' : e.type === 'voice' ? 'Voice note' : 'Photo'} · {prettyDay(e.date)}</div>
+        {url && e.type === 'voice' ? <audio src={url} controls style={{ width: '100%' }} /> : url && (e.type === 'video'
           ? <video src={url} controls playsInline style={{ width: '100%', maxHeight: '52vh', background: '#000', borderRadius: 3 }} />
           : <img src={showOriginal && originalUrl ? originalUrl : url} alt={caption || 'Site photo'} style={{ width: '100%', maxHeight: '52vh', objectFit: 'contain', background: 'var(--ground)', borderRadius: 3 }} />)}
+        {e.transcript && <div className="panel" style={{ fontSize: 14 }}><div className="label">What was said</div>{e.transcript}</div>}
         {e.originalMediaId && <button className="chip" onClick={() => setShowOriginal(!showOriginal)}>{showOriginal ? 'Showing original — tap for marked-up' : 'Show original'}</button>}
         <Field label="Caption" hint="Tip: tap the mic on your keyboard to dictate"><input value={caption} onChange={x => setCaption(x.target.value)} placeholder="What does this show?" /></Field>
         <Field label="Room / area"><input value={room} onChange={x => setRoom(x.target.value)} list="diary-rooms" /></Field>
@@ -54,20 +59,26 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
         {vo ? <div className="flag">Evidence for {voRef(vo.number)} — {vo.description}</div>
           : e.type === 'photo' && <button className="btn btn-secondary" onClick={() => { onSave({ ...e, note: caption.trim(), room: room.trim() }); onRaiseVo({ ...e, note: caption.trim(), room: room.trim() }) }}><IconFlag /> Raise VO from this photo</button>}
         <button className="btn btn-primary" onClick={close}>Done</button>
-        <ConfirmDelete label="Delete…" confirmLabel={<>Delete this {e.type}</>} onConfirm={onDelete} />
+        <ConfirmDelete label="Delete…" confirmLabel={<>Delete this {e.type === 'voice' ? 'voice note' : e.type}</>} onConfirm={onDelete} />
       </div>
     </Sheet>
   )
 }
 
-export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onSave, onDelete, onAddMedia, onRaiseVo }: {
+export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onSave, onDelete, onAddMedia, onRaiseVo, onRead }: {
   job: Job; entries: DiaryEntry[]; rooms: string[]; vos: Variation[]; date: string; setDate: (d: string) => void; focusNote?: boolean
   onSave: (e: DiaryEntry, markedUp?: Blob) => void; onDelete: (e: DiaryEntry) => void
-  onAddMedia: (file: File, kind: 'photo' | 'video', date: string) => Promise<void>; onRaiseVo: (e: DiaryEntry) => void
+  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVo: (e: DiaryEntry) => void
+  /** read this day's captures against the scope; resolves to a one-line result */
+  onRead?: (date: string) => Promise<string>
 }) {
   const today = dayKey()
   const day = entries.find(e => e.id === dayId(job.id, date)) ?? null
-  const media = entries.filter(e => e.date === date && (e.type === 'photo' || e.type === 'video')).sort((a, b) => a.createdAt - b.createdAt)
+  const media = entries.filter(e => e.date === date && (e.type === 'photo' || e.type === 'video' || e.type === 'voice')).sort((a, b) => a.createdAt - b.createdAt)
+  const [recording, setRecording] = useState(false)
+  const [reading, setReading] = useState(false)
+  const [readMsg, setReadMsg] = useState<string | null>(null)
+  const toRead = unread(entries, date).length
   const [note, setNote] = useState(day?.note ?? '')
   const [weather, setWeather] = useState(day?.weather ?? '')
   const [labour, setLabour] = useState<number | null>(day?.labour ?? null)
@@ -107,7 +118,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
     document.addEventListener('visibilitychange', hide); window.addEventListener('pagehide', flushNote)
     return () => { document.removeEventListener('visibilitychange', hide); window.removeEventListener('pagehide', flushNote); flushNote() }
   }, [])
-  const add = async (f: File | undefined, kind: 'photo' | 'video') => {
+  const add = async (f: File | Blob | undefined, kind: 'photo' | 'video' | 'voice') => {
     if (!f) return
     setErr(null); setBusy(true)
     try { await onAddMedia(f, kind, date) } catch (x) { setErr(`Couldn’t add that ${kind} — ${(x as Error).message || 'unknown problem'}. Try again, or pick a smaller file.`) } finally { setBusy(false) }
@@ -147,7 +158,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
       </div>
 
       <div className="row">
-        <div className="label bracket grow">Photos &amp; video ({media.length})</div>
+        <div className="label bracket grow">Photos, video &amp; voice ({media.length})</div>
       </div>
       {media.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
@@ -164,11 +175,25 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <IconVideo /> Video
           <input type="file" accept="video/*" capture="environment" hidden onChange={e => { add(e.target.files?.[0], 'video'); e.target.value = '' }} />
         </label>
-        <label className="btn btn-secondary" style={{ flex: 1 }}>
-          Gallery
+        <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setRecording(true)}><IconMic /> Voice</button>
+      </div>
+      <div className="row">
+        <label className="btn btn-ghost" style={{ flex: 1 }}>
+          From gallery
           <input type="file" accept="image/*,video/*" hidden onChange={e => { const f = e.target.files?.[0]; add(f, f?.type.startsWith('video') ? 'video' : 'photo'); e.target.value = '' }} />
         </label>
       </div>
+
+      {onRead && (toRead > 0 || readMsg) && (
+        <div className="panel stack" style={{ gap: 8 }}>
+          {toRead > 0 && <button className="btn btn-primary" disabled={reading} onClick={async () => { setReading(true); setReadMsg(null); try { setReadMsg(await onRead(date)) } finally { setReading(false) } }}>
+            {reading ? 'Reading against the scope…' : `Read ${date === today ? 'today' : 'this day'} against the scope · ${toRead} new`}
+          </button>}
+          {readMsg && <div role="status" style={{ fontSize: 14 }}>{readMsg}</div>}
+          {!readMsg && <div className="muted" style={{ fontSize: 13 }}>Photos, voice notes, videos and the note are checked against the scope. What’s done, extra work and site events come back as suggestions in Vals — nothing is claimed until someone approves it.</div>}
+        </div>
+      )}
+      {recording && <VoiceSheet onClose={() => setRecording(false)} onSave={async b => { await add(b, 'voice'); setRecording(false) }} />}
 
       {recent.length > 0 && (
         <div>
@@ -193,5 +218,37 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         onDelete={() => { onDelete(open); setOpen(null) }}
         onRaiseVo={e => { setOpen(null); onRaiseVo(e) }} />}
     </div>
+  )
+}
+
+/** Record a voice note: tap to start, tap to stop and keep. */
+export function VoiceSheet({ onSave, onClose }: { onSave: (wav: Blob) => Promise<void>; onClose: () => void }) {
+  const rec = useRef<Recorder | null>(null)
+  const [secs, setSecs] = useState<number | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  useEffect(() => () => rec.current?.cancel(), [])
+  useEffect(() => {
+    if (secs == null) return
+    if (secs >= MAX_VOICE_SECONDS) { void stop(); return }
+    const t = window.setTimeout(() => setSecs(s => (s == null ? s : s + 1)), 1000)
+    return () => clearTimeout(t)
+  }, [secs])
+  const start = async () => { setErr(null); try { rec.current = await startRecording(); setSecs(0) } catch (e) { setErr((e as Error).name === 'NotAllowedError' ? 'Microphone blocked — allow it for Mastor in the phone’s settings.' : (e as Error).message) } }
+  const stop = async () => { const r = rec.current; if (!r) return; rec.current = null; setSecs(null); setSaving(true); try { await onSave(await r.stop()) } catch (e) { setErr(`Couldn’t save the recording — ${(e as Error).message}`); setSaving(false) } }
+  const mmss = (n: number) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`
+  return (
+    <Sheet onClose={() => { rec.current?.cancel(); onClose() }} locked={secs != null || saving} label="Voice note">
+      <div className="stack">
+        <div className="label bracket">Voice note</div>
+        <div className="muted" style={{ fontSize: 14 }}>Say what’s done, where, and anything extra you’ve found — “number 4, front elevation painted; rotten joists under the bath, about two metres”.</div>
+        <div className="amt" aria-live="polite" style={{ fontSize: 40, fontWeight: 700, textAlign: 'center' }}>{secs != null ? mmss(secs) : saving ? 'Saving…' : '0:00'}</div>
+        {err && <div className="flag">{err}</div>}
+        {secs == null
+          ? <button className="btn btn-primary" disabled={saving} onClick={start}><IconMic /> Start recording</button>
+          : <button className="btn btn-primary" onClick={stop}>Stop and save</button>}
+        {secs != null && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => { rec.current?.cancel(); rec.current = null; setSecs(null) }}>Discard</button>}
+      </div>
+    </Sheet>
   )
 }

@@ -40,7 +40,7 @@ describe('BoQ vs PO difference', () => {
     await waitFor(() => expect(screen.queryAllByText('Tenant asked for extra socket in bedroom 2').length).toBe(1))  // filtered to Commercial: only the Home copy remains
     fireEvent.click(document.querySelector('.sheet-bg')!)
     nav('diary')
-    await screen.findByText(/photos & video \(0\)/i)
+    await screen.findByText(/photos, video & voice \(0\)/i)
     nav('home')
     // change the uplifts → the difference changes → flagged again
     click(screen.getByRole('button', { name: /job setup/i }))

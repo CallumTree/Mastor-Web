@@ -14,6 +14,7 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 | ✓ | Completion evidence pack | One PDF per property/order with lines, before/after photos and sign-off |
 | ✓ | Dayworks sheets | Hours and materials on site, priced from the SoR labour rates, signed |
 | ✓ | Operatives see no money | Rates, values, costs and invoices hidden for the operative role |
+| ✓ | Site capture runs the valuation | Photos, video and voice notes on site; Gemini transcribes, Claude reads them against the scope; what's done, extra work (VOs) and site events wait in Vals for one-tap approval — nothing claimed without a person |
 | ✓ | Issuing a valuation | One sheet: what it certifies by property or trade, uplifts and running total, what the client's QS would query (no PO, uninstructed VOs, over-claiming), a draft certificate — then Create invoice as the next step |
 | ✓ | Xero / QuickBooks invoice export | No typing invoices twice |
 | ✓ | Team invites, AI reading locked to members | Multi-user, and no one else can spend the AI credit |
@@ -24,6 +25,11 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 - Opening titles play once per device.
 - Job notes and diary notes are one thing; one way into each action.
 - RAMS and programme stay in the contractor's documents; Mastor stores them against the job.
+
+## Next
+
+- Send to accounts: for firms whose accounts team invoices in Sage — the issued valuation (certificate, breakdown, Sage CSV) emailed to accounts; they enter the Sage invoice number back.
+- Read a WhatsApp job-group export (messages + photos) the same way as site captures.
 
 ## Before pilots (from the launch audit)
 

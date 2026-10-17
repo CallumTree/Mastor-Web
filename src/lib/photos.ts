@@ -48,3 +48,10 @@ export async function saveImageBlob(blob: Blob): Promise<string> {
   await db.putPhoto(id, blob)
   return id
 }
+
+/** A voice note (already a small WAV — see voice.ts). */
+export async function saveVoice(blob: Blob): Promise<string> {
+  const id = uid()
+  await db.putPhoto(id, blob)
+  return id
+}

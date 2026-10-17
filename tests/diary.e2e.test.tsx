@@ -45,7 +45,7 @@ describe('site diary', () => {
     await screen.findByRole('button', { name: /open video/i })
     pick(inputs().find(i => i.accept === 'image/*')!, new File(['p'], 'joist.jpg', { type: 'image/jpeg' }))
     await screen.findByRole('button', { name: /open photo/i })
-    expect(screen.getByText(/photos & video \(2\)/i)).toBeTruthy()
+    expect(screen.getByText(/photos, video & voice \(2\)/i)).toBeTruthy()
 
     // --- caption + raise VO from the photo
     click(screen.getByRole('button', { name: /open photo/i }))

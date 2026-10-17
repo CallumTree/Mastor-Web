@@ -43,6 +43,8 @@ export async function startSync(cid: string) {
 /** For tests and 'sync now' buttons: resolves once any sync in progress has finished. */
 export async function settle() { await syncNow(); while (running || again || timer) { await new Promise(r => setTimeout(r, 15)); if (!running && !again) { if (timer) { clearTimeout(timer); timer = null } await syncNow() } } }
 
+/** The signed-in company this device syncs with, or null when working on the device only. */
+export const currentCompany = () => companyId
 export function stopSync() { companyId = null; setQueueing(false) }
 
 export function schedule(delay = 800) {

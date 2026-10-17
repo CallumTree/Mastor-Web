@@ -12,10 +12,11 @@ import { buildDayworksPdf, dayworksVariation, dwRef } from './lib/dayworks'
 import { accountsCsv, invoiceRows, periods } from './lib/accounts'
 import { buildEvidence, evidenceFileName, orderEvidence, schemeEvidence } from './lib/evidence'
 import { AccessContext, accessFor } from './lib/access'
-import { claimMany, deleteOpenValuation, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
+import { claimMany, deleteOpenValuation, ensureOpenValuation, isPriced, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { Dashboard } from './screens/Dashboard'
-import { fetchPhoto, onRemoteChange } from './lib/sync'
+import { currentCompany, fetchPhoto, onRemoteChange, settle } from './lib/sync'
+import { decide, readSite, unread, voFromSuggestion, MAX_ITEMS } from './lib/siteRead'
 import { SyncBadge } from './components/SyncBadge'
 import { keepStorage, makeBackup, downloadBackup, restoreBackup } from './lib/backup'
 import { JobForm } from './screens/JobForm'
@@ -23,7 +24,7 @@ import { JobView } from './screens/JobView'
 import { EditVariation, LogVariation } from './screens/Variations'
 import { buildVoRegister, registerFileName } from './lib/voRegister'
 import { ScopeForm } from './screens/Scope'
-import { savePhoto, saveVideo, saveImageBlob } from './lib/photos'
+import { savePhoto, saveVideo, saveVoice, saveImageBlob } from './lib/photos'
 import { buildCertificate, certificateFileName, shareOrDownload } from './lib/certificate'
 import { meta } from './lib/db'
 import { BoqImport } from './screens/BoqImport'
@@ -149,11 +150,42 @@ export default function App() {
           }}
           onDeleteDiary={async e => { await db.deleteDiary(e); await reload() }}
           onAddMedia={async (file, kind, date) => {
-            const mediaId = kind === 'video' ? await saveVideo(file) : await savePhoto(file)
+            const mediaId = kind === 'video' ? await saveVideo(file as File) : kind === 'voice' ? await saveVoice(file) : await savePhoto(file as File)
             await db.putDiary({ id: uid(), jobId: job.id, date, type: kind, note: '', labour: null, weather: '', mediaId, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
             await reload()
           }}
-          onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }} />
+          onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }}
+          onDecideSite={async (e, s, state) => {
+            if (state === 'approved') {
+              if (s.kind === 'complete') {
+                const lines = jobScope.filter(i => s.lineIds.includes(i.id) && !i.valuationId && isPriced(i))
+                if (lines.length) {
+                  const v = await ensureOpenValuation(job.id)
+                  for (const i of lines) await db.putScope({ ...i, valuationId: v.id, evidence: [...new Set([...(i.evidence ?? []), e.id])] })
+                }
+              } else if (s.kind === 'vo') {
+                const vo = voFromSuggestion(s, e, job.id, await nextVoNumber(job.id))
+                await db.putVariation(vo)
+                if (e.type === 'photo' && !e.voId) e = { ...e, voId: vo.id }
+              } else {
+                await db.putDiary({ id: uid(), jobId: job.id, date: e.date, type: 'note', note: `${s.text}${s.quote ? `\n— on site: “${s.quote}”` : ''}`, labour: null, weather: '', mediaId: null, originalMediaId: null, room: s.room, voId: null, category: 'Site', createdAt: Date.now() })
+              }
+            }
+            await db.putDiary(decide(e, s.id, state)); await reload()
+          }}
+          onReadSite={async date => {
+            const items = unread(jobDiary, date)
+            if (!items.length) return 'Nothing new to read.'
+            const company = currentCompany()
+            if (!company) return 'Sign in to read site captures — they’re read in the cloud.'
+            await settle()   // the media must be uploaded before it can be read
+            const r = await readSite(company, items, jobScope, jobVos)
+            for (const e of r.updated) await db.putDiary(e)
+            await reload()
+            if (!r.updated.length) return r.error ?? 'Nothing was read.'
+            const more = items.length > MAX_ITEMS ? ` ${items.length - MAX_ITEMS} more to read — tap again.` : ''
+            return `${r.suggestions ? `${r.suggestions} suggestion${r.suggestions === 1 ? '' : 's'} waiting in Vals for review.` : 'Read — nothing to suggest.'}${r.error ? ` ${r.error}` : ''}${more}`
+          }} />
       ) : (
         <JobsList jobs={jobs} vos={vos} orders={orders} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
       )}
