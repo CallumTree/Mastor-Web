@@ -5,13 +5,15 @@
    ground with white work panels. Barlow (highway-sign grotesk) for everything; Cinzel only in the
    MΛSTΘR wordmark; JetBrains Mono only for codes and references. Flat — no texture, no glow.
    ===================================================================== */
-@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_regular.woff2) format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: Mono; src: url(/fonts/jetbrains_mono_medium.woff2) format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url(/fonts/jetbrains_mono_regular.woff2) format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url(/fonts/jetbrains_mono_medium.woff2) format("woff2"); font-weight: 500; font-display: swap; }
 
 :root {
   /* ground and ink */
   --ink: #121316; --ink-2: #33373D; --ink-muted: #565B63;
   --ground: #E9ECEE; --panel: #FFFFFF; --line: #C9CED3; --line-strong: #121316; --row-open: #F3F5F6;
+  --field-line: #7C828A;                /* input borders: 3.9:1 on panel, 3.3:1 on ground (WCAG 1.4.11) — --line is for dividers only */
+  --flag-row: rgba(255, 205, 0, .16);   /* a row that needs checking: a wash of sign yellow */
   /* shell (black bars) */
   --shell: #121316; --shell-2: #1D2024; --shell-line: #33373D; --shell-text: #FFFFFF; --shell-muted: #B4B9C0;
   /* safety colours: plates first, text second */
@@ -39,11 +41,23 @@ input, textarea, select { font: inherit; }
 ::selection { background: var(--yellow); color: var(--ink); }
 h1, h2, h3 { margin: 0; }
 
-.mono { font-family: Mono, ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 .num { font-variant-numeric: tabular-nums; }
 .amt { font-family: var(--cond); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 .muted { color: var(--ink-muted); }
 .grow { flex: 1; min-width: 0; }
+/* small text — 13px is the floor anywhere on screen (site glare); 14px for notes beside a control */
+.t-small { font-size: 13px; line-height: 1.35; }
+.t-note { font-size: 14px; line-height: 1.4; }
+.hint { font-size: 13px; line-height: 1.35; color: var(--ink-muted); }
+/* a tick-to-include row (BoQ review, site suggestions, pack facts): the whole row is the target */
+.check-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px; min-height: 48px; cursor: pointer; }
+.check-row + .check-row { border-top: 1px solid var(--line); }
+.check-row > input[type=checkbox] { width: 22px; height: 22px; flex: none; margin: 2px 0 0; accent-color: var(--blue); }
+.check-row.off { opacity: .5; }
+.check-row.flagged { background: var(--flag-row); }
+/* file pickers are <label class="btn"> around a visually-hidden (not display:none) input, so the keyboard reaches them */
+label:has(> input[type=file]:focus-visible) { outline: 3px solid var(--blue); outline-offset: 2px; }
 .row { display: flex; gap: 8px; align-items: center; }
 .stack > * + * { margin-top: 12px; }
 .page { padding: 0 16px calc(var(--nav-h) + 32px); max-width: 720px; margin: 0 auto; }
@@ -92,7 +106,7 @@ h1, h2, h3 { margin: 0; }
 /* ---------- forms ---------- */
 .field { display: block; }
 .field span { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
-.field input, .field textarea, .field select { width: 100%; padding: 12px; min-height: 48px; border: 2px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--ink); font-size: 16px; }
+.field input, .field textarea, .field select { width: 100%; padding: 12px; min-height: 48px; border: 2px solid var(--field-line); border-radius: var(--r); background: var(--panel); color: var(--ink); font-size: 16px; }
 .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--ink); }
 .field input:disabled, .field textarea:disabled, .field select:disabled { background: var(--ground); border-style: dashed; color: var(--ink-2); }
 .field .hint { font-size: 13px; margin-top: 5px; color: var(--ink-muted); }
@@ -353,6 +367,12 @@ label.row { cursor: pointer; }
 /* ---------- narrow screens and zoom (a phone at 200% is ~195px wide) ---------- */
 @media (max-width: 360px) { .sum-cell { padding: 9px 9px 10px; } .fig { padding: 10px 9px 11px; } .nav button { letter-spacing: .03em; } }
 @media (max-width: 300px) {
+  .cover-head-in { flex-wrap: wrap; justify-content: space-between; }
+  .cover-mark { order: -1; flex: 1 1 100%; }
+  .wordmark { font-size: 22px; letter-spacing: .16em !important; margin-right: -.16em; }
+  :root { --nav-h: 120px; }
+  .nav { flex-wrap: wrap; }
+  .nav button, .nav .nav-capture { flex: 0 0 33.333%; height: 60px; }
   .sum, .sum-3, .figs { grid-template-columns: 1fr; } .fig + .fig { border-left: 0; border-top: 1px solid var(--line); }
   .nav-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .vo-row { grid-template-columns: 52px 1fr; } .vo-row .vo-amt { grid-column: 2; }
