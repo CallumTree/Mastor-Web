@@ -67,7 +67,7 @@ export function RateCheckSheet({ lines, books, onClose }: { lines: CheckLine[]; 
               {r.pattern
                 ? <div>{r.pattern.lines} lines are priced at <b>{patternText(r.pattern)}</b> — that’s this BoQ’s pattern against {book?.name}. Lines that don’t follow it are listed below; they’re worth querying with the client.</div>
                 : <div>This BoQ doesn’t follow {book?.name} at one adjustment — it may be priced from an older SoR version or tendered rates. Nothing is called under- or over-priced; the differences are listed for you to judge.</div>}
-              {r.boqTotal > 0 && <div className="muted" style={{ fontSize: 14 }}>Lines compared: <b className="amt">{money(r.boqTotal)}</b> at the BoQ’s rates, <b className="amt">{money(r.sorTotal)}</b> at {book?.name}.</div>}
+              {r.boqTotal > 0 && <div className="muted t-note">Lines compared: <b className="amt">{money(r.boqTotal)}</b> at the BoQ’s rates, <b className="amt">{money(r.sorTotal)}</b> at {book?.name}.</div>}
             </div>}
 
             {off.length > 0 && <><h2 className="sec-h">Don’t follow the pattern · {off.length}</h2><div className="panel chk">{off.map(line)}</div></>}
@@ -81,7 +81,7 @@ export function RateCheckSheet({ lines, books, onClose }: { lines: CheckLine[]; 
             {group('unit').length > 0 && <><h2 className="sec-h">Unit differs · {group('unit').length}</h2><div className="panel chk">{group('unit').map(line)}</div></>}
             {group('missing').length > 0 && <><h2 className="sec-h">Not in {book?.name} · {group('missing').length}</h2><div className="panel chk">{group('missing').map(line)}</div></>}
             {group('norate').length > 0 && <><h2 className="sec-h">No rate in the BoQ · {group('norate').length}</h2><div className="panel chk">{group('norate').map(line)}</div></>}
-            {r.counts.match + r.counts.pattern > 0 && <div className="muted" style={{ fontSize: 14 }}>{r.counts.match + r.counts.pattern} line{r.counts.match + r.counts.pattern === 1 ? '' : 's'} agree{r.counts.match + r.counts.pattern === 1 ? 's' : ''} — not listed.</div>}
+            {r.counts.match + r.counts.pattern > 0 && <div className="muted t-note">{r.counts.match + r.counts.pattern} line{r.counts.match + r.counts.pattern === 1 ? '' : 's'} agree{r.counts.match + r.counts.pattern === 1 ? 's' : ''} — not listed.</div>}
           </>
         )}
       </div>

@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 
 export function TabHead({ label, meta, menu }: { label: string; title?: string; meta?: ReactNode; menu?: ReactNode }) {
   return (
-    <div className="row" style={{ alignItems: 'center' }}>
+    <div className="row">
       <h2 className="tab-title grow">{label}{meta != null && <span className="tab-meta">{meta}</span>}</h2>
       {menu}
     </div>

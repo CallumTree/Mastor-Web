@@ -30,8 +30,8 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
     <>
       <div className="row" style={{ margin: '18px 0 8px' }}>
         <h2 className="sec-h grow" style={{ margin: 0 }}>Documents{docs.length ? ` · ${docs.length}` : ''}</h2>
-        <label className="linkish tap" style={{ cursor: 'pointer' }}>+ Add document
-          <input type="file" hidden onChange={e => {
+        <label className="linkish tap">+ Add document
+          <input type="file" className="sr-only" onChange={e => {
             const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
             if (f.size > MAX_DOC_BYTES) { setErr('That file is over 20 MB — save a smaller copy (e.g. PDF) and add that.'); return }
             setErr(null); setPicked(f); setKind(guess(f)); setName(f.name.replace(/\.[^.]+$/, ''))
@@ -53,7 +53,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
         <Sheet onClose={() => setPicked(null)} label="Add document" locked={busy}>
           <div className="stack">
             <div className="label bracket">Add document</div>
-            <div className="muted" style={{ fontSize: 14, overflowWrap: 'anywhere' }}>{picked.name} · {size(picked.size)}</div>
+            <div className="muted t-note" style={{ overflowWrap: 'anywhere' }}>{picked.name} · {size(picked.size)}</div>
             <div className="chips" role="group" aria-label="Kind">{KINDS.map(k => <button key={k} className={'chip' + (kind === k ? ' on' : '')} aria-pressed={kind === k} onClick={() => setKind(k)}>{k}</button>)}</div>
             <Field label="Name"><input value={name} onChange={e => setName(e.target.value)} /></Field>
             <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={async () => { setBusy(true); try { await onAdd(picked, kind, name.trim()); setPicked(null) } finally { setBusy(false) } }}>Add to job</button>

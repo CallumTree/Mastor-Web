@@ -99,13 +99,13 @@ export function RatesSheet({ books, onAddBooks, onRemoveBook, onClose }: {
         {busy ? <div className="panel" role="status" style={{ textAlign: 'center', padding: 28 }}><div className="loading-bar" /><div style={{ fontWeight: 600, marginTop: 14 }}>{busy}</div></div>
         : drafts ? (
           <>
-            <div className="muted" style={{ fontSize: 14 }}>Check what was read. Rates are taken exactly as printed — nothing is estimated.</div>
+            <div className="muted t-note">Check what was read. Rates are taken exactly as printed — nothing is estimated.</div>
             {drafts.map((d, i) => (
               <div key={d.id} className="panel stack">
-                <label className="row" style={{ alignItems: 'flex-start', gap: 12 }}>
-                  <input type="checkbox" checked={d.include} style={{ width: 24, height: 24, marginTop: 2, flex: 'none', accentColor: 'var(--blue)' }}
+                <label className="check-row flush">
+                  <input type="checkbox" checked={d.include}
                     onChange={() => setDrafts(drafts.map((x, j) => (j === i ? { ...x, include: !x.include } : x)))} />
-                  <span className="grow"><b>{d.items.length.toLocaleString('en-GB')} rates</b>{d.skipped > 0 && ` · ${d.skipped} without a readable rate left out`}<br /><small className="muted">{d.source}</small></span>
+                  <span className="grow"><b>{d.items.length.toLocaleString('en-GB')} rates</b>{d.skipped > 0 && ` · ${d.skipped} without a readable rate left out`}<br /><small className="hint">{d.source}</small></span>
                 </label>
                 {d.dupOf && <div className="flag">Already in your library as “{d.dupOf}” — same codes, same rates.</div>}
                 {d.include && <label className="field"><span>Book name</span><input value={d.name} onChange={e => setDrafts(drafts.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} /></label>}
@@ -125,13 +125,13 @@ export function RatesSheet({ books, onAddBooks, onRemoveBook, onClose }: {
             {books.length > 0 ? <RateSearch books={books} />
               : <div className="empty">No rate books yet. Import your framework schedule of rates (Word) or a rates spreadsheet, and every code can be priced from it.</div>}
             {err && <div className="flag" role="alert">{err}</div>}
-            <label className="btn btn-primary" style={{ cursor: 'pointer' }} data-keep-clean>Import rates…
-              <input type="file" hidden multiple accept=".docx,.xlsx,.xlsm,.xls,.csv" onChange={e => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) void read(f) }} />
+            <label className="btn btn-primary" data-keep-clean>Import rates…
+              <input type="file" className="sr-only" multiple accept=".docx,.xlsx,.xlsm,.xls,.csv" onChange={e => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) void read(f) }} />
             </label>
             {books.length > 0 && (
               <>
                 <h2 className="sec-h">Your rate books · {books.length}</h2>
-                <div className="panel" style={{ padding: 0 }}>
+                <div className="panel flush">
                   {books.map(b => (
                     <div key={b.id} className="book">
                       <div className="grow"><b>{b.name}</b><small>{b.lines.toLocaleString('en-GB')} rates · added {ukDate(b.importedAt)}<br />{b.source}</small></div>

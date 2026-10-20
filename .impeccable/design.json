@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-09T20:41:29+00:00",
+  "generatedAt": "2026-10-18T20:08:26+00:00",
   "title": "Design System: Mastor",
   "extensions": {
     "colorMeta": {
@@ -106,6 +106,41 @@
         ],
         "cssVar": "--line"
       },
+      "field-line": {
+        "role": "neutral",
+        "displayName": "Field Line",
+        "canonical": "#7C828A",
+        "oklch": "oklch(60.4% 0.014 256)",
+        "tonalRamp": [
+          "#070B11",
+          "#20242B",
+          "#3B4047",
+          "#585E66",
+          "#787E86",
+          "#999FA7",
+          "#BEC5CD",
+          "#E8EFF8"
+        ],
+        "cssVar": "--field-line"
+      },
+      "flag-row": {
+        "role": "neutral",
+        "displayName": "Flag Row",
+        "canonical": "rgba(255, 205, 0, 0.16)",
+        "oklch": "oklch(86.7% 0.177 91)",
+        "tonalRamp": [
+          "#1D0200",
+          "#3D1A00",
+          "#603600",
+          "#835400",
+          "#A57500",
+          "#C69800",
+          "#E8C041",
+          "#FFEC8D"
+        ],
+        "note": "A translucent #FFCD00 (its oklch and ramp are of the solid colour).",
+        "cssVar": "--flag-row"
+      },
       "row-open": {
         "role": "neutral",
         "displayName": "Open Row",
@@ -191,6 +226,24 @@
         ],
         "cssVar": "--shell-muted"
       },
+      "shell-shadow": {
+        "role": "neutral",
+        "displayName": "Shell Shadow",
+        "canonical": "rgba(18, 19, 22, 0.6)",
+        "oklch": "oklch(18.7% 0.006 271)",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#232427",
+          "#3E4043",
+          "#5C5D61",
+          "#7C7D81",
+          "#9D9EA2",
+          "#C2C4C8",
+          "#EDEEF3"
+        ],
+        "note": "A translucent #121316 (its oklch and ramp are of the solid colour).",
+        "cssVar": "--shell-shadow"
+      },
       "sign-yellow": {
         "role": "secondary",
         "displayName": "Sign Yellow",
@@ -224,6 +277,23 @@
           "#FFCFC4"
         ],
         "cssVar": "--red"
+      },
+      "red-on-dark": {
+        "role": "secondary",
+        "displayName": "Red on Black",
+        "canonical": "#FF9B9B",
+        "oklch": "oklch(79.2% 0.120 20)",
+        "tonalRamp": [
+          "#2D0000",
+          "#4F0008",
+          "#721B24",
+          "#953C40",
+          "#BA5D5F",
+          "#DF7E7F",
+          "#FFA4A4",
+          "#FFCECD"
+        ],
+        "cssVar": "--red-on-dark"
       },
       "sign-green": {
         "role": "secondary",
@@ -290,7 +360,8 @@
           "#9B9FA3",
           "#C1C5C8",
           "#EBEFF3"
-        ]
+        ],
+        "cssVar": "--disabled"
       },
       "arch-copper": {
         "role": "tertiary",
@@ -312,15 +383,31 @@
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Job name in the black job bar."
+        "purpose": "Job name in the black job bar; clamp(19px, 5.4vw, 24px) when compact, 18px under 300px."
       },
       "headline": {
         "displayName": "Headline",
         "purpose": "Uppercase tab titles."
       },
+      "figure-xl": {
+        "displayName": "Figure XL",
+        "purpose": "The dashboard head figure, yellow on black."
+      },
       "figure": {
         "displayName": "Figure",
-        "purpose": "Big condensed money figures on job home, summary strips and the dashboard board."
+        "purpose": "The three job-home figures."
+      },
+      "figure-sm": {
+        "displayName": "Figure SM",
+        "purpose": "Summary-cell figures; Roman refs sit at its 19px floor."
+      },
+      "row-title": {
+        "displayName": "Row Title",
+        "purpose": "Property names and number tiles, the job value in the jobs list."
+      },
+      "amount": {
+        "displayName": "Amount",
+        "purpose": "Right-hand amounts on register, property, rate and dashboard rows."
       },
       "title": {
         "displayName": "Title",
@@ -328,15 +415,31 @@
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Running text, hints and metadata."
+        "purpose": "Running text and every input."
+      },
+      "ui": {
+        "displayName": "UI",
+        "purpose": "Chips, rate and check-list descriptions, the job bar client line, ask and update bars."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Section headings, the first label in a sheet."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Uppercase condensed labels, column heads, nav labels; section headings at 15px in ink."
+        "purpose": "Uppercase condensed labels, column heads, nav labels."
       },
       "plate": {
         "displayName": "Plate",
-        "purpose": "Sign plates and badges (13px)."
+        "purpose": "Sign plates; badges at 13px."
+      },
+      "note": {
+        "displayName": "Note",
+        "purpose": "A note beside a control, row metadata (.t-note)."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Hints, captions, secondary metadata: the 13px floor (.t-small, .hint)."
       },
       "code": {
         "displayName": "Code",
@@ -357,6 +460,16 @@
         "name": "scrim",
         "value": "rgba(12,13,15,.6)",
         "purpose": "Sheet backdrop."
+      },
+      {
+        "name": "media-glyph",
+        "value": "0 1px 6px var(--shell-shadow)",
+        "purpose": "Text shadow under the white play glyph on a video thumbnail only; on media, never on the board."
+      },
+      {
+        "name": "swatch-ring",
+        "value": "0 0 0 2px #1D2024, 0 0 0 5px #FFFFFF",
+        "purpose": "Stroke ring marking the chosen mark-up colour; not elevation."
       }
     ],
     "motion": [
@@ -454,9 +567,17 @@
       "name": "Text Field",
       "kind": "input",
       "refersTo": "field",
-      "description": "White input, 2px hairline border turning ink on focus, label above.",
-      "html": "<label class=\"ds-field\"><span>PO number</span><input placeholder=\"Not set\" /></label>",
-      "css": ".ds-field { display: block; font-family: Barlow, system-ui, sans-serif; } .ds-field span { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2, #33373D); margin-bottom: 6px; } .ds-field input { width: 100%; box-sizing: border-box; padding: 12px; min-height: 48px; border: 2px solid var(--line, #C9CED3); border-radius: 4px; background: var(--panel, #fff); color: var(--ink, #121316); font: inherit; font-size: 16px; } .ds-field input:focus { border-color: var(--ink, #121316); outline: 3px solid var(--blue, #0A55B5); outline-offset: 1px; }"
+      "description": "White input, 2px Field Line border (3.9:1 on white) turning ink on focus, label above, 13px hint below.",
+      "html": "<label class=\"ds-field\"><span>PO number</span><input placeholder=\"Not set\" /><small>On every invoice</small></label>",
+      "css": ".ds-field { display: block; font-family: Barlow, system-ui, sans-serif; } .ds-field span { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2, #33373D); margin-bottom: 6px; } .ds-field small { display: block; font-size: 13px; line-height: 1.35; margin-top: 5px; color: var(--ink-muted, #565B63); } .ds-field input { width: 100%; box-sizing: border-box; padding: 12px; min-height: 48px; border: 2px solid var(--field-line, #7C828A); border-radius: 4px; background: var(--panel, #fff); color: var(--ink, #121316); font: inherit; font-size: 16px; } .ds-field input:focus { border-color: var(--ink, #121316); outline: 3px solid var(--blue, #0A55B5); outline-offset: 1px; }"
+    },
+    {
+      "name": "Tick Row",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Tick-to-include list: the whole row is the target; off rows fade, rows that need checking take the Flag Row wash.",
+      "html": "<div class=\"ds-ticks\"><label class=\"ds-tick\"><input type=\"checkbox\" checked /><span><b>Prepare and paint front door</b><small>1 nr @ £86.40</small></span></label><label class=\"ds-tick ds-flag\"><input type=\"checkbox\" checked /><span><b>Renew fascia boards</b><small>12 m · no rate</small></span></label><label class=\"ds-tick ds-off\"><input type=\"checkbox\" /><span><b>Clear gutters</b><small>left out</small></span></label></div>",
+      "css": ".ds-ticks { background: var(--panel, #fff); border: 1px solid var(--line, #C9CED3); border-radius: 6px; overflow: hidden; color: var(--ink, #121316); font-family: Barlow, system-ui, sans-serif; } .ds-tick { display: flex; align-items: flex-start; gap: 12px; padding: 12px; min-height: 48px; cursor: pointer; } .ds-tick + .ds-tick { border-top: 1px solid var(--line, #C9CED3); } .ds-tick input { width: 22px; height: 22px; flex: none; margin: 2px 0 0; accent-color: var(--blue, #0A55B5); } .ds-tick b { display: block; font-size: 14px; font-weight: 500; } .ds-tick small { display: block; font-size: 13px; color: var(--ink-muted, #565B63); } .ds-flag { background: var(--flag-row, rgba(255,205,0,.16)); } .ds-off { opacity: .5; }"
     },
     {
       "name": "Chips",
@@ -485,13 +606,14 @@
   ],
   "narrative": {
     "northStar": "Every Status Is a Site Sign",
-    "overview": "Mastor speaks the UK safety-sign language that everyone on a building site already reads without training. Yellow means it needs doing, red means it is overdue or missing, green means it is done, and blue means the one thing to do next. A site manager squinting at a phone in glare, wearing gloves, should know what is wrong, what is owed and what to do next before reading a sentence. The world is flat and hard-edged: black shell bars, a cool concrete ground, white work panels, and solid colour plates set in condensed highway-sign capitals.\n\nDensity is working density, not airy marketing density. Figures are big and condensed, rows are ruled with hairlines, and every tap target is at least 44px (most are 48 to 64px). Nothing is decorative: no texture, no gradients, no glow, no drop shadows. Depth comes from the contrast between black bars and the white panels on concrete.\n\nThree things carry over from Mastor's earlier classical world at the user's request and live only where named: the MΛSTΘR wordmark in Cinzel, the copper Roman arch on the opening titles, and Roman numerals for valuation and VO references (VAL III, VO XII). Paper, grid backgrounds, beige, serif capitals elsewhere, and the photographic house header are retired.",
+    "overview": "Mastor speaks the UK safety-sign language that everyone on a building site already reads without training. Yellow means it needs doing, red means it is overdue or missing, green means it is done, and blue means the one thing to do next. A site manager squinting at a phone in glare, wearing gloves, should know what is wrong, what is owed and what to do next before reading a sentence. The world is flat and hard-edged: black shell bars, a cool concrete ground, white work panels, and solid colour plates set in condensed highway-sign capitals.\n\nDensity is working density, not airy marketing density. Figures are big and condensed, rows are ruled with hairlines, and every tap target is at least 44px (most are 48 to 64px). Nothing is decorative: no texture, no gradients, no glow, no drop shadows. Depth comes from the contrast between black bars and the white panels on concrete.\n\nIt has to work where there is no signal. Mastor installs as a PWA, and its service worker precaches the app shell, the fonts and PDF-making (certificates, dayworks sheets, evidence packs), so a phone opens it and issues paperwork offline. The document readers (PDF, Excel, Word) are only needed to import a BoQ, rate book or pack, so they stay out of an operative's first install and are cached the first time they are used. A new version waits for the user to reload, never mid-form.\n\nThree things carry over from Mastor's earlier classical world at the user's request and live only where named: the MΛSTΘR wordmark in Cinzel, the copper Roman arch on the opening titles, and Roman numerals for valuation and VO references (VAL III, VO XII). Paper, grid backgrounds, beige, serif capitals elsewhere, and the photographic house header are retired.",
     "keyCharacteristics": [
       "Black shell bars (job bar, cover head, bottom nav or desktop rail) over concrete ground with white panels.",
       "Status told by solid ISO-style sign plates, by shape as well as colour, with a spoken word for screen readers.",
       "One blue next-step plate per record; blue buttons for the primary action only.",
       "Barlow for reading, Barlow Condensed capitals for labels, figures and plates; JetBrains Mono only for codes and refs; Cinzel only in the wordmark.",
-      "Square-ish corners (3 to 6px), 2px ink outlines on secondary controls, no shadows."
+      "Square-ish corners (3 to 6px), 2px ink outlines on secondary controls, no shadows.",
+      "Light only, by decision: no dark theme, and the page declares `color-scheme: only light` so a phone's automatic dark mode doesn't invert the signs."
     ],
     "rules": [
       {
@@ -510,6 +632,11 @@
         "section": "colors"
       },
       {
+        "name": "The Light Board Rule",
+        "body": "Mastor is light only, and that is a decision, not an omission. Site signs are dark ink on bright boards because that is what reads in glare; a dark theme would wash out on a phone in sunlight. The black shell bars are the only dark surfaces, and there is no dark-mode palette to keep in step.",
+        "section": "colors"
+      },
+      {
         "name": "The Three Voices Rule",
         "body": "Barlow reads, Barlow Condensed signs, Mono codes. Cinzel exists only inside the wordmark and the opening titles.",
         "section": "typography"
@@ -522,6 +649,11 @@
       {
         "name": "The Condensed Money Rule",
         "body": "Money amounts are Barlow Condensed with tabular figures, even where the markup says mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The 13px Floor Rule",
+        "body": "No text on screen is smaller than 13px; it is read outdoors, in glare, at arm's length. Small text uses the classes rather than an inline size: `.t-small` (13px), `.hint` (13px in Muted Ink) and `.t-note` (14px). Only a purely decorative glyph hidden from screen readers (a ▸ chevron) may sit below it.",
         "section": "typography"
       },
       {
@@ -547,7 +679,9 @@
       "**Don't** use Cinzel outside the MΛSTΘR wordmark and opening titles, or Mono for anything but codes and references.",
       "**Don't** use copper anywhere but the opening-titles arch.",
       "**Don't** bring back paper, grid backgrounds, beige, serif capitals or the photographic house header.",
-      "**Don't** set text below 12px, or uppercase labels below 13px; this is read outdoors in glare."
+      "**Don't** set text below 13px, or size small text inline; use `.t-small`, `.hint` or `.t-note`. This is read outdoors in glare.",
+      "**Don't** draw an input's edge in Hairline; fields use Field Line.",
+      "**Don't** add a dark theme; light only is a decision (see the Light Board Rule)."
     ]
   }
 }

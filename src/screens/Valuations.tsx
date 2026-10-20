@@ -19,20 +19,20 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => byProp ? (a.property ?? '').localeCompare(b.property ?? '', 'en', { numeric: true }) || a.order - b.order : a.room.localeCompare(b.room) || a.order - b.order)
   const o = vos.filter(x => x.valuationId === val.id).sort((a, b) => a.number - b.number)
   const row = (key: string, ref: string, desc: string, sub: string, value: number, onRemove?: () => void) => (
-    <div key={key} className="row val-line" style={{ padding: '10px 0', borderTop: '1px solid var(--cream-line)', alignItems: 'flex-start' }}>
-      <div className="grow" style={{ minWidth: 0 }}>
-        <div className="row" style={{ gap: 6 }}>{ref && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{ref}</span>}</div>
+    <div key={key} className="row val-line" style={{ padding: '10px 0', borderTop: '1px solid var(--line)', alignItems: 'flex-start' }}>
+      <div className="grow">
+        <div className="row" style={{ gap: 6 }}>{ref && <span className="mono t-small slate">{ref}</span>}</div>
         <div style={{ fontWeight: 500 }}>{desc}</div>
-        <div className="muted" style={{ fontSize: 12 }}>{sub}</div>
+        <div className="hint">{sub}</div>
       </div>
-      <div className="amt" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap' }}>{money(value)}</div>
+      <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap' }}>{money(value)}</div>
       {onRemove && <button className="icon-btn" onClick={onRemove} aria-label="Remove from valuation" style={{ color: 'var(--ink-muted)', fontSize: 20 }}>×</button>}
     </div>
   )
   return (
     <div>
       {s.length > 0 && <div className="label" style={{ marginTop: 8 }}>Scope</div>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <div className="label" style={{ marginTop: 10, color: 'var(--copper-ink)' }}>No. {i.property || '—'}</div>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <div className="label" style={{ marginTop: 10, color: 'var(--ink-2)' }}>No. {i.property || '—'}</div>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
       {o.length > 0 && <div className="label" style={{ marginTop: 12 }}>Variations</div>}
       {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v))))}
     </div>
@@ -88,9 +88,9 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
       {open && current ? (
         <div className="card" style={{ padding: 12 }}>
           <div className="row" style={{ marginBottom: 10 }}>
-            <span className="ref-roman" style={{ color: 'var(--copper-ink)', fontWeight: 500 }}>{valRef(open.number)}</span>
+            <span className="ref-roman" style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{valRef(open.number)}</span>
             <span className="badge b-amber">Open</span><span className="grow" />
-            <span className="muted" style={{ fontSize: 12 }}>started {ukDate(open.createdAt)}</span>
+            <span className="hint">started {ukDate(open.createdAt)}</span>
           </div>
           <SumStrip label={`${valRef(open.number)} figures`} cells={[
             { label: 'This valuation', value: money(current.gross), note: 'incl. uplifts, excl. VAT', hot: true },
@@ -100,7 +100,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             { label: 'Base total', value: money(current.base) },
             { label: 'Uplifts', value: `${job.uplift1}% + ${job.uplift2}%` },
           ]} />
-          {current.lines === 0 && <div className="muted" style={{ fontSize: 13, padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
+          {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
           <div className="stack" style={{ marginTop: 14 }}>
             {!job.poNumber && <div className="flag">No PO number on this job — add it in job setup before issuing.</div>}
@@ -112,7 +112,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
       ) : (
         <div className="card empty">
           <div style={{ fontWeight: 600, color: 'var(--ink)', marginBottom: 6 }}>No open valuation</div>
-          Tick completed items in <button className="linkish tap" style={{ color: 'var(--copper-ink)' }} onClick={() => go('scope')}>Scope</button> or priced <button className="linkish tap" style={{ color: 'var(--copper-ink)' }} onClick={() => go('vos')}>VOs</button> to start {valRef(nextNo)}.
+          Tick completed items in <button className="linkish tap slate" onClick={() => go('scope')}>Scope</button> or priced <button className="linkish tap slate" onClick={() => go('vos')}>VOs</button> to start {valRef(nextNo)}.
         </div>
       )}
 
@@ -133,7 +133,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                     {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {money(invoiceAmounts(job, v, scope, vos).total)} incl. VAT</div>}
                     <div className="vo-status"><CourtLine c={courts.get(v.id)!} /></div>
                   </div>
-                  <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}>▸</span></div>
+                  <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" aria-hidden="true" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}>▸</span></div>
                 </div>
                 {isOpen && (
                   <div className="vo-actions" onClick={e => e.stopPropagation()}>
@@ -171,7 +171,7 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
     <Sheet onClose={onClose}>
       <div className="stack">
         <div className="label bracket">Payment · {valRef(v.number)}</div>
-        <div className="muted" style={{ fontSize: 13 }}>{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Enter what actually landed — a part payment leaves the rest showing as owed.</div>
+        <div className="hint">{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Enter what actually landed — a part payment leaves the rest showing as owed.</div>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
         {amount !== full && <div className="chips"><button className="chip" onClick={() => setAmount(full)}>Paid in full · {money(gross)}</button></div>}
@@ -201,7 +201,7 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onCrea
       <div className="stack">
         <div className="label bracket">{ref} · issued</div>
         <Plate kind="ok">{ref} issued for {money(p.totals.gross)} — locked</Plate>
-        <div className="muted" style={{ fontSize: 14 }}>{p.totals.lines} line{p.totals.lines === 1 ? '' : 's'} certified. {money(p.cumulative)} certified to date{p.pct != null ? ` (${p.pct}% of contract and VOs)` : ''}. Next ticks start {valRef(val.number + 1)}.</div>
+        <div className="muted t-note">{p.totals.lines} line{p.totals.lines === 1 ? '' : 's'} certified. {money(p.cumulative)} certified to date{p.pct != null ? ` (${p.pct}% of contract and VOs)` : ''}. Next ticks start {valRef(val.number + 1)}.</div>
         <button className="btn btn-primary" onClick={() => onCreateInvoice(done)}>Create invoice</button>
         <button className="btn btn-secondary" disabled={busy === 'cert'} onClick={() => cert(done)}>{busy === 'cert' ? 'Preparing…' : 'Certificate PDF'}</button>
         <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onClose}>Done — invoice later</button>
@@ -217,20 +217,20 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onCrea
             <div className="grow"><div className="label">This valuation</div><div className="amt" style={{ fontSize: 28, fontWeight: 700 }}>{money(p.totals.gross)}</div></div>
             <div style={{ textAlign: 'right' }}><div className="label">Lines</div><div className="amt" style={{ fontSize: 22, fontWeight: 700 }}>{p.totals.lines}</div></div>
           </div>
-          <div className="muted" style={{ fontSize: 13 }}>incl. uplifts, excl. VAT{job.poNumber ? ` · PO ${job.poNumber}` : ''}</div>
-          <div className="issue-table" style={{ marginTop: 10, fontSize: 14 }}>
-            {p.groups.map(g => <div key={g.name} className="row"><span className="grow">{g.name} <small className="muted">· {g.lines} line{g.lines === 1 ? '' : 's'}</small></span><span className="amt">{money(g.base)}</span></div>)}
-            <div className="row" style={{ borderTop: '1px solid var(--cream-line)', paddingTop: 4, marginTop: 4 }}><span className="grow">Base</span><span className="amt">{money(p.totals.base)}</span></div>
+          <div className="hint">incl. uplifts, excl. VAT{job.poNumber ? ` · PO ${job.poNumber}` : ''}</div>
+          <div className="issue-table t-note" style={{ marginTop: 10 }}>
+            {p.groups.map(g => <div key={g.name} className="row"><span className="grow">{g.name} <small className="hint">· {g.lines} line{g.lines === 1 ? '' : 's'}</small></span><span className="amt">{money(g.base)}</span></div>)}
+            <div className="row" style={{ borderTop: '1px solid var(--line)', paddingTop: 4, marginTop: 4 }}><span className="grow">Base</span><span className="amt">{money(p.totals.base)}</span></div>
             {p.u1 !== 0 && <div className="row"><span className="grow">Uplift 1 · {job.uplift1}%</span><span className="amt">{money(p.u1)}</span></div>}
             {p.u2 !== 0 && <div className="row"><span className="grow">Uplift 2 · {job.uplift2}%</span><span className="amt">{money(p.u2)}</span></div>}
             <div className="row" style={{ fontWeight: 700 }}><span className="grow">This valuation</span><span className="amt">{money(p.totals.gross)}</span></div>
             <div className="row muted"><span className="grow">Previously certified</span><span className="amt">{money(p.previous)}</span></div>
-            <div className="row" style={{ fontWeight: 600 }}><span className="grow">Cumulative{p.pct != null ? ` · ${p.pct}% of contract + VOs` : ''}</span><span className="amt">{money(p.cumulative)}</span></div>
+            <div className="row t-strong"><span className="grow">Cumulative{p.pct != null ? ` · ${p.pct}% of contract + VOs` : ''}</span><span className="amt">{money(p.cumulative)}</span></div>
           </div>
         </div>
         {p.checks.map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
         <button className="btn btn-secondary" disabled={busy !== null} onClick={() => cert(val)}>{busy === 'cert' ? 'Preparing…' : 'Preview certificate (draft)'}</button>
-        <div className="muted" style={{ fontSize: 13 }}>Issuing locks every line in {ref}: they can’t be unticked or edited afterwards.</div>
+        <div className="hint">Issuing locks every line in {ref}: they can’t be unticked or edited afterwards.</div>
         <button className="btn btn-primary" disabled={busy !== null} onClick={async () => { setBusy('issue'); try { setDone(await onIssue(val)) } finally { setBusy(null) } }}>Issue {ref} for {money(p.totals.gross)}</button>
         <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onClose}>Not yet</button>
       </div>

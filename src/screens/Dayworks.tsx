@@ -46,7 +46,7 @@ export function DayworksSheet({ job, sheets, vos, books, onSave, onDelete, onCla
     <Sheet onClose={onClose} label="Dayworks">
       <div className="stack">
         <div className="label bracket">Dayworks · {job.name}</div>
-        <div className="muted" style={{ fontSize: 14 }}>Work done on time and materials: hours by trade, materials and plant, signed by the client, then claimed as a variation.</div>
+        <div className="muted t-note">Work done on time and materials: hours by trade, materials and plant, signed by the client, then claimed as a variation.</div>
         {sorted.length === 0 ? <div className="card empty">No dayworks sheets yet.</div> : (
           <div className="panel chk">
             {sorted.map(d => {
@@ -132,7 +132,7 @@ function DayworksEditor({ job, d: initial, isNew, vo, books, onSave, onDelete, o
             )}
           </div>
         ))}
-        {!trades.length && <div className="muted" style={{ fontSize: 13 }}>No labour rates in your rate books yet — import your schedule (it carries them) or choose Other and enter the rate.</div>}
+        {!trades.length && <div className="hint">No labour rates in your rate books yet — import your schedule (it carries them) or choose Other and enter the rate.</div>}
         <button type="button" className="linkish tap" onClick={() => setD({ ...d, labour: [...d.labour, { trade: '', label: '', rate: null, hours: null }] })}>+ Add a trade</button>
 
         <Items title="Materials" items={d.materials} set={materials => setD({ ...d, materials })} showMoney={m} />

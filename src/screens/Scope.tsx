@@ -87,25 +87,25 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
     const val = valById(i.valuationId)
     const locked = !!lockedIn(i, vals)
     return (
-      <div key={i.id} className="row has-hit" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--ink-line)' : 'none', alignItems: 'flex-start' }}>
+      <div key={i.id} className="row has-hit" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--line)' : 'none', alignItems: 'flex-start' }}>
         <RowHit label={`Edit ${i.code ? i.code + ' ' : ''}${i.description}`} onClick={() => onEdit(i)} />
         {/* the whole left strip of the row is the tick, so a near miss ticks rather than opening the editor */}
         {isPriced(i) || i.valuationId
           ? <div className="tick-col" onClick={e => { e.stopPropagation(); if (!locked) onToggle(i) }}><Tick on={!!i.valuationId} locked={locked} onClick={() => onToggle(i)} /></div>
           : <span className="tick-col" aria-hidden="true" />}
-        <div className="grow" style={{ minWidth: 0 }}>
+        <div className="grow">
           <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-            {i.code && <span className="mono" style={{ color: 'var(--copper-ink)', fontSize: 12 }}>{i.code}</span>}
-            {showRoom && <span className="muted" style={{ fontSize: 11 }}>{i.room}</span>}
+            {i.code && <span className="mono t-small slate">{i.code}</span>}
+            {showRoom && <span className="hint">{i.room}</span>}
             <ValBadge val={val} />
           </div>
           <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
-          <div className="muted" style={{ fontSize: 12 }}>
+          <div className="hint">
             {i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated'}{i.rate != null ? ` @ ${money(i.rate)}` : ''}{i.hours ? ` · ${i.hours}h` : ''}
           </div>
           {!isPriced(i) && <div className="flag">{i.rate == null ? 'NO RATE' : 'NO QTY'} — tap to fix</div>}
         </div>
-        <div className="amt" style={{ fontSize: 14, flex: 'none', whiteSpace: 'nowrap', color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
+        <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap', color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
       </div>
     )
   }
@@ -168,14 +168,14 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
             {isOpen && (
               <div className="prop-body">
                 {remaining.length > 0 && (
-                  <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ink-line)' }}>
+                  <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--line)' }}>
                     {confirmAll === p
-                      ? <div className="row"><span className="grow" style={{ fontSize: 13 }}>Put all {remaining.length} remaining lines ({money(remaining.reduce((t, i) => t + lineValue(i.qty, i.rate), 0))}) into the valuation?</span>
-                          <button className="chip" onClick={() => setConfirmAll(null)}>No</button><button className="chip on" onClick={() => { setConfirmAll(null); onToggleMany(remaining) }}>Yes</button></div>
-                      : <button className="btn btn-secondary" style={{ minHeight: 42 }} onClick={() => setConfirmAll(p)}>Tick all remaining ({remaining.length})</button>}
+                      ? <div className="row"><span className="grow t-small">Put all {remaining.length} remaining lines ({money(remaining.reduce((t, i) => t + lineValue(i.qty, i.rate), 0))}) into the valuation?</span>
+                          <button className="chip lg" onClick={() => setConfirmAll(null)}>No</button><button className="chip lg on" onClick={() => { setConfirmAll(null); onToggleMany(remaining) }}>Yes</button></div>
+                      : <button className="btn btn-secondary" onClick={() => setConfirmAll(p)}>Tick all remaining ({remaining.length})</button>}
                   </div>
                 )}
-                {lines.length === 0 && <div className="muted" style={{ padding: 12, fontSize: 13 }}>Nothing here for this filter.</div>}
+                {lines.length === 0 && <div className="hint" style={{ padding: 12 }}>Nothing here for this filter.</div>}
                 {groupsOf(lines).map(g => {
                   const key = `${p}|${g}`
                   const gl = lines.filter(i => groupName(i) === g)
@@ -186,13 +186,13 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
                   const grem = gall.filter(i => !i.valuationId && isPriced(i))
                   const gOpen = openGroups.has(key)
                   return (
-                    <div key={key} style={{ borderTop: '1px solid var(--ink-line)' }}>
+                    <div key={key} style={{ borderTop: '1px solid var(--line)' }}>
                       <button onClick={() => toggleGroup(key)} aria-expanded={gOpen} aria-label={`No. ${p} ${g}`}
-                        className="row" style={{ width: '100%', background: gOpen ? 'var(--row-open)' : 'none', border: 'none', padding: '10px 14px 10px 30px', color: 'var(--ink)', textAlign: 'left' }}>
-                        <span style={{ width: 12, color: 'var(--copper-ink)', fontSize: 11, transition: 'transform .2s', transform: gOpen ? 'rotate(90deg)' : 'none' }}>▸</span>
-                        <span className="grow" style={{ fontWeight: 600, fontSize: 14 }}>{g} <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>· {gall.length}</span></span>
-                        <span className="amt" style={{ fontSize: 13 }}>{money(gt)}</span>
-                        <span className="amt" style={{ fontSize: 13, width: 40, textAlign: 'right', color: gpct === 100 ? 'var(--green)' : 'var(--copper-ink)' }}>{gpct}%</span>
+                        className={'row grp-row' + (gOpen ? ' open' : '')}>
+                        <span aria-hidden="true" className="grp-chev">▸</span>
+                        <span className="grow t-note t-strong">{g} <span className="hint" style={{ fontWeight: 400 }}>· {gall.length}</span></span>
+                        <span className="amt t-small grp-amt">{money(gt)}</span>
+                        <span className="amt t-small grp-pct" style={{ color: gpct === 100 ? 'var(--green)' : 'var(--ink-2)' }}>{gpct}%</span>
                       </button>
                       {gOpen && (
                         <div style={{ paddingLeft: 18 }}>
@@ -210,7 +210,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
       })}</div> : rooms.map(room => (
         <div key={room}>
           <div className="label" style={{ margin: '6px 0 6px' }}>{room}</div>
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card flush clip">
             {shown.filter(i => i.room === room).sort((a, b) => a.order - b.order).map((i, idx) => row(i, idx, false))}
           </div>
         </div>
@@ -220,7 +220,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         {scope.length > 0 && <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onImport}><IconScope /> Import more</button>}
         {scope.length > 0 && <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onAdd}><IconPlus /> Add item</button>}
       </div>
-      {scope.length > 0 && <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>Tick an item to put it in the open valuation. Untick to send it back.</div>}
+      {scope.length > 0 && <div className="hint" style={{ textAlign: 'center' }}>Tick an item to put it in the open valuation. Untick to send it back.</div>}
     </div>
   )
 }
@@ -256,7 +256,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           <div style={{ width: '22%' }}><Field label="Unit"><input disabled={locked} value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} /></Field></div>
           <div className="grow"><Field label="Rate (£)" hint={f.rateBook ? `From ${f.rateBook}` : undefined}><input disabled={locked} inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setF({ ...f, rateBook: undefined }) }} placeholder="No rate" /></Field></div>
         </div>
-        <div className="amt" style={{ fontSize: 20, fontWeight: 700, color: n(qty) && n(rate) ? 'var(--copper-ink)' : 'var(--ink-muted)' }}>
+        <div className="amt" style={{ fontSize: 20, fontWeight: 700, color: n(qty) && n(rate) ? 'var(--ink-2)' : 'var(--ink-muted)' }}>
           {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}
         </div>
         {!locked && <button className="btn btn-primary" disabled={!f.description.trim()} onClick={() => onSave({ ...f, description: f.description.trim(), room: f.room.trim() || 'General', code: f.code.trim(), qty: n(qty), rate: n(rate) })}>{item ? 'Save' : 'Add item'}</button>}

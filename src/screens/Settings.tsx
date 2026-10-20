@@ -31,45 +31,45 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
       <div className="stack">
         {m && <>
         <div className="label bracket">Company settings</div>
-        <div className="muted" style={{ fontSize: 13 }}>Used on your VAT invoices. Shared with everyone in your company.</div>
+        <div className="hint">Used on your VAT invoices. Shared with everyone in your company.</div>
 
         <div className="label" style={{ marginTop: 6 }}>Company</div>
         {T('name', 'Company name *', { placeholder: 'Tree & Sons Ltd' })}
         <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
-        <div className="row"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
-        <div className="row"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
+        <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
+        <div className="row pair"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
 
         <div className="label" style={{ marginTop: 6 }}>Bank details (printed on invoices)</div>
-        <div className="row"><div className="grow">{T('accountName', 'Account name')}</div><div className="grow">{T('bankName', 'Bank')}</div></div>
-        <div className="row"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
+        <div className="row pair"><div className="grow">{T('accountName', 'Account name')}</div><div className="grow">{T('bankName', 'Bank')}</div></div>
+        <div className="row pair"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
 
         <div className="label" style={{ marginTop: 6 }}>Invoices</div>
-        <div className="row">
+        <div className="row pair">
           <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. TS- (or blank)' })}</div>
           <div className="grow"><Field label="Next invoice number" hint="Carry on from your current sequence"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
         </div>
-        <div className="row">
+        <div className="row pair">
           <div className="grow"><Field label="Digits" hint="e.g. 4 → 0042"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} /></Field></div>
           <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>
         </div>
         <Field label="Labour day rate (£)" hint="Your cost of one operative-day. Lets each job’s margin include the labour recorded in the diary, shown as an estimate. Leave blank to leave it out.">
           <input inputMode="decimal" value={s.labourDayRate != null ? String(s.labourDayRate) : ''} onChange={e => { const v = parseFloat(e.target.value.replace(/[£,]/g, '')); set('labourDayRate', isFinite(v) && v > 0 ? v : null) }} placeholder="e.g. 180" />
         </Field>
-        <div className="panel" style={{ padding: '10px 14px', fontSize: 13 }}>Your next invoice will be <b className="mono" style={{ color: 'var(--copper-ink)' }}>{formatInvoiceNo(preview, nextN)}</b></div>
+        <div className="panel t-small" style={{ padding: '10px 14px' }}>Your next invoice will be <b className="mono slate">{formatInvoiceNo(preview, nextN)}</b></div>
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>
 
         </>}
 
-        <div className="label bracket" style={{ marginTop: 22 }}>Team</div>
-        <div className="muted" style={{ fontSize: 13 }}>Add your office and site staff so they see the same jobs.</div>
+        <div className="label bracket sec">Team</div>
+        <div className="hint">Add your office and site staff so they see the same jobs.</div>
         <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
 
         <AiSetup />
 
         {m && <>
-        <div className="label bracket" style={{ marginTop: 22 }}>Export invoices</div>
-        <div className="muted" style={{ fontSize: 13 }}>A CSV your accounts package imports, so invoices aren’t typed in twice. Only invoices you’ve created are included.</div>
+        <div className="label bracket sec">Export invoices</div>
+        <div className="hint">A CSV your accounts package imports, so invoices aren’t typed in twice. Only invoices you’ve created are included.</div>
         <div className="chips" role="group" aria-label="Accounts package">
           {(['xero', 'quickbooks'] as const).map(f => <button key={f} className={'chip' + ((s.accountsFormat ?? 'xero') === f ? ' on' : '')} aria-pressed={(s.accountsFormat ?? 'xero') === f} onClick={() => set('accountsFormat', f)}>{f === 'xero' ? 'Xero' : 'QuickBooks'}</button>)}
         </div>
@@ -83,18 +83,18 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         }}>Download CSV</button>
         {exportMsg && <div role="status"><Plate kind={exportMsg.startsWith('No') ? 'wait' : 'ok'}>{exportMsg}</Plate></div>}
 
-        <div className="label bracket" style={{ marginTop: 22 }}>Schedule of rates</div>
-        <div className="muted" style={{ fontSize: 13 }}>{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
+        <div className="label bracket sec">Schedule of rates</div>
+        <div className="hint">{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
         <button className="btn btn-secondary" onClick={onRates}>Open schedule of rates</button>
 
         </>}
 
-        <div className="label bracket" style={{ marginTop: 22 }}>This device</div>
-        <div className="muted" style={{ fontSize: 13 }}>A backup is a file of every job on this phone or computer — keep one before changing devices.</div>
+        <div className="label bracket sec">This device</div>
+        <div className="hint">A backup is a file of every job on this phone or computer — keep one before changing devices.</div>
         <div className="row">
           <button className="btn btn-secondary" style={{ flex: 1 }} onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>
-          <label className="btn btn-secondary" style={{ flex: 1, cursor: 'pointer' }} data-keep-clean>Restore…
-            <input type="file" hidden accept=".json,application/json" onChange={async e => {
+          <label className="btn btn-secondary" style={{ flex: 1 }} data-keep-clean>Restore…
+            <input type="file" className="sr-only" accept=".json,application/json" onChange={async e => {
               const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
               try { const text = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsText(f) }); const n = await onRestore(text); setMsg(`Restored ${n} job${n === 1 ? '' : 's'}`) }
               catch (err) { setMsg((err as Error).message || 'Couldn’t restore that file — is it a Mastor backup?') }
@@ -122,19 +122,19 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onC
         <div className="label bracket">Create VAT invoice</div>
         {missing.length ? (
           <>
-            <div style={{ fontSize: 14 }}>Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
+            <div className="t-note">Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
             <button className="btn btn-primary" onClick={onSettings}>Open company settings</button>
           </>
         ) : (
           <>
             <div className="panel" style={{ padding: 14 }}>
-              <div className="row"><span className="grow muted">Invoice number</span><b className="mono" style={{ color: 'var(--copper-ink)', fontSize: 18 }}>{number}</b></div>
+              <div className="row"><span className="grow muted">Invoice number</span><b className="mono" style={{ color: 'var(--ink-2)', fontSize: 18 }}>{number}</b></div>
               <div className="row" style={{ marginTop: 8 }}><span className="grow muted">Net</span><span className="mono">{net}</span></div>
               <div className="row"><span className="grow muted">VAT @ {rate}%</span><span className="mono">{vat}</span></div>
-              <div className="row" style={{ borderTop: '1px solid var(--ink-line)', marginTop: 6, paddingTop: 6 }}><b className="grow">Total</b><b className="mono">{total}</b></div>
+              <div className="row" style={{ borderTop: '1px solid var(--line)', marginTop: 6, paddingTop: 6 }}><b className="grow">Total</b><b className="mono">{total}</b></div>
             </div>
             <Field label="Invoice date (tax point)"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
-            <div className="muted" style={{ fontSize: 12 }}>Once created, this number is used and can't be reissued. Payment terms run from this date.</div>
+            <div className="hint">Once created, this number is used and can't be reissued. Payment terms run from this date.</div>
             <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, dd] = date.split('-').map(Number); onCreate(new Date(y, m - 1, dd, 12).getTime()) }}>Create invoice {number}</button>
           </>
         )}
@@ -150,13 +150,13 @@ function AiSetup() {
   const [busy, setBusy] = useState(false)
   return (
     <>
-      <div className="label bracket" style={{ marginTop: 22 }}>AI setup</div>
-      <div className="muted" style={{ fontSize: 13 }}>Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Uses one of today’s reads.</div>
+      <div className="label bracket sec">AI setup</div>
+      <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Uses one of today’s reads.</div>
       <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setOut(null); try { setOut(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
-      {res && <div className="stack" role="status" style={{ gap: 6 }}>
-        {res.map(c => <div key={c.name}><Plate kind={c.ok ? 'ok' : 'stop'}>{c.name}</Plate><div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{c.detail}</div></div>)}
-        {res.every(c => c.ok) && <div style={{ fontSize: 14, fontWeight: 600 }}>All working.</div>}
-        {out?.build && <div className="muted mono" style={{ fontSize: 12 }}>Checked on: {out.build}</div>}
+      {res && <div className="stack" role="status">
+        {res.map(c => <div key={c.name}><Plate kind={c.ok ? 'ok' : 'stop'}>{c.name}</Plate><div className="hint" style={{ marginTop: 2 }}>{c.detail}</div></div>)}
+        {res.every(c => c.ok) && <div className="t-note t-strong">All working.</div>}
+        {out?.build && <div className="hint mono">Checked on: {out.build}</div>}
       </div>}
     </>
   )

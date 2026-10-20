@@ -43,11 +43,11 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
         ]} />
         {m.margin < 0 && <Plate kind="stop">Costs are more than the job is worth</Plate>}
         {m.provisional.length > 0 && <Plate kind="warn">Provisional: {m.provisional.join(' · ')}</Plate>}
-        {m.unpriced > 0 && <div className="muted" style={{ fontSize: 14 }}>The value leaves out {m.unpriced} unpriced line{m.unpriced === 1 ? '' : 's'} — the margin will move when they’re priced.</div>}
+        {m.unpriced > 0 && <div className="muted t-note">The value leaves out {m.unpriced} unpriced line{m.unpriced === 1 ? '' : 's'} — the margin will move when they’re priced.</div>}
 
         <div className="panel" style={{ fontSize: 15 }}>
           <b>Labour from the site diary</b>
-          <div className="muted" style={{ fontSize: 14, marginTop: 4 }}>
+          <div className="muted t-note" style={{ marginTop: 4 }}>
             {m.labourDays ? `${m.labourDays} operative-day${m.labourDays === 1 ? '' : 's'} recorded` : 'No labour recorded in the diary yet'}
             {m.labourEstimate != null ? ` × ${money(dayRate!)} a day = ${money(m.labourEstimate)} (an estimate, included above).` : m.labourDays ? ' — set your day rate in Settings to include them as an estimate.' : '.'}
           </div>

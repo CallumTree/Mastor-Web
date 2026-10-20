@@ -52,9 +52,9 @@ export function Gate({ children }: { children: ReactNode }) {
         {stage.s === 'signedOut' && <SignIn />}
         {stage.s === 'needCompany' && <CompanySetup onDone={() => supabase.auth.getSession().then(({ data }) => afterSignIn(data.session))} />}
         {stage.s === 'error' && (
-          <div className="panel stack" style={{ padding: 16 }}>
+          <div className="panel stack">
             <div style={{ fontWeight: 700 }}>Couldn’t reach Mastor’s servers</div>
-            <div className="muted" style={{ fontSize: 14 }}>{stage.msg}</div>
+            <div className="muted t-note">{stage.msg}</div>
             <button className="btn btn-primary" onClick={() => location.reload()}>Try again</button>
           </div>
         )}
@@ -88,14 +88,14 @@ function SignIn() {
     else if (mode === 'up' && !r.data.session) setMsg({ ok: true, text: 'Check your email and tap the link to confirm — then sign in here.' })
   }
   return (
-    <div className="panel stack" style={{ padding: 16 }}>
+    <div className="panel stack">
       <div className="chips">
         <button className={'chip' + (mode === 'in' ? ' on' : '')} onClick={() => setMode('in')}>Sign in</button>
         <button className={'chip' + (mode === 'up' ? ' on' : '')} onClick={() => setMode('up')}>Create account</button>
       </div>
       <Field label="Email"><input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></Field>
       <Field label="Password" hint={mode === 'up' ? 'At least 8 characters' : undefined}><input type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} /></Field>
-      {msg && <div role="status" style={{ fontSize: 14, fontWeight: 600, color: msg.ok ? 'var(--green)' : 'var(--red)' }}>{msg.text}</div>}
+      {msg && <div role="status" className="t-note" style={{ fontWeight: 600, color: msg.ok ? 'var(--green)' : 'var(--red)' }}>{msg.text}</div>}
       <button className="btn btn-primary" disabled={busy || !email.includes('@') || password.length < (mode === 'up' ? 8 : 1)} onClick={go}>
         {busy ? '…' : mode === 'in' ? 'Sign in' : 'Create account'}
       </button>
@@ -114,12 +114,12 @@ function CompanySetup({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   return (
-    <div className="panel stack" style={{ padding: 16 }}>
+    <div className="panel stack">
       <div style={{ fontWeight: 700 }}>Your company</div>
-      <div className="muted" style={{ fontSize: 14 }}>Jobs belong to your company, so people you add later see the same jobs. Anything already on this phone comes with you.</div>
-      <div className="muted" style={{ fontSize: 14 }}>Joining someone else’s company? Ask them to add your email under Settings → Team, then <button className="linkish" onClick={onDone}>check again</button>.</div>
+      <div className="muted t-note">Jobs belong to your company, so people you add later see the same jobs. Anything already on this phone comes with you.</div>
+      <div className="muted t-note">Joining someone else’s company? Ask them to add your email under Settings → Team, then <button className="linkish tap" onClick={onDone}>check again</button>.</div>
       <Field label="Company name"><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Tree & Sons Ltd" /></Field>
-      {err && <div role="alert" style={{ fontSize: 14, fontWeight: 600, color: 'var(--red)' }}>{err}</div>}
+      {err && <div role="alert" className="t-note" style={{ fontWeight: 600, color: 'var(--red)' }}>{err}</div>}
       <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={async () => {
         setBusy(true); setErr(null)
         try { await createCompany(name.trim()); onDone() } catch (e) { setErr((e as Error).message); setBusy(false) }

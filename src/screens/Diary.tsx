@@ -17,15 +17,17 @@ export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayI
 function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
   const url = usePhotoUrl(e.mediaId)
   return (
-    <button onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : e.type === 'voice' ? 'Open voice note' : 'Open photo'} style={{ position: 'relative', aspectRatio: '1', padding: 0, border: '1px solid var(--ink-line)', borderRadius: 3, overflow: 'hidden', background: 'var(--ground)' }}>
-      {e.type === 'voice' ? <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 4, color: 'var(--ink)', fontSize: 12, fontWeight: 600 }}><IconMic size={30} />Voice note</span>
+    <button className="d-thumb" onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : e.type === 'voice' ? 'Open voice note' : 'Open photo'}>
+      {e.type === 'voice' ? <span className="t-small" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 4, color: 'var(--ink)', fontWeight: 600 }}><IconMic size={30} />Voice note</span>
         : url && (e.type === 'video'
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : <img src={url} alt={e.note || 'Site photo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
-      {e.type === 'video' && <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 26, textShadow: '0 1px 6px rgba(0,0,0,.6)' }}>▶</span>}
-      {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4, fontSize: 11 }}>Marked up</span>}
-      {e.voId && <span className="badge b-slate" style={{ position: 'absolute', right: 4, top: 4, fontSize: 11 }}>VO</span>}
-      {e.read && <span className={'badge ' + (e.read.suggestions.some(x => x.state === 'open') ? 'b-amber' : 'b-green')} style={{ position: 'absolute', left: 4, top: 4, fontSize: 11 }}>{e.read.suggestions.some(x => x.state === 'open') ? `${e.read.suggestions.filter(x => x.state === 'open').length} to review` : 'Read'}</span>}
+      {e.type === 'video' && <span aria-hidden="true" className="d-thumb-play">▶</span>}
+      {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4 }}>Marked up</span>}
+      {(e.read || e.voId) && <span style={{ position: 'absolute', left: 4, right: 4, top: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        {e.read && <span className={'badge ' + (e.read.suggestions.some(x => x.state === 'open') ? 'b-amber' : 'b-green')}>{e.read.suggestions.some(x => x.state === 'open') ? `${e.read.suggestions.filter(x => x.state === 'open').length} to review` : 'Read'}</span>}
+        {e.voId && <span className="badge b-slate" style={{ marginLeft: 'auto' }}>VO</span>}
+      </span>}
     </button>
   )
 }
@@ -48,9 +50,9 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
       <div className="stack">
         <div className="label bracket">{e.type === 'video' ? 'Video' : e.type === 'voice' ? 'Voice note' : 'Photo'} · {prettyDay(e.date)}</div>
         {url && e.type === 'voice' ? <audio src={url} controls style={{ width: '100%' }} /> : url && (e.type === 'video'
-          ? <video src={url} controls playsInline style={{ width: '100%', maxHeight: '52vh', background: '#000', borderRadius: 3 }} />
-          : <img src={showOriginal && originalUrl ? originalUrl : url} alt={caption || 'Site photo'} style={{ width: '100%', maxHeight: '52vh', objectFit: 'contain', background: 'var(--ground)', borderRadius: 3 }} />)}
-        {e.transcript && <div className="panel" style={{ fontSize: 14 }}><div className="label">What was said</div>{e.transcript}</div>}
+          ? <video src={url} controls playsInline style={{ width: '100%', maxHeight: '52vh', background: 'var(--shell)', borderRadius: 'var(--r-sm)' }} />
+          : <img src={showOriginal && originalUrl ? originalUrl : url} alt={caption || 'Site photo'} style={{ width: '100%', maxHeight: '52vh', objectFit: 'contain', background: 'var(--ground)', borderRadius: 'var(--r-sm)' }} />)}
+        {e.transcript && <div className="panel t-note"><div className="label">What was said</div>{e.transcript}</div>}
         {e.originalMediaId && <button className="chip" onClick={() => setShowOriginal(!showOriginal)}>{showOriginal ? 'Showing original — tap for marked-up' : 'Show original'}</button>}
         <Field label="Caption" hint="Tip: tap the mic on your keyboard to dictate"><input value={caption} onChange={x => setCaption(x.target.value)} placeholder="What does this show?" /></Field>
         <Field label="Room / area"><input value={room} onChange={x => setRoom(x.target.value)} list="diary-rooms" /></Field>
@@ -127,13 +129,13 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
 
   return (
     <div className="stack">
-      <div className="row">
-        <button aria-label="Previous day" onClick={() => setDate(addDays(date, -1))} style={{ width: 44, height: 44, border: '2px solid var(--ink)', background: 'var(--panel)', borderRadius: 4, color: 'var(--ink)' }}><IconBack size={18} /></button>
+      <div className="row diary-day">
+        <button className="icon-btn" aria-label="Previous day" onClick={() => setDate(addDays(date, -1))}><IconBack size={18} /></button>
         <div className="grow" style={{ textAlign: 'center' }}>
           <div className="label">{date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : 'Site diary'}</div>
           <div style={{ fontWeight: 700, fontSize: 17 }}>{prettyDay(date)}</div>
         </div>
-        <button aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ width: 44, height: 44, border: '2px solid var(--ink)', background: 'var(--panel)', borderRadius: 4, color: 'var(--ink)', opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
+        <button className="icon-btn" aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
         <TabMenu title="Diary" actions={[
           { label: 'Go to today', disabled: date === today, onClick: () => setDate(today) },
           { label: 'Write a note for this day', onClick: () => noteRef.current?.focus() },
@@ -144,10 +146,10 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         <div className="row" style={{ alignItems: 'flex-end', gap: 12 }}>
           <div className="grow"><Field label="Weather"><input value={weather} onChange={e => setWeather(e.target.value)} onBlur={() => weather !== (day?.weather ?? '') && saveDay({ weather: weather.trim() })} placeholder={job.address ? 'Looking up…' : 'Add a site address in job setup for automatic weather'} /></Field></div>
         </div>
-        <div className="row" style={{ marginTop: 12 }}>
-          <span className="grow" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)' }}>Labour on site</span>
+        <div className="row diary-labour" style={{ marginTop: 12 }}>
+          <span className="grow hint t-strong">Labour on site</span>
           <button aria-label="Fewer operatives" onClick={() => { const n = Math.max(0, (labour ?? 0) - 1); setLabour(n); saveDay({ labour: n }) }} className="step-btn">−</button>
-          <span className="mono" style={{ width: 44, textAlign: 'center', fontSize: 20 }}>{labour ?? '—'}</span>
+          <span className="mono diary-count">{labour ?? '—'}</span>
           <button aria-label="More operatives" onClick={() => { const n = (labour ?? 0) + 1; setLabour(n); saveDay({ labour: n }) }} className="step-btn">+</button>
         </div>
         <div style={{ marginTop: 12 }}>
@@ -161,7 +163,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         <div className="label bracket grow">Photos, video &amp; voice ({media.length})</div>
       </div>
       {media.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+        <div className="diary-thumbs">
           {media.map(e => <Thumb key={e.id} e={e} onOpen={() => setOpen(e)} />)}
         </div>
       )}
@@ -169,18 +171,18 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
       <div className="row">
         <label className="btn btn-secondary" style={{ flex: 1 }}>
           <IconCamera /> {busy ? 'Saving…' : 'Photo'}
-          <input type="file" accept="image/*" capture="environment" hidden onChange={e => { add(e.target.files?.[0], 'photo'); e.target.value = '' }} />
+          <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { add(e.target.files?.[0], 'photo'); e.target.value = '' }} />
         </label>
         <label className="btn btn-secondary" style={{ flex: 1 }}>
           <IconVideo /> Video
-          <input type="file" accept="video/*" capture="environment" hidden onChange={e => { add(e.target.files?.[0], 'video'); e.target.value = '' }} />
+          <input type="file" className="sr-only" accept="video/*" capture="environment" onChange={e => { add(e.target.files?.[0], 'video'); e.target.value = '' }} />
         </label>
         <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setRecording(true)}><IconMic /> Voice</button>
       </div>
       <div className="row">
         <label className="btn btn-ghost" style={{ flex: 1 }}>
           From gallery
-          <input type="file" accept="image/*,video/*" hidden onChange={e => { const f = e.target.files?.[0]; add(f, f?.type.startsWith('video') ? 'video' : 'photo'); e.target.value = '' }} />
+          <input type="file" className="sr-only" accept="image/*,video/*" onChange={e => { const f = e.target.files?.[0]; add(f, f?.type.startsWith('video') ? 'video' : 'photo'); e.target.value = '' }} />
         </label>
       </div>
 
@@ -189,8 +191,8 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           {toRead > 0 && <button className="btn btn-primary" disabled={reading} onClick={async () => { setReading(true); setReadMsg(null); try { setReadMsg(await onRead(date)) } finally { setReading(false) } }}>
             {reading ? 'Reading against the scope…' : `Read ${date === today ? 'today' : 'this day'} against the scope · ${toRead} new`}
           </button>}
-          {readMsg && <div role="status" style={{ fontSize: 14 }}>{readMsg}</div>}
-          {!readMsg && <div className="muted" style={{ fontSize: 13 }}>Photos, voice notes, videos and the note are checked against the scope. What’s done, extra work and site events come back as suggestions in Vals — nothing is claimed until someone approves it.</div>}
+          {readMsg && <div role="status" className="t-note">{readMsg}</div>}
+          {!readMsg && <div className="hint">Photos, voice notes, videos and the note are checked against the scope. What’s done, extra work and site events come back as suggestions in Vals — nothing is claimed until someone approves it.</div>}
         </div>
       )}
       {recording && <VoiceSheet onClose={() => setRecording(false)} onSave={async b => { await add(b, 'voice'); setRecording(false) }} />}
@@ -203,8 +205,8 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
               const n = entries.filter(e => e.date === d && (e.type === 'photo' || e.type === 'video')).length
               const dd = entries.find(e => e.id === dayId(job.id, d))
               return (
-                <button key={d} onClick={() => setDate(d)} className="row" style={{ width: '100%', background: 'none', border: 'none', borderTop: i ? '1px solid var(--ink-line)' : 'none', padding: '10px 0', textAlign: 'left', color: 'var(--ink)' }}>
-                  <span className="grow"><b style={{ fontWeight: 600 }}>{prettyDay(d)}</b><div className="muted" style={{ fontSize: 12 }}>{[dd?.weather, dd?.labour != null ? `${dd.labour} on site` : '', n ? `${n} photo${n === 1 ? '' : 's'}/video` : ''].filter(Boolean).join(' · ') || 'Note only'}</div></span>
+                <button key={d} onClick={() => setDate(d)} className="row" style={{ width: '100%', background: 'none', border: 'none', borderTop: i ? '1px solid var(--line)' : 'none', padding: '10px 0', minHeight: 48, textAlign: 'left', color: 'var(--ink)' }}>
+                  <span className="grow"><b className="t-strong">{prettyDay(d)}</b><div className="hint">{[dd?.weather, dd?.labour != null ? `${dd.labour} on site` : '', n ? `${n} photo${n === 1 ? '' : 's'}/video` : ''].filter(Boolean).join(' · ') || 'Note only'}</div></span>
                   <span className="muted">›</span>
                 </button>
               )
@@ -241,7 +243,7 @@ export function VoiceSheet({ onSave, onClose }: { onSave: (wav: Blob) => Promise
     <Sheet onClose={() => { rec.current?.cancel(); onClose() }} locked={secs != null || saving} label="Voice note">
       <div className="stack">
         <div className="label bracket">Voice note</div>
-        <div className="muted" style={{ fontSize: 14 }}>Say what’s done, where, and anything extra you’ve found — “number 4, front elevation painted; rotten joists under the bath, about two metres”.</div>
+        <div className="muted t-note">Say what’s done, where, and anything extra you’ve found — “number 4, front elevation painted; rotten joists under the bath, about two metres”.</div>
         <div className="amt" aria-live="polite" style={{ fontSize: 40, fontWeight: 700, textAlign: 'center' }}>{secs != null ? mmss(secs) : saving ? 'Saving…' : '0:00'}</div>
         {err && <div className="flag">{err}</div>}
         {secs == null

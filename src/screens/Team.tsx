@@ -40,14 +40,14 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
     <Sheet onClose={onClose} label="Team">
       <div className="stack">
         <div className="label bracket">Team</div>
-        <div className="muted" style={{ fontSize: 14 }}>Everyone on the team sees the same jobs.</div>
+        <div className="muted t-note">Everyone on the team sees the same jobs.</div>
         {err && <div role="alert"><Plate kind="stop">{err}</Plate></div>}
         {!rows && !err && <div className="loading-bar" role="status" aria-label="Loading team" />}
 
         {rows && (
           <>
             <h2 className="sec-h">People · {members.length}</h2>
-            <div className="panel" style={{ padding: 0 }}>
+            <div className="panel flush">
               {members.map(m => (
                 <div key={m.id} className="person">
                   <div className="grow"><b>{m.email}</b>{m.is_me && <small>You</small>}<small>Joined {ukDate(Date.parse(m.since))}</small></div>
@@ -68,7 +68,7 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
             {invites.length > 0 && (
               <>
                 <h2 className="sec-h">Added, not signed up yet · {invites.length}</h2>
-                <div className="panel" style={{ padding: 0 }}>
+                <div className="panel flush">
                   {invites.map(i => (
                     <div key={i.id} className="person">
                       <div className="grow"><b>{i.email}</b><small>{roleLabel(i.role)} · added {ukDate(Date.parse(i.since))}</small></div>
@@ -117,9 +117,9 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
                   ))}
                 </fieldset>
                 <button className="btn btn-primary" type="submit" disabled={busy || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())}>Add to team</button>
-                <div className="muted" style={{ fontSize: 13 }}>They join when they sign up with this email and confirm it. Mastor doesn’t send the invite — you share it.</div>
+                <div className="hint">They join when they sign up with this email and confirm it. Mastor doesn’t send the invite — you share it.</div>
               </form>
-            ) : me && <div className="muted" style={{ fontSize: 14 }}>Only an owner or director can add or remove people.</div>}
+            ) : me && <div className="muted t-note">Only an owner or director can add or remove people.</div>}
           </>
         )}
       </div>

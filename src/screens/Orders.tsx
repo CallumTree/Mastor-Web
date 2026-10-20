@@ -46,7 +46,7 @@ export function OrdersTab({ job, orders, scope, vals, onNew, onOpen, onClaim }: 
         { label: 'Done, not claimed', value: money(value(claimable)), note: `${claimableOrders} order${claimableOrders === 1 ? '' : 's'}${unpricedDone ? ` · + ${unpricedDone} unpriced line${unpricedDone === 1 ? '' : 's'}` : ''}`, hot: true, nil: !claimable.length },
         { label: 'Claimed', value: money(value(claimed)), note: `${new Set(claimed.map(i => i.orderId)).size} orders`, nil: !claimed.length },
       ]} />}
-      <div className="row" style={{ gap: 8 }}>
+      <div className="row">
         <button className="btn btn-primary" onClick={onNew}><IconPlus /> New order</button>
         {m && claimable.length > 0 && <button className="btn btn-secondary" onClick={() => onClaim(claimable)}>Claim {claimableOrders} completed</button>}
       </div>
@@ -170,7 +170,7 @@ export function OrderSheet({ job, order, scope, vals, books, onSave, onDelete, o
           <div key={w} className="stack" style={{ marginTop: 0 }}>
             <div className="row"><b className="grow">{w === 'beforeIds' ? 'Before' : 'After'} · {o[w].length}</b>
               <label className="btn btn-secondary" style={{ width: 'auto' }}><IconCamera /> Add
-                <input type="file" accept="image/*" capture="environment" multiple hidden onChange={e => { void addPhotos(e.target.files, w); e.target.value = '' }} /></label>
+                <input type="file" className="sr-only" accept="image/*" capture="environment" multiple onChange={e => { void addPhotos(e.target.files, w); e.target.value = '' }} /></label>
             </div>
             {o[w].length > 0 && <div className="thumbs">{o[w].map(id => <Thumb key={id} id={id} />)}</div>}
           </div>
@@ -181,7 +181,7 @@ export function OrderSheet({ job, order, scope, vals, books, onSave, onDelete, o
 
         {o.status === 'open' && (
           <>
-            {!o.afterIds.length && lines.length > 0 && <div className="muted" style={{ fontSize: 14 }}>Clients usually ask for after photos before paying — add them before marking it done.</div>}
+            {!o.afterIds.length && lines.length > 0 && <div className="muted t-note">Clients usually ask for after photos before paying — add them before marking it done.</div>}
             <button className="btn btn-primary" disabled={busy || !o.ref.trim() || !o.address.trim()} onClick={() => save('complete')}>Mark done</button>
           </>
         )}

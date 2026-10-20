@@ -8,10 +8,10 @@ export type SignKind = 'stop' | 'warn' | 'do' | 'ok'
 
 export function SignMark({ kind, size = 18 }: { kind: SignKind; size?: number }) {
   const s = { width: size, height: size, flex: 'none' as const, display: 'block' }
-  if (kind === 'stop') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="var(--red)" /><rect x="4.5" y="8.4" width="11" height="3.2" fill="#fff" /></svg>
-  if (kind === 'warn') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><path d="M10 1.2 19.2 18H.8z" fill="var(--yellow)" stroke="#121316" strokeWidth="1.4" strokeLinejoin="round" /><rect x="9.1" y="6.6" width="1.8" height="6" fill="#121316" /><rect x="9.1" y="14" width="1.8" height="1.8" fill="#121316" /></svg>
-  if (kind === 'do') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="var(--blue)" /><path d="M5 10h8.2M10 6.2 13.8 10 10 13.8" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="square" /></svg>
-  return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><rect x=".5" y=".5" width="19" height="19" rx="2" fill="var(--green)" /><path d="M5.2 10.2 8.4 13.4 14.8 6.8" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="square" /></svg>
+  if (kind === 'stop') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="var(--red)" /><rect x="4.5" y="8.4" width="11" height="3.2" fill="var(--panel)" /></svg>
+  if (kind === 'warn') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><path d="M10 1.2 19.2 18H.8z" fill="var(--yellow)" stroke="var(--ink)" strokeWidth="1.4" strokeLinejoin="round" /><rect x="9.1" y="6.6" width="1.8" height="6" fill="var(--ink)" /><rect x="9.1" y="14" width="1.8" height="1.8" fill="var(--ink)" /></svg>
+  if (kind === 'do') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="var(--blue)" /><path d="M5 10h8.2M10 6.2 13.8 10 10 13.8" fill="none" stroke="var(--panel)" strokeWidth="2.2" strokeLinecap="square" /></svg>
+  return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><rect x=".5" y=".5" width="19" height="19" rx="2" fill="var(--green)" /><path d="M5.2 10.2 8.4 13.4 14.8 6.8" fill="none" stroke="var(--panel)" strokeWidth="2.2" strokeLinecap="square" /></svg>
 }
 
 /** Spoken name for each sign, so screen readers get the meaning the shape and colour carry. */

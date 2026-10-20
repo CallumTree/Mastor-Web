@@ -61,7 +61,7 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
           [['Unpriced lines', unpricedTotal ? String(unpricedTotal) : '—'], ['Margin', withCosts.length ? `${signedK(marginTotal)}${anyProvisional ? ' · provisional' : valueTotal > 0 ? ` · ${Math.round((marginTotal / valueTotal) * 1000) / 10}%` : ''}` : '—']],
           [['Certified this year · excl. VAT', k(p.certifiedThisYear)], ['Paid this year', k(p.paidThisYear)]],
         ]} />
-      <div className="muted" style={{ fontSize: 13, marginTop: 6 }}>
+      <div className="hint" style={{ marginTop: 6 }}>
         Owed includes VAT once invoiced; other values are net of VAT and include uplifts.{p.unpricedVos ? ` ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not counted until priced.` : ''}{withCosts.length && withCosts.length < work.length ? ` Margin covers the ${withCosts.length} job${withCosts.length === 1 ? '' : 's'} with costs recorded.` : ''}
       </div>
 
@@ -81,7 +81,7 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
               ))}
             </div>
           )}
-          {vosWaiting.length > 0 && <div className="muted" style={{ fontSize: 14, marginTop: 8 }}>{vosWaiting.length} variation{vosWaiting.length === 1 ? '' : 's'} waiting on the client for instruction — chase them from each job.</div>}
+          {vosWaiting.length > 0 && <div className="muted t-note" style={{ marginTop: 8 }}>{vosWaiting.length} variation{vosWaiting.length === 1 ? '' : 's'} waiting on the client for instruction — chase them from each job.</div>}
         </section>
 
         <section>

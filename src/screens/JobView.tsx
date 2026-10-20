@@ -127,7 +127,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
           )
         })}
       </div>
-      {poNote && <div className="panel" style={{ padding: '10px 14px', marginTop: 10, fontSize: 12 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish" style={{ color: 'var(--copper-ink)' }} onClick={() => setGapOpen(true)}>review</button></div>}
+      {poNote && <div className="panel t-small" style={{ padding: '10px 14px', marginTop: 10 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish tap slate" onClick={() => setGapOpen(true)}>review</button></div>}
       {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => {
         setGapOpen(false); onUpdateJob(j)
         // the reason goes on record in the job's notes
@@ -135,16 +135,16 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       }} />}
       <div className="row" style={{ margin: '18px 0 8px' }}>
         <h2 className="sec-h grow" style={{ margin: 0 }}>Notes &amp; decisions</h2>
-        <button className="linkish tap" style={{ color: 'var(--copper-ink)', fontSize: 14 }} onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length}` : '+ Add'}</button>
+        <button className="linkish tap t-note slate" onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length}` : '+ Add'}</button>
       </div>
       <div className="panel" style={{ padding: '0 14px' }}>
-        {notes.length === 0 && <button onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', color: 'var(--ink-muted)', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}
-        {[...notes].sort(sortNotes).slice(0, 3).map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--ink-line)' : 'none' }}><NoteRow n={n} onOpen={() => setNoteEdit(n)} /></div>)}
+        {notes.length === 0 && <button className="muted" onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}
+        {[...notes].sort(sortNotes).slice(0, 3).map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}><NoteRow n={n} onOpen={() => setNoteEdit(n)} /></div>)}
       </div>
       {documents}
       {notesOpen && <NotesSheet job={job} notes={notes} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} />}
       {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
-      {seesMoney && <div className="muted" style={{ fontSize: 12, marginTop: 12 }}>
+      {seesMoney && <div className="hint" style={{ marginTop: 12 }}>
         PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts
       </div>}
     </div>
@@ -224,9 +224,9 @@ export function JobView(p: {
             <div className="label bracket">Capture · {job.name}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <label className="btn btn-secondary"><IconCamera /> Photo
-                <input type="file" accept="image/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
+                <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
               <label className="btn btn-secondary"><IconVideo /> Video
-                <input type="file" accept="video/*" capture="environment" hidden onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
+                <input type="file" className="sr-only" accept="video/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickVoice(true) }}><IconMic /> Voice note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onDayworks(true) }}><IconClock /> Dayworks</button>
@@ -234,7 +234,7 @@ export function JobView(p: {
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
-            <div className="muted" style={{ fontSize: 13 }}>Photos, video and voice notes go into today’s diary. Today’s site log (weather, labour, what happened) is on the Diary tab.</div>
+            <div className="hint">Photos, video and voice notes go into today’s diary. Today’s site log (weather, labour, what happened) is on the Diary tab.</div>
           </div>
         </Sheet>
       )}
@@ -253,7 +253,7 @@ function PoGapSheet({ job, gap, onSave, onSetup, onClose }: {
         <div className="label bracket">BoQ vs PO</div>
         <TitleBlock head={[gap.diff > 0 ? 'BoQ is over the PO by' : 'BoQ is under the PO by', money(Math.abs(gap.diff))]}
           rows={[[['BoQ + uplifts', money(gap.withUplifts)], ['PO value', money(job.contractValue)]], [['Uplifts set', `${job.uplift1}% + ${job.uplift2}%`], ['Would reconcile at', `${gap.needed.toFixed(2)}% combined`]]]} />
-        <div className="muted" style={{ fontSize: 13 }}>Common reasons: items added after the PO was raised, a PO line missing, or the wrong uplifts. If you know why and will claim it anyway, accept it with a note — it'll stay recorded, and flag again if the difference changes.</div>
+        <div className="hint">Common reasons: items added after the PO was raised, a PO line missing, or the wrong uplifts. If you know why and will claim it anyway, accept it with a note — it'll stay recorded, and flag again if the difference changes.</div>
         <Field label="Why (for the record)"><textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Kitchen partition + ceiling patch added after PO — Dylan aware, will be claimed" /></Field>
         <button className="btn btn-primary" disabled={!note.trim()} onClick={() => onSave({ ...job, poGapAccepted: { diff: gap.diff, note: note.trim(), at: Date.now() } })}>{accepted ? 'Update note' : `Accept ${money(Math.abs(gap.diff))} difference`}</button>
         <button className="btn btn-secondary" onClick={onSetup}>Check uplifts / PO value in job setup</button>

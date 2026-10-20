@@ -37,7 +37,7 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
     <Sheet onClose={onClose}>
       <div className="stack">
         <div className="label bracket">Log variation</div>
-        <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>Capture it now — price it later.</div>
+        <div className="hint" style={{ marginTop: 2 }}>Capture it now — price it later.</div>
         <Field label="What's the extra work? *"><textarea rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Replace rotten joists under bath" /></Field>
         <Field label="Where"><input value={room} onChange={e => setRoom(e.target.value)} placeholder="e.g. Bathroom" /></Field>
         <div className="row">
@@ -52,12 +52,12 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
           </div>
           <label className="btn btn-secondary">
             <IconCamera /> {busy ? 'Saving…' : photoIds.length ? 'Add another photo' : 'Take photo'}
-            <input type="file" accept="image/*" capture="environment" hidden onChange={async e => {
+            <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={async e => {
               const file = e.target.files?.[0]; if (!file) return
               setBusy(true); try { const id = await savePhoto(file); setPhotoIds(p => [...p, id]) } finally { setBusy(false); e.target.value = '' }
             }} />
           </label>
-          {photoIds.length > 0 && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Tap a photo to remove it.</div>}
+          {photoIds.length > 0 && <div className="hint" style={{ marginTop: 4 }}>Tap a photo to remove it.</div>}
         </div>
         <button className="btn btn-primary" disabled={!description.trim() || busy} onClick={() => onSave({
           description: description.trim(), room: room.trim() || 'General',
@@ -134,7 +134,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
           note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
         { label: 'Total incl. uplifts', value: money(sum.gross), note: [`${money(sum.base)} base`, sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · '), hot: true },
       ]} />}
-      <div className="row" style={{ gap: 8 }}>
+      <div className="row">
         <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
         {m && sorted.length > 0 && <button className="btn btn-secondary" style={{ flex: '0 0 auto', width: 'auto' }} onClick={onRegister}>Register PDF</button>}
       </div>

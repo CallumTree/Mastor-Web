@@ -15,7 +15,7 @@ const KIND: Record<SiteSuggestion['kind'], { badge: string; cls: string }> = {
 
 function Capture({ e }: { e: DiaryEntry }) {
   const url = usePhotoUrl(e.type === 'photo' ? e.mediaId : null)
-  if (url) return <img src={url} alt={e.note || 'Site photo'} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 3, flex: 'none', border: '1px solid var(--ink-line)' }} />
+  if (url) return <img src={url} alt={e.note || 'Site photo'} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--r-sm)', flex: 'none', border: '1px solid var(--line)' }} />
   return <span className="badge b-slate" style={{ flex: 'none' }}>{e.type === 'voice' ? 'Voice' : e.type === 'video' ? 'Video' : 'Note'}</span>
 }
 
@@ -31,24 +31,24 @@ export function SiteReview({ diary, scope, valLabel, onDecide }: {
   return (
     <div className="stack" style={{ gap: 8 }}>
       <Plate kind="do">From site · {list.length} to review</Plate>
-      <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="panel flush clip">
         {list.map(({ entry: e, s }, n) => {
           const lines = scope.filter(i => s.lineIds.includes(i.id))
           const gone = s.kind === 'complete' && lines.every(i => i.valuationId)
           return (
-            <div key={s.id} className="site-sug" style={{ padding: 12, borderTop: n ? '1px solid var(--cream-line)' : 'none' }}>
+            <div key={s.id} className="site-sug" style={{ padding: 12, borderTop: n ? '1px solid var(--line)' : 'none' }}>
               <div className="row" style={{ alignItems: 'flex-start', gap: 10 }}>
                 <Capture e={e} />
-                <div className="grow" style={{ minWidth: 0 }}>
-                  <div><span className={'badge ' + KIND[s.kind].cls}>{KIND[s.kind].badge}</span> <span className="muted" style={{ fontSize: 12 }}>{prettyDay(e.date)}{s.property ? ` · No. ${s.property}` : ''}{s.room ? ` · ${s.room}` : ''}</span></div>
+                <div className="grow">
+                  <div><span className={'badge ' + KIND[s.kind].cls}>{KIND[s.kind].badge}</span> <span className="hint">{prettyDay(e.date)}{s.property ? ` · No. ${s.property}` : ''}{s.room ? ` · ${s.room}` : ''}</span></div>
                   <div style={{ fontWeight: 600, fontSize: 15, marginTop: 4 }}>{s.text}</div>
                   {s.kind === 'complete' && lines.map(i => (
-                    <div key={i.id} className="muted" style={{ fontSize: 13 }}>{i.property ? `No. ${i.property} · ` : ''}<span className="mono">{i.code}</span> {i.description} · {money(lineValue(i.qty, i.rate))}{i.valuationId ? ' · already claimed' : ''}</div>
+                    <div key={i.id} className="hint">{i.property ? `No. ${i.property} · ` : ''}<span className="mono">{i.code}</span> {i.description} · {money(lineValue(i.qty, i.rate))}{i.valuationId ? ' · already claimed' : ''}</div>
                   ))}
-                  {s.kind === 'vo' && <div className="muted" style={{ fontSize: 13 }}>{s.qty != null ? `${s.qty} ${s.unit}` : 'Not measured'}{s.code ? ` · ${s.code}` : ''} · unpriced until you price it</div>}
-                  {s.quote && <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>“{s.quote}”</div>}
-                  {s.basis === 'seen' && <div className="flag" style={{ fontWeight: 600 }}>From the {e.type === 'video' ? 'video' : 'photo'} alone — look before approving</div>}
-                  {s.basis !== 'seen' && !s.verified && <div className="flag" style={{ fontWeight: 600 }}>Those words weren’t found in what was said — check before approving</div>}
+                  {s.kind === 'vo' && <div className="hint">{s.qty != null ? `${s.qty} ${s.unit}` : 'Not measured'}{s.code ? ` · ${s.code}` : ''} · unpriced until you price it</div>}
+                  {s.quote && <div className="hint" style={{ marginTop: 2 }}>“{s.quote}”</div>}
+                  {s.basis === 'seen' && <div className="flag t-strong">From the {e.type === 'video' ? 'video' : 'photo'} alone — look before approving</div>}
+                  {s.basis !== 'seen' && !s.verified && <div className="flag t-strong">Those words weren’t found in what was said — check before approving</div>}
                 </div>
               </div>
               <div className="row" style={{ marginTop: 10 }}>
