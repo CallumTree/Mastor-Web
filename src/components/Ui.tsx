@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 
 /**
  * Bottom sheet. Once anything has been typed or changed inside it, a stray tap on the backdrop,
@@ -9,6 +9,7 @@ export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose
   const [dirty, setDirty] = useState(false)
   const [asking, setAsking] = useState(false)
   const box = useRef<HTMLDivElement>(null)
+  const titleId = useId()
   // typing marks the sheet as holding work; controls inside [data-keep-clean] (e.g. a file picker that acts at once) don't
   const markDirty = (e: { target: EventTarget }) => { if (!(e.target as HTMLElement).closest?.('[data-keep-clean]')) setDirty(true) }
   const ask = () => { if (locked) return; if (dirty && !keepsWork) setAsking(true); else onClose() }
@@ -32,6 +33,14 @@ export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose
     document.addEventListener('keydown', key)
     return () => { document.removeEventListener('keydown', key); back?.focus?.({ preventScroll: true }) }
   }, [])
+
+  // with no label given, the sheet is named by its own title (its first heading), so a screen reader announces it
+  useEffect(() => {
+    const el = box.current; if (!el || label) return
+    const h = el.querySelector('h2'); if (!h) return
+    if (!h.id) h.id = titleId
+    el.setAttribute('aria-labelledby', h.id)
+  })
 
   return (
     <div className="sheet-bg" onClick={ask}>

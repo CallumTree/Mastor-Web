@@ -30,20 +30,20 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
     <Sheet onClose={onClose} label="Settings">
       <div className="stack">
         {m && <>
-        <div className="label bracket">Company settings</div>
+        <h2 className="label bracket">Company settings</h2>
         <div className="hint">Used on your VAT invoices. Shared with everyone in your company.</div>
 
-        <div className="label" style={{ marginTop: 6 }}>Company</div>
+        <h3 className="label sec">Company</h3>
         {T('name', 'Company name *', { placeholder: 'Tree & Sons Ltd' })}
         <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
         <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
         <div className="row pair"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
 
-        <div className="label" style={{ marginTop: 6 }}>Bank details (printed on invoices)</div>
+        <h3 className="label sec">Bank details (printed on invoices)</h3>
         <div className="row pair"><div className="grow">{T('accountName', 'Account name')}</div><div className="grow">{T('bankName', 'Bank')}</div></div>
         <div className="row pair"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
 
-        <div className="label" style={{ marginTop: 6 }}>Invoices</div>
+        <h3 className="label sec">Invoices</h3>
         <div className="row pair">
           <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. TS- (or blank)' })}</div>
           <div className="grow"><Field label="Next invoice number" hint="Carry on from your current sequence"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
@@ -61,14 +61,14 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 
         </>}
 
-        <div className="label bracket sec">Team</div>
+        <h3 className="label bracket sec">Team</h3>
         <div className="hint">Add your office and site staff so they see the same jobs.</div>
         <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
 
         <AiSetup />
 
         {m && <>
-        <div className="label bracket sec">Export invoices</div>
+        <h3 className="label bracket sec">Export invoices</h3>
         <div className="hint">A CSV your accounts package imports, so invoices aren’t typed in twice. Only invoices you’ve created are included.</div>
         <div className="chips" role="group" aria-label="Accounts package">
           {(['xero', 'quickbooks'] as const).map(f => <button key={f} className={'chip' + ((s.accountsFormat ?? 'xero') === f ? ' on' : '')} aria-pressed={(s.accountsFormat ?? 'xero') === f} onClick={() => set('accountsFormat', f)}>{f === 'xero' ? 'Xero' : 'QuickBooks'}</button>)}
@@ -83,13 +83,13 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         }}>Download CSV</button>
         {exportMsg && <div role="status"><Plate kind={exportMsg.startsWith('No') ? 'wait' : 'ok'}>{exportMsg}</Plate></div>}
 
-        <div className="label bracket sec">Schedule of rates</div>
+        <h3 className="label bracket sec">Schedule of rates</h3>
         <div className="hint">{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
         <button className="btn btn-secondary" onClick={onRates}>Open schedule of rates</button>
 
         </>}
 
-        <div className="label bracket sec">This device</div>
+        <h3 className="label bracket sec">This device</h3>
         <div className="hint">A backup is a file of every job on this phone or computer — keep one before changing devices.</div>
         <div className="row">
           <button className="btn btn-secondary" style={{ flex: 1 }} onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>
@@ -119,7 +119,7 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onC
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">Create VAT invoice</div>
+        <h2 className="label bracket">Create VAT invoice</h2>
         {missing.length ? (
           <>
             <div className="t-note">Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
@@ -150,7 +150,7 @@ function AiSetup() {
   const [busy, setBusy] = useState(false)
   return (
     <>
-      <div className="label bracket sec">AI setup</div>
+      <h3 className="label bracket sec">AI setup</h3>
       <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Uses one of today’s reads.</div>
       <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setOut(null); try { setOut(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
       {res && <div className="stack" role="status">

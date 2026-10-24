@@ -52,7 +52,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
       {picked && (
         <Sheet onClose={() => setPicked(null)} label="Add document" locked={busy}>
           <div className="stack">
-            <div className="label bracket">Add document</div>
+            <h2 className="label bracket">Add document</h2>
             <div className="muted t-note" style={{ overflowWrap: 'anywhere' }}>{picked.name} · {size(picked.size)}</div>
             <div className="chips" role="group" aria-label="Kind">{KINDS.map(k => <button key={k} className={'chip' + (kind === k ? ' on' : '')} aria-pressed={kind === k} onClick={() => setKind(k)}>{k}</button>)}</div>
             <Field label="Name"><input value={name} onChange={e => setName(e.target.value)} /></Field>
@@ -63,7 +63,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
       {manage && (
         <Sheet onClose={() => setManage(null)} label="Remove document">
           <div className="stack">
-            <div className="label bracket">{manage.kind} · {manage.name}</div>
+            <h2 className="label bracket">{manage.kind} · {manage.name}</h2>
             <ConfirmDelete label="Remove from this job…" confirmLabel="Remove document" onConfirm={async () => { await onDelete(manage); setManage(null) }} />
           </div>
         </Sheet>

@@ -128,7 +128,7 @@ export function OrderSheet({ job, order, scope, vals, books, onSave, onDelete, o
   return (
     <Sheet onClose={onClose} label={order ? `Order ${o.ref}` : 'New order'} locked={busy}>
       <div className="stack">
-        <div className="label bracket">{order ? `Order ${o.ref || ''}` : 'New works order'} · {job.name}</div>
+        <h2 className="label bracket">{order ? `Order ${o.ref || ''}` : 'New works order'} · {job.name}</h2>
         {o.status === 'complete' && <Plate kind="ok">Done {o.completedAt ? ukDate(o.completedAt) : ''}{o.signedBy ? ` · signed off by ${o.signedBy}` : ''}</Plate>}
         {o.status === 'cancelled' && <Plate kind="wait">Cancelled</Plate>}
         {locked && <div className="flag">Claimed on an issued valuation — the lines are locked.</div>}
@@ -141,7 +141,7 @@ export function OrderSheet({ job, order, scope, vals, books, onSave, onDelete, o
           {PRIORITIES.map(p => <button key={p} type="button" className={'chip' + (o.priority === p ? ' on' : '')} aria-pressed={o.priority === p} onClick={() => setO({ ...o, priority: p })}>{p}</button>)}
         </fieldset>
 
-        <h2 className="sec-h">Work · {lines.length} line{lines.length === 1 ? '' : 's'}{m && lines.length ? ` · ${money(total)}` : ''}</h2>
+        <h3 className="sec-h">Work · {lines.length} line{lines.length === 1 ? '' : 's'}{m && lines.length ? ` · ${money(total)}` : ''}</h3>
         {lines.length > 0 && (
           <div className="panel chk">
             {lines.map((l, n) => (
@@ -165,7 +165,7 @@ export function OrderSheet({ job, order, scope, vals, books, onSave, onDelete, o
           </div>
         )}
 
-        <h2 className="sec-h">Photos</h2>
+        <h3 className="sec-h">Photos</h3>
         {(['beforeIds', 'afterIds'] as const).map(w => (
           <div key={w} className="stack" style={{ marginTop: 0 }}>
             <div className="row"><b className="grow">{w === 'beforeIds' ? 'Before' : 'After'} · {o[w].length}</b>

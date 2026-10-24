@@ -20,6 +20,10 @@ const money = (c: Cell): number | null => {
 const pick = (head: string[], ...names: RegExp[]) => head.findIndex(h => names.some(n => n.test(h)))
 const KNOWN = /^(NUMBER|NO\.?|PLOT|HOUSE|UNIT|PROP(ERTY)? ?NO\.?|CODE|SOR|SOR CODE|ITEM|QTY|QUANTITY|RATE|UNIT RATE|UOM|UNITS?|LOCATION|ROOM|AREA|DESCRIPTION|COMMENTS?|NOTES?|COST|TOTAL|AMOUNT|HOURS|HRS)$/
 
+/** A description typed in capitals (as many council spec lists are) is turned into a sentence; anything already in mixed
+ *  case is the client's own wording and stays exactly as written (uPVC, BS 8000, names). */
+const shouting = (s: string) => { const letters = s.replace(/[^A-Za-z]/g, ''); return letters.length > 3 && letters.replace(/[^A-Z]/g, '').length / letters.length > 0.8 }
+
 export function readSchedule(rows: Cell[][]): ParsedBoq | null {
   // header row = first row with CODE + QTY + RATE + DESCRIPTION-ish columns
   const h = rows.findIndex(r => { const u = r.map(up); return u.some(x => /^(CODE|SOR( CODE)?)$/.test(x)) && u.some(x => /^(QTY|QUANTITY)$/.test(x)) && u.some(x => /RATE/.test(x)) && u.some(x => /DESCRIPTION/.test(x)) })
@@ -54,7 +58,7 @@ export function readSchedule(rows: Cell[][]): ParsedBoq | null {
     // A wrapped description (common in PDF→Excel conversions): no code, qty or rate → belongs to the line above
     if (!code && qty == null && rate == null && lines.length) {
       const prev = lines[lines.length - 1]
-      prev.description = `${prev.description} ${description.toLowerCase()}`.replace(/\s+/g, ' ')
+      prev.description = `${prev.description} ${shouting(description) ? description.toLowerCase() : description}`.replace(/\s+/g, ' ')
       continue
     }
     // workstream = the stream column that holds this line's money
@@ -71,7 +75,7 @@ export function readSchedule(rows: Cell[][]): ParsedBoq | null {
     const hours = col.hours >= 0 ? money(r[col.hours]) : null
     lines.push({
       include: true, code, room: tidyLocation(col.loc >= 0 ? norm(r[col.loc]) : '') || 'General',
-      description: (description.charAt(0) + description.slice(1).toLowerCase()).replace(/:(\S)/, ': $1') + (comment ? ` — ${comment}` : ''),
+      description: (shouting(description) ? description.charAt(0) + description.slice(1).toLowerCase() : description).replace(/:(\S)/, ': $1') + (comment ? ` — ${comment}` : ''),
       qty, unit: col.unit >= 0 ? norm(r[col.unit]) || 'item' : 'item', rate, cost,
       property: col.prop >= 0 ? norm(r[col.prop]).replace(/\.0+$/, '') : '', workstream, hours: hours ?? null, note: '', issues,
     })

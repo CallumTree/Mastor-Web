@@ -29,7 +29,7 @@ export function BoqImport({ job, existing, books = [], onImport, onClose }: {
   return (
     <Sheet onClose={onClose} locked={stage.s === 'reading'} label="Import BoQ">
       <div className="stack">
-        <div className="label bracket">Read the client’s pack</div>
+        <h2 className="label bracket">Read the client’s pack</h2>
         {stage.s === 'reading' ? (
           <div className="panel" role="status" style={{ textAlign: 'center', padding: 28 }}>
             <div className="loading-bar" />
@@ -91,7 +91,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">Check before importing</div>
+        <h2 className="label bracket">Check before importing</h2>
 
         <div className="panel">
           <div className="row" style={{ alignItems: 'baseline' }}>
@@ -184,7 +184,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
                 const gRows = rows.filter(({ l }) => (l.workstream || l.room) === g)
                 return (
                   <div key={g}>
-                    <div className="label" style={{ padding: '8px 14px', borderTop: '1px solid var(--line)', color: 'var(--ink-2)' }}>{g}</div>
+                    <h3 className="label" style={{ padding: '8px 14px', borderTop: '1px solid var(--line)', color: 'var(--ink-2)' }}>{g}</h3>
                     {gRows.map(lineRow)}
                   </div>
 )
@@ -196,7 +196,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
           if (!rows.length) return null
           return (
             <div key={room}>
-              <div className="label" style={{ marginBottom: 6 }}>{room}</div>
+              <h3 className="label" style={{ marginBottom: 6 }}>{room}</h3>
               <div className="card flush clip">
                 {rows.map(lineRow)}
               </div>
@@ -235,7 +235,7 @@ function FromDocuments({ f, onChange }: { f: PackFacts; onChange: (f: PackFacts)
   const cats = [...new Set(f.facts.map(x => x.category))]
   return (
     <div className="stack" style={{ marginTop: 0 }}>
-      <h2 className="sec-h">From the documents · read by AI</h2>
+      <h3 className="sec-h">From the documents · read by AI</h3>
       {f.extras.length > 0 && <>
         <Plate kind="warn">{f.extras.length} piece{f.extras.length === 1 ? '' : 's'} of work the documents ask for that isn’t in the scope</Plate>
         <div className="panel flush clip">
@@ -246,7 +246,7 @@ function FromDocuments({ f, onChange }: { f: PackFacts; onChange: (f: PackFacts)
       {f.facts.length > 0 && <div className="panel flush clip">
         {cats.map((c, ci) => (
           <div key={c}>
-            <div className="label" style={{ padding: '8px 14px', borderTop: ci ? '1px solid var(--line)' : undefined, color: 'var(--ink-2)' }}>{c}</div>
+            <h4 className="label" style={{ padding: '8px 14px', borderTop: ci ? '1px solid var(--line)' : undefined, color: 'var(--ink-2)' }}>{c}</h4>
             {f.facts.map((x, i) => (x.category === c ? row(x, () => setFact(i), 'f') : null))}
           </div>
         ))}

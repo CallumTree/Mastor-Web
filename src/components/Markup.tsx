@@ -87,16 +87,27 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
     return () => window.removeEventListener('blur', away)
   })
 
+  // a full-screen layer like the sheets: focus moves in, Esc is Cancel, and it's announced by its title
+  const layer = useRef<HTMLDivElement>(null)
+  const cancel = useRef(onCancel); cancel.current = onCancel
+  useEffect(() => {
+    const back = document.activeElement as HTMLElement | null
+    layer.current?.focus({ preventScroll: true })
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); cancel.current() } }
+    document.addEventListener('keydown', key)
+    return () => { document.removeEventListener('keydown', key); back?.focus?.({ preventScroll: true }) }
+  }, [])
+
   const tools: [Tool, string][] = [['arrow', '↗ Arrow'], ['circle', '◯ Circle'], ['pen', '✎ Draw'], ['text', 'T Text']]
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--shell)', display: 'flex', flexDirection: 'column' }}>
+    <div ref={layer} role="dialog" aria-modal="true" aria-labelledby="mk-title" tabIndex={-1} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--shell)', display: 'flex', flexDirection: 'column', outline: 'none' }}>
       <div className="row" style={{ padding: '10px 12px', color: 'var(--shell-text)' }}>
         <button className="btn-ghost on-dark" onClick={onCancel}>Cancel</button>
-        <span className="grow mk-title">Mark up</span>
+        <h2 id="mk-title" className="grow mk-title">Mark up</h2>
         <button className="btn-ghost on-dark" disabled={!shapes.length} onClick={() => setShapes(s => s.slice(0, -1))}>Undo</button>
       </div>
       <div style={{ flex: 1, display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 8 }}>
-        <canvas ref={canvas} onPointerDown={down} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end}
+        <canvas ref={canvas} role="img" aria-label="The photo — draw on it with a finger or the mouse" onPointerDown={down} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end}
           style={{ maxWidth: '100%', maxHeight: '100%', touchAction: 'none', background: 'var(--shell-2)' }} />
       </div>
       <div style={{ padding: '10px 12px calc(12px + env(safe-area-inset-bottom))', background: 'var(--shell-2)' }}>

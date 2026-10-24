@@ -52,7 +52,7 @@ export function RateCheckSheet({ lines, books, onClose }: { lines: CheckLine[]; 
   return (
     <Sheet onClose={onClose} label="Check rates">
       <div className="stack">
-        <div className="label bracket">Check rates against your SoR</div>
+        <h2 className="label bracket">Check rates against your SoR</h2>
         {!books.length && <div className="empty">Import your schedule of rates first (jobs board → Schedule of rates).</div>}
         {loading && <div className="loading-bar" role="status" aria-label="Loading rates" />}
         {books.length > 1 && (
@@ -70,17 +70,17 @@ export function RateCheckSheet({ lines, books, onClose }: { lines: CheckLine[]; 
               {r.boqTotal > 0 && <div className="muted t-note">Lines compared: <b className="amt">{money(r.boqTotal)}</b> at the BoQ’s rates, <b className="amt">{money(r.sorTotal)}</b> at {book?.name}.</div>}
             </div>}
 
-            {off.length > 0 && <><h2 className="sec-h">Don’t follow the pattern · {off.length}</h2><div className="panel chk">{off.map(line)}</div></>}
+            {off.length > 0 && <><h3 className="sec-h">Don’t follow the pattern · {off.length}</h3><div className="panel chk">{off.map(line)}</div></>}
             {differs.length > 0 && (
               <>
-                <h2 className="sec-h">Differ from the SoR · {differs.length}</h2>
+                <h3 className="sec-h">Differ from the SoR · {differs.length}</h3>
                 <div className="panel chk">{(all ? differs : differs.slice(0, 15)).map(line)}</div>
                 {differs.length > 15 && !all && <button className="btn btn-ghost" onClick={() => setAll(true)}>Show all {differs.length}</button>}
               </>
             )}
-            {group('unit').length > 0 && <><h2 className="sec-h">Unit differs · {group('unit').length}</h2><div className="panel chk">{group('unit').map(line)}</div></>}
-            {group('missing').length > 0 && <><h2 className="sec-h">Not in {book?.name} · {group('missing').length}</h2><div className="panel chk">{group('missing').map(line)}</div></>}
-            {group('norate').length > 0 && <><h2 className="sec-h">No rate in the BoQ · {group('norate').length}</h2><div className="panel chk">{group('norate').map(line)}</div></>}
+            {group('unit').length > 0 && <><h3 className="sec-h">Unit differs · {group('unit').length}</h3><div className="panel chk">{group('unit').map(line)}</div></>}
+            {group('missing').length > 0 && <><h3 className="sec-h">Not in {book?.name} · {group('missing').length}</h3><div className="panel chk">{group('missing').map(line)}</div></>}
+            {group('norate').length > 0 && <><h3 className="sec-h">No rate in the BoQ · {group('norate').length}</h3><div className="panel chk">{group('norate').map(line)}</div></>}
             {r.counts.match + r.counts.pattern > 0 && <div className="muted t-note">{r.counts.match + r.counts.pattern} line{r.counts.match + r.counts.pattern === 1 ? '' : 's'} agree{r.counts.match + r.counts.pattern === 1 ? 's' : ''} — not listed.</div>}
           </>
         )}

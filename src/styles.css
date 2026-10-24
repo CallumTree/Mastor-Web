@@ -80,7 +80,7 @@ label.btn { cursor: pointer; }
 .tab-title { font-family: var(--cond); font-weight: 700; font-size: 28px; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; margin: 0; }
 .tab-meta { font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none; margin-left: 10px; color: var(--ink-muted); vertical-align: 3px; }
 .ref-roman { font-family: var(--cond); font-weight: 700; letter-spacing: .03em; }
-.imm-sub, .cover-sub { font-family: var(--cond); font-size: 14px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--shell-muted); margin-top: 8px; }
+.cover-sub { font-family: var(--cond); font-size: 14px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--shell-muted); margin-top: 8px; }
 
 /* ---------- buttons: blue plate = do this; outline = everything else ---------- */
 .btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 18px; width: 100%;
@@ -90,7 +90,7 @@ label.btn { cursor: pointer; }
 .btn-primary { background: var(--blue); color: #fff; }
 .btn-primary:hover:not(:disabled) { background: var(--blue-press); }
 .btn-primary svg { color: #fff; }
-.btn-secondary, .btn-dark, .btn-glass { background: var(--panel); color: var(--ink); border-color: var(--ink); }
+.btn-secondary { background: var(--panel); color: var(--ink); border-color: var(--ink); }
 .btn-secondary:hover:not(:disabled) { background: var(--row-open); }
 .btn-ghost { background: none; border: none; color: var(--ink-2); min-height: 44px; width: auto; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .btn-danger { background: var(--red); color: #fff; border-color: var(--red); }
@@ -112,8 +112,8 @@ label.btn { cursor: pointer; }
 .tabmenu-item:active { background: var(--row-open); }
 
 /* ---------- panels ---------- */
-.card, .panel, .card-dark { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; }
-.card-dark .label, .panel .label { color: var(--ink-muted); }
+.card, .panel { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; }
+.panel .label { color: var(--ink-muted); }
 
 /* ---------- forms ---------- */
 .field { display: block; }
@@ -354,7 +354,6 @@ label.row { cursor: pointer; }
 .tb-row .tb-cell + .tb-cell { border-left: 1px solid var(--shell-line); }
 .tb-wrap { margin: 0; }
 .scalebar { height: 4px; background: var(--shell-line); margin-top: 8px; } .scalebar > div { height: 100%; background: var(--yellow); }
-.hatch { background: var(--yellow); }
 
 /* ---------- opening titles (the arch and wordmark keep their copper) ---------- */
 .splash { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: opacity .5s ease, transform .5s ease; }

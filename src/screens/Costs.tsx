@@ -35,7 +35,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
   return (
     <Sheet onClose={onClose} label="Costs and margin">
       <div className="stack">
-        <div className="label bracket">Costs &amp; margin · {job.name}</div>
+        <h2 className="label bracket">Costs &amp; margin · {job.name}</h2>
         <SumStrip label="Margin" cols={3} cells={[
           { label: 'Job value', value: money(m.value), note: m.unpriced ? `incl. uplifts · + ${m.unpriced} unpriced` : 'incl. uplifts' },
           { label: 'Costs', value: money(m.costs), note: [m.labourEstimate != null ? 'incl. labour estimate' : '', m.unknownCosts ? `+ ${m.unknownCosts} without an amount` : '', m.quotes ? `${m.quotes} quote${m.quotes === 1 ? '' : 's'} not counted` : ''].filter(Boolean).join(' · ') || 'agreed + paid', nil: !m.costs },
@@ -55,7 +55,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
 
         {trades.length > 0 && (
           <>
-            <h2 className="sec-h">By trade · what the client pays vs your costs</h2>
+            <h3 className="sec-h">By trade · what the client pays vs your costs</h3>
             {trades.map(t => (
               <div key={t.trade} className="panel trade">
                 <div className="trade-head">
@@ -88,7 +88,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
           </>
         )}
 
-        <h2 className="sec-h">All costs · {costs.length}</h2>
+        <h3 className="sec-h">All costs · {costs.length}</h3>
         {list.length === 0 ? <div className="card empty">No costs yet. Add subbie quotes and bills, materials and hire as they come in.</div> : (
           <div className="panel chk">
             {list.map(c => (
@@ -116,7 +116,7 @@ function CostForm({ job, cost, preset, streams, onSave, onDelete, onClose }: {
   return (
     <Sheet onClose={onClose} label={cost ? 'Edit cost' : 'Add a cost'}>
       <div className="stack">
-        <div className="label bracket">{cost ? 'Cost' : 'Add a cost'} · {job.name}</div>
+        <h2 className="label bracket">{cost ? 'Cost' : 'Add a cost'} · {job.name}</h2>
         <fieldset className="chips" style={{ border: 0, padding: 0, margin: 0 }}><legend className="sr-only">Kind</legend>
           {KINDS.map(k => <button key={k.k} type="button" className={'chip' + (c.kind === k.k ? ' on' : '')} aria-pressed={c.kind === k.k} onClick={() => setC({ ...c, kind: k.k })}>{k.label}</button>)}
         </fieldset>

@@ -209,7 +209,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         )
       })}</div> : rooms.map(room => (
         <div key={room}>
-          <div className="label" style={{ margin: '6px 0 6px' }}>{room}</div>
+          <h3 className="label" style={{ margin: '6px 0 6px' }}>{room}</h3>
           <div className="card flush clip">
             {shown.filter(i => i.room === room).sort((a, b) => a.order - b.order).map((i, idx) => row(i, idx, false))}
           </div>
@@ -236,7 +236,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">{item ? 'Scope item' : 'Add scope item'}</div>
+        <h2 className="label bracket">{item ? 'Scope item' : 'Add scope item'}</h2>
         {locked && <div className="flag">Claimed on an issued valuation — locked.</div>}
         <div className="row">
           <div style={{ width: '38%' }}><Field label="SoR code"><input disabled={locked} value={f.code} autoCapitalize="characters" onChange={e => setF({ ...f, code: e.target.value, rateBook: undefined })} /></Field></div>

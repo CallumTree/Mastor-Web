@@ -37,4 +37,6 @@ ok(readSchedule([['Some', 'random'], ['sheet', 'nothing']]) === null, 'unrecogni
 ok(tidyLocation('F/Elev') === 'Front elevation' && tidyLocation('ALL ELEVATIONS') === 'All elevations' && tidyLocation('Bed2') === 'Bedroom 2', 'F/Elev, ALL ELEVATIONS, Bed2')
 const wrapped = readSchedule([H, row(1, '4360BD', 71, 8.55, 'PROPERTY', 'WASHDOWN AND APPLY 1 COAT OF MASONRY PAINT', 'PAINT', 607.05, 0), [null, null, null, null, null, 'TO RENDER'], row(2, '4350AA', 27, 3.7753, 'PROPERTY', 'GUTTER:CLEAN OUT', 'PAINT', 101.93, 2.16)])!
 ok(wrapped.lines.length === 2 && wrapped.lines[0].description.endsWith('masonry paint to render'), 'a wrapped description row joins the line above (PDF→Excel conversions)')
+const cased = readSchedule([H, row(1, '4360BD', 71, 8.55, 'PROPERTY', 'WASHDOWN AND APPLY 1 COAT OF MASONRY PAINT', 'PAINT', 607.05, 0), row(2, '2032AA', 60, 80.43, 'FRONT', 'Renew fascia and soffit in uPVC to BS 8000', 'ROOFING', 4825.8, 0)])!
+ok(cased.lines[0].description === 'Washdown and apply 1 coat of masonry paint' && cased.lines[1].description === 'Renew fascia and soffit in uPVC to BS 8000', 'capitals become a sentence; mixed case is the client’s wording, kept exactly (uPVC, BS 8000)')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

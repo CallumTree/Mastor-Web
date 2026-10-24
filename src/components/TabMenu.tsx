@@ -18,7 +18,7 @@ export function TabMenu({ title, actions }: { title: string; actions: MenuAction
       </button>
       {open && (
         <Sheet onClose={() => { setOpen(false); setConfirming(null) }}>
-          <div className="label bracket" style={{ marginBottom: 8 }}>{title} options</div>
+          <h2 className="label bracket" style={{ marginBottom: 8 }}>{title} options</h2>
           <div className="panel flush">
             {actions.map((a, i) => (
               <div key={a.label} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>

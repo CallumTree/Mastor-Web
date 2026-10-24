@@ -39,14 +39,14 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
   return (
     <Sheet onClose={onClose} label="Team">
       <div className="stack">
-        <div className="label bracket">Team</div>
+        <h2 className="label bracket">Team</h2>
         <div className="muted t-note">Everyone on the team sees the same jobs.</div>
         {err && <div role="alert"><Plate kind="stop">{err}</Plate></div>}
         {!rows && !err && <div className="loading-bar" role="status" aria-label="Loading team" />}
 
         {rows && (
           <>
-            <h2 className="sec-h">People · {members.length}</h2>
+            <h3 className="sec-h">People · {members.length}</h3>
             <div className="panel flush">
               {members.map(m => (
                 <div key={m.id} className="person">
@@ -67,7 +67,7 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
 
             {invites.length > 0 && (
               <>
-                <h2 className="sec-h">Added, not signed up yet · {invites.length}</h2>
+                <h3 className="sec-h">Added, not signed up yet · {invites.length}</h3>
                 <div className="panel flush">
                   {invites.map(i => (
                     <div key={i.id} className="person">

@@ -22,7 +22,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">{job ? 'Job setup' : 'New job'}</div>
+        <h2 className="label bracket">{job ? 'Job setup' : 'New job'}</h2>
         <fieldset className="roles"><legend>What kind of work</legend>
           {([['scheme', 'One scheme', 'A BoQ or works order for one job or a group of properties'], ['orders', 'Responsive or voids contract', 'Many small works orders, claimed together each month']] as const).map(([k, label, hint]) => (
             <label key={k} className={'role' + ((f.kind ?? 'scheme') === k ? ' on' : '')}>

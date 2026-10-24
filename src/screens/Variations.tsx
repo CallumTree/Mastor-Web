@@ -50,7 +50,7 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">Log variation</div>
+        <h2 className="label bracket">Log variation</h2>
         <div className="hint" style={{ marginTop: 2 }}>Capture it now — price it later.</div>
         <Field label="What's the extra work? *"><textarea rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Replace rotten joists under bath" /></Field>
         <Field label="Where"><input value={room} onChange={e => setRoom(e.target.value)} placeholder="e.g. Bathroom" /></Field>
@@ -95,7 +95,7 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">{voRef(vo.number)}</div>
+        <h2 className="label bracket">{voRef(vo.number)}</h2>
         {locked && <div className="flag">Claimed on an issued valuation — locked.</div>}
         <fieldset disabled={locked} style={{ border: 'none', padding: 0, margin: 0 }} className="stack">
         <Field label="Description"><textarea rows={2} value={v.description} onChange={e => setV({ ...v, description: e.target.value })} /></Field>

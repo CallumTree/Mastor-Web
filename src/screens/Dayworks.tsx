@@ -45,7 +45,7 @@ export function DayworksSheet({ job, sheets, vos, books, onSave, onDelete, onCla
   return (
     <Sheet onClose={onClose} label="Dayworks">
       <div className="stack">
-        <div className="label bracket">Dayworks · {job.name}</div>
+        <h2 className="label bracket">Dayworks · {job.name}</h2>
         <div className="muted t-note">Work done on time and materials: hours by trade, materials and plant, signed by the client, then claimed as a variation.</div>
         {sorted.length === 0 ? <div className="card empty">No dayworks sheets yet.</div> : (
           <div className="panel chk">
@@ -71,7 +71,7 @@ export function DayworksSheet({ job, sheets, vos, books, onSave, onDelete, onCla
 function Items({ title, items, set, showMoney }: { title: string; items: DayworksItem[]; set: (x: DayworksItem[]) => void; showMoney: boolean }) {
   return (
     <div className="stack" style={{ marginTop: 6 }}>
-      <h2 className="sec-h" style={{ margin: '8px 0 0' }}>{title}</h2>
+      <h3 className="sec-h" style={{ margin: '8px 0 0' }}>{title}</h3>
       {items.map((it, i) => (
         <div key={i} className="row dw-row">
           <div className="grow"><Field label={`${title} ${i + 1}`}><input value={it.description} onChange={e => set(items.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)))} placeholder="e.g. 6 bags of plaster" /></Field></div>
@@ -99,7 +99,7 @@ function DayworksEditor({ job, d: initial, isNew, vo, books, onSave, onDelete, o
   return (
     <Sheet onClose={onClose} label={`Dayworks ${dwRef(d.number)}`} locked={busy}>
       <div className="stack">
-        <div className="label bracket">Dayworks {dwRef(d.number)} · {job.name}</div>
+        <h2 className="label bracket">Dayworks {dwRef(d.number)} · {job.name}</h2>
         {vo && <Plate kind="wait">Claimed as {voRef(vo.number)}{claimedLocked ? ' — in a valuation' : ''}</Plate>}
         <div className="row">
           <div style={{ width: 170 }}><Field label="Date"><input type="date" value={d.date} onChange={e => setD({ ...d, date: e.target.value })} /></Field></div>
@@ -107,7 +107,7 @@ function DayworksEditor({ job, d: initial, isNew, vo, books, onSave, onDelete, o
         </div>
         <Field label="Work done, and why it’s dayworks"><textarea rows={2} value={d.description} onChange={e => setD({ ...d, description: e.target.value })} placeholder="e.g. Clear flooded cellar before survey — instructed by Dylan on site" /></Field>
 
-        <h2 className="sec-h" style={{ margin: '8px 0 0' }}>Labour</h2>
+        <h3 className="sec-h" style={{ margin: '8px 0 0' }}>Labour</h3>
         {d.labour.map((l, i) => (
           <div key={i} className="row dw-row">
             <div className="grow">

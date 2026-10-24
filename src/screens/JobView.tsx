@@ -224,7 +224,7 @@ export function JobView(p: {
       {capture && (
         <Sheet onClose={() => setCapture(false)}>
           <div className="stack">
-            <div className="label bracket">Capture · {job.name}</div>
+            <h2 className="label bracket">Capture · {job.name}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <label className="btn btn-secondary"><IconCamera /> Photo
                 <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
@@ -253,7 +253,7 @@ function PoGapSheet({ job, gap, onSave, onSetup, onClose }: {
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">BoQ vs PO</div>
+        <h2 className="label bracket">BoQ vs PO</h2>
         <TitleBlock head={[gap.diff > 0 ? 'BoQ is over the PO by' : 'BoQ is under the PO by', money(Math.abs(gap.diff))]}
           rows={[[['BoQ + uplifts', money(gap.withUplifts)], ['PO value', money(job.contractValue)]], [['Uplifts set', `${job.uplift1}% + ${job.uplift2}%`], ['Would reconcile at', `${gap.needed.toFixed(2)}% combined`]]]} />
         <div className="hint">Common reasons: items added after the PO was raised, a PO line missing, or the wrong uplifts. If you know why and will claim it anyway, accept it with a note — it'll stay recorded, and flag again if the difference changes.</div>

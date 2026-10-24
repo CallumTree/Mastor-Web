@@ -34,7 +34,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
     return (
       <Sheet onClose={onClose}>
         <div className="stack">
-          <div className="label bracket">Council instruction · check before adding</div>
+          <h2 className="label bracket">Council instruction · check before adding</h2>
           <div className="panel" style={{ padding: 14 }}>
             <div className="row" style={{ alignItems: 'baseline' }}>
               <div className="grow"><div className="label">Instruction</div><div className="mono" style={{ fontSize: 22, color: 'var(--ink-2)' }}>{vo.ref || '—'}</div></div>
@@ -83,7 +83,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
   return (
     <Sheet onClose={onClose} locked={stage.s === 'reading'} label="Import council instruction">
       <div className="stack">
-        <div className="label bracket">Import council instruction</div>
+        <h2 className="label bracket">Import council instruction</h2>
         {stage.s === 'reading' ? (
           <div className="panel" role="status" style={{ textAlign: 'center', padding: 28 }}><div className="loading-bar" /><div style={{ fontWeight: 600, marginTop: 14 }}>Reading {stage.name}</div></div>
         ) : (

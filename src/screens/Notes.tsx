@@ -44,7 +44,7 @@ export function NoteEditor({ job, note, onSave, onDelete, onClose }: {
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">{note ? 'Note' : 'New note'} · {job.name}</div>
+        <h2 className="label bracket">{note ? 'Note' : 'New note'} · {job.name}</h2>
         <div className="chips">{NOTE_CATEGORIES.map(c => <button key={c} className={'chip' + (cat === c ? ' on' : '')} onClick={() => setCat(c)}>{c}</button>)}</div>
         <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate"><textarea rows={5} autoFocus value={text} onChange={e => setText(e.target.value)} placeholder="e.g. Dylan agreed the airing-cupboard partition can be claimed — email 2 Oct" /></Field>
         <label className="check-row t-note flush" style={{ alignItems: 'center' }}><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} /> Pin to the top of the job</label>
@@ -70,7 +70,7 @@ export function NotesSheet({ job, notes, onSave, onDelete, onClose }: {
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="row"><div className="label bracket grow">Notes &amp; decisions · {job.name}</div><span className="hint mono">{notes.length}</span></div>
+        <div className="row"><h2 className="label bracket grow">Notes &amp; decisions · {job.name}</h2><span className="hint mono">{notes.length}</span></div>
         <button className="btn btn-primary" onClick={() => setEditing('new')}>+ Add note</button>
         <div className="chips">{(['All', ...NOTE_CATEGORIES] as const).map(c => <button key={c} className={'chip' + (filter === c ? ' on' : '')} onClick={() => setFilter(c)}>{c}</button>)}</div>
         {notes.length > 4 && <Field label="Search notes"><input value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. partition, Dylan, asbestos" /></Field>}

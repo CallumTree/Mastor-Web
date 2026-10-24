@@ -31,9 +31,9 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   )
   return (
     <div>
-      {s.length > 0 && <div className="label" style={{ marginTop: 8 }}>Scope</div>}
+      {s.length > 0 && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
       {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <div className="label" style={{ marginTop: 10, color: 'var(--ink-2)' }}>No. {i.property || '—'}</div>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
-      {o.length > 0 && <div className="label" style={{ marginTop: 12 }}>Variations</div>}
+      {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
       {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v))))}
     </div>
   )
@@ -170,7 +170,7 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">Payment · {valRef(v.number)}</div>
+        <h2 className="label bracket">Payment · {valRef(v.number)}</h2>
         <div className="hint">{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Enter what actually landed — a part payment leaves the rest showing as owed.</div>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
@@ -199,7 +199,7 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onCrea
   if (done) return (
     <Sheet onClose={onClose} label={`${ref} issued`}>
       <div className="stack">
-        <div className="label bracket">{ref} · issued</div>
+        <h2 className="label bracket">{ref} · issued</h2>
         <Plate kind="ok">{ref} issued for {money(p.totals.gross)} — locked</Plate>
         <div className="muted t-note">{p.totals.lines} line{p.totals.lines === 1 ? '' : 's'} certified. {money(p.cumulative)} certified to date{p.pct != null ? ` (${p.pct}% of contract and VOs)` : ''}. Next ticks start {valRef(val.number + 1)}.</div>
         <button className="btn btn-primary" onClick={() => onCreateInvoice(done)}>Create invoice</button>
@@ -211,7 +211,7 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onCrea
   return (
     <Sheet onClose={onClose} locked={busy === 'issue'} label={`Issue ${ref}`}>
       <div className="stack">
-        <div className="label bracket">Issue {ref}</div>
+        <h2 className="label bracket">Issue {ref}</h2>
         <div className="panel">
           <div className="row" style={{ alignItems: 'baseline' }}>
             <div className="grow"><div className="label">This valuation</div><div className="amt" style={{ fontSize: 28, fontWeight: 700 }}>{money(p.totals.gross)}</div></div>

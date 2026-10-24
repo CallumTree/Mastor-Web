@@ -95,7 +95,7 @@ export function RatesSheet({ books, onAddBooks, onRemoveBook, onClose }: {
   return (
     <Sheet onClose={onClose} label="Schedule of rates" locked={!!busy}>
       <div className="stack">
-        <div className="label bracket">Schedule of rates</div>
+        <h2 className="label bracket">Schedule of rates</h2>
         {busy ? <div className="panel" role="status" style={{ textAlign: 'center', padding: 28 }}><div className="loading-bar" /><div style={{ fontWeight: 600, marginTop: 14 }}>{busy}</div></div>
         : drafts ? (
           <>
@@ -130,7 +130,7 @@ export function RatesSheet({ books, onAddBooks, onRemoveBook, onClose }: {
             </label>
             {books.length > 0 && (
               <>
-                <h2 className="sec-h">Your rate books · {books.length}</h2>
+                <h3 className="sec-h">Your rate books · {books.length}</h3>
                 <div className="panel flush">
                   {books.map(b => (
                     <div key={b.id} className="book">

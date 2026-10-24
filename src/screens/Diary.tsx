@@ -51,7 +51,7 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
   return (
     <Sheet onClose={close} keepsWork label={e.type === 'video' ? 'Video' : e.type === 'voice' ? 'Voice note' : 'Photo'}>
       <div className="stack">
-        <div className="label bracket">{e.type === 'video' ? 'Video' : e.type === 'voice' ? 'Voice note' : 'Photo'} · {prettyDay(e.date)}</div>
+        <h2 className="label bracket">{e.type === 'video' ? 'Video' : e.type === 'voice' ? 'Voice note' : 'Photo'} · {prettyDay(e.date)}</h2>
         {url && e.type === 'voice' ? <audio src={url} controls style={{ width: '100%' }} /> : url && (e.type === 'video'
           ? <video src={url} controls playsInline style={{ width: '100%', maxHeight: '52vh', background: 'var(--shell)', borderRadius: 'var(--r-sm)' }} />
           : <img src={showOriginal && originalUrl ? originalUrl : url} alt={caption || 'Site photo'} style={{ width: '100%', maxHeight: '52vh', objectFit: 'contain', background: 'var(--ground)', borderRadius: 'var(--r-sm)' }} />)}
@@ -163,7 +163,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
       </div>
 
       <div className="row">
-        <div className="label bracket grow">Photos, video &amp; voice ({media.length})</div>
+        <h2 className="label bracket grow">Photos, video &amp; voice ({media.length})</h2>
       </div>
       {media.length > 0 && (
         <div className="diary-thumbs">
@@ -202,7 +202,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
 
       {recent.length > 0 && (
         <div>
-          <div className="label" style={{ margin: '10px 0 6px' }}>Recent days</div>
+          <h2 className="label" style={{ margin: '10px 0 6px' }}>Recent days</h2>
           <div className="panel" style={{ padding: '2px 14px' }}>
             {recent.map((d, i) => {
               const n = entries.filter(e => e.date === d && (e.type === 'photo' || e.type === 'video')).length
@@ -245,7 +245,7 @@ export function VoiceSheet({ onSave, onClose }: { onSave: (wav: Blob) => Promise
   return (
     <Sheet onClose={() => { rec.current?.cancel(); onClose() }} locked={secs != null || saving} label="Voice note">
       <div className="stack">
-        <div className="label bracket">Voice note</div>
+        <h2 className="label bracket">Voice note</h2>
         <div className="muted t-note">Say what’s done, where, and anything extra you’ve found — “number 4, front elevation painted; rotten joists under the bath, about two metres”.</div>
         <div className="amt" aria-live="polite" style={{ fontSize: 40, fontWeight: 700, textAlign: 'center' }}>{secs != null ? mmss(secs) : saving ? 'Saving…' : '0:00'}</div>
         {err && <div className="flag">{err}</div>}
