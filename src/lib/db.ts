@@ -3,10 +3,11 @@
  * Every change is also queued in the OUTBOX; sync.ts sends the queue to the cloud when it can.
  * Writes coming *from* the cloud use the `local` helpers, which don't queue anything.
  */
-import type { CompanySettings, DiaryEntry, Job, ScopeItem, Valuation, Variation } from './types'
+import type { CompanySettings, Cost, Dayworks, DiaryEntry, Job, JobDocument, RateItem, ScopeItem, Valuation, Variation, WorkOrder } from './types'
+import { clearThumbs } from './thumbs'
 
 const DB_NAME = 'mastor'
-const VERSION = 5 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary · v5: company settings
+const VERSION = 7 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary · v5: company settings · v6: rate books · v7: costs, orders, dayworks, documents
 let dbp: Promise<IDBDatabase> | null = null
 
 function open(): Promise<IDBDatabase> {
@@ -24,6 +25,11 @@ function open(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta')
       if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'id' })
       if (!db.objectStoreNames.contains('diary')) db.createObjectStore('diary', { keyPath: 'id' }).createIndex('jobId', 'jobId')
+      for (const s of JOB_STORES) if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, { keyPath: 'id' }).createIndex('jobId', 'jobId')
+      if (!db.objectStoreNames.contains('rates')) {
+        const r = db.createObjectStore('rates', { keyPath: ['bookId', 'code'] })
+        r.createIndex('code', 'code'); r.createIndex('bookId', 'bookId')
+      }
     }
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error)
@@ -43,10 +49,15 @@ function tx<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore) 
 export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36))
 
 // ---------- outbox (changes waiting to go to the cloud) ----------
-export type RecordTable = 'jobs' | 'scope' | 'variations' | 'valuations' | 'diary' | 'settings'
+export type RecordTable = 'jobs' | 'scope' | 'variations' | 'valuations' | 'diary' | 'settings' | JobStore
+/** Newer per-job records, all stored and synced the same way. */
+export const JOB_STORES = ['costs', 'orders', 'dayworks', 'docs'] as const
+export type JobStore = typeof JOB_STORES[number]
+type JobRecord = { costs: Cost; orders: WorkOrder; dayworks: Dayworks; docs: JobDocument }
 export type OutboxOp =
   | { seq?: number; kind: 'record'; table: RecordTable; id: string; jobId: string | null; data: unknown | null } // data null = delete
   | { seq?: number; kind: 'photo'; id: string }
+  | { seq?: number; kind: 'ratebook'; id: string } // a rate book's lines, uploaded as one file
 
 let queueing = false // switched on by sync once signed in with a company
 let onQueued: (() => void) | null = null
@@ -84,6 +95,7 @@ export const db = {
     for (const s of await db.scope(id)) await db.deleteScope(s.id)
     for (const v of await db.valuations(id)) await db.deleteValuation(v.id)
     for (const d of await db.diary(id)) await db.deleteDiary(d)
+    for (const st of JOB_STORES) for (const r of await db.list(st, id)) await db.remove(st, r)
     await tx('jobs', 'readwrite', s => s.delete(id))
     await enqueue({ kind: 'record', table: 'jobs', id, jobId: id, data: null })
   },
@@ -107,6 +119,10 @@ export const db = {
     await tx('diary', 'readwrite', s => s.delete(d.id))
     await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: null })
   },
+  /** costs, orders, dayworks, docs: list for a job, save, delete */
+  list: <K extends JobStore>(store: K, jobId: string) => tx<JobRecord[K][]>(store, 'readonly', s => s.index('jobId').getAll(jobId)),
+  put: async <K extends JobStore>(store: K, r: JobRecord[K]) => { await tx(store, 'readwrite', s => s.put(r)); await enqueue({ kind: 'record', table: store, id: r.id, jobId: r.jobId, data: r }) },
+  remove: async <K extends JobStore>(store: K, r: JobRecord[K]) => { await tx(store, 'readwrite', s => s.delete(r.id)); await enqueue({ kind: 'record', table: store, id: r.id, jobId: r.jobId, data: null }) },
   settings: () => tx<CompanySettings | undefined>('settings', 'readonly', s => s.get('company')),
   putSettings: async (c: CompanySettings) => { await tx('settings', 'readwrite', s => s.put(c)); await enqueue({ kind: 'record', table: 'settings', id: c.id, jobId: null, data: c }) },
   putPhoto: async (id: string, blob: Blob) => { await tx('photos', 'readwrite', s => s.put(blob, id)); await enqueue({ kind: 'photo', id }) },
@@ -114,9 +130,35 @@ export const db = {
   deletePhoto: (id: string) => tx('photos', 'readwrite', s => s.delete(id)),
 }
 
+// ---------- rate books (the lines; the book list itself is in company settings) ----------
+let rateCache: RateItem[] | null = null
+export const rates = {
+  /** Every rate line on this device (cached — 8,000 lines is a few MB, read once). */
+  all: async () => (rateCache ??= await tx<RateItem[]>('rates', 'readonly', s => s.getAll())),
+  byCode: (code: string) => tx<RateItem[]>('rates', 'readonly', s => s.index('code').getAll(code.trim().toUpperCase())),
+  countBook: (bookId: string) => tx<number>('rates', 'readonly', s => s.index('bookId').count(bookId)),
+  book: (bookId: string) => tx<RateItem[]>('rates', 'readonly', s => s.index('bookId').getAll(bookId)),
+  /** Store a book's lines on this device only (used for books that came from the cloud). */
+  putLocal: (items: RateItem[]) => open().then(d => new Promise<void>((resolve, reject) => {
+    const t = d.transaction('rates', 'readwrite'), s = t.objectStore('rates')
+    for (const i of items) s.put(i)
+    t.oncomplete = () => { rateCache = null; resolve() }; t.onerror = () => reject(t.error)
+  })),
+  /** A newly imported book: store its lines and queue them for the cloud. */
+  put: async (bookId: string, items: RateItem[]) => { await rates.putLocal(items); await enqueue({ kind: 'ratebook', id: bookId }) },
+  deleteBook: (bookId: string) => open().then(d => new Promise<void>((resolve, reject) => {
+    const t = d.transaction('rates', 'readwrite'), idx = t.objectStore('rates').index('bookId')
+    const req = idx.openCursor(IDBKeyRange.only(bookId))
+    req.onsuccess = () => { const c = req.result; if (c) { c.delete(); c.continue() } }
+    t.oncomplete = () => { rateCache = null; resolve() }; t.onerror = () => reject(t.error)
+  })),
+}
+
 /** Sign-out: remove every local copy so the next person on this phone sees nothing of yours. */
 export async function wipeLocal() {
-  for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'settings', 'photos', 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
+  for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'settings', 'photos', 'rates', ...JOB_STORES, 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
+  rateCache = null
+  await clearThumbs().catch(() => {})   // the thumbnail cache lives in its own database
 }
 
 /** Next VO number = highest existing + 1. Never count-based (that reuses numbers after a delete). */

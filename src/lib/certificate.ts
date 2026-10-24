@@ -131,9 +131,9 @@ export async function buildCertificate({ job, val, vals, scope, vos, company }: 
 export const certificateFileName = (job: Job, val: Valuation) =>
   `${(job.contractRef || job.name).replace(/[^A-Za-z0-9-]+/g, '_')}_${valRef(val.number).replace(' ', '-')}${val.status === 'Open' ? '_DRAFT' : ''}.pdf`
 
-/** Share on phones (email/WhatsApp/Drive) where supported, otherwise download. */
+/** Share on phones (email/WhatsApp/Drive) where supported, otherwise download. Keeps the file's own type (PDF by default). */
 export async function shareOrDownload(blob: Blob, name: string) {
-  const file = new File([blob], name, { type: 'application/pdf' })
+  const file = new File([blob], name, { type: blob.type || 'application/pdf' })
   const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean }
   if (nav.canShare?.({ files: [file] })) { try { await nav.share({ files: [file], title: name }); return } catch { /* cancelled — fall through to download */ } }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click()

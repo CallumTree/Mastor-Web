@@ -18,20 +18,20 @@ export function TabMenu({ title, actions }: { title: string; actions: MenuAction
       </button>
       {open && (
         <Sheet onClose={() => { setOpen(false); setConfirming(null) }}>
-          <div className="label bracket" style={{ marginBottom: 8 }}>{title} options</div>
-          <div className="panel" style={{ padding: 0 }}>
+          <h2 className="label bracket" style={{ marginBottom: 8 }}>{title} options</h2>
+          <div className="panel flush">
             {actions.map((a, i) => (
-              <div key={a.label} style={{ borderTop: i ? '1px solid var(--ink-line)' : 'none' }}>
+              <div key={a.label} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
                 <button disabled={a.disabled} onClick={() => run(a)} className="tabmenu-item" style={{ color: a.danger ? 'var(--red)' : 'var(--ink)', opacity: a.disabled ? .45 : 1 }}>
-                  <span style={{ fontWeight: 600 }}>{a.label}</span>
-                  {a.hint && <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>{a.hint}</span>}
+                  <span>{a.label}</span>
+                  {a.hint && <span className="hint" style={{ fontWeight: 400 }}>{a.hint}</span>}
                 </button>
                 {confirming === a && (
                   <div style={{ padding: '0 14px 12px' }}>
-                    <div style={{ fontSize: 13, marginBottom: 8 }}>{a.confirm}</div>
+                    <div className="t-small" style={{ marginBottom: 8 }}>{a.confirm}</div>
                     <div className="row">
-                      <button className="btn btn-secondary" style={{ flex: 1, minHeight: 42 }} onClick={() => setConfirming(null)}>Cancel</button>
-                      <button className="btn" style={{ flex: 1, minHeight: 42, background: 'var(--red)', color: '#fff' }} onClick={() => run(a)}>Yes, {a.label.toLowerCase()}</button>
+                      <button className="btn btn-secondary" style={{ flex: 1, minHeight: 48 }} onClick={() => setConfirming(null)}>Cancel</button>
+                      <button className="btn btn-danger" style={{ flex: 1, minHeight: 48 }} onClick={() => run(a)}>Yes, {a.label.toLowerCase()}</button>
                     </div>
                   </div>
                 )}

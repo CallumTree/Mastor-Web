@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import App from '../src/App'
 const click = (el: Element) => fireEvent.click(el)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
@@ -17,7 +17,10 @@ async function issueOne(desc: string, rate: string, valNo: number) {
   nav('vals')
   click(await screen.findByRole('button', { name: `Issue VAL ${'I'.repeat(valNo)}` }))
   click(await screen.findByRole('button', { name: new RegExp(`issue val ${'i'.repeat(valNo)} for`, 'i') }))
-  await screen.findAllByRole('button', { name: 'Create invoice' })
+  // issuing ends on the next step: the invoice, from the issued sheet
+  const done = await screen.findByRole('dialog', { name: new RegExp(`VAL ${'I'.repeat(valNo)} issued`) })
+  expect(within(done).getByText(/issued for .* — locked/)).toBeTruthy()
+  return () => click(within(done).getByRole('button', { name: 'Create invoice' }))
 }
 
 describe('VAT invoicing', () => {
@@ -29,8 +32,8 @@ describe('VAT invoicing', () => {
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Invoice Close')
 
-    await issueOne('Bathroom upgrade', '1000', 1)
-    click(screen.getByRole('button', { name: 'Create invoice' }))
+    const invoiceFirst = await issueOne('Bathroom upgrade', '1000', 1)
+    invoiceFirst()
     await screen.findByText(/before your first invoice/i)
     click(screen.getByRole('button', { name: /open company settings/i }))
     type('Company name *', 'Tree & Sons Ltd'); type(/address \*/i, 'The Reclamation Yard, Milford Haven')
@@ -45,14 +48,16 @@ describe('VAT invoicing', () => {
     await screen.findByText('TS-1042')
     expect(screen.getByText(/£1,200\.00 incl\. VAT/)).toBeTruthy()
 
-    // payment defaults to the invoice total incl. VAT
+    // payment is never assumed: blank, with one tap for 'paid in full' at the invoice total incl. VAT
     click(screen.getByRole('button', { name: /mark as paid/i }))
-    expect((screen.getByLabelText(/amount received/i) as HTMLInputElement).value).toBe('1200')
+    const amount = screen.getByLabelText(/amount received/i) as HTMLInputElement
+    expect(amount.value).toBe('')
+    click(screen.getByRole('button', { name: /paid in full · £1,200\.00/i }))
+    expect(amount.value).toBe('1200.00')
     fireEvent.click(document.querySelector('.sheet-bg')!); await closed()
 
     // second valuation → next number
-    await issueOne('Kitchen upgrade', '500', 2)
-    click(screen.getAllByRole('button', { name: 'Create invoice' })[0])
+    ;(await issueOne('Kitchen upgrade', '500', 2))()
     click(await screen.findByRole('button', { name: 'Create invoice TS-1043' })); await closed()
     await screen.findByText('TS-1043')
   })

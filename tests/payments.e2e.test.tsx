@@ -23,11 +23,11 @@ describe('payments and chasing', () => {
     type(/extra work/i, 'Extra socket'); type('Qty (if known)', '1')
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    click(await screen.findByText('Extra socket'))
+    click(await screen.findByRole('button', { name: /Extra socket/ }))
     type('Rate (£)', '100'); click(screen.getByRole('button', { name: 'Save' }))
     await screen.findByText(/send to client for instruction/i)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    click(screen.getByText('Extra socket'))
+    click(screen.getByRole('button', { name: /Extra socket/ }))
     click(await screen.findByRole('button', { name: /mark as sent to client/i }))
     click(screen.getByRole('button', { name: 'Save' }))
     await screen.findByText(/awaiting instruction · 0 days/i)
@@ -38,7 +38,7 @@ describe('payments and chasing', () => {
     nav('vals')
     click(await screen.findByRole('button', { name: 'Issue VAL I' }))
     click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findByText(/^Due /)
+    await screen.findAllByText(/^With client · Due /)
 
     // part payment → still owed; then paid in full
     click(screen.getByRole('button', { name: /mark as paid/i }))

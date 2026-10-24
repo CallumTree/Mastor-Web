@@ -4,9 +4,14 @@
  * Rule: a cloud row never overwrites a local record that still has unsent changes.
  */
 import { supabase } from './supabase'
-import { db, local, meta, outbox, setQueueing, type RecordTable } from './db'
+import { db, JOB_STORES, local, meta, outbox, rates, setQueueing, type RecordTable } from './db'
+import type { RateItem } from './types'
 
-const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries', settings: 'company_settings' }
+const CLOUD: Record<RecordTable, string> = { jobs: 'jobs', scope: 'scope_items', variations: 'variations', valuations: 'valuations', diary: 'diary_entries', settings: 'company_settings',
+  costs: 'costs', orders: 'work_orders', dayworks: 'dayworks', docs: 'job_documents' }
+/** Tables added after launch: until the database update has been run they're skipped (and kept queued), not fatal. */
+const OPTIONAL = new Set<RecordTable>(['diary', 'settings', ...JOB_STORES])
+const tableMissing = (t: RecordTable, msg: string) => OPTIONAL.has(t) && (msg.includes(CLOUD[t]) || /schema cache|does not exist/i.test(msg))
 const TABLES = Object.keys(CLOUD) as RecordTable[]
 
 export type SyncState = 'idle' | 'syncing' | 'synced' | 'offline' | 'error'
@@ -38,6 +43,8 @@ export async function startSync(cid: string) {
 /** For tests and 'sync now' buttons: resolves once any sync in progress has finished. */
 export async function settle() { await syncNow(); while (running || again || timer) { await new Promise(r => setTimeout(r, 15)); if (!running && !again) { if (timer) { clearTimeout(timer); timer = null } await syncNow() } } }
 
+/** The signed-in company this device syncs with, or null when working on the device only. */
+export const currentCompany = () => companyId
 export function stopSync() { companyId = null; setQueueing(false) }
 
 export function schedule(delay = 800) {
@@ -60,6 +67,11 @@ async function queueEverything() {
       for (const m of [d.mediaId, d.originalMediaId]) if (m) await outbox.add({ kind: 'photo', id: m })
     }
     if (j.photoId) await outbox.add({ kind: 'photo', id: j.photoId })
+    for (const st of JOB_STORES) for (const r of await db.list(st, j.id)) {
+      await outbox.add({ kind: 'record', table: st, id: r.id, jobId: j.id, data: r })
+      const files = 'fileId' in r ? [r.fileId] : 'beforeIds' in r ? [...r.beforeIds, ...r.afterIds] : []
+      for (const f of files) await outbox.add({ kind: 'photo', id: f })
+    }
   }
 }
 
@@ -71,7 +83,8 @@ export async function syncNow() {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) { setStatus({ state: 'offline', pending: await outbox.count() }); return }
     setStatus({ state: 'syncing', pending: await outbox.count() })
     await push()
-    const changed = await pull()
+    const pulled = await pull()
+    const changed = (await syncRateBooks()) || pulled   // both always run
     if (changed) changeListeners.forEach(f => f())
     setStatus({ state: 'synced', pending: await outbox.count(), at: Date.now(), message: undefined })
   } catch (e) {
@@ -89,8 +102,15 @@ async function push() {
     if (op.kind === 'record') {
       const row = { id: op.id, company_id: companyId, job_id: op.jobId, data: op.data ?? {}, deleted: op.data === null }
       const { error } = await supabase.from(CLOUD[op.table]).upsert(row, { onConflict: op.table === 'settings' ? 'company_id,id' : 'id' })  // settings: one row per company
-      if (error && (op.table === 'diary' || op.table === 'settings') && /diary_entries|company_settings/.test(error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
+      if (error && tableMissing(op.table, error.message)) { missingDiaryTable = true; continue } // stays queued until the table exists
       if (error) throw new Error(error.message)
+    } else if (op.kind === 'ratebook') {
+      const items = await rates.book(op.id)
+      if (items.length) {
+        const blob = new Blob([JSON.stringify(items)], { type: 'application/json' })
+        const { error } = await supabase.storage.from('photos').upload(rateBookPath(op.id), blob, { upsert: true, contentType: 'application/json' })
+        if (error) throw new Error(error.message)
+      }
     } else {
       const blob = await db.photo(op.id)
       if (blob) {
@@ -110,7 +130,7 @@ async function pull(): Promise<boolean> {
     for (;;) {
       const { data, error } = await supabase.from(CLOUD[t]).select('id, data, deleted, updated_at')
         .eq('company_id', companyId!).gt('updated_at', since).order('updated_at', { ascending: true }).limit(500)
-      if (error && (t === 'diary' || t === 'settings') && /diary_entries|company_settings/.test(error.message)) { missingDiaryTable = true; break }
+      if (error && tableMissing(t, error.message)) { missingDiaryTable = true; break }
       if (error) throw new Error(error.message)
       if (!data?.length) break
       for (const row of data as { id: string; data: unknown; deleted: boolean; updated_at: string }[]) {
@@ -128,6 +148,32 @@ async function pull(): Promise<boolean> {
   return changed
 }
 
+const rateBookPath = (id: string) => `${companyId}/rates/${id}.json`
+
+/**
+ * Rate books follow the company's book list (kept in company settings): fetch the lines of any book
+ * added on another device, and drop the lines of any book removed there.
+ */
+async function syncRateBooks(): Promise<boolean> {
+  const books = (await db.settings())?.rateBooks ?? []
+  const pending = new Set((await outbox.all()).filter(o => o.kind === 'ratebook').map(o => o.id))
+  let changed = false
+  for (const b of books) {
+    if (pending.has(b.id) || (await rates.countBook(b.id)) > 0) continue
+    const { data, error } = await supabase.storage.from('photos').download(rateBookPath(b.id))
+    if (error || !data) continue // not uploaded yet — try again next sync
+    const text = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsText(data) })
+    const items = JSON.parse(text) as RateItem[]
+    await rates.putLocal(items.map(i => ({ ...i, bookId: b.id })))
+    changed = true
+  }
+  const keep = new Set(books.map(b => b.id))
+  for (const id of new Set((await rates.all()).map(i => i.bookId))) {
+    if (!keep.has(id) && !pending.has(id)) { await rates.deleteBook(id); changed = true }
+  }
+  return changed
+}
+
 /** A photo taken on another device: fetch it from the cloud once and keep a local copy. */
 export async function fetchPhoto(id: string): Promise<Blob | null> {
   if (!companyId) return null
@@ -138,13 +184,13 @@ export async function fetchPhoto(id: string): Promise<Blob | null> {
 }
 
 // ---------- account ----------
-export async function myCompany(): Promise<{ id: string; name: string } | null> {
-  const { data, error } = await supabase.from('memberships').select('company_id, companies(name)').limit(1)
+export async function myCompany(): Promise<{ id: string; name: string; role: string } | null> {
+  const { data, error } = await supabase.from('memberships').select('company_id, role, companies(name)').limit(1)
   if (error) throw new Error(error.message)
-  const row = data?.[0] as { company_id: string; companies: { name: string } | { name: string }[] | null } | undefined
+  const row = data?.[0] as { company_id: string; role: string; companies: { name: string } | { name: string }[] | null } | undefined
   if (!row) return null
   const c = Array.isArray(row.companies) ? row.companies[0] : row.companies
-  return { id: row.company_id, name: c?.name ?? '' }
+  return { id: row.company_id, name: c?.name ?? '', role: row.role }
 }
 export async function createCompany(name: string): Promise<string> {
   const { data, error } = await supabase.rpc('create_company', { p_name: name })

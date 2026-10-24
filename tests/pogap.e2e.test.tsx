@@ -29,7 +29,7 @@ describe('BoQ vs PO difference', () => {
 
     // a note from ⊕ lands on Home, pinned first, and stays out of the diary's photo grid
     click(screen.getByRole('button', { name: 'Capture' }))
-    click(await screen.findByRole('button', { name: /job note/i }))
+    click(await screen.findByRole('button', { name: /^Note$/ }))
     click(screen.getByRole('button', { name: 'Client' }))
     type(/^note/i, 'Tenant asked for extra socket in bedroom 2')
     click(screen.getByLabelText(/pin to the top/i))
@@ -40,7 +40,7 @@ describe('BoQ vs PO difference', () => {
     await waitFor(() => expect(screen.queryAllByText('Tenant asked for extra socket in bedroom 2').length).toBe(1))  // filtered to Commercial: only the Home copy remains
     fireEvent.click(document.querySelector('.sheet-bg')!)
     nav('diary')
-    await screen.findByText(/photos & video \(0\)/i)
+    await screen.findByText(/photos, video & voice \(0\)/i)
     nav('home')
     // change the uplifts → the difference changes → flagged again
     click(screen.getByRole('button', { name: /job setup/i }))

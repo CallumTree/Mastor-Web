@@ -64,9 +64,61 @@ export async function deleteOpenValuation(v: Valuation, scope: ScopeItem[], vos:
   await db.deleteValuation(v.id)
 }
 
-export async function issueValuation(v: Valuation) {
-  await db.putValuation({ ...v, status: 'Issued', issuedAt: Date.now() })
+/** Locks the valuation. Returns the issued record, so the next step (the invoice) works from it, not the open copy. */
+export async function issueValuation(v: Valuation): Promise<Valuation> {
+  const issued: Valuation = { ...v, status: 'Issued', issuedAt: Date.now() }
+  await db.putValuation(issued)
+  return issued
 }
+
+export interface IssueGroup { name: string; lines: number; base: number }
+export interface IssueCheck { kind: 'warn' | 'ok'; text: string }
+export interface IssuePlan {
+  totals: ValTotals; u1: number; u2: number
+  previous: number; cumulative: number; target: number; pct: number | null
+  groups: IssueGroup[]; checks: IssueCheck[]
+}
+
+/**
+ * What a valuation certifies, and what a client QS would query before it's locked: a missing PO,
+ * VOs the client hasn't instructed, claiming more than the contract and VOs are worth, a property
+ * claimed past its scope. Warnings never block issuing — the contractor decides.
+ */
+export function issuePlan(job: Job, val: Valuation, vals: Valuation[], scope: ScopeItem[], vos: Variation[]): IssuePlan {
+  const totals = valTotals(job, val.id, scope, vos)
+  const { u1, u2 } = upliftAmounts(totals.base, job.uplift1, job.uplift2)
+  const previous = pennies(vals.filter(v => v.status === 'Issued' && v.id !== val.id).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0))
+  const cumulative = pennies(previous + totals.gross)
+  const live = vos.filter(v => v.status !== 'Rejected')
+  const f = (1 + (job.uplift1 || 0) / 100) * (1 + (job.uplift2 || 0) / 100)
+  const scopeGross = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) * f)
+  const target = pennies((job.contractValue || scopeGross) + live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0) * f)
+  const mine = scope.filter(i => i.valuationId === val.id), myVos = vos.filter(v => v.valuationId === val.id)
+  const multi = new Set(scope.map(i => i.property).filter(Boolean)).size > 1
+  const groupOf = (i: ScopeItem) => (multi ? (i.property ? `No. ${i.property}` : 'Unassigned') : i.workstream || i.room || 'General')
+  const groups = new Map<string, IssueGroup>()
+  const add = (name: string, base: number) => { const g = groups.get(name) ?? { name, lines: 0, base: 0 }; g.lines++; g.base = pennies(g.base + base); groups.set(name, g) }
+  for (const i of mine) add(groupOf(i), lineValue(i.qty, i.rate))
+  for (const v of myVos) add('Variations', lineValue(v.qty, v.rate))
+
+  const checks: IssueCheck[] = []
+  if (!job.poNumber) checks.push({ kind: 'warn', text: 'No PO number on this job — the certificate and invoice will go out without one.' })
+  const uninstructed = myVos.filter(v => v.status === 'Identified')
+  if (uninstructed.length) checks.push({ kind: 'warn', text: `${uninstructed.map(v => `VO ${roman(v.number)}`).join(', ')} ${uninstructed.length === 1 ? 'isn’t' : 'aren’t'} instructed by the client yet — they may not certify ${uninstructed.length === 1 ? 'it' : 'them'}.` })
+  const noRef = myVos.filter(v => v.status !== 'Identified' && !v.clientRef)
+  if (noRef.length) checks.push({ kind: 'warn', text: `${noRef.map(v => `VO ${roman(v.number)}`).join(', ')} ${noRef.length === 1 ? 'has' : 'have'} no client VO reference.` })
+  if (target > 0 && cumulative > target + 0.5) checks.push({ kind: 'warn', text: `Cumulative claims ${gbp(pennies(cumulative - target))} more than the contract and VOs are worth (${gbp(target)}).` })
+  if (multi) {
+    for (const p of new Set(mine.map(i => i.property).filter((x): x is string => !!x))) {
+      const all = scope.filter(i => i.property === p), priced = all.filter(isPriced)
+      const unpriced = all.length - priced.length
+      if (unpriced && priced.every(i => i.valuationId)) checks.push({ kind: 'warn', text: `No. ${p} has every priced line claimed, but ${unpriced} line${unpriced === 1 ? ' is' : 's are'} still unpriced — price ${unpriced === 1 ? 'it' : 'them'} before the property is finished.` })
+    }
+  }
+  if (!checks.length) checks.push({ kind: 'ok', text: 'Nothing for the client to query — ready to issue.' })
+  return { totals, u1, u2, previous, cumulative, target, pct: target > 0 ? Math.round((cumulative / target) * 1000) / 10 : null, groups: [...groups.values()].sort((a, b) => (a.name === 'Variations' ? 1 : b.name === 'Variations' ? -1 : a.name.localeCompare(b.name, 'en', { numeric: true }))), checks }
+}
+const gbp = (n: number) => '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 /**
  * Uplifts compound (uplift 2 on top of uplift 1) and — as Pembrokeshire's POs do — the total is

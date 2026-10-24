@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 /**
  * Opening titles: a copper line draws a Roman arch, the keystone drops in and locks it,
  * MASTOR rises letter by letter, a dimension line draws out underneath with the beam, then it
- * dissolves into the app. Plays once per visit, tap to skip, honours reduced motion.
+ * dissolves into the app. Plays once per device (first open), tap to skip, honours reduced motion.
  * The app loads underneath the whole time — this never delays anything.
  */
 const KEY = 'mastor.splashSeen'
@@ -12,7 +12,7 @@ export function shouldPlaySplash() {
   try {
     // ?intro always plays it (handy for showing people, and for phones with animations reduced)
     if (new URLSearchParams(location.search).has('intro')) return true
-    if (sessionStorage.getItem(KEY)) return false
+    if (localStorage.getItem(KEY)) return false   // once per device — Settings → Play the opening titles replays it
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return false
     return true
   } catch { return false }
@@ -21,7 +21,7 @@ export function shouldPlaySplash() {
 export function Splash({ onDone }: { onDone: () => void }) {
   const [leaving, setLeaving] = useState(false)
   useEffect(() => {
-    try { sessionStorage.setItem(KEY, '1') } catch { /* private mode */ }
+    try { localStorage.setItem(KEY, '1') } catch { /* private mode */ }
     const t1 = setTimeout(() => setLeaving(true), 2500)
     const t2 = setTimeout(onDone, 3100)
     return () => { clearTimeout(t1); clearTimeout(t2) }

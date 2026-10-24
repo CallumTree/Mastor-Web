@@ -1,10 +1,22 @@
 import { useState } from 'react'
+import { Plate } from '../components/Sign'
+import { useAccess } from '../lib/access'
 import { blankSettings, type CompanySettings } from '../lib/types'
 import { Field, Sheet } from '../components/Ui'
 import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
+import { SignOutButton } from '../components/SyncBadge'
+import { checkAi, type AiCheck } from '../lib/aiCheck'
 
-/** Company details for invoices. Saved for the whole company and synced to every device. */
-export function SettingsSheet({ settings, onSave, onClose }: { settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void }) {
+/** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
+export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices }: {
+  settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
+  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void; onRates: () => void; onTeam: () => void
+  onExportInvoices?: (format: 'xero' | 'quickbooks', period: 'thisMonth' | 'lastMonth' | 'all', code: string) => Promise<number>
+}) {
+  const { money: m } = useAccess()
+  const [period, setPeriod] = useState<'thisMonth' | 'lastMonth' | 'all'>('lastMonth')
+  const [exportMsg, setExportMsg] = useState<string | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
   const [s, setS] = useState<CompanySettings>(settings ?? blankSettings())
   const [nextText, setNextText] = useState(String(s.nextInvoiceNumber || 1))
   const set = <K extends keyof CompanySettings>(k: K, v: CompanySettings[K]) => setS(x => ({ ...x, [k]: v }))
@@ -15,33 +27,83 @@ export function SettingsSheet({ settings, onSave, onClose }: { settings?: Compan
     <Field label={label}><input value={String(s[k] ?? '')} onChange={e => set(k, e.target.value as never)} {...props} /></Field>
   )
   return (
-    <Sheet onClose={onClose}>
+    <Sheet onClose={onClose} label="Settings">
       <div className="stack">
-        <div className="label bracket">Company settings</div>
-        <div className="muted" style={{ fontSize: 13 }}>Used on your VAT invoices. Shared with everyone in your company.</div>
+        {m && <>
+        <h2 className="label bracket">Company settings</h2>
+        <div className="hint">Used on your VAT invoices. Shared with everyone in your company.</div>
 
-        <div className="label" style={{ marginTop: 6 }}>Company</div>
+        <h3 className="label sec">Company</h3>
         {T('name', 'Company name *', { placeholder: 'Tree & Sons Ltd' })}
         <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
-        <div className="row"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
-        <div className="row"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
+        <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
+        <div className="row pair"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
 
-        <div className="label" style={{ marginTop: 6 }}>Bank details (printed on invoices)</div>
-        <div className="row"><div className="grow">{T('accountName', 'Account name')}</div><div className="grow">{T('bankName', 'Bank')}</div></div>
-        <div className="row"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
+        <h3 className="label sec">Bank details (printed on invoices)</h3>
+        <div className="row pair"><div className="grow">{T('accountName', 'Account name')}</div><div className="grow">{T('bankName', 'Bank')}</div></div>
+        <div className="row pair"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
 
-        <div className="label" style={{ marginTop: 6 }}>Invoices</div>
-        <div className="row">
+        <h3 className="label sec">Invoices</h3>
+        <div className="row pair">
           <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. TS- (or blank)' })}</div>
           <div className="grow"><Field label="Next invoice number" hint="Carry on from your current sequence"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
         </div>
-        <div className="row">
+        <div className="row pair">
           <div className="grow"><Field label="Digits" hint="e.g. 4 → 0042"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} /></Field></div>
           <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>
         </div>
-        <div className="panel" style={{ padding: '10px 14px', fontSize: 13 }}>Your next invoice will be <b className="mono" style={{ color: 'var(--copper-ink)' }}>{formatInvoiceNo(preview, nextN)}</b></div>
+        <Field label="Labour day rate (£)" hint="Your cost of one operative-day. Lets each job’s margin include the labour recorded in the diary, shown as an estimate. Leave blank to leave it out.">
+          <input inputMode="decimal" value={s.labourDayRate != null ? String(s.labourDayRate) : ''} onChange={e => { const v = parseFloat(e.target.value.replace(/[£,]/g, '')); set('labourDayRate', isFinite(v) && v > 0 ? v : null) }} placeholder="e.g. 180" />
+        </Field>
+        <div className="panel t-small" style={{ padding: '10px 14px' }}>Your next invoice will be <b className="mono slate">{formatInvoiceNo(preview, nextN)}</b></div>
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>
+
+        </>}
+
+        <h3 className="label bracket sec">Team</h3>
+        <div className="hint">Add your office and site staff so they see the same jobs.</div>
+        <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
+
+        <AiSetup />
+
+        {m && <>
+        <h3 className="label bracket sec">Export invoices</h3>
+        <div className="hint">A CSV your accounts package imports, so invoices aren’t typed in twice. Only invoices you’ve created are included.</div>
+        <div className="chips" role="group" aria-label="Accounts package">
+          {(['xero', 'quickbooks'] as const).map(f => <button key={f} className={'chip' + ((s.accountsFormat ?? 'xero') === f ? ' on' : '')} aria-pressed={(s.accountsFormat ?? 'xero') === f} onClick={() => set('accountsFormat', f)}>{f === 'xero' ? 'Xero' : 'QuickBooks'}</button>)}
+        </div>
+        {(s.accountsFormat ?? 'xero') === 'xero' && <Field label="Xero sales account code" hint="Where the income goes in Xero — 200 (Sales) unless you use another"><input inputMode="numeric" value={s.accountsCode ?? '200'} onChange={e => set('accountsCode', e.target.value)} /></Field>}
+        <div className="chips" role="group" aria-label="Period">
+          {([['thisMonth', 'This month'], ['lastMonth', 'Last month'], ['all', 'All']] as const).map(([p, l]) => <button key={p} className={'chip' + (period === p ? ' on' : '')} aria-pressed={period === p} onClick={() => setPeriod(p)}>{l}</button>)}
+        </div>
+        <button className="btn btn-secondary" disabled={!onExportInvoices} onClick={async () => {
+          const n = await onExportInvoices!(s.accountsFormat ?? 'xero', period, (s.accountsCode ?? '200').trim() || '200')
+          setExportMsg(n ? `Downloaded ${n} invoice${n === 1 ? '' : 's'} for ${(s.accountsFormat ?? 'xero') === 'xero' ? 'Xero' : 'QuickBooks'}` : 'No invoices in that period')
+        }}>Download CSV</button>
+        {exportMsg && <div role="status"><Plate kind={exportMsg.startsWith('No') ? 'wait' : 'ok'}>{exportMsg}</Plate></div>}
+
+        <h3 className="label bracket sec">Schedule of rates</h3>
+        <div className="hint">{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
+        <button className="btn btn-secondary" onClick={onRates}>Open schedule of rates</button>
+
+        </>}
+
+        <h3 className="label bracket sec">This device</h3>
+        <div className="hint">A backup is a file of every job on this phone or computer — keep one before changing devices.</div>
+        <div className="row">
+          <button className="btn btn-secondary" style={{ flex: 1 }} onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>
+          <label className="btn btn-secondary" style={{ flex: 1 }} data-keep-clean>Restore…
+            <input type="file" className="sr-only" accept=".json,application/json" onChange={async e => {
+              const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
+              try { const text = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsText(f) }); const n = await onRestore(text); setMsg(`Restored ${n} job${n === 1 ? '' : 's'}`) }
+              catch (err) { setMsg((err as Error).message || 'Couldn’t restore that file — is it a Mastor backup?') }
+            }} />
+          </label>
+        </div>
+        {msg && <div className="flag" role="status">{msg}</div>}
+        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onPlayIntro}>Play the opening titles</button>
+        <SignOutButton />
       </div>
     </Sheet>
   )
@@ -57,26 +119,45 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onC
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <div className="label bracket">Create VAT invoice</div>
+        <h2 className="label bracket">Create VAT invoice</h2>
         {missing.length ? (
           <>
-            <div style={{ fontSize: 14 }}>Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
+            <div className="t-note">Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
             <button className="btn btn-primary" onClick={onSettings}>Open company settings</button>
           </>
         ) : (
           <>
             <div className="panel" style={{ padding: 14 }}>
-              <div className="row"><span className="grow muted">Invoice number</span><b className="mono" style={{ color: 'var(--copper-ink)', fontSize: 18 }}>{number}</b></div>
+              <div className="row"><span className="grow muted">Invoice number</span><b className="mono" style={{ color: 'var(--ink-2)', fontSize: 18 }}>{number}</b></div>
               <div className="row" style={{ marginTop: 8 }}><span className="grow muted">Net</span><span className="mono">{net}</span></div>
               <div className="row"><span className="grow muted">VAT @ {rate}%</span><span className="mono">{vat}</span></div>
-              <div className="row" style={{ borderTop: '1px solid var(--ink-line)', marginTop: 6, paddingTop: 6 }}><b className="grow">Total</b><b className="mono">{total}</b></div>
+              <div className="row" style={{ borderTop: '1px solid var(--line)', marginTop: 6, paddingTop: 6 }}><b className="grow">Total</b><b className="mono">{total}</b></div>
             </div>
             <Field label="Invoice date (tax point)"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
-            <div className="muted" style={{ fontSize: 12 }}>Once created, this number is used and can't be reissued. Payment terms run from this date.</div>
+            <div className="hint">Once created, this number is used and can't be reissued. Payment terms run from this date.</div>
             <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, dd] = date.split('-').map(Number); onCreate(new Date(y, m - 1, dd, 12).getTime()) }}>Create invoice {number}</button>
           </>
         )}
       </div>
     </Sheet>
+  )
+}
+
+/** One tap: is every AI service Mastor uses set up and answering? Green or red, with what to fix. */
+function AiSetup() {
+  const [out, setOut] = useState<{ checks: AiCheck[]; build?: string } | null>(null)
+  const res = out?.checks ?? null
+  const [busy, setBusy] = useState(false)
+  return (
+    <>
+      <h3 className="label bracket sec">AI setup</h3>
+      <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Uses one of today’s reads.</div>
+      <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setOut(null); try { setOut(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
+      {res && <div className="stack" role="status">
+        {res.map(c => <div key={c.name}><Plate kind={c.ok ? 'ok' : 'stop'}>{c.name}</Plate><div className="hint" style={{ marginTop: 2 }}>{c.detail}</div></div>)}
+        {res.every(c => c.ok) && <div className="t-note t-strong">All working.</div>}
+        {out?.build && <div className="hint mono">Checked on: {out.build}</div>}
+      </div>}
+    </>
   )
 }

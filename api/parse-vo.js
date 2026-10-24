@@ -5,6 +5,8 @@
  */
 export const config = { maxDuration: 120 }
 
+import { guard, anthropicKey } from './_guard.js'
+
 const PROMPT = `This is a UK local-authority variation instruction / works order / site instruction sent to a building contractor.
 It may be handwritten, scanned, photographed or a screenshot. Read it carefully.
 
@@ -26,13 +28,14 @@ Rules:
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' })
-  const key = process.env.ANTHROPIC_API_KEY
+  const key = anthropicKey()
   if (!key) return res.status(503).json({ error: 'AI is not set up yet — add ANTHROPIC_API_KEY in Vercel.' })
   const b = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
   let doc
   if (b?.kind === 'image' && b.data) doc = { type: 'image', source: { type: 'base64', media_type: b.mediaType || 'image/jpeg', data: b.data } }
   else if (b?.kind === 'pdf' && b.data) doc = { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b.data } }
   else return res.status(400).json({ error: 'No document received.' })
+  if (!(await guard(req, res, 'vo'))) return
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },

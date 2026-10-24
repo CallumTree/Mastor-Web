@@ -31,7 +31,7 @@ describe('site diary', () => {
 
     // --- day note + labour
     nav('diary')
-    await screen.findByText('Today')
+    await screen.findByText(/^(Today|Yesterday) · /)   // the diary keeps the day you were on
     const note = screen.getByPlaceholderText(/what happened on site today/i)
     fireEvent.change(note, { target: { value: 'Stripped out kitchen, skip swapped' } }); fireEvent.blur(note)
     click(screen.getByRole('button', { name: /more operatives/i }))
@@ -45,7 +45,7 @@ describe('site diary', () => {
     await screen.findByRole('button', { name: /open video/i })
     pick(inputs().find(i => i.accept === 'image/*')!, new File(['p'], 'joist.jpg', { type: 'image/jpeg' }))
     await screen.findByRole('button', { name: /open photo/i })
-    expect(screen.getByText(/photos & video \(2\)/i)).toBeTruthy()
+    expect(screen.getByText(/photos, video & voice \(2\)/i)).toBeTruthy()
 
     // --- caption + raise VO from the photo
     click(screen.getByRole('button', { name: /open photo/i }))
@@ -69,18 +69,21 @@ describe('site diary', () => {
 
     // --- day pager + recent days
     click(screen.getByRole('button', { name: /previous day/i }))
-    await screen.findByText('Yesterday')
+    await screen.findByText(/^Yesterday · /)
     expect(screen.getByText(/recent days/i)).toBeTruthy()
 
-    // --- ⊕ capture → diary note goes to today's diary
+    // --- one kind of note: ⊕ capture offers "Note" (on record); today's site log is the Diary tab
     nav('scope')
     click(screen.getByRole('button', { name: 'Capture' }))
-    click(await screen.findByRole('button', { name: /diary note/i }))
-    await screen.findByText('Today')
+    expect(await screen.findByRole('button', { name: /^Note$/ })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /diary note|job note/i })).toBeNull()
+    click(screen.getByRole('button', { name: 'Close' }))
+    nav('diary')
+    await screen.findByText(/^(Today|Yesterday) · /)   // the diary keeps the day you were on
 
     // --- survives a reload
     cleanup(); render(<App />)
-    click(await screen.findByRole('button', { name: /open job/i }))
+    click(await screen.findByRole('button', { name: /Diary Close/ }))
     nav('diary')
     expect(((await screen.findByPlaceholderText(/what happened on site today/i)) as HTMLTextAreaElement).value).toBe('Stripped out kitchen, skip swapped')
     expect(screen.getByText('2')).toBeTruthy()

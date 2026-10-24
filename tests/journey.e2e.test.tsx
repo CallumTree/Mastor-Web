@@ -20,6 +20,9 @@ beforeAll(() => {
   }))
 })
 
+// issued = locked: the lock is a drawn icon next to the text
+const lockedText = (text: string) => (_: string, el: Element | null) => !!el && el.textContent?.trim() === text && !!el.querySelector(':scope > svg')
+
 describe('College Park, end to end', () => {
   it('create job → import BoQ → scope → valuations → issue → VAL II → VOs → survives reload', async () => {
     render(<App />)
@@ -70,9 +73,9 @@ describe('College Park, end to end', () => {
     nav('vals')
     click(await screen.findByRole('button', { name: 'Issue VAL I' }))
     click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findByText('🔒 Issued')
+    await screen.findByText(lockedText('Issued'))
     nav('scope')
-    const locked = await screen.findByText('🔒 VAL I')
+    const locked = await screen.findByText(lockedText('VAL I'))
     expect(locked).toBeTruthy()
 
     // --- next tick opens VAL II
@@ -87,10 +90,10 @@ describe('College Park, end to end', () => {
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!)
     await screen.findByText('VO I')
     expect(screen.getByText(/price it/i)).toBeTruthy()
-    click(screen.getByText('Replace rotten joists under bath'))
+    click(screen.getByRole('button', { name: /Replace rotten joists under bath/ }))
     type('Qty', '2'); type('Rate (£)', '85.50'); type('SoR code', '3051AB')
     click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(screen.queryByText(/next: price it/i)).toBeNull())
+    await waitFor(() => expect(screen.queryByText(/^price it$/i)).toBeNull())
     click(screen.getByRole('button', { name: /add to valuation/i }))
     await waitFor(() => expect(screen.getAllByText('VAL II').length).toBeGreaterThan(0))
     nav('vals')
@@ -99,18 +102,20 @@ describe('College Park, end to end', () => {
     // --- everything survives a full reload
     cleanup()
     render(<App />)
-    click(await screen.findByRole('button', { name: /open job/i }))
+    click(await screen.findByRole('button', { name: /32 College Park/ }))
     nav('scope')
     await screen.findByText('58 items')
-    expect(screen.getAllByText('🔒 VAL I').length).toBe(1)
+    expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)
     expect(screen.getAllByText('VAL II').length).toBe(1)
 
     // --- director dashboard reflects it
     cleanup()
     render(<App />)
     click(await screen.findByRole('button', { name: /director dashboard/i }))
-    await screen.findByText(/at a glance/i)
-    expect(screen.getByText('Certified this year')).toBeTruthy()
-    expect(screen.getByText('32 College Park')).toBeTruthy()
+    await screen.findByText('Needs action')
+    expect(screen.getByText('Certified this year · excl. VAT')).toBeTruthy()
+    // in Chase payment (VAL I is owed) and in the jobs list
+    expect(screen.getAllByText('32 College Park').length).toBe(2)
+    expect(screen.getByText(/Chase payment · 1/)).toBeTruthy()
   })
 })
