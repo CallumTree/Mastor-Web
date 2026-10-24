@@ -7,6 +7,7 @@ import { Gate } from './screens/Gate'
 import { Splash, shouldPlaySplash } from './components/Splash'
 import { UpdateBar } from './components/UpdateBar'
 import { ProblemBar, ProblemBoundary } from './components/Problem'
+import { Consent } from './screens/Consent'
 import { useState } from 'react'
 import './styles.css'
 import { HOME, isBranchPreview, shouldGoHome } from './lib/host'
@@ -16,6 +17,8 @@ if (shouldGoHome(location.hostname)) {
 }
 if (isBranchPreview(location.hostname)) document.title = 'Preview · Mastor'
 // everything renders the app
+// Claude (or another app) asking to use Mastor as you: sign in as usual, then allow or refuse
+const ConsentRoot = () => <><ProblemBoundary><Gate><Consent /></Gate></ProblemBoundary><ProblemBar /></>
 function Root() {
   const [splash, setSplash] = useState(() => !location.hash && shouldPlaySplash())
   // the app loads underneath while the opening titles play
@@ -25,4 +28,4 @@ window.addEventListener('hashchange', () => location.reload())
 // local-first: ask the browser not to clear Mastor's data when the phone runs low on space
 // (granted quietly for an installed app; asked only once it's installed, so no prompt on a first visit)
 if (matchMedia('(display-mode: standalone)').matches) navigator.storage?.persisted?.().then(p => { if (!p) navigator.storage.persist().catch(() => {}) }).catch(() => {})
-createRoot(document.getElementById('root')!).render(<StrictMode><Root /></StrictMode>)
+createRoot(document.getElementById('root')!).render(<StrictMode>{location.pathname === '/oauth/consent' ? <ConsentRoot /> : <Root />}</StrictMode>)

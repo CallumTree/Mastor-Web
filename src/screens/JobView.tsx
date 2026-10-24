@@ -2,10 +2,10 @@ import { Fragment, useState, type ReactNode } from 'react'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
 import type { Cost, DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder, SiteSuggestion } from '../lib/types'
-import { OrdersTab, isOverdue } from './Orders'
+import { OrdersTab } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
-import { money, ukDate, upliftFactor } from '../lib/format'
+import { money, upliftFactor } from '../lib/format'
 import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
@@ -15,10 +15,10 @@ import { dayKey } from '../lib/dates'
 import { Sheet, TitleBlock } from '../components/Ui'
 import { SignMark, SIGN_WORD, type SignKind } from '../components/Sign'
 import { ValuationsTab } from './Valuations'
-import { pennies, upliftAmounts, valRef, valTotals } from '../lib/valuation'
+import { valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
-import { valCourt, voCourt, VO_CHASE_AMBER } from '../lib/chase'
 import { fitLen } from '../components/Register'
+import { jobAlerts, type AlertPlace } from '../lib/alerts'
 
 /** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
 const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
@@ -85,49 +85,11 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const voGross = voBase * upliftFactor(job.uplift1, job.uplift2)
 
   const { money: seesMoney } = useAccess()
-  const actions: { text: string; hint: string; colour: string; onClick: () => void; site?: boolean }[] = []
-  // Uplifts must turn the BoQ into the PO's all-in figure. A known, accepted difference becomes a note;
-  // if the difference changes after it was accepted, it's flagged again.
-  const scopeBase = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
-  let poNote: string | null = null
   const [gapOpen, setGapOpen] = useState(false)
-  let gap: { withUplifts: number; diff: number; needed: number } | null = null
-  if (scopeBase > 0 && job.contractValue > 0) {
-    const withUplifts = upliftAmounts(pennies(scopeBase), job.uplift1, job.uplift2).gross
-    const diff = pennies(withUplifts - job.contractValue)
-    if (Math.abs(diff) / job.contractValue > 0.0005) {
-      gap = { withUplifts, diff, needed: (job.contractValue / scopeBase - 1) * 100 }
-      const acc = job.poGapAccepted
-      if (acc && Math.abs(acc.diff - diff) < 0.01) poNote = `PO difference of ${money(Math.abs(diff))} accepted ${ukDate(acc.at)}${acc.note ? ` — ${acc.note}` : ''}`
-      else actions.push({ text: acc ? 'PO difference has changed since you accepted it' : "BoQ doesn't reconcile with the PO",
-        hint: `BoQ ${money(scopeBase)} + ${job.uplift1}% + ${job.uplift2}% = ${money(withUplifts)}; PO is ${money(job.contractValue)} (${diff > 0 ? 'over' : 'under'} by ${money(Math.abs(diff))}). Tap to review or accept.`,
-        colour: 'var(--red)', onClick: () => setGapOpen(true) })
-    }
-  }
-  for (const v of vals.filter(x => x.status === 'Issued')) {
-    const c = valCourt(v, job, scope, vos)
-    if (c.tone === 'late') actions.push({ text: `${valRef(v.number)} overdue — ${money(c.owed)}`, hint: c.text + ' · chase the client', colour: 'var(--red)', onClick: () => go('vals') })
-    else if (c.tone === 'due') actions.push({ text: `${valRef(v.number)} payment due soon`, hint: c.text, colour: 'var(--amber)', onClick: () => go('vals') })
-  }
-  const waiting = vos.filter(v => { const c = voCourt(v, vals); return c.who === 'client' && (c.days ?? 0) >= VO_CHASE_AMBER })
-  if (waiting.length) actions.push({ text: `${waiting.length} VO${waiting.length === 1 ? '' : 's'} waiting on the client ${VO_CHASE_AMBER}+ days`, hint: 'Chase for an instruction', colour: waiting.some(v => voCourt(v, vals).tone === 'late') ? 'var(--red)' : 'var(--amber)', onClick: () => go('vos') })
-  const toSend = vos.filter(v => voCourt(v, vals).text.startsWith('Send')).length
-  if (toSend) actions.push({ text: `${toSend} priced VO${toSend === 1 ? '' : 's'} not sent to the client`, hint: 'Send for instruction so the clock starts', colour: 'var(--amber)', onClick: () => go('vos') })
-  if (!job.poNumber) actions.push({ text: 'No PO number', hint: 'Invoices will be rejected without it', colour: 'var(--red)', onClick: onSetup })
-  if (unpriced) actions.push({ text: `${unpriced} variation${unpriced === 1 ? '' : 's'} unpriced`, hint: 'Add SoR code and rate so they can be claimed', colour: 'var(--amber)', onClick: () => go('vos') })
-  if (unmeasured) actions.push({ text: `${unmeasured} variation${unmeasured === 1 ? '' : 's'} not measured`, hint: 'Measure on site', colour: 'var(--amber)', onClick: () => go('vos'), site: true })
-  if (open && openTotals && openTotals.lines > 0) actions.push({ text: `${valRef(open.number)}: ${money(openTotals.gross)} ready`, hint: `${openTotals.lines} line${openTotals.lines === 1 ? '' : 's'} — review and issue`, colour: 'var(--blue)', onClick: () => go('vals') })
-  if (job.kind === 'orders') {
-    const late = orders.filter(o => isOverdue(o))
-    if (late.length) actions.push({ text: `${late.length} order${late.length === 1 ? '' : 's'} overdue`, hint: late.slice(0, 3).map(o => `${o.ref} ${o.address}`).join(' · '), colour: 'var(--red)', onClick: () => go('scope'), site: true })
-    const noPhotos = orders.filter(o => o.status === 'complete' && !o.afterIds.length).length
-    if (noPhotos) actions.push({ text: `${noPhotos} finished order${noPhotos === 1 ? '' : 's'} without after photos`, hint: 'Clients usually ask for them before paying', colour: 'var(--amber)', onClick: () => go('scope'), site: true })
-    const ready = orders.filter(o => o.status === 'complete' && scope.some(i => i.orderId === o.id && !i.valuationId && i.qty != null && i.rate != null)).length
-    if (ready) actions.push({ text: `${ready} completed order${ready === 1 ? '' : 's'} not claimed`, hint: 'Claim them into this month’s valuation', colour: 'var(--amber)', onClick: () => go('scope') })
-    if (!orders.length) actions.push({ text: 'No orders yet', hint: 'Add each works order as it comes in', colour: 'var(--amber)', onClick: () => go('scope'), site: true })
-  } else if (scope.length === 0) actions.push({ text: 'No scope yet', hint: 'Add the works order items', colour: 'var(--amber)', onClick: () => go('scope'), site: true })
-  // operatives: only the site actions — nothing about money, POs or the client
-  if (!seesMoney) for (let i = actions.length - 1; i >= 0; i--) if (!actions[i].site) actions.splice(i, 1)
+  // the same alerts Claude reads through the connector (lib/alerts); operatives see only the site ones
+  const { alerts, gap, poNote } = jobAlerts(job, scope, vos, vals, orders)
+  const placeAction = (p: AlertPlace) => (p === 'gap' ? () => setGapOpen(true) : p === 'setup' ? onSetup : () => go(p))
+  const actions = alerts.filter(a => seesMoney || a.site).map(a => ({ ...a, onClick: placeAction(a.place) }))
 
   return (
     <div>
@@ -147,7 +109,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       <div className="acts">
         {actions.length === 0 && <div className="act act-clear"><SignMark kind="ok" size={22} /><span>Nothing outstanding on this job.</span></div>}
         {actions.map((a, i) => {
-          const kind: SignKind = a.colour === 'var(--red)' ? 'stop' : a.colour === 'var(--green)' ? 'ok' : a.colour === 'var(--blue)' ? 'do' : 'warn'
+          const kind: SignKind = a.kind
           return (
             <button key={i} className={'act act-' + kind} onClick={a.onClick}>
               <SignMark kind={kind} size={22} />

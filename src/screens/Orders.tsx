@@ -13,7 +13,8 @@ import { RateLookup } from './Rates'
 
 export const PRIORITIES = ['Emergency', 'Urgent', 'Routine', 'Void', 'Planned']
 const priorityPlate = (p: string) => (p === 'Emergency' ? 'stop' : p === 'Urgent' || p === 'Void' ? 'warn' : 'wait') as 'stop' | 'warn' | 'wait'
-export const isOverdue = (o: WorkOrder, now = Date.now()) => o.status === 'open' && o.dueAt != null && o.dueAt < now
+export { isOverdue } from '../lib/alerts'
+import { isOverdue } from '../lib/alerts'
 const orderLines = (o: WorkOrder, scope: ScopeItem[]) => scope.filter(i => i.orderId === o.id)
 const value = (ls: ScopeItem[]) => ls.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
 

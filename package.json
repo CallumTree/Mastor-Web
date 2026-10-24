@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && tsc -p tsconfig.server.json && vite build",
     "preview": "vite preview",
-    "test": "tsx tests/valuation.test.ts && tsx tests/boq.test.ts && tsx tests/sheet.test.ts && tsx tests/pdftable.test.ts && tsx tests/money.test.ts && tsx tests/portfolio.test.ts && tsx tests/chase.test.ts && tsx tests/certificate.test.ts && tsx tests/invoice.test.ts && tsx tests/vo.test.ts && tsx tests/voregister.test.ts && tsx tests/host.test.ts && tsx tests/rates.test.ts && tsx tests/aiguard.test.ts && tsx tests/ratecheck.test.ts && tsx tests/margin.test.ts && tsx tests/accounts.test.ts && tsx tests/pack.test.ts && tsx tests/packfacts.test.ts && tsx tests/issue.test.ts && tsx tests/siteread.test.ts && tsx tests/checkai.test.ts && vitest run"
+    "test": "tsx tests/valuation.test.ts && tsx tests/boq.test.ts && tsx tests/sheet.test.ts && tsx tests/pdftable.test.ts && tsx tests/money.test.ts && tsx tests/portfolio.test.ts && tsx tests/chase.test.ts && tsx tests/certificate.test.ts && tsx tests/invoice.test.ts && tsx tests/vo.test.ts && tsx tests/voregister.test.ts && tsx tests/host.test.ts && tsx tests/rates.test.ts && tsx tests/aiguard.test.ts && tsx tests/ratecheck.test.ts && tsx tests/margin.test.ts && tsx tests/accounts.test.ts && tsx tests/pack.test.ts && tsx tests/packfacts.test.ts && tsx tests/issue.test.ts && tsx tests/siteread.test.ts && tsx tests/checkai.test.ts && tsx tests/mcp.test.ts && vitest run",
+    "build:mcp": "node scripts/build-mcp.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
     "@fontsource/cinzel": "^5.3.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@supabase/supabase-js": "^2.117.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
@@ -19,11 +21,13 @@
     "pdfjs-dist": "^6.3.289",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
+    "@types/node": "^20.19.43",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

@@ -18,6 +18,7 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 | ✓ | Issuing a valuation | One sheet: what it certifies by property or trade, uplifts and running total, what the client's QS would query (no PO, uninstructed VOs, over-claiming), a draft certificate — then Create invoice as the next step |
 | ✓ | Xero / QuickBooks invoice export | No typing invoices twice |
 | ✓ | Team invites, AI reading locked to members | Multi-user, and no one else can spend the AI credit |
+| ✓ | Claude connector, phase 1 (reads) | Mastor as a Claude connector: ask Claude about any job — figures, what needs action, scope, VOs, valuations, the site diary — and it looks at site photos and hears voice notes and videos. Signed in as yourself through Supabase Auth, same company and role as the app (operatives get no money). Use it alongside Claude's Outlook / Gmail connectors |
 
 ## Cut or slimmed
 
@@ -28,6 +29,8 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 
 ## Next
 
+- Claude connector, phase 2 (does things): Claude can tick lines into the open valuation, log, measure and price VOs, add diary notes, and prepare valuations and invoice drafts — every change marked “by Claude” in the app and approved in the chat. **Never issues**: issuing a valuation or an invoice always stays in the app with a person (owner's rule, Oct 2026).
+- Claude connector, phase 3: a scheduled morning briefing (overdue, ready to claim, what came in overnight).
 - Send to accounts: for firms whose accounts team invoices in Sage — the issued valuation (certificate, breakdown, Sage CSV) emailed to accounts; they enter the Sage invoice number back.
 - Read a WhatsApp job-group export (messages + photos) the same way as site captures.
 
