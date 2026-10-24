@@ -1,7 +1,7 @@
 /**
  * Mastor icon set — "construction drawing" family.
  * Rules: 24-unit grid, 1.6 stroke, square caps, mitred joins, no rounded corners,
- * one solid copper accent per icon. Line colour follows currentColor.
+ * one solid accent dot per icon (neon on black, volt on white). Line colour follows currentColor.
  */
 // the small accent dot each icon carries: neon on the black slabs, volt blue on white
 const COPPER = 'var(--icon-dot, #0040FF)'
@@ -23,6 +23,7 @@ export const IconBack = (p: P) => <S {...p}><path d="M15 5l-7 7 7 7" /></S>
 export const IconPlus = (p: P) => <S {...p}><path d="M12 5v14M5 12h14" /></S>
 export const IconClose = (p: P) => <S {...p}><path d="M6 6l12 12M18 6 6 18" /></S>
 export const IconChevron = (p: P) => <S {...p}><path d="M9 5l7 7-7 7" /></S>
+export const IconPlay = (p: P) => <S {...p}><path d="M8 5v14l11-7z" fill="currentColor" stroke="none" /></S>
 export const IconCheck = (p: P) => <S {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></S>
 export const IconArrow = (p: P) => <S {...p}><path d="M6 18 18 6M9 6h9v9" /></S>
 export const IconCircle = (p: P) => <S {...p}><circle cx="12" cy="12" r="8" /></S>

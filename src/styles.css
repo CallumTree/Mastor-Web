@@ -22,7 +22,7 @@
   --red-on-dark: #FF9B9B;               /* warning red as text on black: 9:1 (--red is only 3:1 there) */
   --shell-shadow: rgba(10, 10, 11, .6); /* the one text shadow: a white glyph laid over a photo or video frame */
   /* neon: cyan on black, volt blue on white */
-  --neon: #00E5FF;                      /* 13:1 on --shell; never text on white */
+  --neon: #00E5FF; --neon-press: #66F0FF;   /* 13:1 on --shell; never text on white */
   --volt: #0040FF; --volt-press: #0033CC;  /* 6.6:1 on white */
   /* warning colours (unchanged): plates first, text second */
   --yellow: #FFCD00; --red: #C1121F; --green: #0B7A3E;
@@ -51,7 +51,7 @@ html { scroll-padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 
 body { font-family: var(--sans); background: var(--ground); color: var(--ink); font-size: 16px; line-height: 1.45; font-weight: 400; -webkit-font-smoothing: antialiased; }
 button { font: inherit; cursor: pointer; color: inherit; }
 input, textarea, select { font: inherit; }
-::selection { background: var(--neon); color: var(--ink); }
+::selection { background: var(--volt); color: #fff; }
 h1, h2, h3 { margin: 0; }
 
 .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
@@ -79,7 +79,7 @@ label.btn { cursor: pointer; }
 .empty { text-align: center; padding: 32px 16px; color: var(--ink-muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
-/* ---------- labels and headings: condensed sign capitals ---------- */
+/* ---------- labels and headings: expanded capitals ---------- */
 .label { font-family: var(--cond); font-stretch: 125%; font-size: 13px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-muted); line-height: 1.2; }
 .label.sec { margin-top: 22px; }      /* a label that opens a new section of a sheet */
 .bracket::before, .bracket::after { content: none; }
@@ -220,7 +220,7 @@ label.btn { cursor: pointer; }
 .sum-cell { padding: 12px 14px 13px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-width: 0; }
 .sum-cell .label { font-size: 13px; }
 .sum-3 .sum-cell .label { font-stretch: 100%; letter-spacing: .05em; }
-.sum-3 .sum-cell { padding-left: 12px; padding-right: 10px; }   /* three across on a phone: room for a ten-character amount at the 15px floor */   /* three across on a phone: the labels at normal width so they fit on one line */
+.sum-3 .sum-cell { padding-left: 12px; padding-right: 10px; }   /* three across on a phone: room for a ten-character amount at the 15px floor */
 .sum-cell .n { font-family: var(--cond); font-stretch: 112%; font-weight: 750; font-size: clamp(19px, 5.6vw, 24px); line-height: 1.05; margin-top: 4px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .sum-cell .n { font-size: min(clamp(19px, 5.6vw, 24px), max(15px, calc(160cqi / var(--len, 6)))); overflow-wrap: anywhere; }
 .site-review { margin-top: 26px; }
@@ -312,14 +312,14 @@ span.tick-col { cursor: auto; }
 .has-hit { position: relative; cursor: pointer; }
 .row-hit { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; cursor: pointer; }
 .row-hit:hover { background: var(--row-open); }
-.row-hit:active { background: #E3E7EA; }
+.row-hit:active { background: var(--line); }
 .row-hit:focus-visible { outline-offset: -3px; }
 .has-hit > :not(.row-hit) { position: relative; z-index: 1; pointer-events: none; }
 .has-hit button:not(.row-hit), .has-hit .tick-col, .has-hit a, .has-hit input, .has-hit label { pointer-events: auto; }
 span.tick-col { pointer-events: none !important; }
 label.row { cursor: pointer; }
 
-/* ---------- bottom nav: the black bar, yellow capture key ---------- */
+/* ---------- the dock (phone) and rail (desktop): black, with the neon capture key ---------- */
 .nav { position: fixed; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 40; display: flex; height: var(--dock-h); padding: 0 4px; max-width: 560px; margin: 0 auto;
   background: var(--shell); border: 1px solid var(--shell-line); border-radius: var(--r-xl); box-shadow: 0 16px 36px -14px rgba(10, 10, 11, .5); --icon-dot: var(--neon); }
 .nav button { flex: 1; min-width: 0; background: none; border: none; color: var(--shell-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -430,11 +430,11 @@ label.row { cursor: pointer; }
 .diary-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .d-thumb { position: relative; aspect-ratio: 1; padding: 0; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--ground); }
 .d-thumb .badge { font-stretch: 100%; letter-spacing: .03em; }   /* a status on a tile stays one line */
-.d-thumb-play { position: absolute; inset: 0; display: grid; place-items: center; color: var(--shell-text); font-size: 26px; text-shadow: 0 1px 6px var(--shell-shadow); }
+.d-thumb-play { position: absolute; inset: 0; display: grid; place-items: center; color: var(--shell-text); filter: drop-shadow(0 1px 4px var(--shell-shadow)); }   /* the one shadow: a white mark over a video frame */
 
 /* ---------- photo mark-up: a black toolbar over the photo ---------- */
 .markup .btn-primary { background: var(--neon); color: var(--ink); }   /* on the black layer the main action is neon */
-.markup .btn-primary:hover:not(:disabled) { background: #66F0FF; }
+.markup .btn-primary:hover:not(:disabled) { background: var(--neon-press); }
 .mk-title { text-align: center; font-family: var(--cond); font-stretch: 125%; font-size: 15px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .mk-swatch { width: 44px; height: 44px; flex: none; padding: 0; border-radius: var(--r); border: 2px solid var(--shell-line); }
 /* the chosen colour is ringed outside the swatch (a dark gap, then white), so it shows on the yellow and white swatches too */
@@ -624,7 +624,7 @@ label.row { cursor: pointer; }
 .trade-row .grow { min-width: 140px; }
 .trade-row small { display: block; font-size: 13px; color: var(--ink-muted); }
 .trade-row .amt { font-size: 16px; font-weight: 700; white-space: nowrap; }
-.trade-m { text-align: right; color: var(--green); }
+.trade-m { text-align: right; color: var(--ink); }   /* a margin is a figure, not a "done" */
 .trade-m small { font-family: var(--sans); font-weight: 500; }
 .trade-m.neg { color: var(--red); }
 .trade-row .btn { width: auto; min-height: 44px; padding: 0 14px; }

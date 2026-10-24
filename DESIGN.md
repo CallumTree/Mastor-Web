@@ -1,116 +1,142 @@
 ---
 name: Mastor
-description: Job money for small UK builders, told in the site-sign language everyone on site already reads.
+description: Job money for small UK builders. Black and white carry the structure, neon carries the one live thing, and red, yellow and green mean only warning, to-do and done.
 colors:
-  ink: "#121316"
-  ink-2: "#33373D"
-  ink-muted: "#565B63"
-  ground: "#E9ECEE"
+  ink: "#0A0A0B"
+  ink-2: "#3F3F46"
+  ink-muted: "#5E5E66"
+  ground: "#FFFFFF"
   panel: "#FFFFFF"
-  line: "#C9CED3"
-  field-line: "#7C828A"
-  row-open: "#F3F5F6"
-  flag-row: "rgba(255, 205, 0, 0.16)"
-  shell: "#121316"
-  shell-2: "#1D2024"
-  shell-line: "#33373D"
-  shell-muted: "#B4B9C0"
-  shell-shadow: "rgba(18, 19, 22, 0.6)"
-  sign-yellow: "#FFCD00"
-  sign-red: "#C1121F"
+  line: "#E4E4E7"
+  field-line: "#8B8B93"
+  row-open: "#F4F4F5"
+  flag-row: "rgba(255, 205, 0, 0.18)"
+  disabled: "#E4E4E7"
+  shell: "#0A0A0B"
+  shell-2: "#18181B"
+  shell-line: "#2E2E33"
+  shell-text: "#FFFFFF"
+  shell-muted: "#A1A1AA"
+  shell-shadow: "rgba(10, 10, 11, 0.6)"
+  neon: "#00E5FF"
+  neon-press: "#66F0FF"
+  volt: "#0040FF"
+  volt-press: "#0033CC"
+  warn-yellow: "#FFCD00"
+  warn-red: "#C1121F"
   red-on-dark: "#FF9B9B"
-  sign-green: "#0B7A3E"
-  sign-blue: "#0A55B5"
-  sign-blue-press: "#08458F"
-  disabled: "#D9DDE1"
+  done-green: "#0B7A3E"
   arch-copper: "#C97B3F"
 typography:
   display:
-    fontFamily: "Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontFamily: "'Archivo Variable', Archivo, system-ui, -apple-system, 'Segoe UI', sans-serif"
     fontSize: "clamp(22px, 6.4vw, 30px)"
-    fontWeight: 700
+    fontWeight: 800
     lineHeight: 1.08
-    letterSpacing: "-0.005em"
+    letterSpacing: "-0.02em"
+    fontVariation: "'wdth' 125"
   headline:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "28px"
-    fontWeight: 700
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 800
     lineHeight: 1.05
-    letterSpacing: "0.01em"
-  figure-xl:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "clamp(34px, 11vw, 48px)"
-    fontWeight: 700
-    lineHeight: 1.05
-    fontFeature: "tnum"
-  figure:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "clamp(22px, 7vw, 32px)"
-    fontWeight: 700
-    lineHeight: 1
     letterSpacing: "-0.01em"
-    fontFeature: "tnum"
-  figure-sm:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "clamp(19px, 5.6vw, 24px)"
-    fontWeight: 700
+    fontVariation: "'wdth' 125"
+  figure-xl:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "clamp(34px, 11vw, 48px)"
+    fontWeight: 750
     lineHeight: 1.05
     fontFeature: "tnum"
-  row-title:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "20px"
-    fontWeight: 700
-    lineHeight: 1.1
-    letterSpacing: "0.02em"
+    fontVariation: "'wdth' 112"
+  figure:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "min(clamp(22px, 7vw, 32px), max(15px, calc(160cqi / var(--len, 6))))"
+    fontWeight: 750
+    lineHeight: 1
+    letterSpacing: "-0.02em"
+    fontFeature: "tnum"
+    fontVariation: "'wdth' 112"
+  figure-board:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 750
+    lineHeight: 1.05
+    fontFeature: "tnum"
+    fontVariation: "'wdth' 112"
+  figure-sm:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "min(clamp(19px, 5.6vw, 24px), max(15px, calc(160cqi / var(--len, 6))))"
+    fontWeight: 750
+    lineHeight: 1.05
+    fontFeature: "tnum"
+    fontVariation: "'wdth' 112"
   amount:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "18px"
     fontWeight: 700
     lineHeight: 1.1
     fontFeature: "tnum"
+    fontVariation: "'wdth' 112"
+  row-title:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 750
+    lineHeight: 1.1
+    letterSpacing: "0.02em"
+    fontVariation: "'wdth' 112"
   title:
-    fontFamily: "Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 700
     lineHeight: 1.25
   body:
-    fontFamily: "Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontFamily: "'Archivo Variable', Archivo, system-ui, -apple-system, 'Segoe UI', sans-serif"
     fontSize: "16px"
     fontWeight: 400
-    lineHeight: 1.4
-  ui:
-    fontFamily: "Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    lineHeight: 1.45
+  row-text:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "15px"
     fontWeight: 600
     lineHeight: 1.3
-  section:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "15px"
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: "0.06em"
-  label:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "13px"
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: "0.06em"
-  plate:
-    fontFamily: "'Barlow Condensed', Barlow, system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: "0.03em"
   note:
-    fontFamily: "Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.4
   small:
-    fontFamily: "Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "13px"
     fontWeight: 400
     lineHeight: 1.35
+  section-head:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 750
+    letterSpacing: "0.07em"
+    fontVariation: "'wdth' 125"
+  label:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 650
+    lineHeight: 1.2
+    letterSpacing: "0.07em"
+    fontVariation: "'wdth' 125"
+  plate:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "0.03em"
+    fontVariation: "'wdth' 112"
+  roman-ref:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "19px"
+    fontWeight: 750
+    lineHeight: 1
+    letterSpacing: "0.02em"
+    fontVariation: "'wdth' 125"
   code:
     fontFamily: "'JetBrains Mono', ui-monospace, monospace"
     fontSize: "13px"
@@ -122,80 +148,119 @@ typography:
     fontWeight: 600
     letterSpacing: "0.28em"
 rounded:
-  sm: "3px"
-  md: "4px"
-  lg: "6px"
-spacing:
-  xs: "4px"
-  sm: "8px"
+  sm: "6px"
+  base: "10px"
   md: "12px"
   lg: "16px"
-  desktop-gutter: "48px"
+  xl: "24px"
+  pill: "999px"
+spacing:
+  hair: "4px"
+  tight: "6px"
+  inline: "8px"
+  stack: "12px"
+  cell: "14px"
+  panel: "16px"
+  section: "22px"
+  empty: "32px"
+  gutter-desktop: "48px"
+  dock: "64px"
 components:
   button-primary:
-    backgroundColor: "{colors.sign-blue}"
-    textColor: "{colors.panel}"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.shell-text}"
     typography: "{typography.title}"
     rounded: "{rounded.md}"
-    padding: "0 18px"
+    padding: "0 20px"
     height: "52px"
   button-primary-hover:
-    backgroundColor: "{colors.sign-blue-press}"
+    backgroundColor: "#27272A"
   button-secondary:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
-    typography: "{typography.title}"
     rounded: "{rounded.md}"
-    padding: "0 18px"
+    padding: "0 20px"
     height: "52px"
   button-secondary-hover:
     backgroundColor: "{colors.row-open}"
-  button-ghost:
-    textColor: "{colors.ink-2}"
-    height: "44px"
   button-danger:
-    backgroundColor: "{colors.sign-red}"
-    textColor: "{colors.panel}"
+    backgroundColor: "{colors.warn-red}"
+    textColor: "{colors.shell-text}"
     rounded: "{rounded.md}"
     height: "52px"
   button-disabled:
     backgroundColor: "{colors.disabled}"
     textColor: "{colors.ink-2}"
-  plate-stop:
-    backgroundColor: "{colors.sign-red}"
-    textColor: "{colors.panel}"
+  button-ghost:
+    textColor: "{colors.ink-2}"
+    height: "44px"
+  button-markup-primary:
+    backgroundColor: "{colors.neon}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    height: "52px"
+  icon-button:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    size: "44px"
+  icon-button-on-dark:
+    backgroundColor: "{colors.shell-2}"
+    textColor: "{colors.shell-text}"
+    rounded: "{rounded.md}"
+    size: "44px"
+  plate-do:
+    backgroundColor: "{colors.volt}"
+    textColor: "{colors.shell-text}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
-    padding: "4px 9px 3px 6px"
+    padding: "5px 10px"
+  plate-stop:
+    backgroundColor: "{colors.warn-red}"
+    textColor: "{colors.shell-text}"
+    typography: "{typography.plate}"
+    rounded: "{rounded.sm}"
+    padding: "5px 10px 5px 7px"
   plate-warn:
-    backgroundColor: "{colors.sign-yellow}"
+    backgroundColor: "{colors.warn-yellow}"
     textColor: "{colors.ink}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
-    padding: "4px 9px 3px 6px"
+    padding: "5px 10px 5px 7px"
   plate-ok:
-    backgroundColor: "{colors.sign-green}"
-    textColor: "{colors.panel}"
+    backgroundColor: "{colors.done-green}"
+    textColor: "{colors.shell-text}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
-    padding: "4px 9px 3px 6px"
-  plate-do:
-    backgroundColor: "{colors.sign-blue}"
-    textColor: "{colors.panel}"
-    typography: "{typography.plate}"
-    rounded: "{rounded.sm}"
-    padding: "4px 9px 3px 9px"
+    padding: "5px 10px 5px 7px"
   plate-wait:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
-    padding: "4px 9px 3px 9px"
+    padding: "5px 10px 5px 9px"
+  badge:
+    typography: "{typography.plate}"
+    rounded: "{rounded.sm}"
+    padding: "3px 8px"
   action-plate:
-    typography: "{typography.title}"
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.md}"
-    padding: "14px"
+    padding: "14px 16px"
     height: "64px"
+  action-plate-do:
+    backgroundColor: "{colors.volt}"
+    textColor: "{colors.shell-text}"
+  action-plate-stop:
+    backgroundColor: "{colors.warn-red}"
+    textColor: "{colors.shell-text}"
+  action-plate-warn:
+    backgroundColor: "{colors.warn-yellow}"
+    textColor: "{colors.ink}"
+  action-plate-ok:
+    backgroundColor: "{colors.done-green}"
+    textColor: "{colors.shell-text}"
   panel:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
@@ -206,244 +271,276 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.body}"
     rounded: "{rounded.md}"
-    padding: "12px"
-    height: "48px"
+    padding: "12px 14px"
+    height: "50px"
   chip:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "0 14px"
+    rounded: "{rounded.pill}"
+    padding: "0 16px"
     height: "44px"
   chip-on:
     backgroundColor: "{colors.ink}"
-    textColor: "{colors.panel}"
+    textColor: "{colors.shell-text}"
   job-bar:
     backgroundColor: "{colors.shell}"
-    textColor: "{colors.panel}"
+    textColor: "{colors.shell-text}"
     typography: "{typography.display}"
-    padding: "14px 16px 18px"
-  nav-bar:
+    rounded: "{rounded.xl}"
+    padding: "14px 16px 16px"
+  dock:
     backgroundColor: "{colors.shell}"
     textColor: "{colors.shell-muted}"
-    typography: "{typography.label}"
-    height: "68px"
-  nav-capture:
-    backgroundColor: "{colors.sign-yellow}"
+    rounded: "{rounded.xl}"
+    height: "64px"
+  capture-key:
+    backgroundColor: "{colors.neon}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    size: "56px"
-    height: "52px"
-  summary-cell-hot:
+    rounded: "{rounded.lg}"
+    width: "52px"
+    height: "48px"
+  title-block:
     backgroundColor: "{colors.shell}"
-    textColor: "{colors.panel}"
-    padding: "11px 12px 12px"
+    textColor: "{colors.shell-text}"
+    typography: "{typography.figure-board}"
+    rounded: "{rounded.xl}"
+    padding: "14px 16px"
+  figure-cell-hot:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.neon}"
+    typography: "{typography.figure-sm}"
+    padding: "12px 14px 13px"
+  property-tile:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.shell-text}"
+    rounded: "{rounded.md}"
+    size: "40px"
+  property-tile-open:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.neon}"
+  sheet:
+    backgroundColor: "{colors.panel}"
+    rounded: "{rounded.xl}"
+    padding: "12px 18px 28px"
 ---
 
 # Design System: Mastor
 
 ## Overview
 
-**Creative North Star: "Every Status Is a Site Sign"**
+**Creative North Star: "The Live Wire on the Drawing Board"**
 
-Mastor speaks the UK safety-sign language that everyone on a building site already reads without training. Yellow means it needs doing, red means it is overdue or missing, green means it is done, and blue means the one thing to do next. A site manager squinting at a phone in glare, wearing gloves, should know what is wrong, what is owed and what to do next before reading a sentence. The world is flat and hard-edged: black shell bars, a cool concrete ground, white work panels, and solid colour plates set in condensed highway-sign capitals.
+Mastor is a white drawing board with black slabs bolted to it. The ground is pure white; structure is carried by near-black ink and by solid black slabs for the things that frame a job: the job header, the floating dock, the dashboard title block and the one figure on a screen that matters most. On top of that structure exactly one thing is lit: where you are, what's next, how far the job has got. On black it is lit in neon cyan; on white its twin, volt blue, takes over. Red, yellow and green are not decoration; they are warnings, and appear only where something is overdue, needs doing or is done.
 
-Density is working density, not airy marketing density. Figures are big and condensed, rows are ruled with hairlines, and every tap target is at least 44px (most are 48 to 64px). Nothing is decorative: no texture, no gradients, no glow, no drop shadows. Depth comes from the contrast between black bars and the white panels on concrete.
+The type is one variable family, Archivo, used at three widths: expanded capitals (125%) for headings and labels, a narrower expanded cut (112%) for figures so long amounts fit a phone cell, and normal width for anything that is read as sentences. JetBrains Mono sets codes and references; Cinzel lives only in the MΛSTΘR wordmark. The density is a site phone's: large targets, 13px floor, figures that shrink to their box rather than overflow it.
 
-It has to work where there is no signal. Mastor installs as a PWA, and its service worker precaches the app shell, the fonts and PDF-making (certificates, dayworks sheets, evidence packs), so a phone opens it and issues paperwork offline. The document readers (PDF, Excel, Word) are only needed to import a BoQ, rate book or pack, so they stay out of an operative's first install and are cached the first time they are used. A new version waits for the user to reload, never mid-form.
-
-Three things carry over from Mastor's earlier classical world at the user's request and live only where named: the MΛSTΘR wordmark in Cinzel, the copper Roman arch on the opening titles, and Roman numerals for valuation and VO references (VAL III, VO XII). Paper, grid backgrounds, beige, serif capitals elsewhere, and the photographic house header are retired.
+This world refuses the category default of a grey dashboard with a brand-blue button, and it refuses the dark neon "cyber" console: neon here is a signal on black slabs inside a light page, never an atmosphere, never a glow.
 
 **Key Characteristics:**
-- Black shell bars (job bar, cover head, bottom nav or desktop rail) over concrete ground with white panels.
-- Status told by solid ISO-style sign plates, by shape as well as colour, with a spoken word for screen readers.
-- One blue next-step plate per record; blue buttons for the primary action only.
-- Barlow for reading, Barlow Condensed capitals for labels, figures and plates; JetBrains Mono only for codes and refs; Cinzel only in the wordmark.
-- Square-ish corners (3 to 6px), 2px ink outlines on secondary controls, no shadows.
-- Light only, by decision: no dark theme, and the page declares `color-scheme: only light` so a phone's automatic dark mode doesn't invert the signs.
+- Pure white ground, hairline panels, no shadow at rest.
+- Black slabs for structure: job header, dock, title block, hot figures, property tiles.
+- One lit thing per screen: neon on black, volt on white.
+- Warning colours carry meaning only, always paired with a sign shape and a word.
+- Archivo at 125% (headings, labels), 112% (figures), 100% (reading).
+- Signature: the neon progress rail along the foot of the job header.
+- Light only, by decision.
 
 ## Colors
 
-Four safety colours on a neutral black, concrete and white world; colour is reserved for meaning.
+A black-and-white board with one live colour in two forms (neon on black, volt on white) and three warning colours that mean only what they say.
 
 ### Primary
-- **Next-Step Blue** (sign-blue): the colour of acting. Primary buttons, the next-step plate on a record, text links and the keyboard focus ring. It presses to **Pressed Blue** (sign-blue-press). Never a status, never a data fill.
+- **Live Neon** (neon): the one live thing on a black slab. The progress rail and its tick, the active-tab bar on the dock, the capture key, the headline figure on the title block, a hot figure cell, the open property numeral, the mark-up layer's main action, focus rings on black. 13:1 on Shell Black; it is never text or a mark on white.
+- **Volt Blue** (volt): neon's twin on white. Links, focus rings, checkbox and radio accents, the loading bar, the small accent dot in icons on white, and the next-step plate and action plate ("do this next"). Volt Press (volt-press) is its pressed state. 6.6:1 on white.
 
-### Secondary
-- **Sign Yellow** (sign-yellow): needs doing. Warn plates and action plates, the "+ N not priced" figure note, the yellow capture key, the active-tab bar in the nav, the open-property number tile, the sheet's unsaved-changes ask bar, "in a valuation" chart fills, text selection. Always carries ink text.
-- **Stop Red** (sign-red): overdue, missing, blocking. Stop plates and action plates, danger buttons, the dashboard alert figure, the discard bar.
-- **Red on Black** (red-on-dark): Stop Red lifted for text on the black shell, where Stop Red itself is only 3:1. It holds 9.2:1 on Shell Black and 8.1:1 on Shell Raised. Used for the sync-problem line in the bars; never a plate or a fill.
-- **Done Green** (sign-green): done and certified. OK plates, the Active badge, ticked boxes, progress bars, certified chart fills, the "all clear" plate.
+### Secondary (warning plates)
+- **Warning Red** (warn-red): overdue, missing, urgent, destructive. Plates take white text; as text on white it marks a negative figure. On black it becomes **Red on Dark** (red-on-dark) for text, since the plate red is only 3:1 there.
+- **To-do Yellow** (warn-yellow): needs doing. A plate colour only, always with ink text; the flagged-row wash (flag-row) and the unsaved-changes ask bar are the same yellow.
+- **Done Green** (done-green): done, complete, certified, paid. Plates take white text; progress fills on white that measure claimed or complete work are green.
 
 ### Tertiary
-- **Arch Copper** (arch-copper): the opening-titles arch and keystone only. It appears nowhere in the working app.
+- **Arch Copper** (arch-copper): the arch and keystone in the opening titles, and the app icon. Nowhere else.
 
 ### Neutral
-- **Site Ink** (ink): body text, 2px control outlines, register header rules, the selected chip.
-- **Slate Ink** (ink-2): secondary text, ghost buttons, locked tick boxes.
-- **Muted Ink** (ink-muted): labels, metadata, hints, nil figures.
-- **Concrete** (ground): the page ground and inset progress tracks.
-- **Panel White** (panel): work panels, sheets, secondary buttons, inputs.
-- **Hairline** (line): 1px panel borders, row rules and dividers. Dividers only: at 1.6:1 on white it is too faint to be the edge of a control.
-- **Field Line** (field-line): the 2px idle border of inputs, selects and textareas. It holds 3.9:1 on Panel White and 3.3:1 on Concrete, so a field's edge clears the 3:1 non-text contrast of WCAG 1.4.11 in glare.
-- **Open Row** (row-open): hover and expanded-row tint.
-- **Flag Row** (flag-row): a 16% wash of Sign Yellow behind a row that needs checking (a BoQ line the reader was unsure of, a pack fact not yet verified). It is the yellow sign spread thin across a row, so it still means needs doing.
-- **Shell Black** (shell), **Shell Raised** (shell-2), **Shell Rule** (shell-line), **Shell Muted** (shell-muted): the black bars, the offline/sync banner, rules inside bars, and secondary text on black.
-- **Disabled Grey** (disabled): disabled buttons, with slate text.
+- **Ink** (ink): text, outlines of secondary controls, the primary button fill, property tiles, 1.5px register header rules.
+- **Slate Ink** (ink-2): codes and refs beside body text, ghost buttons, disabled-button text.
+- **Muted Ink** (ink-muted): labels, hints, secondary lines.
+- **White Ground / Panel** (ground, panel): page and panels; both are pure white.
+- **Hairline** (line): dividers and panel edges only. Also the disabled fill (disabled).
+- **Field Line** (field-line): input and choice-card edges, 3.4:1 on white.
+- **Open Row** (row-open): hover, expanded rows, secondary-button hover.
+- **Shell Black** (shell), **Shell Raised** (shell-2), **Shell Rule** (shell-line), **Shell Muted** (shell-muted): the black slabs, their raised controls, their rules and their secondary text. White (shell-text) is their primary text.
 
 ### Named Rules
-**The Sign Meaning Rule.** Yellow is needs doing, red is overdue or missing, green is done, blue is the next step. A colour never appears for any other reason; if it isn't a status or an action, it is ink, white or concrete.
+**The One Live Thing Rule.** Neon (on black) or volt (on white) marks only where you are, what's next, or how far the job has got. If it isn't one of those, it is ink or white.
+
+**The Neon Lives on Black Rule.** Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (the open property tile is an ink tile with a neon numeral).
+
+**The Warning Meaning Rule.** Red is overdue or missing, yellow is needs doing, green is done. Green means done only: an "Active" job status is an ink outline badge, not green.
 
 **The Yellow Is a Plate Rule.** Yellow is a surface, never a text colour. "Needs doing" as text is ink beside a yellow sign.
 
-**The One Blue Rule.** Each record carries at most one blue next-step plate, and each view region one blue primary button. Everything else is an ink outline.
-
-**The Light Board Rule.** Mastor is light only, and that is a decision, not an omission. Site signs are dark ink on bright boards because that is what reads in glare; a dark theme would wash out on a phone in sunlight. The black shell bars are the only dark surfaces, and there is no dark-mode palette to keep in step.
+**The Light Only Rule.** Mastor is light only, and that is a decision (`color-scheme: only light`). The black slabs are the only dark surfaces; there is no dark palette to keep in step.
 
 ## Typography
 
-**Display Font:** Barlow (with system-ui, Segoe UI)
-**Label Font:** Barlow Condensed (with Barlow)
-**Mono Font:** JetBrains Mono (self-hosted, 400 and 500), codes and references only
-**Wordmark Font:** Cinzel 600, the MΛSTΘR wordmark only
+**Display Font:** Archivo Variable, expanded (with system-ui fallback)
+**Body Font:** Archivo Variable, normal width
+**Label/Mono Font:** JetBrains Mono for codes and references; Cinzel 600 for the wordmark only
 
-**Character:** a highway-sign grotesk family. Barlow reads plainly at sentence length; its condensed cut gives the capitals and big figures the look of painted site boards.
+**Character:** One grotesque stretched to three widths: wide, flat capitals that read like stencilled site lettering for headings and labels, a slightly narrower cut for figures, and a plain normal width for sentences. Width is the hierarchy, as much as size.
 
 ### Hierarchy
-- **Display** (Barlow 700, clamp(22px, 6.4vw, 30px), 1.08): the job name in the black job bar. Drops to clamp(19px, 5.4vw, 24px) when the bar is compact on inner tabs: Figure SM's 19 to 24px range on a slightly shallower slope. Under 300px wide it is a fixed 18px on its own line, so whole words fit.
-- **Headline** (Barlow Condensed 700, 28px, 1.05, uppercase): tab titles (VARIATIONS, VALUATIONS).
-- **Figure XL** (Barlow Condensed 700, clamp(34px, 11vw, 48px), 1.05, tabular): the dashboard head figure, in yellow on black. The board's other cells sit at 26px.
-- **Figure** (Barlow Condensed 700, clamp(22px, 7vw, 32px), 1, tabular): the three job-home figures.
-- **Figure SM** (Barlow Condensed 700, clamp(19px, 5.6vw, 24px), 1.05, tabular): summary-cell figures. Roman refs in the VO and valuation registers sit at its 19px floor.
-- **Row Title** (Barlow Condensed 700, 20px, 1.1, 0.02em): property names and number tiles, the job value in the jobs list. Job names in that list share the size in Barlow 700.
-- **Amount** (Barlow Condensed 700, 18px, 1.1, tabular): the right-hand amount on register, property, rate and dashboard rows, and the dayworks total line. The cover's empty-jobs message uses the same size in Barlow.
-- **Title** (Barlow 700, 16px, 1.25): action-plate headings, VO descriptions, button text.
-- **Body** (Barlow 400, 16px, 1.4): everything else, and every input.
-- **UI** (Barlow 600, 15px, 1.3): chips, rate and check-list descriptions, the job bar's client line, the sheet ask bar and update bar. Running text at this size (a rate's notes, the share message, dayworks lines) drops to 400.
-- **Section** (Barlow Condensed 700, 15px, 0.06em, uppercase, ink): section headings, the first label in a sheet, the opening-titles sub-line.
-- **Label** (Barlow Condensed 700, 13px, 0.06em, uppercase): figure and summary labels, register column heads, nav labels.
-- **Plate** (Barlow Condensed 700, 14px, 0.03em, uppercase): sign plates; badges sit at 13px, 0.05em.
-- **Note** (Barlow 400, 14px, 1.4): a note beside a control, row metadata (`.t-note`).
-- **Small** (Barlow 400, 13px, 1.35): hints, captions and secondary metadata; the floor (`.t-small`, or `.hint` when it is also Muted Ink).
-- **Code** (JetBrains Mono 400/500, 13px, tabular): contract refs, SoR codes, council refs.
-- **Wordmark** (Cinzel 600, clamp(26px, 9vw, 40px), 0.28em): MΛSTΘR, with its drawn Λ and spirit-level Θ. The opening titles set it at a fixed 34px.
+- **Display** (800, clamp 22–30px, 1.08, 125% width): the job name in the black header. 19–24px on the work tabs; 18px under 300px.
+- **Headline** (800, 26px, 1.05, 125% width, uppercase): tab titles.
+- **Figure XL** (750, clamp 34–48px, 112% width, tabular): the title block's headline figure, in neon.
+- **Figure** (750, up to 32px, 112% width, tabular): job-home figures. Shrinks to its cell, down to 15px, then breaks.
+- **Figure Board / Figure Small** (750, 26px / up to 24px, 112% width): title-block cells and summary strips.
+- **Amount** (700, 18px, 112% width, tabular): right-hand amounts in registers, property rows and job rows (20px there).
+- **Row Title** (750, 17px, 112% width, uppercase, 0.02em): property names, set deliberately between the 16px title and 18px amount steps.
+- **Title** (700, 16px, 1.25, normal width): action-plate headings, button text (650).
+- **Body** (400, 16px, 1.45, normal width): everything read as sentences. Notes 14px/1.4; small 13px/1.35.
+- **Row text** (600, 15px, 1.3, normal width): the title line of a list row (a rate, a cost, a check result, a document) and short bold messages in bars and plates — between body and note, so a row's title outranks its meta without shouting.
+- **Section Head** (750, 14px, 0.07em, 125% width, uppercase): section headings inside a screen.
+- **Label** (650–700, 13px, 0.06–0.07em, 125% width, uppercase): figure labels, sheet titles, register heads.
+- **Plate** (700, 13px, 0.03em plates / 0.05em badges, 112% width, uppercase): sign plates and badges.
+- **Roman Ref** (750, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
+- **Code** (JetBrains Mono 400/500, 13–14px, tabular): job refs, SoR codes, the rail's percentage.
 
 ### Named Rules
-**The Three Voices Rule.** Barlow reads, Barlow Condensed signs, Mono codes. Cinzel exists only inside the wordmark and the opening titles.
+**The Three Widths Rule.** 125% for headings and labels, 112% for figures, 100% for reading. A figure at 112% runs about 0.6em a character, so a ten-character amount (£11,879.22) fits a three-across phone cell at the 15px floor; 125% does not.
 
-**The Roman Ref Rule.** VO and valuation references are Roman numerals set in Barlow Condensed 700 (VO XII, VAL III), never in Mono and never in Cinzel.
+**The Fit to the Box Rule.** Figures size themselves to their cell: the cell is a size container, `--len` carries the character count (a % counts as two), and the figure is `160cqi / --len`, capped at its step and floored at 15px. Never let a figure overflow or ellipsise.
 
-**The Condensed Money Rule.** Money amounts are Barlow Condensed with tabular figures, even where the markup says mono.
+**The Narrow Label Rule.** On phones (≤480px), labels in figure grids and the title block drop to 100% width at 0.05em and keep room for two lines (2.4em), so the figures across a row start level.
 
-**The 13px Floor Rule.** No text on screen is smaller than 13px; it is read outdoors, in glare, at arm's length. Small text uses the classes rather than an inline size: `.t-small` (13px), `.hint` (13px in Muted Ink) and `.t-note` (14px). Only a purely decorative glyph hidden from screen readers (a ▸ chevron) may sit below it.
+**The Roman Ref Rule.** VO and valuation references are Roman numerals in expanded Archivo 750, never in Mono and never in Cinzel.
+
+**The 13px Floor Rule.** No text on screen is smaller than 13px; it is read outdoors, in glare. Small text uses the 13px small and hint styles and the 14px note style, not an inline size.
+
+**The Wordmark Rule.** Cinzel exists only in the MΛSTΘR wordmark and the opening titles.
 
 ## Layout
 
-Mobile first, one column. Pages are capped at 720px with 16px side padding and clear the fixed 68px bottom nav. The black job bar bleeds edge to edge above the column. Panels stack 12px apart, inline groups use 8px gaps, and rows pad at 14px. Section headings sit 22px above and 10px below.
+Phone first, one column. Pages cap at 720px with 16px side padding and clear the floating dock (64px plus 20px). The black job header bleeds edge to edge above the column with 24px rounded foot corners. Panels stack 12px apart, inline groups use 8px gaps, rows pad at 12–14px, panels at 16px, and section heads sit 26px above and 10px below.
 
-Summary strips are ruled grids, two columns on a phone, three or four from 560px. Job-home figures are a three-up ruled strip. Registers (VOs, valuations) are 64px ref / description / right-aligned amount grids under a 2px ink header rule.
+Job-home figures are a ruled grid, two across on a phone and four from 640px. Summary strips are two or three across; from 560px they go three or four. Title-block cells foot-align their figures so labels of different heights still share a baseline row. Registers are a 64px ref / description / right-aligned amount grid under a 1.5px ink header rule.
 
-At 1024px and up, the bottom nav becomes a 104px black left rail with the yellow capture key at the top. Content moves to a 960px column with 48px gutters, sheets become centred 640px dialogs, the dashboard splits into two columns, and the jobs list becomes a ruled five-column schedule. Under 360px padding tightens. Under 300px (a phone at about 200% zoom) the layout reflows rather than scrolling sideways: grids collapse to one column, paired buttons stack, the cover-head wordmark takes a row of its own above its buttons (at 22px, tracking eased to 0.16em), and the bottom nav wraps into rows of three 60px keys (3 + 3, or 3 + 2 for an operative, who has no Vals tab), icons only, with the labels kept for screen readers. The job bar puts back and setup on one row and the job name full width beneath. Property and workstream rows keep the name beside the tile and drop the amount to its own line; the dashboard board and its job amounts go one per line; the diary date takes its own line above its buttons, the labour stepper drops under its label, and photos sit two across; paired settings fields stack.
+The dock floats 10px in from the sides and foot (max 560px). At 1024px and up it becomes a 104px black left rail with the capture key at the top and the active bar on its left edge; content moves to a 960px column with 48px gutters, the job header meets the rail square, sheets become centred 640px dialogs, the dashboard title block runs six cells across under its headline, the dashboard splits into two columns, and the jobs list becomes a ruled five-column schedule.
 
-The page keeps scroll padding the height of the bottom nav, so a control that takes keyboard focus near the bottom scrolls clear of the bar instead of sitting under it (the desktop rail needs none).
+Under 360px cell padding tightens. Under 300px (a phone at about 200% zoom) the layout reflows instead of scrolling sideways: grids go to one column, paired buttons and fields stack, the wordmark takes its own row (22px, tracking 0.16em), the dock wraps into rows of three 60px keys with labels kept for screen readers (the active key raised to Shell Raised, a second-row bar on its own bottom edge), the job name goes full width at 18px beneath back and setup, property and workstream amounts drop to their own line, the title block goes one figure per row, and diary photos go one across.
+
+The page keeps scroll padding the height of the dock so a focused control near the bottom scrolls clear of it.
 
 ## Elevation & Depth
 
-Flat. There are no drop shadows on the board. Depth is told by tone: black shell bars sit above concrete ground, white panels sit on concrete with a 1px hairline, and an expanded row tints to Open Row. The only overlay is the sheet scrim, ink at 60%. A 1.5px inset ink line draws the outline of the neutral "wait" plate and slate badge, and a white ring outside a dark gap marks the chosen colour in photo mark-up; both are strokes, not elevation. The one true shadow lives on media, not the board: the white play glyph on a video thumbnail carries a soft Shell Black text shadow at 60% (shell-shadow) so it reads on a bright frame.
+Flat at rest. Panels are white on white, separated by a 1px hairline, never by shadow; an expanded row tints to Open Row. Black slabs are not lifted: they read as weight, not height. Only the two things that genuinely float cast a soft, ink-tinted shadow: the dock on a phone and the sheet. The scrim behind a sheet is ink at 55%. Outlined plates (wait, slate badge) are drawn with a 1.5px inset ink line; the open property tile and the chosen mark-up swatch are ringed by a gap and an outer ring. The one text shadow sits on media: the play glyph over a video frame.
+
+### Shadow Vocabulary
+- **Dock float** (`box-shadow: 0 16px 36px -14px rgba(10, 10, 11, .5)`): the floating dock on phones; removed on the desktop rail.
+- **Sheet rise** (`box-shadow: 0 -18px 48px -20px rgba(10, 10, 11, .35)`): bottom sheets; on desktop dialogs `0 32px 80px -24px rgba(10, 10, 11, .45)`.
+- **Media glyph** (`text-shadow: 0 1px 6px rgba(10, 10, 11, .6)`): a white glyph over a photo or video frame.
 
 ### Named Rules
-**The Flat Board Rule.** Nothing floats. If something needs to stand out, it gets a sign colour or a black bar, not a shadow.
+**The Flat Board Rule.** Nothing at rest casts a shadow. To make something stand out, make it black or give it its warning plate; only floating layers (dock, sheet) cast shadow.
+
+**The No Glow Rule.** Neon is a flat fill or line. No glow, no blur, no glass.
 
 ## Shapes
 
-Square-ish corners throughout: 3px on plates, badges, tick boxes and thumbnails; 4px on buttons, inputs, chips, icon buttons and action plates; 6px on panels, strips, sheets and the dashboard board. Secondary controls are drawn with a 2px ink outline; panels with a 1px hairline. Progress bars are flat 6px tracks (4px on black).
+Softly rounded on a fixed scale: 6px for plates, badges and small tiles; 10px for choice cards, ask bars, tick boxes and thumbnails; 12px for buttons, inputs, icon buttons, action plates and the property tile; 16px for panels, figure grids, strips, the update bar and the capture key; 24px for the black slabs (job header foot, dock, title block) and sheet tops. Chips and the sheet close button are pills. The 2px ends on 4px progress bars are hairline rounding, not a scale step.
 
-Status shapes follow safety signs: **stop** is a red circle with a white bar, **warn** a yellow triangle with a black exclamation, **do** a blue circle with a white arrow, **ok** a green square with a white tick. These are inline SVG marks at 14px in plates and 22px in action plates.
+Lines: secondary controls take a 1.5px ink outline, inputs a 1.5px Field Line edge, panels a 1px Hairline. Icons are drawn on a 24-unit grid with a 1.6 stroke, square caps and mitred joins, plus one small accent dot (volt on white, neon on black).
+
+Status shapes follow safety signs: **stop** a red circle with a white bar, **warn** a yellow triangle with an ink exclamation, **do** a volt circle with a white arrow, **ok** a green square with a white tick; 14px in plates, larger in action plates.
 
 ## Components
 
 ### Buttons
-Full-width blocks on a phone, confident and blunt.
-- **Shape:** gently squared (4px), 52px tall, 0 18px padding, 2px border, Barlow 700 16px, optional 20px SVG icon.
-- **Primary:** Next-Step Blue with white text; presses to Pressed Blue. Only the main action in a view.
-- **Secondary:** white with a 2px ink outline; hover tints to Open Row.
-- **Ghost:** no fill, slate underlined text, 44px tall, auto width. On a black bar it takes Shell Muted text; a bare ghost button that is disabled drops to 50%.
-- **Danger:** Stop Red with white text.
-- **Disabled:** Disabled Grey with slate text.
-- **Press / Focus:** press nudges down 1px (off under reduced motion); focus is a 3px blue outline offset 2px, yellow on black bars.
-- **Icon buttons:** 44px squares with a 2px ink outline; on black bars the outline is Shell Rule and turns white on hover.
-- **File pickers:** a button or link label (`label.btn` in primary, secondary or ghost, or `label.linkish.tap` for an inline "add") wrapped around its `input type=file`, with the pointer cursor. The input is visually hidden with `.sr-only`, never `hidden`, so it stays in the tab order; when it has keyboard focus the 3px blue ring draws on the label. A tap anywhere on the label opens the picker (or the camera, where it captures).
+Full-width blocks on a phone, blunt and black.
+- **Shape:** 12px corners, 52px tall, 0 20px padding, 1.5px border, Archivo 650 16px, optional 20px icon.
+- **Primary:** ink fill, white text; hover lifts to a lighter black.
+- **Secondary:** white with a 1.5px ink outline; hover Open Row.
+- **Ghost:** no fill, underlined Slate Ink text, 44px, auto width; Shell Muted on black.
+- **Danger:** Warning Red, white text. **Disabled:** Hairline grey fill, Slate Ink text.
+- **Press / Focus:** press nudges down 1px (off under reduced motion); focus is a 2.5px volt outline offset 2px, neon on black slabs.
+- **Icon buttons:** 44px, 12px corners, 1.5px ink outline; on black, Shell Raised with a Shell Rule edge that turns neon on hover.
+- **On the mark-up layer** the main action is neon with ink text (Mark-up is a black layer).
+- **File pickers** are button labels around a visually hidden file input, so the keyboard reaches them; the focus ring draws on the label.
 
-### Sign Plates
-The signature component. A solid plate of sign colour, condensed capitals, 3px corners, a sign mark on the left.
-- **Stop / Warn / OK:** red, yellow (ink text), green, each led by its 14px shape mark.
-- **Do (next step):** blue with white text and a leading arrow, naming the one thing we do next ("Price it", "Chase the client").
-- **Wait:** white with a 1.5px ink outline, for things waiting on the client ("With client · Awaiting instruction · 4 days").
-- A record that is overdue with the client shows the red plate followed by the blue "Chase the client" plate.
-- **Badges** are the same plate at 13px for record states (INSTRUCTED, IDENTIFIED, REJECTED, Active).
+### Sign Plates and Badges
+- **Style:** solid plate, 6px corners, 13px capitals at 112% width, led by a 14px sign mark.
+- **Stop / Warn / OK:** red, yellow (ink text), green.
+- **Do:** volt with white text and a leading arrow, naming the one next step.
+- **Wait:** white with a 1.5px inset ink line, for things waiting on someone else.
+- **Badges** are the same plate at 3px 8px for record states; "Active" and "Instructed" are the ink outline badge.
 
 ### Action Plates
-Full-width tappable signs on job home under "Action needed · N", red first then yellow, then green for a valuation ready to issue. 64px minimum, 14px padding, 4px apart, 22px sign mark, Barlow 700 16px heading with a 14px hint, ending in a chevron. Hover darkens slightly. When nothing is outstanding, a single green "all clear" plate.
+Full-width tappable signs on job home under "Action needed": 64px minimum, 14px 16px padding, 6px apart, 12px corners, a 16px 700 heading over a 14px hint, ending in a chevron. Red, yellow and green by meaning; volt for the next step. Hover darkens slightly. When nothing is outstanding, one green all-clear plate.
 
 ### Cards / Containers
-- **Corner Style:** 6px.
-- **Background:** Panel White on Concrete.
+- **Corner Style:** 16px.
+- **Background:** white on white.
 - **Shadow Strategy:** none (see Elevation & Depth).
-- **Border:** 1px Hairline; register and schedule heads use a 2px ink rule.
-- **Internal Padding:** 16px; list panels drop padding and rule their rows instead.
+- **Border:** 1px Hairline; register and schedule heads take a 1.5px ink rule.
+- **Internal Padding:** 16px; list panels drop padding and rule their rows.
 
 ### Figures and Summary Strips
-White ruled strips of condensed figures over condensed labels. A cell that carries the headline total turns Shell Black with white figures ("hot"). Honest unknowns stay visible: an em dash, the word "Unpriced", or a yellow "+ N not priced" note under the figure.
+White ruled grids of 112% figures over 125% labels. The cell carrying the figure that matters turns black with a neon figure (hot). Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work.
 
 ### Inputs / Fields
-- **Style:** white, 2px Field Line border (Hairline is for dividers only), 4px corners, 48px tall, 12px padding, 16px text; label above in Barlow 600 14px slate, hint below at 13px in Muted Ink.
-- **Focus:** border turns ink plus the 3px blue focus outline.
-- **Warn:** ink border and a bold ink hint led by the yellow triangle mark.
-- **Disabled:** concrete fill with a dashed border.
-- **Choice cards** (team role, kind of work, cost status): a radio inside a 52px card with the same 2px Field Line edge; the chosen card turns its edge ink on an Open Row fill.
+- **Style:** white, 1.5px Field Line edge, 12px corners, 50px tall, 12px 14px padding, 16px text; label above in 600 14px, hint below at 13px Muted Ink.
+- **Focus:** edge turns ink plus the 2.5px volt ring.
+- **Warn:** ink edge and a bold ink hint led by the yellow triangle.
+- **Disabled:** dashed edge on white.
+- **Choice cards:** 52px, 10px corners, Field Line edge; chosen turns ink on Open Row.
 
 ### Chips
-44px, 2px ink outline, white, Barlow 600 15px; selected fills ink with white text. Used for mode and filter choices.
-
-### Tick Rows
-Tick-to-include lists (BoQ review, pack facts, VO import lines, rate-book drafts, the note pin) make the whole row the target: a `label.check-row` with its checkbox as the first child. 48px minimum, 12px padding and gap, a 22px checkbox in Next-Step Blue, and a Hairline between consecutive rows. A row left out (`.off`) drops to 50% opacity but stays readable; a row that needs checking (`.flagged`) takes the Flag Row wash.
+Pills, 44px tall, 1.5px ink outline, 600 15px; selected fills ink with white text.
 
 ### Navigation
-- **Job bar:** Shell Black, full bleed; back and setup icon buttons either side of the mono ref (Shell Muted), the job name in Display, and client · address beneath in Shell Muted.
-- **Bottom nav:** 68px Shell Black bar with 24px icons over condensed uppercase labels in Shell Muted; the active tab turns white with a 4px yellow bar on top. The centre capture key is a 56 by 52px yellow plate with an ink plus. On desktop it becomes the left rail, with the yellow bar on the left edge. When it wraps to two rows under 300px, the active key is raised to Shell Raised and a second-row key carries its bar on its own bottom edge, so the bar never sits on the seam under the key above.
-- **Cover head:** Shell Black with the white wordmark centred, a condensed tracked sub-line in Shell Muted, and the sync state beneath.
-- **Banner:** Shell Raised strip for offline and sync messages.
+- **Job header:** Shell Black, full bleed, 24px foot corners. Back and setup icon buttons flank the mono ref (Shell Muted), the job name in Display, and the setup line beneath; the neon progress rail runs along its foot.
+- **Dock:** a floating 64px Shell Black bar, 24px corners, 24px icons over 13px 600 labels in Shell Muted. The active tab turns white with an 18px by 3px neon bar above its icon. The capture key is a 52 by 48px neon key with an ink plus, 16px corners. On desktop it becomes the left rail with the active bar on the left edge.
+- **Cover head:** Shell Black with the white wordmark centred, a 125% tracked sub-line in Shell Muted, and the sync state.
+
+### Dashboard Title Block
+A Shell Black block, 24px corners, labels at 125% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule.
+
+### Property Rows
+A 40px ink tile with a white numeral, the name in Row Title, and the amount right. Open, the row tints Open Row and the numeral turns neon inside a double ring; workstream groups indent beneath as 48px toggle rows with green progress bars.
+
+### Neon Progress Rail (signature)
+How far the job has got, along the foot of the job header on every tab. A 4px Shell Rule track with 2px ends: certified work is solid neon, the open valuation is a neon dash (4px on, 3px off) at 60%, and a 2 by 12px neon tick marks the certified point. Its label sits right in 13px mono, Shell Muted on job home and neon with just the figure on the work tabs. It grows in from the left over 0.9s (`cubic-bezier(.16, 1, .3, 1)`); under reduced motion it is simply drawn.
 
 ### Sheets
-Bottom sheets on a phone (6px top corners, rising from the edge in 0.26s), centred dialogs on desktop. A 44px outlined close square. Unsaved changes raise a sticky yellow ask bar; discard is red.
-
-### Dashboard Board
-A Shell Black block with condensed labels in Shell Muted, the headline figure in yellow, and cells ruled in Shell Rule. A red plate marks an alert figure. Bars below are flat: green certified, yellow in valuation, ink outline still to claim.
+Bottom sheets on a phone (24px top corners, rising from the edge in 0.26s; a fade under reduced motion), centred 640px dialogs on desktop. A 44px pill close button with a 1.5px ink outline. Unsaved changes raise a sticky yellow ask bar; discard is red.
 
 ### Photo Mark-up
-A full-screen Shell Black layer over the photo. Cancel and Undo are ghost buttons in Shell Muted; the title is a condensed tracked capital. Five 44px colour swatches in the site colours (red, yellow, blue, white, ink) and four 48px outlined tool toggles (arrow, circle, draw, text) both say which one is chosen (`aria-pressed`): the chosen swatch is ringed in white outside a dark gap, so it shows even on the yellow and white swatches, and the chosen tool's outline turns yellow. Text drawn on the photo gets an ink halo, or a white one when the text itself is ink.
+A full-screen black layer: ghost buttons in Shell Muted, a 125% tracked title, 44px colour swatches ringed white outside a dark gap when chosen, 48px outlined tool toggles whose outline turns neon when chosen, and a neon main action.
 
 ### Opening Titles
-Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR letters rise, and a yellow dimension line grows beneath. Reduced motion skips it.
+Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR letters rise, and a neon dimension line grows beneath. Reduced motion skips it.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use a sign colour only for its meaning: yellow needs doing, red overdue or missing, green done, blue the next step or primary action.
-- **Do** put ink text on yellow and white text on red, green and blue.
-- **Do** pair every status colour with its shape mark (circle-bar, triangle, square-tick, circle-arrow) and a spoken word for screen readers.
-- **Do** give each record one blue next-step plate that names the action in plain words.
-- **Do** show unknowns honestly: "Unpriced", "not measured", an em dash, or a yellow "+ N not priced" note, never £0.
-- **Do** keep tap targets at 44px minimum and primary controls at 48-64px.
-- **Do** keep corners between 3px and 6px and outline secondary controls in 2px ink.
-- **Do** set money and big figures in Barlow Condensed 700 with tabular figures, and VO/VAL refs as Roman numerals in the same face.
+- **Do** keep each screen to one lit thing: neon on black, volt on white.
+- **Do** turn a white-ground element black before lighting it neon (the open property tile).
+- **Do** use red, yellow and green only for overdue, needs doing and done, each with its sign shape and a spoken word.
+- **Do** put ink text on yellow and neon; white text on red, green, volt and black.
+- **Do** set headings and labels at 125% width, figures at 112%, and reading text at normal width.
+- **Do** let figures fit their box (`--len`, container units, 15px floor) rather than truncate.
+- **Do** keep panels flat with a 1px Hairline and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
+- **Do** keep tap targets at 44px minimum and primary controls at 48–64px.
+- **Do** show unknowns honestly: "Unpriced", "not measured", an em dash, never £0.
 
 ### Don't:
-- **Don't** use drop shadows, glows, gradients or texture; the board is flat.
+- **Don't** put neon on a white ground, or use it as text on white.
+- **Don't** use green for anything but done; an active or in-progress state is an ink outline.
 - **Don't** use yellow as a text colour.
-- **Don't** use blue for status, decoration or chart fills.
-- **Don't** use Cinzel outside the MΛSTΘR wordmark and opening titles, or Mono for anything but codes and references.
-- **Don't** use copper anywhere but the opening-titles arch.
-- **Don't** bring back paper, grid backgrounds, beige, serif capitals or the photographic house header.
-- **Don't** set text below 13px, or size small text inline; use `.t-small`, `.hint` or `.t-note`. This is read outdoors in glare.
+- **Don't** add glow, glass, gradients or texture, or shadows on anything at rest.
+- **Don't** build a grey dashboard with a brand-blue button, or a dark neon console.
+- **Don't** use Cinzel outside the wordmark and opening titles, Mono outside codes and references, or copper outside the opening-titles arch.
+- **Don't** set text below 13px, or size small text inline.
 - **Don't** draw an input's edge in Hairline; fields use Field Line.
-- **Don't** add a dark theme; light only is a decision (see the Light Board Rule).
+- **Don't** add a dark theme; light only is a decision.

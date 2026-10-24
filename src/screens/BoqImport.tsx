@@ -141,7 +141,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
             <b>In the pack · {boq.files.length} files</b>
             {boq.files.map((f, i) => (
               <div key={i} className="row" style={{ marginTop: 6, alignItems: 'baseline' }}>
-                <span className={'badge ' + (f.as.role === 'document' ? 'b-slate' : f.as.role === 'ai' ? 'b-amber' : 'b-green')}>{f.as.role === 'spec' ? 'Schedule' : f.as.role === 'order' ? 'Works order' : f.as.role === 'ai' ? 'AI read' : 'Document'}</span>
+                <span className={'badge ' + (f.as.role === 'ai' ? 'b-amber' : 'b-slate')}>{f.as.role === 'spec' ? 'Schedule' : f.as.role === 'order' ? 'Works order' : f.as.role === 'ai' ? 'AI read' : 'Document'}</span>
                 <span className="grow" style={{ overflowWrap: 'anywhere' }}>{f.file.name}<small className="hint" style={{ display: 'block' }}>{f.as.detail}</small></span>
               </div>
             ))}

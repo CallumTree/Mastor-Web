@@ -58,10 +58,10 @@ Not now (parked deliberately): formal CVR (accruals, cost codes, period locks, f
 
 ## Brand Commitments
 
-- Name: **Mastor**. Wordmark **MΛSTΘR**: Cinzel Roman capitals, a hand-drawn Λ and a Θ whose bar reads as a spirit level (`src/components/Wordmark.tsx`). Everything else uses Barlow.
+- Name: **Mastor**. Wordmark **MΛSTΘR**: Cinzel Roman capitals, a hand-drawn Λ and a Θ whose bar reads as a spirit level (`src/components/Wordmark.tsx`). Everything else uses Archivo (variable: expanded for headings and figures, normal width for reading).
 - App icon: a Roman masonry arch, copper on charcoal (`public/icon.svg`).
 - Classical thread: Roman numerals for valuations and VOs; opening titles with the arch and keystone, played once on first open.
-- Visual language: site signage (see DESIGN.md) — every status is a sign.
+- Visual language: white and black with neon (see DESIGN.md) — black and white carry the structure, neon the one live thing on a screen, and red / yellow / green only warning, to-do and done.
 - Voice: plain, direct builder's English (en-GB). Never overstates.
 
 ## Evidence on Hand

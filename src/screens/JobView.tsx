@@ -6,7 +6,7 @@ import { OrdersTab, isOverdue } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
 import { money, ukDate, upliftFactor } from '../lib/format'
-import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic } from '../components/Icons'
+import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
@@ -241,7 +241,7 @@ export function JobView(p: {
       <nav className="nav">
         {nav.map(({ tab: t, label: navLabel, Icon }, i) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
           <Fragment key={t}>{i === 2 && (
-            <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span>+</span></button>
+            <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={26} /></span></button>
           )}
           <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>
         ) })}

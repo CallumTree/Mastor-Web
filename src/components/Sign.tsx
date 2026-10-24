@@ -1,6 +1,6 @@
 /**
  * Site-sign marks. Status is told by shape as well as colour, the way safety signs do it:
- * stop = red circle with a bar · warn = yellow triangle · do = blue circle with an arrow · ok = green square with a tick.
+ * stop = red circle with a bar · warn = yellow triangle · do = volt circle with an arrow · ok = green square with a tick.
  */
 import type { ReactNode } from 'react'
 

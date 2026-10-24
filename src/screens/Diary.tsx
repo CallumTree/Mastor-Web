@@ -7,7 +7,7 @@ import { usePhotoThumb, usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
 import { weatherFor } from '../lib/weather'
 import { voRef } from '../lib/format'
-import { IconBack, IconCamera, IconFlag, IconMarkup, IconMic, IconVideo } from '../components/Icons'
+import { IconBack, IconCamera, IconFlag, IconMarkup, IconMic, IconPlay, IconVideo } from '../components/Icons'
 import { MAX_VOICE_SECONDS, startRecording, type Recorder } from '../lib/voice'
 import { unread } from '../lib/siteRead'
 
@@ -25,7 +25,7 @@ function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
         : url && (e.type === 'video'
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : <img src={url} alt={e.note || 'Site photo'} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
-      {e.type === 'video' && <span aria-hidden="true" className="d-thumb-play">▶</span>}
+      {e.type === 'video' && <span aria-hidden="true" className="d-thumb-play"><IconPlay size={28} /></span>}
       {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4 }}>Marked up</span>}
       {(e.read || e.voId) && <span style={{ position: 'absolute', left: 4, right: 4, top: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         {e.read && <span className={'badge ' + (e.read.suggestions.some(x => x.state === 'open') ? 'b-amber' : 'b-green')}>{e.read.suggestions.some(x => x.state === 'open') ? `${e.read.suggestions.filter(x => x.state === 'open').length} to review` : 'Read'}</span>}

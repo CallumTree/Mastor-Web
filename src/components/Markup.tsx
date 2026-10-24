@@ -7,7 +7,7 @@ import { IconArrow, IconCircle, IconPen, IconText } from './Icons'
  */
 type Tool = 'pen' | 'arrow' | 'circle' | 'text'
 type Shape = { tool: Tool; color: string; pts: [number, number][]; text?: string }
-const RED = '#C1121F', YELLOW = '#FFCD00', BLUE = '#0A55B5', WHITE = '#FFFFFF', INK = '#121316'
+const RED = '#C1121F', YELLOW = '#FFCD00', BLUE = '#0040FF', WHITE = '#FFFFFF', INK = '#0A0A0B'
 const COLOURS = [RED, YELLOW, BLUE, WHITE, INK]
 /** Text halo: an ink outline, or a white one for ink text (the old check named a retired ink colour, so ink text got an ink halo). */
 const haloFor = (c: string) => (c === INK ? WHITE : INK)
