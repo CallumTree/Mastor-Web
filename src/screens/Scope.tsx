@@ -7,7 +7,7 @@ import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { money, qtyText } from '../lib/format'
 import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
-import { IconLock, IconPlus, IconScope } from '../components/Icons'
+import { IconCheck, IconChevron, IconLock, IconPlus, IconScope } from '../components/Icons'
 import { TabMenu } from '../components/TabMenu'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 
@@ -161,8 +161,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
                 <span className="prop-name">{p === '—' ? 'Unassigned' : job.properties?.[p]?.split(',')[0] || `No. ${p}`}</span>
                 <span className="prop-meta" style={{ display: 'block' }}>{[...new Set(all.map(groupName))].join(' · ')}</span>
               </span>
-              <span className="prop-amt"><span className="mono">{money(tot)}</span><small style={{ color: pct === 100 ? 'var(--green)' : undefined }}>{pct === 100 ? '✓ all claimed' : `${pct}% claimed`}</small></span>
-              <span className="prop-chev">▸</span>
+              <span className="prop-amt"><span className="mono">{money(tot)}</span><small style={{ color: pct === 100 ? 'var(--green)' : undefined }}>{pct === 100 ? <><IconCheck size={14} /> all claimed</> : `${pct}% claimed`}</small></span>
+              <span className="prop-chev" aria-hidden="true"><IconChevron size={16} /></span>
             </button>
             <div className="prop-bar"><div style={{ width: `${pct}%` }} /></div>
             {isOpen && (
@@ -189,7 +189,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
                     <div key={key} style={{ borderTop: '1px solid var(--line)' }}>
                       <button onClick={() => toggleGroup(key)} aria-expanded={gOpen} aria-label={`No. ${p} ${g}`}
                         className={'row grp-row' + (gOpen ? ' open' : '')}>
-                        <span aria-hidden="true" className="grp-chev">▸</span>
+                        <span aria-hidden="true" className="grp-chev"><IconChevron size={14} /></span>
                         <span className="grow t-note t-strong">{g} <span className="hint" style={{ fontWeight: 400 }}>· {gall.length}</span></span>
                         <span className="amt t-small grp-amt">{money(gt)}</span>
                         <span className="amt t-small grp-pct" style={{ color: gpct === 100 ? 'var(--green)' : 'var(--ink-2)' }}>{gpct}%</span>

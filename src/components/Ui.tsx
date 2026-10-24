@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { IconClose } from './Icons'
 
 /**
  * Bottom sheet. Once anything has been typed or changed inside it, a stray tap on the backdrop,
@@ -48,7 +49,7 @@ export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose
         onClick={e => e.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty}>
         <div className="sheet-top">
           <div className="sheet-handle" />
-          {!locked && <button className="sheet-x" aria-label="Close" onClick={ask}>×</button>}
+          {!locked && <button className="sheet-x" aria-label="Close" onClick={ask}><IconClose size={20} /></button>}
         </div>
         {asking && (
           <div className="sheet-ask" role="alertdialog" aria-label="Discard changes?">

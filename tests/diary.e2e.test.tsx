@@ -31,7 +31,7 @@ describe('site diary', () => {
 
     // --- day note + labour
     nav('diary')
-    await screen.findByText(/^(Today|Yesterday)$/)   // the diary keeps the day you were on
+    await screen.findByText(/^(Today|Yesterday) · /)   // the diary keeps the day you were on
     const note = screen.getByPlaceholderText(/what happened on site today/i)
     fireEvent.change(note, { target: { value: 'Stripped out kitchen, skip swapped' } }); fireEvent.blur(note)
     click(screen.getByRole('button', { name: /more operatives/i }))
@@ -69,7 +69,7 @@ describe('site diary', () => {
 
     // --- day pager + recent days
     click(screen.getByRole('button', { name: /previous day/i }))
-    await screen.findByText('Yesterday')
+    await screen.findByText(/^Yesterday · /)
     expect(screen.getByText(/recent days/i)).toBeTruthy()
 
     // --- one kind of note: ⊕ capture offers "Note" (on record); today's site log is the Diary tab
@@ -79,7 +79,7 @@ describe('site diary', () => {
     expect(screen.queryByRole('button', { name: /diary note|job note/i })).toBeNull()
     click(screen.getByRole('button', { name: 'Close' }))
     nav('diary')
-    await screen.findByText(/^(Today|Yesterday)$/)   // the diary keeps the day you were on
+    await screen.findByText(/^(Today|Yesterday) · /)   // the diary keeps the day you were on
 
     // --- survives a reload
     cleanup(); render(<App />)

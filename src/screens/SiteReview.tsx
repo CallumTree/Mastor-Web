@@ -29,7 +29,7 @@ export function SiteReview({ diary, scope, valLabel, onDecide }: {
   if (!list.length) return null
   const act = async (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => { setBusy(s.id); try { await onDecide(e, s, state) } finally { setBusy(null) } }
   return (
-    <div className="stack" style={{ gap: 8 }}>
+    <div className="stack site-review" style={{ gap: 8 }}>
       <Plate kind="do">From site · {list.length} to review</Plate>
       <div className="panel flush clip">
         {list.map(({ entry: e, s }, n) => {

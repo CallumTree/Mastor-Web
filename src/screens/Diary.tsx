@@ -135,8 +135,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
       <div className="row diary-day">
         <button className="icon-btn" aria-label="Previous day" onClick={() => setDate(addDays(date, -1))}><IconBack size={18} /></button>
         <div className="grow" style={{ textAlign: 'center' }}>
-          <div className="label">{date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : 'Site diary'}</div>
-          <div style={{ fontWeight: 700, fontSize: 17 }}>{prettyDay(date)}</div>
+          <h2 className="diary-date">{date === today ? 'Today · ' : date === addDays(today, -1) ? 'Yesterday · ' : ''}{prettyDay(date)}</h2>
         </div>
         <button className="icon-btn" aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
         <TabMenu title="Diary" actions={[
@@ -152,7 +151,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         <div className="row diary-labour" style={{ marginTop: 12 }}>
           <span className="grow hint t-strong">Labour on site</span>
           <button aria-label="Fewer operatives" onClick={() => { const n = Math.max(0, (labour ?? 0) - 1); setLabour(n); saveDay({ labour: n }) }} className="step-btn">−</button>
-          <span className="mono diary-count">{labour ?? '—'}</span>
+          <span className={'diary-count' + (labour == null ? ' unset' : '')}>{labour ?? 'None'}</span>
           <button aria-label="More operatives" onClick={() => { const n = (labour ?? 0) + 1; setLabour(n); saveDay({ labour: n }) }} className="step-btn">+</button>
         </div>
         <div style={{ marginTop: 12 }}>

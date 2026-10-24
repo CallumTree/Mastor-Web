@@ -3,8 +3,8 @@
  * Rules: 24-unit grid, 1.6 stroke, square caps, mitred joins, no rounded corners,
  * one solid copper accent per icon. Line colour follows currentColor.
  */
-// the small accent dot each icon carries: yellow on the black bars, blue on white
-const COPPER = 'var(--icon-dot, #0A55B5)'
+// the small accent dot each icon carries: neon on the black slabs, volt blue on white
+const COPPER = 'var(--icon-dot, #0040FF)'
 type P = { size?: number }
 const S = ({ size = 24, children }: P & { children: React.ReactNode }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="square" strokeLinejoin="miter">{children}</svg>
@@ -21,6 +21,13 @@ export const IconCamera = (p: P) => <S {...p}><rect x="3" y="7" width="18" heigh
 export const IconSettings = (p: P) => <S {...p}><path d="M13 15l-2-3.5h-4L5 15l2 3.5h4z" /><path d="M13 11L21 3" strokeWidth={2} /><circle cx="20" cy="4" r="1.1" fill={COPPER} stroke="none" /></S>
 export const IconBack = (p: P) => <S {...p}><path d="M15 5l-7 7 7 7" /></S>
 export const IconPlus = (p: P) => <S {...p}><path d="M12 5v14M5 12h14" /></S>
+export const IconClose = (p: P) => <S {...p}><path d="M6 6l12 12M18 6 6 18" /></S>
+export const IconChevron = (p: P) => <S {...p}><path d="M9 5l7 7-7 7" /></S>
+export const IconCheck = (p: P) => <S {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></S>
+export const IconArrow = (p: P) => <S {...p}><path d="M6 18 18 6M9 6h9v9" /></S>
+export const IconCircle = (p: P) => <S {...p}><circle cx="12" cy="12" r="8" /></S>
+export const IconPen = (p: P) => <S {...p}><path d="M4 20l1-4L16 5l3 3L8 19z" /><path d="M14 7l3 3" /></S>
+export const IconText = (p: P) => <S {...p}><path d="M5 6V4h14v2M12 4v16M9 20h6" /></S>
 export const IconChart = (p: P) => <S {...p}><path d="M3 21h18" /><rect x="5" y="12" width="3" height="9" /><rect x="10.5" y="7" width="3" height="14" /><rect x="16" y="10" width="3" height="11" /><circle cx="12" cy="4" r="1.1" fill={COPPER} stroke="none" /></S>
 export const IconCog = (p: P) => <S {...p}><path d="M18.9 10.1 L21.4 10.5 L21.4 13.5 L18.9 13.9 L18.3 15.5 L19.7 17.5 L17.5 19.7 L15.5 18.3 L13.9 18.9 L13.5 21.4 L10.5 21.4 L10.1 18.9 L8.5 18.3 L6.5 19.7 L4.3 17.5 L5.7 15.5 L5.1 13.9 L2.6 13.5 L2.6 10.5 L5.1 10.1 L5.7 8.5 L4.3 6.5 L6.5 4.3 L8.5 5.7 L10.1 5.1 L10.5 2.6 L13.5 2.6 L13.9 5.1 L15.5 5.7 L17.5 4.3 L19.7 6.5 L18.3 8.5z" /><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="1" fill={COPPER} stroke="none" /></S>
 export const IconLock = (p: P) => <S {...p}><rect x="5" y="11" width="14" height="10" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /><circle cx="12" cy="16" r="1.2" fill={COPPER} stroke="none" /></S>

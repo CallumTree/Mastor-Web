@@ -8,7 +8,7 @@ import { readPackFiles, type PackResult } from '../lib/packIntake'
 import { Plate } from '../components/Sign'
 import type { PackFacts, Source } from '../lib/packFacts'
 import { lineValue } from '../lib/valuation'
-import { IconScope } from '../components/Icons'
+import { IconChevron, IconScope } from '../components/Icons'
 
 type Stage = { s: 'pick' } | { s: 'reading'; name: string; of: number } | { s: 'review'; boq: PackResult } | { s: 'error'; msg: string }
 export type ImportPack = (lines: ParsedLine[], pack: PackResult) => void
@@ -178,7 +178,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
                   <span className="prop-meta" style={{ display: 'block' }}>{groups.join(' · ')}</span>
                 </span>
                 <span className="prop-amt"><span className="mono">{money(sum)}</span><small>{rows.length} lines{flagged ? ` · ${flagged} to check` : ''}</small></span>
-                <span className="prop-chev">▸</span>
+                <span className="prop-chev" aria-hidden="true"><IconChevron size={16} /></span>
               </button>
               {isOpen && <div className="prop-body">{groups.map(g => {
                 const gRows = rows.filter(({ l }) => (l.workstream || l.room) === g)

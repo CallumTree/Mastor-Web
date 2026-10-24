@@ -51,7 +51,7 @@ export function JobsList({ jobs, vos, orders = [], onOpen, onNew, onDashboard, o
                     {j.kind === 'orders' && <Plate kind="wait">{orders.filter(o => o.jobId === j.id && o.status === 'open').length} open orders</Plate>}
                     {m && unpriced > 0 && <Plate kind="warn">{unpriced} unpriced VO{unpriced === 1 ? '' : 's'}</Plate>}
                   </span>
-                  <span className="jr-status"><span className={'badge ' + (j.status === 'Active' ? 'b-green' : 'b-slate')}>{j.status}</span></span>
+                  <span className="jr-status"><span className={'badge ' + (j.status === 'Active' ? 'b-slate' : 'b-quiet')}>{j.status}</span></span>
                 </button>
               )
             })}

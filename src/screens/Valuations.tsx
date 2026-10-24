@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { DiaryEntry, Job, ScopeItem, SiteSuggestion, Valuation, Variation } from '../lib/types'
 import { SiteReview } from './SiteReview'
-import { IconLock } from '../components/Icons'
+import { IconChevron, IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { issuePlan, lineValue, valRef, valTotals } from '../lib/valuation'
@@ -31,8 +31,8 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   )
   return (
     <div>
-      {s.length > 0 && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <div className="label" style={{ marginTop: 10, color: 'var(--ink-2)' }}>No. {i.property || '—'}</div>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
+      {s.length > 0 && !byProp && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
       {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
       {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v))))}
     </div>
@@ -98,7 +98,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             { label: 'Scope', value: money(current.scopeBase), note: 'base rates', nil: !current.scopeBase },
             { label: 'Variations', value: money(current.voBase), note: 'base rates', nil: !current.voBase },
             { label: 'Base total', value: money(current.base) },
-            { label: 'Uplifts', value: `${job.uplift1}% + ${job.uplift2}%` },
+            { label: 'Uplifts', value: `${job.uplift1}%\u00a0+\u00a0${job.uplift2}%` },
           ]} />
           {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
@@ -133,7 +133,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                     {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {money(invoiceAmounts(job, v, scope, vos).total)} incl. VAT</div>}
                     <div className="vo-status"><CourtLine c={courts.get(v.id)!} /></div>
                   </div>
-                  <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" aria-hidden="true" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}>▸</span></div>
+                  <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" aria-hidden="true" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}><IconChevron size={16} /></span></div>
                 </div>
                 {isOpen && (
                   <div className="vo-actions" onClick={e => e.stopPropagation()}>

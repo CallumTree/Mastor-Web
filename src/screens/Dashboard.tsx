@@ -72,7 +72,7 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
             <div className="panel chk">
               {chase.map(({ v, job, c }) => (
                 <button key={v.id} className="chk-row order-row" onClick={() => onOpenJob(job)}>
-                  <span className="mono">{valRef(v.number)}</span>
+                  <span className="ref-roman">{valRef(v.number)}</span>
                   <span className="grow">{job.name}<small>{v.invoiceNumber ? `Invoice ${v.invoiceNumber}` : 'Not invoiced yet'}</small>
                     <span className="order-plates">{c.tone === 'late' ? <Plate kind="stop">{c.text}</Plate> : c.tone === 'due' ? <Plate kind="warn">{c.text}</Plate> : <Plate kind="wait">{c.text}</Plate>}</span>
                   </span>

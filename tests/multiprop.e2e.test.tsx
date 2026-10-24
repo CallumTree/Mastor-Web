@@ -49,9 +49,9 @@ describe('multi-property scheme', () => {
     await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))   // property header (+ open group)
     expect(screen.getAllByText('VAL I').length).toBe(2)                                // the open PPR Paint group's lines
 
-    // valuation shows the lines under a "No. 1" heading
+    // valuation shows the lines under a "Scope · No. 1" heading
     nav('vals')
-    await screen.findByText('No. 1')
+    await screen.findByRole('heading', { name: 'Scope · No. 1' })
     expect(screen.getAllByRole('button', { name: /remove from valuation/i }).length).toBe(3)
 
     // clear unclaimed lines (to redo an import) keeps the claimed ones

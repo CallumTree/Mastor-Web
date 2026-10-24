@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { IconArrow, IconCircle, IconPen, IconText } from './Icons'
 
 /**
  * Photo mark-up: pen, arrow, circle, text in site colours. Saves a new marked-up image;
@@ -98,9 +99,9 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
     return () => { document.removeEventListener('keydown', key); back?.focus?.({ preventScroll: true }) }
   }, [])
 
-  const tools: [Tool, string][] = [['arrow', '↗ Arrow'], ['circle', '◯ Circle'], ['pen', '✎ Draw'], ['text', 'T Text']]
+  const tools: [Tool, string, typeof IconArrow][] = [['arrow', 'Arrow', IconArrow], ['circle', 'Circle', IconCircle], ['pen', 'Draw', IconPen], ['text', 'Text', IconText]]
   return (
-    <div ref={layer} role="dialog" aria-modal="true" aria-labelledby="mk-title" tabIndex={-1} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--shell)', display: 'flex', flexDirection: 'column', outline: 'none' }}>
+    <div ref={layer} className="markup" role="dialog" aria-modal="true" aria-labelledby="mk-title" tabIndex={-1} style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--shell)', display: 'flex', flexDirection: 'column', outline: 'none' }}>
       <div className="row" style={{ padding: '10px 12px', color: 'var(--shell-text)' }}>
         <button className="btn-ghost on-dark" onClick={onCancel}>Cancel</button>
         <h2 id="mk-title" className="grow mk-title">Mark up</h2>
@@ -115,7 +116,7 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
           {COLOURS.map(c => <button key={c} className="mk-swatch" aria-label={`Colour ${c}`} aria-pressed={color === c} onClick={() => setColor(c)} style={{ background: c }} />)}
         </div>
         <div className="row" style={{ gap: 6, marginBottom: 10 }}>
-          {tools.map(([t, label]) => <button key={t} className="mk-tool" aria-pressed={tool === t} onClick={() => setTool(t)}>{label}</button>)}
+          {tools.map(([t, label, Icon]) => <button key={t} className="mk-tool" aria-pressed={tool === t} onClick={() => setTool(t)}><Icon size={18} /> {label}</button>)}
         </div>
         <button className="btn btn-primary" disabled={!ready || saving} onClick={() => { setSaving(true); canvas.current!.toBlob(b => b && onSave(b), 'image/jpeg', 0.85) }}>{saving ? 'Saving…' : 'Save mark-up'}</button>
       </div>

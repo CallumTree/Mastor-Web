@@ -25,7 +25,7 @@ const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
-export interface Rail { done: number; next: number; label: string }
+export interface Rail { done: number; next: number; label: string; short: string }
 
 /** How far the job has got, the same line on every tab: certified to date (and the open valuation) against the
  *  contract for people who see money; lines done for everyone else. */
@@ -35,11 +35,11 @@ function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation
     const open = vals.find(v => v.status === 'Open')
     const next = open ? valTotals(job, open.id, scope, vos).gross / job.contractValue : 0
     const pct = (x: number) => `${Math.round(x * 100)}%`
-    return { done, next, label: `${pct(done)} certified${next > 0.004 ? ` · ${valRef(open!.number)} ${pct(next)} more` : ''}` }
+    return { done, next, label: `${pct(done)} certified${next > 0.004 ? ` · ${valRef(open!.number)} ${pct(next)} more` : ''}`, short: pct(done) }
   }
   if (!scope.length) return null
   const n = scope.filter(i => i.valuationId).length
-  return { done: n / scope.length, next: 0, label: `${n} of ${scope.length} lines done` }
+  return { done: n / scope.length, next: 0, label: `${n} of ${scope.length} lines done`, short: `${n}/${scope.length}` }
 }
 
 /** The job's black header: where you are, the way back, and the neon rail of how far the job has got. */
@@ -58,10 +58,11 @@ function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: bool
       {rail && (
         <div className="jrail-in">
           <div className="jrail" role="img" aria-label={rail.label}>
-            <i className="jrail-done" style={{ width: `${Math.min(100, rail.done * 100)}%` }} />
+            <i className="jrail-done" style={{ width: `${Math.min(100, rail.done * 100)}%`, minWidth: rail.done > 0 ? 6 : 0 }} />
             <i className="jrail-next" style={{ width: `${Math.max(0, Math.min(100 - rail.done * 100, rail.next * 100))}%` }} />
+            <b className="jrail-tick" style={{ left: `max(6px, ${Math.min(100, rail.done * 100)}%)` }} />
           </div>
-          {!compact && <span className="jrail-label" aria-hidden="true">{rail.label}</span>}
+          <span className="jrail-label" aria-hidden="true">{compact ? rail.short : rail.label}</span>
         </div>
       )}
     </header>
@@ -115,7 +116,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   if (!job.poNumber) actions.push({ text: 'No PO number', hint: 'Invoices will be rejected without it', colour: 'var(--red)', onClick: onSetup })
   if (unpriced) actions.push({ text: `${unpriced} variation${unpriced === 1 ? '' : 's'} unpriced`, hint: 'Add SoR code and rate so they can be claimed', colour: 'var(--amber)', onClick: () => go('vos') })
   if (unmeasured) actions.push({ text: `${unmeasured} variation${unmeasured === 1 ? '' : 's'} not measured`, hint: 'Measure on site', colour: 'var(--amber)', onClick: () => go('vos'), site: true })
-  if (open && openTotals && openTotals.lines > 0) actions.push({ text: `${valRef(open.number)}: ${money(openTotals.gross)} ready`, hint: `${openTotals.lines} line${openTotals.lines === 1 ? '' : 's'} — review and issue`, colour: 'var(--green)', onClick: () => go('vals') })
+  if (open && openTotals && openTotals.lines > 0) actions.push({ text: `${valRef(open.number)}: ${money(openTotals.gross)} ready`, hint: `${openTotals.lines} line${openTotals.lines === 1 ? '' : 's'} — review and issue`, colour: 'var(--blue)', onClick: () => go('vals') })
   if (job.kind === 'orders') {
     const late = orders.filter(o => isOverdue(o))
     if (late.length) actions.push({ text: `${late.length} order${late.length === 1 ? '' : 's'} overdue`, hint: late.slice(0, 3).map(o => `${o.ref} ${o.address}`).join(' · '), colour: 'var(--red)', onClick: () => go('scope'), site: true })
@@ -146,7 +147,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       <div className="acts">
         {actions.length === 0 && <div className="act act-clear"><SignMark kind="ok" size={22} /><span>Nothing outstanding on this job.</span></div>}
         {actions.map((a, i) => {
-          const kind: SignKind = a.colour === 'var(--red)' ? 'stop' : a.colour === 'var(--green)' ? 'ok' : 'warn'
+          const kind: SignKind = a.colour === 'var(--red)' ? 'stop' : a.colour === 'var(--green)' ? 'ok' : a.colour === 'var(--blue)' ? 'do' : 'warn'
           return (
             <button key={i} className={'act act-' + kind} onClick={a.onClick}>
               <SignMark kind={kind} size={22} />
@@ -164,7 +165,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       }} />}
       <div className="row" style={{ margin: '18px 0 8px' }}>
         <h2 className="sec-h grow" style={{ margin: 0 }}>Notes &amp; decisions</h2>
-        <button className="linkish tap t-note slate" onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length}` : '+ Add'}</button>
+        <button className="linkish tap t-note" onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length}` : '+ Add'}</button>
       </div>
       <div className="panel" style={{ padding: '0 14px' }}>
         {notes.length === 0 && <button className="muted" onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}

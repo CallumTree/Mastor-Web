@@ -14,7 +14,7 @@ export function TabHead({ label, meta, menu }: { label: string; title?: string; 
 }
 
 /** A figure's length, so CSS can shrink a long amount (£12,345,678.90) to fit its box instead of cutting it off. */
-export const fitLen = (text: string) => ({ '--len': Math.max(6, text.length) }) as CSSProperties
+export const fitLen = (text: string) => ({ '--len': Math.max(6, text.length + (text.match(/%/g)?.length ?? 0)) }) as CSSProperties   // a % is about two figures wide
 
 export interface SumCell { label: string; value: string; note?: string; hot?: boolean; nil?: boolean; key?: string }
 

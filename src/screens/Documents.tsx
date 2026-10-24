@@ -30,7 +30,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
     <>
       <div className="row" style={{ margin: '18px 0 8px' }}>
         <h2 className="sec-h grow" style={{ margin: 0 }}>Documents{docs.length ? ` · ${docs.length}` : ''}</h2>
-        <label className="linkish tap">+ Add document
+        <label className="linkish tap t-note">+ Add document
           <input type="file" className="sr-only" onChange={e => {
             const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
             if (f.size > MAX_DOC_BYTES) { setErr('That file is over 20 MB — save a smaller copy (e.g. PDF) and add that.'); return }
