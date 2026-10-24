@@ -44,6 +44,8 @@ export interface Variation {
   valuationId?: string | null // which valuation it's claimed in; null/undefined = live
   submittedAt?: number | null // sent to the client for instruction — the ball is in their court from here
   attachments?: { id: string; name: string; type: string }[] // original council instruction (scan, PDF, Excel)
+  /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
+  byClaude?: number | null
 }
 
 /** One line of the works order / BoQ. */
@@ -65,6 +67,8 @@ export interface ScopeItem {
   orderId?: string           // small works orders: the order this line belongs to
   evidence?: string[]         // diary captures (photos, video, voice) that showed it done
   contract?: string          // the client's contract / works order ref for this line (packs with several), e.g. MH21180
+  /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
+  byClaude?: number | null
   createdAt: number
 }
 
@@ -83,6 +87,8 @@ export interface Valuation {
   invoiceNumber?: string | null // VAT invoice raised for this valuation (one per valuation)
   invoiceDate?: number | null
   invoiceVatRate?: number | null
+  /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
+  byClaude?: number | null
 }
 
 /**
@@ -105,6 +111,8 @@ export interface DiaryEntry {
   pinned?: boolean             // job notes only
   transcript?: string          // voice / video: what was said, transcribed when the day is read
   read?: SiteRead              // what reading it against the scope suggested
+  /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
+  byClaude?: number | null
   createdAt: number
 }
 

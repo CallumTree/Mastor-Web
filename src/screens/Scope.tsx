@@ -9,6 +9,7 @@ import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
 import { IconCheck, IconChevron, IconLock, IconPlus, IconScope } from '../components/Icons'
 import { TabMenu } from '../components/TabMenu'
+import { ByClaude } from '../components/Sign'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 
 /** Valuation tick. 44px to hit with a glove; the visible box sits inside. */
@@ -98,6 +99,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
             {i.code && <span className="mono t-small slate">{i.code}</span>}
             {showRoom && <span className="hint">{i.room}</span>}
             <ValBadge val={val} />
+            {!locked && <ByClaude at={i.byClaude} />}
           </div>
           <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
           <div className="hint">

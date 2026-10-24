@@ -115,6 +115,8 @@ export function issuePlan(job: Job, val: Valuation, vals: Valuation[], scope: Sc
       if (unpriced && priced.every(i => i.valuationId)) checks.push({ kind: 'warn', text: `No. ${p} has every priced line claimed, but ${unpriced} line${unpriced === 1 ? ' is' : 's are'} still unpriced — price ${unpriced === 1 ? 'it' : 'them'} before the property is finished.` })
     }
   }
+  const claude = mine.filter(i => i.byClaude).length + myVos.filter(v => v.byClaude).length
+  if (claude) checks.push({ kind: 'warn', text: `Claude added ${claude} line${claude === 1 ? '' : 's'} (marked “by Claude”) — check ${claude === 1 ? 'it' : 'them'} before you issue.` })
   if (!checks.length) checks.push({ kind: 'ok', text: 'Nothing for the client to query — ready to issue.' })
   return { totals, u1, u2, previous, cumulative, target, pct: target > 0 ? Math.round((cumulative / target) * 1000) / 10 : null, groups: [...groups.values()].sort((a, b) => (a.name === 'Variations' ? 1 : b.name === 'Variations' ? -1 : a.name.localeCompare(b.name, 'en', { numeric: true }))), checks }
 }

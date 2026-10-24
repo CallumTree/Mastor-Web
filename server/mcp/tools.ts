@@ -1,14 +1,14 @@
 /**
  * What Claude can ask Mastor. Every figure comes from the app's own calculations (src/lib), so Claude
- * reports exactly what the screens show and never does its own sums. Phase 1 is read-only: nothing here
- * changes a job (a voice note's transcript is kept on its diary entry, as the app's own reader does).
- * Issuing valuations and invoices stays in the app with a person, always.
+ * reports exactly what the screens show and never does its own sums. These tools only read (a voice
+ * note's transcript is kept on its diary entry, as the app's own reader does); the ones that change a
+ * job are in writes.ts. Issuing valuations and invoices stays in the app with a person, always.
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { DiaryEntry, Job, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
-import { money, qtyText, ukDate, voRef } from '../../src/lib/format'
-import { issuePlan, lineValue, lockedIn, valRef, valTotals } from '../../src/lib/valuation'
+import { money, qtyText, voRef } from '../../src/lib/format'
+import { isPriced, issuePlan, lineValue, lockedIn, pennies, upliftAmounts, valRef, valTotals } from '../../src/lib/valuation'
 import { valCourt, voCourt } from '../../src/lib/chase'
 import { registerSummary } from '../../src/lib/voRegister'
 import { portfolio } from '../../src/lib/portfolio'
@@ -16,18 +16,26 @@ import { jobAlerts } from '../../src/lib/alerts'
 import { jobMargin } from '../../src/lib/margin'
 import { findJob, jobData, records, settings, type Ctx } from './data'
 import { siteMedia } from './media'
+import { day, NO_MONEY, text, ukToday } from './shared'
+import { registerWrites } from './writes'
 
-const text = (o: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(o, null, 1) }] })
 const READ = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
-const NO_MONEY = 'Your Mastor role is operative, which doesn’t include money (rates, values, valuations, invoices). Ask someone in the office.'
-const day = (t: number | null | undefined) => (t ? ukDate(t) : null)
+
+/** Base-rate totals of a set of scope lines, with the uplifted figure: so Claude quotes Mastor's sums, never its own. */
+const scopeTotals = (job: Job, lines: ScopeItem[]) => {
+  const base = pennies(lines.reduce((t, i) => t + lineValue(i.qty, i.rate), 0))
+  const claimed = pennies(lines.filter(i => i.valuationId).reduce((t, i) => t + lineValue(i.qty, i.rate), 0))
+  const unpriced = lines.filter(i => !isPriced(i)).length
+  return { lines: lines.length, scope: money(base), inclUplifts: money(upliftAmounts(base, job.uplift1, job.uplift2).gross), claimed: money(claimed), stillToDo: money(pennies(base - claimed)),
+    ...(unpriced ? { unpricedLines: `${unpriced} — not in these totals` } : {}) }
+}
 
 const jobRef = (j: Job) => ({ id: j.id, name: j.name, client: j.client || null, ref: j.contractRef || null, address: j.address || null, status: j.status, kind: j.kind === 'orders' ? 'works orders' : 'scheme' })
 
 export function mastorServer(ctx: Ctx) {
   const server = new McpServer(
     { name: 'mastor', title: 'Mastor', version: '1.0.0' },
-    { instructions: `Mastor is ${ctx.company || 'the company'}’s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor’s own calculations — quote them, don’t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here.${ctx.money ? '' : ' This person is an operative: Mastor gives them no money figures.'}` },
+    { instructions: `Mastor is ${ctx.company || 'the company'}’s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor’s own calculations — quote them, don’t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here. You can also make changes for this person — tick lines into the open valuation, log and update VOs, add notes, fill in the site day. Before any change, say exactly what you will change and get their yes. Everything you change is marked “by Claude” in the app for them to check.${ctx.money ? '' : ' This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused.'}` },
   )
 
   server.registerTool('mastor_overview', {
@@ -90,7 +98,7 @@ export function mastorServer(ctx: Ctx) {
 
   server.registerTool('get_scope', {
     title: 'Scope (BoQ) lines',
-    description: 'The job’s scope lines with code, description, quantity and (for office roles) rate and value, and whether each is still to do, in the open valuation, or certified.',
+    description: 'The job’s scope lines with code, description, quantity and (for office roles) rate and value, and whether each is still to do, in the open valuation, or certified. Office roles also get Mastor’s totals — for the whole job and, when filtered, for exactly the lines shown (base rates and including uplifts). Quote those totals; don’t add lines up yourself.',
     inputSchema: {
       job: z.string().describe('Job id, or part of its name, contract ref or address'),
       show: z.enum(['all', 'to_do', 'claimed']).optional().describe('Filter (default all)'),
@@ -112,11 +120,13 @@ export function mastorServer(ctx: Ctx) {
       const v = d.vals.find(x => x.id === i.valuationId)
       return v ? `${v.status === 'Issued' ? 'certified in' : 'claimed in'} ${valRef(v.number)}` : 'claimed'
     }
-    const base = d.scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
-    const claimed = d.scope.filter(i => i.valuationId).reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+    const filtered = show !== 'all' || !!property || !!s
     return text({
       job: job.name, showing: lines.length, ofTotal: d.scope.length,
-      ...(ctx.money ? { totalsAtBaseRates: { scope: money(base), claimed: money(claimed), stillToDo: money(base - claimed) } } : {}),
+      ...(ctx.money ? {
+        jobTotals: scopeTotals(job, d.scope),
+        ...(filtered ? { totalsOfTheseLines: scopeTotals(job, lines) } : {}),
+      } : {}),
       lines: lines.slice(0, 400).map(i => ({
         id: i.id, property: i.property || undefined, room: i.room, workstream: i.workstream || undefined, code: i.code || undefined, description: i.description,
         qty: i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'not stated',
@@ -195,8 +205,8 @@ export function mastorServer(ctx: Ctx) {
   }, async ({ job: q, from, to }) => {
     const job = findJob(await records<Job>(ctx, 'jobs'), q)
     const d = await jobData(ctx, job)
-    const today = new Date().toISOString().slice(0, 10)
-    const start = from ?? new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10), end = to ?? today
+    const today = ukToday()
+    const start = from ?? ukToday(new Date(Date.now() - 14 * 864e5)), end = to ?? today
     const entries = d.diary.filter(e => e.type !== 'note' && e.date >= start && e.date <= end)
     const days = [...new Set(entries.map(e => e.date))].sort().reverse()
     const capture = (e: DiaryEntry) => ({
@@ -229,5 +239,6 @@ export function mastorServer(ctx: Ctx) {
     return { content: await siteMedia(ctx, diary, entry_ids) }
   })
 
+  registerWrites(server, ctx)
   return server
 }

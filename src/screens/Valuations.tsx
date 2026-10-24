@@ -5,7 +5,7 @@ import { IconChevron, IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { issuePlan, lineValue, valRef, valTotals } from '../lib/valuation'
-import { Plate } from '../components/Sign'
+import { ByClaude, Plate } from '../components/Sign'
 import { CourtLine, valCourt } from '../lib/chase'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
@@ -18,10 +18,11 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   const byProp = scope.some(x => x.property)
   const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => byProp ? (a.property ?? '').localeCompare(b.property ?? '', 'en', { numeric: true }) || a.order - b.order : a.room.localeCompare(b.room) || a.order - b.order)
   const o = vos.filter(x => x.valuationId === val.id).sort((a, b) => a.number - b.number)
-  const row = (key: string, ref: string, desc: string, sub: string, value: number, onRemove?: () => void) => (
+  const open = val.status === 'Open'   // Claude's marks matter while the valuation can still change
+  const row = (key: string, ref: string, desc: string, sub: string, value: number, onRemove?: () => void, claude?: number | null) => (
     <div key={key} className="row val-line" style={{ padding: '10px 0', borderTop: '1px solid var(--line)', alignItems: 'flex-start' }}>
       <div className="grow">
-        <div className="row" style={{ gap: 6 }}>{ref && <span className="mono t-small slate">{ref}</span>}</div>
+        <div className="row" style={{ gap: 6 }}>{ref && <span className="mono t-small slate">{ref}</span>}{open && <ByClaude at={claude} />}</div>
         <div style={{ fontWeight: 500 }}>{desc}</div>
         <div className="hint">{sub}</div>
       </div>
@@ -32,9 +33,9 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   return (
     <div>
       {s.length > 0 && !byProp && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)))}</div>)}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
       {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
-      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v))))}
+      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
     </div>
   )
 }

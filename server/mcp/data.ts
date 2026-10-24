@@ -107,3 +107,27 @@ export async function saveTranscript(ctx: Ctx, entry: DiaryEntry, transcript: st
     body: JSON.stringify({ data: { ...entry, transcript } }),
   }).catch(() => {})
 }
+
+/**
+ * Save records as the person, the way a phone's sync does (an upsert of the whole record). The database
+ * stamps the time, so every phone pulls the change on its next sync; its own rules still decide what
+ * this person may write. Throws a plain message when it can't.
+ */
+export async function save<T extends { id: string; jobId: string }>(ctx: Ctx, kind: Exclude<Kind, 'settings'>, rows: T[]) {
+  if (!rows.length) return
+  const r = await fetch(`${SB_URL}/rest/v1/${TABLE[kind]}?on_conflict=id`, {
+    method: 'POST', headers: headers(ctx.token, { 'content-type': 'application/json', prefer: 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify(rows.map(data => ({ id: data.id, company_id: ctx.companyId, job_id: data.jobId, data, deleted: false }))),
+  })
+  if (!r.ok) throw new Error(`Couldn’t save to Mastor just now (${r.status}) — nothing was changed. Try again in a minute.`)
+}
+
+/** A copy of a site photo for a VO to keep as its own evidence (as the app does), or null if it can't be copied. */
+export async function copyMedia(ctx: Ctx, mediaId: string): Promise<string | null> {
+  const id = crypto.randomUUID()
+  const r = await fetch(`${SB_URL}/storage/v1/object/copy`, {
+    method: 'POST', headers: headers(ctx.token, { 'content-type': 'application/json' }),
+    body: JSON.stringify({ bucketId: 'photos', sourceKey: `${ctx.companyId}/${mediaId}.jpg`, destinationKey: `${ctx.companyId}/${id}.jpg` }),
+  }).catch(() => null)
+  return r?.ok ? id : null
+}

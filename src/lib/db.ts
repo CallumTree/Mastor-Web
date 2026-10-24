@@ -87,6 +87,8 @@ export const local = {
 }
 
 // ---------- the app's storage API (local write + queue for the cloud) ----------
+/** A person saving a record takes it over from Claude: the “by Claude” mark goes. (Synced copies keep it.) */
+const byPerson = <T extends { byClaude?: number | null }>(r: T): T => { if (r.byClaude == null) return r; const { byClaude: _, ...rest } = r; return rest as T }
 export const db = {
   jobs: () => tx<Job[]>('jobs', 'readonly', s => s.getAll()),
   putJob: async (j: Job) => { await tx('jobs', 'readwrite', s => s.put(j)); await enqueue({ kind: 'record', table: 'jobs', id: j.id, jobId: j.id, data: j }) },
@@ -100,20 +102,20 @@ export const db = {
     await enqueue({ kind: 'record', table: 'jobs', id, jobId: id, data: null })
   },
   scope: (jobId: string) => tx<ScopeItem[]>('scope', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putScope: async (i: ScopeItem) => { await tx('scope', 'readwrite', s => s.put(i)); await enqueue({ kind: 'record', table: 'scope', id: i.id, jobId: i.jobId, data: i }) },
+  putScope: async (item: ScopeItem) => { const i = byPerson(item); await tx('scope', 'readwrite', s => s.put(i)); await enqueue({ kind: 'record', table: 'scope', id: i.id, jobId: i.jobId, data: i }) },
   deleteScope: async (id: string) => { await tx('scope', 'readwrite', s => s.delete(id)); await enqueue({ kind: 'record', table: 'scope', id, jobId: null, data: null }) },
   valuations: (jobId: string) => tx<Valuation[]>('valuations', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putValuation: async (v: Valuation) => { await tx('valuations', 'readwrite', s => s.put(v)); await enqueue({ kind: 'record', table: 'valuations', id: v.id, jobId: v.jobId, data: v }) },
+  putValuation: async (val: Valuation) => { const v = byPerson(val); await tx('valuations', 'readwrite', s => s.put(v)); await enqueue({ kind: 'record', table: 'valuations', id: v.id, jobId: v.jobId, data: v }) },
   deleteValuation: async (id: string) => { await tx('valuations', 'readwrite', s => s.delete(id)); await enqueue({ kind: 'record', table: 'valuations', id, jobId: null, data: null }) },
   variations: (jobId: string) => tx<Variation[]>('variations', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putVariation: async (v: Variation) => { await tx('variations', 'readwrite', s => s.put(v)); await enqueue({ kind: 'record', table: 'variations', id: v.id, jobId: v.jobId, data: v }) },
+  putVariation: async (vo: Variation) => { const v = byPerson(vo); await tx('variations', 'readwrite', s => s.put(v)); await enqueue({ kind: 'record', table: 'variations', id: v.id, jobId: v.jobId, data: v }) },
   deleteVariation: async (v: Variation) => {
     for (const p of v.photoIds) await tx('photos', 'readwrite', s => s.delete(p))
     await tx('variations', 'readwrite', s => s.delete(v.id))
     await enqueue({ kind: 'record', table: 'variations', id: v.id, jobId: v.jobId, data: null })
   },
   diary: (jobId: string) => tx<DiaryEntry[]>('diary', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putDiary: async (d: DiaryEntry) => { await tx('diary', 'readwrite', s => s.put(d)); await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: d }) },
+  putDiary: async (entry: DiaryEntry) => { const d = byPerson(entry); await tx('diary', 'readwrite', s => s.put(d)); await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: d }) },
   deleteDiary: async (d: DiaryEntry) => {
     for (const m of [d.mediaId, d.originalMediaId]) if (m) await tx('photos', 'readwrite', s => s.delete(m))
     await tx('diary', 'readwrite', s => s.delete(d.id))

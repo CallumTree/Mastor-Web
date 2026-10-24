@@ -7,6 +7,7 @@ import { Tick, ValBadge } from './Scope'
 import { lockedIn } from '../lib/valuation'
 import { CourtLine, voCourt } from '../lib/chase'
 import { TabMenu } from '../components/TabMenu'
+import { ByClaude } from '../components/Sign'
 import { groupValue, registerSummary, VO_GROUP_SHORT } from '../lib/voRegister'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { ukDate as ukd } from '../lib/format'
@@ -176,7 +177,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
                   <div className="vo-meta">
                     <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef ? `Council ref ${v.clientRef}` : 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
                   </div>
-                  <div className="vo-status"><span className={'badge ' + statusClass[v.status]}>{v.status}</span>{m && v.status !== 'Rejected' && <CourtLine c={c} />}</div>
+                  <div className="vo-status"><span className={'badge ' + statusClass[v.status]}>{v.status}</span>{!lockedIn(v, vals) && <ByClaude at={v.byClaude} />}{m && v.status !== 'Rejected' && <CourtLine c={c} />}</div>
                 </div>
                 {m ? <div className="vo-amt">
                   <span className="mono">{priced ? money(lineValue(v.qty, v.rate)) : '—'}</span>
