@@ -4,7 +4,7 @@ import { useAccess } from '../lib/access'
 import { uid } from '../lib/db'
 import { isPriced, lineValue, lockedIn } from '../lib/valuation'
 import { money, ukDate } from '../lib/format'
-import { savePhoto, usePhotoUrl } from '../lib/photos'
+import { savePhoto, usePhotoThumb } from '../lib/photos'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { SumStrip, TabHead } from '../components/Register'
 import { Plate } from '../components/Sign'
@@ -81,8 +81,8 @@ export function OrdersTab({ job, orders, scope, vals, onNew, onOpen, onClaim }: 
 }
 
 function Thumb({ id }: { id: string }) {
-  const url = usePhotoUrl(id)
-  return url ? <img src={url} alt="" /> : null
+  const url = usePhotoThumb(id)
+  return url ? <img src={url} alt="" decoding="async" /> : null
 }
 
 type Draft = { id: string; code: string; description: string; qty: string; unit: string; rate: number | null; rateBook?: string; existing?: ScopeItem }

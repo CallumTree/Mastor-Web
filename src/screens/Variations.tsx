@@ -14,19 +14,19 @@ import { Field, Sheet, ConfirmDelete, useOnce } from '../components/Ui'
 import { describeProblem } from '../components/Problem'
 import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
-import { savePhoto, usePhotoUrl } from '../lib/photos'
+import { savePhoto, usePhotoThumb } from '../lib/photos'
 import { IconCamera, IconFlag } from '../components/Icons'
 
 const UNITS = ['nr', 'm', 'm2', 'lm', 'item']
 
 function Thumb({ id }: { id: string }) {
-  const url = usePhotoUrl(id)
-  return url ? <img src={url} alt="" /> : null
+  const url = usePhotoThumb(id)
+  return url ? <img src={url} alt="" decoding="async" /> : null
 }
 
 /** A photo on a VO being logged: the × removes it (a labelled button, so it works by keyboard and screen reader too). */
 function RemovableThumb({ id, n, onRemove }: { id: string; n: number; onRemove: () => void }) {
-  const url = usePhotoUrl(id)
+  const url = usePhotoThumb(id)
   return (
     <span className="thumb-x">
       {url ? <img src={url} alt="" /> : <span className="thumb-x-blank" />}

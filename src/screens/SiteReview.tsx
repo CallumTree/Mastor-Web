@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { DiaryEntry, ScopeItem, SiteSuggestion } from '../lib/types'
 import { openSuggestions } from '../lib/siteRead'
-import { usePhotoUrl } from '../lib/photos'
+import { usePhotoThumb } from '../lib/photos'
 import { money } from '../lib/format'
 import { lineValue } from '../lib/valuation'
 import { Plate } from '../components/Sign'
@@ -14,8 +14,8 @@ const KIND: Record<SiteSuggestion['kind'], { badge: string; cls: string }> = {
 }
 
 function Capture({ e }: { e: DiaryEntry }) {
-  const url = usePhotoUrl(e.type === 'photo' ? e.mediaId : null)
-  if (url) return <img src={url} alt={e.note || 'Site photo'} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--r-sm)', flex: 'none', border: '1px solid var(--line)' }} />
+  const url = usePhotoThumb(e.type === 'photo' ? e.mediaId : null)
+  if (url) return <img src={url} alt={e.note || 'Site photo'} decoding="async" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--r-sm)', flex: 'none', border: '1px solid var(--line)' }} />
   return <span className="badge b-slate" style={{ flex: 'none' }}>{e.type === 'voice' ? 'Voice' : e.type === 'video' ? 'Video' : 'Note'}</span>
 }
 

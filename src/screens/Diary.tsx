@@ -3,7 +3,7 @@ import type { DiaryEntry, Job, Variation } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { Markup } from '../components/Markup'
 import { TabMenu } from '../components/TabMenu'
-import { usePhotoUrl } from '../lib/photos'
+import { usePhotoThumb, usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
 import { weatherFor } from '../lib/weather'
 import { voRef } from '../lib/format'
@@ -15,13 +15,16 @@ export const dayId = (jobId: string, date: string) => `day:${jobId}:${date}`
 export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayId(jobId, date), jobId, date, type: 'day', note: '', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
 
 function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
-  const url = usePhotoUrl(e.mediaId)
+  const tile = useRef<HTMLButtonElement>(null)
+  const thumb = usePhotoThumb(e.type === 'photo' ? e.mediaId : null, tile)   // a small copy, made when the tile nears the screen
+  const video = usePhotoUrl(e.type === 'video' ? e.mediaId : null)
+  const url = e.type === 'video' ? video : thumb
   return (
-    <button className="d-thumb" onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : e.type === 'voice' ? 'Open voice note' : 'Open photo'}>
+    <button ref={tile} className="d-thumb" onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : e.type === 'voice' ? 'Open voice note' : 'Open photo'}>
       {e.type === 'voice' ? <span className="t-small" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 4, color: 'var(--ink)', fontWeight: 600 }}><IconMic size={30} />Voice note</span>
         : url && (e.type === 'video'
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        : <img src={url} alt={e.note || 'Site photo'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
+        : <img src={url} alt={e.note || 'Site photo'} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
       {e.type === 'video' && <span aria-hidden="true" className="d-thumb-play">▶</span>}
       {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4 }}>Marked up</span>}
       {(e.read || e.voId) && <span style={{ position: 'absolute', left: 4, right: 4, top: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>

@@ -4,6 +4,7 @@
  * Writes coming *from* the cloud use the `local` helpers, which don't queue anything.
  */
 import type { CompanySettings, Cost, Dayworks, DiaryEntry, Job, JobDocument, RateItem, ScopeItem, Valuation, Variation, WorkOrder } from './types'
+import { clearThumbs } from './thumbs'
 
 const DB_NAME = 'mastor'
 const VERSION = 7 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary · v5: company settings · v6: rate books · v7: costs, orders, dayworks, documents
@@ -157,6 +158,7 @@ export const rates = {
 export async function wipeLocal() {
   for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'settings', 'photos', 'rates', ...JOB_STORES, 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
   rateCache = null
+  await clearThumbs().catch(() => {})   // the thumbnail cache lives in its own database
 }
 
 /** Next VO number = highest existing + 1. Never count-based (that reuses numbers after a delete). */
