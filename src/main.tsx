@@ -11,6 +11,7 @@ import App from './App'
 import { Gate } from './screens/Gate'
 import { Splash, shouldPlaySplash } from './components/Splash'
 import { UpdateBar } from './components/UpdateBar'
+import { ProblemBar, ProblemBoundary } from './components/Problem'
 import { useState } from 'react'
 import './styles.css'
 import { HOME, isBranchPreview, shouldGoHome } from './lib/host'
@@ -23,7 +24,10 @@ if (isBranchPreview(location.hostname)) document.title = 'Preview · Mastor'
 function Root() {
   const [splash, setSplash] = useState(() => !location.hash && shouldPlaySplash())
   // the app loads underneath while the opening titles play
-  return <>{<Gate><App /></Gate>}{splash && <Splash onDone={() => setSplash(false)} />}<UpdateBar /></>
+  return <><ProblemBoundary><Gate><App /></Gate></ProblemBoundary>{splash && <Splash onDone={() => setSplash(false)} />}<UpdateBar /><ProblemBar /></>
 }
 window.addEventListener('hashchange', () => location.reload())
+// local-first: ask the browser not to clear Mastor's data when the phone runs low on space
+// (granted quietly for an installed app; asked only once it's installed, so no prompt on a first visit)
+if (matchMedia('(display-mode: standalone)').matches) navigator.storage?.persisted?.().then(p => { if (!p) navigator.storage.persist().catch(() => {}) }).catch(() => {})
 createRoot(document.getElementById('root')!).render(<StrictMode><Root /></StrictMode>)

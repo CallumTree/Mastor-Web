@@ -10,7 +10,8 @@ import { TabMenu } from '../components/TabMenu'
 import { groupValue, registerSummary, VO_GROUP_SHORT } from '../lib/voRegister'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { ukDate as ukd } from '../lib/format'
-import { Field, Sheet, ConfirmDelete } from '../components/Ui'
+import { Field, Sheet, ConfirmDelete, useOnce } from '../components/Ui'
+import { describeProblem } from '../components/Problem'
 import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoUrl } from '../lib/photos'
@@ -18,13 +19,24 @@ import { IconCamera, IconFlag } from '../components/Icons'
 
 const UNITS = ['nr', 'm', 'm2', 'lm', 'item']
 
-function Thumb({ id, onClick }: { id: string; onClick?: () => void }) {
+function Thumb({ id }: { id: string }) {
   const url = usePhotoUrl(id)
-  return url ? <img src={url} alt="" onClick={onClick} /> : null
+  return url ? <img src={url} alt="" /> : null
+}
+
+/** A photo on a VO being logged: the × removes it (a labelled button, so it works by keyboard and screen reader too). */
+function RemovableThumb({ id, n, onRemove }: { id: string; n: number; onRemove: () => void }) {
+  const url = usePhotoUrl(id)
+  return (
+    <span className="thumb-x">
+      {url ? <img src={url} alt="" /> : <span className="thumb-x-blank" />}
+      <button type="button" aria-label={`Remove photo ${n}`} onClick={onRemove}><span aria-hidden="true">×</span></button>
+    </span>
+  )
 }
 
 /** On-site capture: what, where, how much, why, photos. Price it later. */
-export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Variation, 'id' | 'jobId' | 'number'>) => void; onClose: () => void; initial?: { description?: string; room?: string; photoIds?: string[] } }) {
+export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Variation, 'id' | 'jobId' | 'number'>) => void | Promise<void>; onClose: () => void; initial?: { description?: string; room?: string; photoIds?: string[] } }) {
   const [description, setDescription] = useState(initial?.description ?? '')
   const [room, setRoom] = useState(initial?.room ?? '')
   const [qty, setQty] = useState('')
@@ -32,6 +44,8 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
   const [reason, setReason] = useState('')
   const [photoIds, setPhotoIds] = useState<string[]>(initial?.photoIds ?? [])
   const [busy, setBusy] = useState(false)
+  const [photoErr, setPhotoErr] = useState<string | null>(null)
+  const [saving, once] = useOnce()
   const q = parseFloat(qty.replace(',', '.'))
   return (
     <Sheet onClose={onClose}>
@@ -48,22 +62,22 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
         <Field label="Why / who asked"><input value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Found when bath removed" /></Field>
         <div>
           <div className="thumbs" style={{ marginBottom: 8 }}>
-            {photoIds.map(id => <Thumb key={id} id={id} onClick={() => setPhotoIds(photoIds.filter(p => p !== id))} />)}
+            {photoIds.map((id, n) => <RemovableThumb key={id} id={id} n={n + 1} onRemove={() => setPhotoIds(photoIds.filter(p => p !== id))} />)}
           </div>
           <label className="btn btn-secondary">
             <IconCamera /> {busy ? 'Saving…' : photoIds.length ? 'Add another photo' : 'Take photo'}
             <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={async e => {
               const file = e.target.files?.[0]; if (!file) return
-              setBusy(true); try { const id = await savePhoto(file); setPhotoIds(p => [...p, id]) } finally { setBusy(false); e.target.value = '' }
+              setBusy(true); setPhotoErr(null); try { const id = await savePhoto(file); setPhotoIds(p => [...p, id]) } catch (err) { setPhotoErr(describeProblem(err)) } finally { setBusy(false); e.target.value = '' }
             }} />
           </label>
-          {photoIds.length > 0 && <div className="hint" style={{ marginTop: 4 }}>Tap a photo to remove it.</div>}
+          {photoErr && <div className="flag t-strong" role="alert" style={{ marginTop: 6 }}>{photoErr}</div>}
         </div>
-        <button className="btn btn-primary" disabled={!description.trim() || busy} onClick={() => onSave({
+        <button className="btn btn-primary" disabled={!description.trim() || busy || saving} onClick={once(() => onSave({
           description: description.trim(), room: room.trim() || 'General',
           qty: isFinite(q) && q > 0 ? q : null, unit: unit.trim() || 'item', rate: null, code: '',
           reason: reason.trim(), clientRef: '', status: 'Identified', photoIds, dateRaised: Date.now(),
-        })}>Log variation</button>
+        }))}>Log variation</button>
       </div>
     </Sheet>
   )

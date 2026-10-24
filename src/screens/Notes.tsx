@@ -39,6 +39,8 @@ export function NoteEditor({ job, note, onSave, onDelete, onClose }: {
   const [text, setText] = useState(note?.note ?? '')
   const [cat, setCat] = useState<NoteCategory>(note?.category ?? 'Site')
   const [pinned, setPinned] = useState(!!note?.pinned)
+  // a new note gets its id once, so a double tap on Add saves the same note twice rather than two notes
+  const [base] = useState(() => note ?? newNote(job, '', 'Site', false))
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
@@ -46,7 +48,7 @@ export function NoteEditor({ job, note, onSave, onDelete, onClose }: {
         <div className="chips">{NOTE_CATEGORIES.map(c => <button key={c} className={'chip' + (cat === c ? ' on' : '')} onClick={() => setCat(c)}>{c}</button>)}</div>
         <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate"><textarea rows={5} autoFocus value={text} onChange={e => setText(e.target.value)} placeholder="e.g. Dylan agreed the airing-cupboard partition can be claimed — email 2 Oct" /></Field>
         <label className="check-row t-note flush" style={{ alignItems: 'center' }}><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} /> Pin to the top of the job</label>
-        <button className="btn btn-primary" disabled={!text.trim()} onClick={() => onSave(note ? { ...note, note: text.trim(), category: cat, pinned } : newNote(job, text.trim(), cat, pinned))}>{note ? 'Save' : 'Add note'}</button>
+        <button className="btn btn-primary" disabled={!text.trim()} onClick={() => onSave({ ...base, note: text.trim(), category: cat, pinned })}>{note ? 'Save' : 'Add note'}</button>
         {onDelete && <ConfirmDelete label="Delete…" confirmLabel={<>Delete this note</>} onConfirm={onDelete} />}
       </div>
     </Sheet>

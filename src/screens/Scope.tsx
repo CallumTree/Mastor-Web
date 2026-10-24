@@ -87,7 +87,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
     const val = valById(i.valuationId)
     const locked = !!lockedIn(i, vals)
     return (
-      <div key={i.id} className="row has-hit" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--line)' : 'none', alignItems: 'flex-start' }}>
+      <div key={i.id} className="row has-hit line-row" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--line)' : 'none', alignItems: 'flex-start' }}>
         <RowHit label={`Edit ${i.code ? i.code + ' ' : ''}${i.description}`} onClick={() => onEdit(i)} />
         {/* the whole left strip of the row is the tick, so a near miss ticks rather than opening the editor */}
         {isPriced(i) || i.valuationId

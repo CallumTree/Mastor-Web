@@ -18,6 +18,7 @@ import { ValuationsTab } from './Valuations'
 import { pennies, upliftAmounts, valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
 import { valCourt, voCourt, VO_CHASE_AMBER } from '../lib/chase'
+import { fitLen } from '../components/Register'
 
 /** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
 const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
@@ -40,6 +41,8 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
     </header>
   )
 }
+
+const FigN = ({ text, neg }: { text: string; neg?: boolean }) => <div className={'fig-n' + (neg ? ' neg' : '')} style={fitLen(text)}>{text}</div>
 
 function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, margin, onCosts, orders, documents }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode }) {
   const [notesOpen, setNotesOpen] = useState(false)
@@ -102,11 +105,11 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   return (
     <div>
       {seesMoney && <div className="figs">
-        <div className="fig"><div className="fig-n">{job.contractValue ? pounds(job.contractValue) : '—'}</div><div className="fig-l">Contract</div></div>
-        <div className="fig"><div className="fig-n">{pounds(certified)}</div><div className="fig-l">Certified</div></div>
-        <div className="fig"><div className="fig-n">{pounds(voGross)}</div><div className="fig-l">Variations</div>{(unpriced || unmeasured) > 0 && <div className="fig-note">+ {Math.max(unpriced, unmeasured)} not priced</div>}</div>
+        <div className="fig"><FigN text={job.contractValue ? pounds(job.contractValue) : '—'} /><div className="fig-l">Contract</div></div>
+        <div className="fig"><FigN text={pounds(certified)} /><div className="fig-l">Certified</div></div>
+        <div className="fig"><FigN text={pounds(voGross)} /><div className="fig-l">Variations</div>{(unpriced || unmeasured) > 0 && <div className="fig-note">+ {Math.max(unpriced, unmeasured)} not priced</div>}</div>
         <button className="fig fig-btn" onClick={onCosts} aria-label={`Margin ${pounds(margin.margin)} — costs and margin`}>
-          <div className={'fig-n' + (margin.margin < 0 ? ' neg' : '')}>{margin.costs || margin.labourEstimate != null ? pounds(margin.margin) : '—'}</div>
+          <FigN text={margin.costs || margin.labourEstimate != null ? pounds(margin.margin) : '—'} neg={margin.margin < 0} />
           <div className="fig-l">Margin ›</div>
           {margin.costs || margin.labourEstimate != null
             ? (margin.provisional.length ? <div className="fig-note">Provisional</div> : margin.pct != null && <div className="fig-sub">{margin.pct}% · costs {pounds(margin.costs)}</div>)

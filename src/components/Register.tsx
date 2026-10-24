@@ -2,7 +2,7 @@
  * Shared "register" pieces so Scope, Variations and Valuations read like the same set of drawings:
  * one header (the tab's name — the job is named in the page header above), one boxed summary strip (like the Variation Register PDF), ruled schedules below.
  */
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 export function TabHead({ label, meta, menu }: { label: string; title?: string; meta?: ReactNode; menu?: ReactNode }) {
   return (
@@ -13,6 +13,9 @@ export function TabHead({ label, meta, menu }: { label: string; title?: string; 
   )
 }
 
+/** A figure's length, so CSS can shrink a long amount (£12,345,678.90) to fit its box instead of cutting it off. */
+export const fitLen = (text: string) => ({ '--len': Math.max(6, text.length) }) as CSSProperties
+
 export interface SumCell { label: string; value: string; note?: string; hot?: boolean; nil?: boolean; key?: string }
 
 /** Boxed figures strip. A `nil` cell (nothing in it) reads "—", never £0.00. `progress` (0–100) draws a scale bar along the foot, like a drawing's scale. */
@@ -22,7 +25,7 @@ export function SumStrip({ cells, cols = 2, progress, label, caption }: { cells:
       {cells.map(c => (
         <div key={c.key ?? c.label} className={'sum-cell' + (c.hot ? ' hot' : '') + (c.nil ? ' nil' : '')}>
           <div className="label">{c.label}</div>
-          <div className="mono n">{c.nil ? '—' : c.value}</div>
+          <div className="mono n" style={fitLen(c.nil ? '—' : c.value)}>{c.nil ? '—' : c.value}</div>
           {c.note && <small>{c.note}</small>}
         </div>
       ))}

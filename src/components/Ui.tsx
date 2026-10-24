@@ -54,6 +54,21 @@ export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose
   )
 }
 
+/**
+ * One run at a time: a second tap while the first is still saving does nothing (gloves, a slow phone).
+ * Use on buttons that create something new each time they're pressed.
+ */
+export function useOnce() {
+  const running = useRef(false)
+  const [busy, setBusy] = useState(false)
+  const once = (fn: () => unknown) => async () => {
+    if (running.current) return
+    running.current = true; setBusy(true)
+    try { await fn() } finally { running.current = false; setBusy(false) }
+  }
+  return [busy, once] as const
+}
+
 export function Field({ label, hint, warn, children }: { label: string; hint?: string; warn?: boolean; children: ReactNode }) {
   return (
     <label className={'field' + (warn ? ' warn' : '')}>

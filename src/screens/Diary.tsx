@@ -144,7 +144,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
 
       <div className="panel" style={{ padding: 14 }}>
         <div className="row" style={{ alignItems: 'flex-end', gap: 12 }}>
-          <div className="grow"><Field label="Weather"><input value={weather} onChange={e => setWeather(e.target.value)} onBlur={() => weather !== (day?.weather ?? '') && saveDay({ weather: weather.trim() })} placeholder={job.address ? 'Looking up…' : 'Add a site address in job setup for automatic weather'} /></Field></div>
+          <div className="grow"><Field label="Weather" hint={job.address ? undefined : 'Add the site address in job setup and the weather fills in itself.'}><input value={weather} onChange={e => setWeather(e.target.value)} onBlur={() => weather !== (day?.weather ?? '') && saveDay({ weather: weather.trim() })} placeholder={job.address ? 'Looking up…' : 'e.g. Dry, 12°C'} /></Field></div>
         </div>
         <div className="row diary-labour" style={{ marginTop: 12 }}>
           <span className="grow hint t-strong">Labour on site</span>

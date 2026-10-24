@@ -58,14 +58,34 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
     const c = canvas.current!, r = c.getBoundingClientRect()
     return [((e.clientX - r.left) / r.width) * c.width, ((e.clientY - r.top) / r.height) * c.height]
   }
+  // one finger draws; a second finger, a cancelled gesture, lost capture or leaving the app ends the stroke cleanly
+  const active = useRef<number | null>(null)
+  const latest = useRef(draft); latest.current = draft
+  const finish = () => {
+    active.current = null
+    const d = latest.current
+    if (d && d.pts.length > 1) setShapes(s => [...s, d])
+    setDraft(null)
+  }
   const down = (e: React.PointerEvent) => {
+    if (active.current !== null) return
     if (tool === 'text') {
       const t = window.prompt('Text to add'); if (t?.trim()) setShapes(s => [...s, { tool, color, pts: [pos(e)], text: t.trim() }]); return
     }
-    (e.target as Element).setPointerCapture(e.pointerId); setDraft({ tool, color, pts: [pos(e)] })
+    (e.target as Element).setPointerCapture(e.pointerId); active.current = e.pointerId
+    setDraft({ tool, color, pts: [pos(e)] })
   }
-  const move = (e: React.PointerEvent) => { if (draft) setDraft({ ...draft, pts: draft.tool === 'pen' ? [...draft.pts, pos(e)] : [draft.pts[0], pos(e)] }) }
-  const up = () => { if (draft && draft.pts.length > 1) setShapes(s => [...s, draft]); setDraft(null) }
+  const move = (e: React.PointerEvent) => {
+    if (e.pointerId !== active.current) return
+    const p = pos(e)
+    setDraft(d => d && { ...d, pts: d.tool === 'pen' ? [...d.pts, p] : [d.pts[0], p] })
+  }
+  const end = (e: React.PointerEvent) => { if (e.pointerId === active.current) finish() }
+  useEffect(() => {
+    const away = () => { if (active.current !== null) finish() }
+    window.addEventListener('blur', away)
+    return () => window.removeEventListener('blur', away)
+  })
 
   const tools: [Tool, string][] = [['arrow', '↗ Arrow'], ['circle', '◯ Circle'], ['pen', '✎ Draw'], ['text', 'T Text']]
   return (
@@ -76,7 +96,7 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
         <button className="btn-ghost on-dark" disabled={!shapes.length} onClick={() => setShapes(s => s.slice(0, -1))}>Undo</button>
       </div>
       <div style={{ flex: 1, display: 'grid', placeItems: 'center', overflow: 'hidden', padding: 8 }}>
-        <canvas ref={canvas} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+        <canvas ref={canvas} onPointerDown={down} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end}
           style={{ maxWidth: '100%', maxHeight: '100%', touchAction: 'none', background: 'var(--shell-2)' }} />
       </div>
       <div style={{ padding: '10px 12px calc(12px + env(safe-area-inset-bottom))', background: 'var(--shell-2)' }}>
