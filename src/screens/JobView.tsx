@@ -25,8 +25,25 @@ const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
 
-/** The job's black bar: where you are, and the way back. No decoration — the work starts underneath it. */
-function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; onBack: () => void; onSetup: () => void }) {
+export interface Rail { done: number; next: number; label: string }
+
+/** How far the job has got, the same line on every tab: certified to date (and the open valuation) against the
+ *  contract for people who see money; lines done for everyone else. */
+function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation[], money: boolean): Rail | null {
+  if (money && job.contractValue > 0) {
+    const done = vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0) / job.contractValue
+    const open = vals.find(v => v.status === 'Open')
+    const next = open ? valTotals(job, open.id, scope, vos).gross / job.contractValue : 0
+    const pct = (x: number) => `${Math.round(x * 100)}%`
+    return { done, next, label: `${pct(done)} certified${next > 0.004 ? ` · ${valRef(open!.number)} ${pct(next)} more` : ''}` }
+  }
+  if (!scope.length) return null
+  const n = scope.filter(i => i.valuationId).length
+  return { done: n / scope.length, next: 0, label: `${n} of ${scope.length} lines done` }
+}
+
+/** The job's black header: where you are, the way back, and the neon rail of how far the job has got. */
+function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: boolean; rail: Rail | null; onBack: () => void; onSetup: () => void }) {
   return (
     <header className={'jbar bleed' + (compact ? ' compact' : '')}>
       <div className="jbar-in">
@@ -38,6 +55,15 @@ function Hero({ job, compact, onBack, onSetup }: { job: Job; compact: boolean; o
         </div>
         {useAccess().money ? <button className="icon-btn on-dark" onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button> : <span className="icon-gap" />}
       </div>
+      {rail && (
+        <div className="jrail-in">
+          <div className="jrail" role="img" aria-label={rail.label}>
+            <i className="jrail-done" style={{ width: `${Math.min(100, rail.done * 100)}%` }} />
+            <i className="jrail-next" style={{ width: `${Math.max(0, Math.min(100 - rail.done * 100, rail.next * 100))}%` }} />
+          </div>
+          {!compact && <span className="jrail-label" aria-hidden="true">{rail.label}</span>}
+        </div>
+      )}
     </header>
   )
 }
@@ -197,7 +223,7 @@ export function JobView(p: {
   return (
     <>
       <main className="page with-rail">
-        <Hero job={job} compact={tab !== 'home'} onBack={onBack} onSetup={onSetup} />
+        <Hero job={job} compact={tab !== 'home'} rail={jobRail(job, scope, vals, vos, access.money)} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
           documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} />}

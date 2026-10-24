@@ -47,7 +47,7 @@ export function Markup({ src, onSave, onCancel }: { src: string; onSave: (b: Blo
       }
       if (s.tool === 'circle' && s.pts.length > 1) { g.beginPath(); g.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.abs(b[0] - a[0]) / 2 + 1, Math.abs(b[1] - a[1]) / 2 + 1, 0, 0, Math.PI * 2); g.stroke() }
       if (s.tool === 'text' && s.text) {
-        g.shadowBlur = 0; g.font = `700 ${Math.round(c.width / 22)}px Barlow, sans-serif`; g.lineWidth = lw * 1.4
+        g.shadowBlur = 0; g.font = `700 ${Math.round(c.width / 22)}px 'Archivo Variable', Archivo, sans-serif`; g.lineWidth = lw * 1.4
         g.strokeStyle = haloFor(s.color); g.strokeText(s.text, a[0], a[1]); g.fillText(s.text, a[0], a[1])
       }
       g.shadowBlur = 0
