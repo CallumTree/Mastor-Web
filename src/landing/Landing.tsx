@@ -10,7 +10,7 @@ import { roman } from '../lib/format'
 import { SignMark } from '../components/Sign'
 
 const PLACES = 50
-const WORK = ['Planned (PPR, WHQS, Decent Homes)', 'Responsive and voids', 'Other framework work'] as const
+const WORK = ['Planned (PPR, WHQS, Decent Homes)', 'Responsive and voids', 'Both planned and responsive', 'Other framework work'] as const
 
 type Claimed = { place: number | null; already: boolean; listed?: boolean }
 
@@ -45,7 +45,7 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
   taken: number | null; claimed: Claimed | null; onClaimed: (c: Claimed, taken: number | null) => void; nameRef: React.RefObject<HTMLInputElement>
 }) {
   const [name, setName] = useState(''), [firm, setFirm] = useState(''), [email, setEmail] = useState(''), [phone, setPhone] = useState('')
-  const [work, setWork] = useState<string[]>([])
+  const [work, setWork] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const robot = useRef<HTMLInputElement>(null)
@@ -62,7 +62,7 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
       const q = new URLSearchParams(location.search)
       const r = await fetch('/api/early-signup', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name, firm, email, phone, work: work.join('; '), website: robot.current?.value ?? '', source: q.get('utm_source') || q.get('ref') || document.referrer || '' }),
+        body: JSON.stringify({ name, firm, email, phone, work, website: robot.current?.value ?? '', source: q.get('utm_source') || q.get('ref') || document.referrer || '' }),
       })
       const b = await r.json().catch(() => ({}))
       if (!r.ok || !b.ok) throw new Error(b.error || 'Couldn’t save that just now. Try again in a minute.')
@@ -89,13 +89,17 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
 
   return (
     <form className="signup" onSubmit={submit} noValidate>
-      <div className="pair">
+      <div className="fields">
         <label className="field"><span>Your name</span><input ref={nameRef} value={name} onChange={e => setName(e.target.value)} autoComplete="name" required /></label>
         <label className="field"><span>Firm</span><input value={firm} onChange={e => setFirm(e.target.value)} autoComplete="organization" required /></label>
-      </div>
-      <div className="pair">
         <label className="field"><span>Email</span><input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required /></label>
         <label className="field"><span>Phone <em>optional</em></span><input type="tel" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" /></label>
+        <label className="field work"><span>Your work <em>optional</em></span>
+          <select value={work} onChange={e => setWork(e.target.value)}>
+            <option value="">Choose…</option>
+            {WORK.map(w => <option key={w} value={w}>{w}</option>)}
+          </select>
+        </label>
       </div>
       {/* not for people: left empty by anyone who can see the form */}
       <input ref={robot} name="website" tabIndex={-1} autoComplete="off" className="robot" aria-hidden="true" />
@@ -105,16 +109,6 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
         <IconArrow size={22} />
       </button>
       <p className="fine">We use these details only to talk to you about Mastor. No card needed.</p>
-      {/* optional, so it sits after the button: the claim stays in a phone's first screen */}
-      <fieldset className="work">
-        <legend>Your work <em>optional, sent with your claim</em></legend>
-        <div className="chips">
-          {WORK.map(w => (
-            <button type="button" key={w} className={'chip' + (work.includes(w) ? ' on' : '')} aria-pressed={work.includes(w)}
-              onClick={() => setWork(s => (s.includes(w) ? s.filter(x => x !== w) : [...s, w]))}>{work.includes(w) && <IconCheck size={16} />}{w}</button>
-          ))}
-        </div>
-      </fieldset>
     </form>
   )
 }

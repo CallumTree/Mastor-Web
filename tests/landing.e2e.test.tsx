@@ -28,7 +28,7 @@ describe('front page', () => {
     fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Dai Jones' } })
     fireEvent.change(screen.getByLabelText('Firm'), { target: { value: 'Jones Building' } })
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'dai@jones.co.uk' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Responsive and voids' }))
+    fireEvent.change(screen.getByLabelText(/Your work/), { target: { value: 'Responsive and voids' } })
     fireEvent.click(claim)
     await screen.findByText('Place XIV is yours.')
     expect(sent[0]).toMatchObject({ name: 'Dai Jones', firm: 'Jones Building', email: 'dai@jones.co.uk', work: 'Responsive and voids', website: '' })

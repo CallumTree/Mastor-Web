@@ -25,3 +25,5 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 Signature interaction: on claim, the neon tile becomes the visitor's (white tile, neon ring, "yours"), the next tile lights, and the button and summary update to the next numeral.
 
 Recorded adaptation: taken tiles fill with Shell Rule (#2E2E33), not Shell Raised (#18181B). Raised is about 1.1:1 on the Shell board and would not read as taken; Rule against the outlined free tiles keeps the three states apart. The optional "your work" chips sit after the claim button so the button stays in a phone's first screen.
+Recorded adaptation: on phones (under 560px) the register's numerals are one size, 13px at 100% width, so the longest (XXXVIII) keeps 6px clear inside a fifth of a phone's width; the board goes four a row under 390px and three at 300px and under. From 560px they are the Roman Ref cut at 112%, each shrinking to its tile (Fit to the Box). This extends the Narrow Label Rule to the register's numerals, which on a phone behave as labels for places rather than as references.
+The optional "your work" question is a single select inside the fields grid, before the claim button.

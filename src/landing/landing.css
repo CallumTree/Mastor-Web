@@ -41,37 +41,35 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 /* ---------- type ---------- */
 .hero-copy { container-type: inline-size; min-width: 0; }
 /* sized to its column: the longest word (SPREADSHEETS.) always fits on one line */
-.h1 { font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: clamp(24px, 9.3cqi, 68px); line-height: .98; letter-spacing: -.015em; text-wrap: balance; }
+.h1 { font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: clamp(24px, 9.3cqi, 60px); line-height: .98; letter-spacing: -.015em; text-wrap: balance; }
 .h2 { font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: clamp(26px, 6.4vw, 44px); line-height: 1.02; letter-spacing: -.01em; text-wrap: balance; }
 .h3 { font-stretch: 112%; font-weight: 750; text-transform: uppercase; font-size: 17px; line-height: 1.15; letter-spacing: .02em; }
-.lede { font-size: 17px; line-height: 1.45; color: var(--ink-2); max-width: 34em; margin-top: 18px; }
+.lede { font-size: 17px; line-height: 1.45; color: var(--ink-2); max-width: 34em; margin-top: 12px; }
 .body-l { font-size: 18px; line-height: 1.5; color: var(--ink-2); max-width: 62ch; }
 .on-dark { color: #fff; }
 .body-l.on-dark { color: var(--shell-muted); }
 .body-l.on-dark b { color: #fff; font-weight: 650; }
 
 /* ---------- first screen: the offer, the form, the register ---------- */
-.hero { display: grid; gap: 28px; padding-top: 32px; padding-bottom: 56px; }
-.offer { font-size: 18px; line-height: 1.4; margin-top: 14px; padding-top: 14px; border-top: 1.5px solid var(--ink); max-width: 34em; }
+.hero { display: grid; gap: 28px; padding-top: 22px; padding-bottom: 56px; }
+.offer { font-size: 18px; line-height: 1.4; margin-top: 12px; padding-top: 12px; border-top: 1.5px solid var(--ink); max-width: 34em; }
 .offer b { font-weight: 750; }
 
-.next-strip { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 8px 14px 8px 8px; border-radius: 12px; background: var(--shell); color: var(--shell-muted); text-decoration: none; font-size: 15px; font-weight: 600; line-height: 1.3; }
+.next-strip { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 8px 14px 8px 8px; border-radius: 12px; background: var(--shell); color: var(--shell-muted); text-decoration: none; font-size: 15px; font-weight: 600; line-height: 1.3; }
 .next-strip b { color: #fff; font-weight: 650; }
 .next-tile { flex: none; display: grid; place-items: center; min-width: 56px; min-height: 40px; padding: 0 8px; border-radius: 6px; background: var(--neon); color: var(--ink); font-stretch: 112%; font-weight: 800; font-size: 16px; letter-spacing: .02em; }
-.signup { margin-top: 22px; display: grid; gap: 14px; }
-.work { margin-top: 6px; }
-.pair { display: grid; gap: 14px; }
+.signup { margin-top: 18px; display: grid; gap: 14px; }
+.fields { display: grid; gap: 14px; }
 .field { display: block; }
-.field > span, .work legend { display: block; font-size: 14px; font-weight: 600; margin-bottom: 7px; padding: 0; }
-.field em, .work em { font-style: normal; font-weight: 400; color: var(--ink-muted); margin-left: 4px; }
+.field > span { display: block; font-size: 14px; font-weight: 600; margin-bottom: 7px; padding: 0; }
+.field em { font-style: normal; font-weight: 400; color: var(--ink-muted); margin-left: 4px; }
 .field input { caret-color: var(--volt); width: 100%; min-height: 52px; padding: 12px 14px; border: 1.5px solid var(--field-line); border-radius: 12px; background: var(--panel); font-size: 16px; }
 .field input:focus { outline: none; border-color: var(--ink); }
 .field input:focus-visible { outline: 2.5px solid var(--volt); outline-offset: 1px; }
-.work { border: 0; margin: 0; padding: 0; min-width: 0; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--ink); background: var(--panel); font-weight: 600; font-size: 15px; transition: background .15s; }
-.chip:hover { background: var(--row-open); }
-.chip.on { background: var(--ink); color: #fff; }
+.field select { width: 100%; min-height: 52px; padding: 12px 40px 12px 14px; border: 1.5px solid var(--field-line); border-radius: 12px; font-size: 16px; color: var(--ink); appearance: none; -webkit-appearance: none;
+  background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230A0A0B' stroke-width='1.8' stroke-linecap='square'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center / 18px; }
+.field select:focus { outline: none; border-color: var(--ink); }
+.field select:focus-visible { outline: 2.5px solid var(--volt); outline-offset: 1px; }
 .robot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .err { background: var(--red); color: #fff; border-radius: 6px; padding: 10px 12px; font-size: 15px; font-weight: 600; line-height: 1.35; }
 .claim { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 60px; padding: 0 20px; border: 1.5px solid var(--ink); border-radius: 12px;
@@ -99,8 +97,8 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .tiles { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
 .tile { position: relative; display: grid; place-items: center; min-height: 44px; border-radius: 6px; overflow: hidden; isolation: isolate; container-type: inline-size;
   color: var(--shell-muted); box-shadow: inset 0 0 0 1.5px var(--shell-line); }
-/* a numeral fits its tile (DESIGN.md Fit to the Box): 112% Roman Ref, shrinking with its length, floored at 13px */
-.tile > span { font-stretch: 112%; font-weight: 750; letter-spacing: 0; line-height: 1; font-size: min(16px, max(13px, calc(132cqi / var(--len, 3)))); }
+/* phones: every numeral at one size, 13px at normal width (DESIGN.md Narrow Label Rule), at least 6px clear of its tile */
+.tile > span { font-stretch: 100%; font-weight: 750; letter-spacing: 0; line-height: 1; font-size: 13px; }
 /* taken tiles fill with Shell Rule, not Shell Raised: Raised is about 1.1:1 on the board and wouldn't read as taken */
 .tile.taken { background: var(--shell-line); color: #fff; box-shadow: none; animation: fill .45s var(--ease) both; animation-delay: calc(var(--i) * 14ms); }
 .tile.next { color: var(--ink); box-shadow: none; }
@@ -111,7 +109,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 @keyframes yours { from { outline-offset: 10px; outline-color: transparent; } }
 .board-key { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--shell-muted); }
 .board-key li { display: inline-flex; align-items: center; gap: 8px; }
-.k { width: 14px; height: 14px; border-radius: 6px; display: inline-block; }
+.k { width: 20px; height: 16px; border-radius: 6px; display: inline-block; }
 .k.taken { background: var(--shell-line); } .k.next { background: var(--neon); } .k.free { box-shadow: inset 0 0 0 1.5px var(--shell-line); }
 
 /* ---------- what it replaces ---------- */
@@ -164,11 +162,14 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 
 /* ---------- wider screens ---------- */
 @media (min-width: 360px) {
-  .pair { grid-template-columns: 1fr 1fr; }
+  .fields { grid-template-columns: 1fr 1fr; }
+  .fields .work { grid-column: 1 / -1; }
 }
 @media (min-width: 560px) {
   .board { padding: 22px 22px 20px; }
   .tile { min-height: 48px; }
+  /* wider: 112% Roman Ref, each numeral shrinking to its tile (DESIGN.md Fit to the Box) */
+  .tile > span { font-stretch: 112%; font-size: min(16px, max(13px, calc(132cqi / var(--len, 3)))); }
   .stages li { grid-template-columns: 88px minmax(0, 1fr); }
   .stage-n { font-size: 32px; }
 }
@@ -180,7 +181,13 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 @media (min-width: 1024px) {
   .wrap { padding: 0 48px; }
   .wordmark { font-size: 26px; }
-  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 64px; padding-top: 44px; padding-bottom: 88px; align-items: start; }
+  .signup { gap: 12px; }
+  /* five fields in two rows, so the claim stays above a laptop's fold */
+  .fields { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  .fields > :nth-child(-n+2) { grid-column: span 3; }
+  .fields > :nth-child(n+3) { grid-column: span 2; }
+  .field input, .field select { min-height: 48px; }
+  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 64px; padding-top: 32px; padding-bottom: 88px; align-items: start; }
   .board { position: sticky; top: 24px; padding: 26px 26px 22px; }
   .tile { min-height: 50px; }
   .next-strip { display: none; }   /* the register itself is beside the form */
@@ -193,8 +200,8 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   .honest-in { grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 64px; align-items: start; }
 }
 
-/* small phones: four places a row, so the longest numeral (XXXVIII) still fits its tile at 13px */
-@media (max-width: 359px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* small phones: four places a row, so the longest numeral (XXXVIII) keeps its 6px clear at 13px */
+@media (max-width: 389px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 /* a phone at about 200% zoom: reflow rather than scroll sideways */
 @media (max-width: 300px) {
