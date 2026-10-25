@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T20:14:33+00:00",
+  "generatedAt": "2026-10-25T12:00:00+00:00",
   "title": "Design System: Mastor",
   "extensions": {
     "colorMeta": {
@@ -485,6 +485,30 @@
       "wordmark": {
         "displayName": "Wordmark",
         "purpose": "MΛSTΘR wordmark only."
+      },
+      "page-display": {
+        "displayName": "Page Display",
+        "purpose": "Front-page headline only. Container-sized (9.3cqi) so the longest word holds one line; 24px floor, 60px cap."
+      },
+      "page-headline": {
+        "displayName": "Page Headline",
+        "purpose": "Front-page section heads, clamp 26-44px; ink on white, white on black."
+      },
+      "stage-numeral": {
+        "displayName": "Stage Numeral",
+        "purpose": "Roman numeral leading each stages-register row: 26px, 32px from 560px, 40px from 1024px."
+      },
+      "register-numeral": {
+        "displayName": "Register Numeral",
+        "purpose": "Founding Register tile numerals: 13px at 100% width under 560px; from 560px 112% width at min(16px, max(13px, 132cqi / --len))."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "Front-page headline lede and term values; Slate Ink, 34em measure."
+      },
+      "body-large": {
+        "displayName": "Body Large",
+        "purpose": "Front-page section copy; Slate Ink on white, Shell Muted with white bold words on black; 62ch."
       }
     },
     "shadows": [
@@ -549,6 +573,26 @@
         "name": "press",
         "value": "translateY(1px), 0.08s",
         "purpose": "Button press; off under reduced motion."
+      },
+      {
+        "name": "register-fill",
+        "value": "0.45s cubic-bezier(.16, 1, .3, 1), 14ms stagger per tile",
+        "purpose": "Taken register tiles fill in turn; off under reduced motion."
+      },
+      {
+        "name": "register-lit",
+        "value": "0.7s cubic-bezier(.16, 1, .3, 1) 0.35s, scaleX from left",
+        "purpose": "The next tile's neon wipes in; off under reduced motion."
+      },
+      {
+        "name": "register-yours",
+        "value": "0.6s cubic-bezier(.16, 1, .3, 1), ring offset 10px to 2px",
+        "purpose": "The claimed tile's neon ring closes in; off under reduced motion."
+      },
+      {
+        "name": "claimed-rise",
+        "value": "0.5s cubic-bezier(.16, 1, .3, 1), 8px rise and fade",
+        "purpose": "The claimed confirmation replacing the form; off under reduced motion."
       }
     ],
     "breakpoints": [
@@ -575,6 +619,14 @@
       {
         "name": "desktop-rail",
         "value": "min-width: 1024px"
+      },
+      {
+        "name": "register-four",
+        "value": "max-width: 389px"
+      },
+      {
+        "name": "page-wide",
+        "value": "min-width: 760px"
       }
     ],
     "fontStretch": {
@@ -656,6 +708,30 @@
       "description": "Full-width tappable sign under Action needed; volt for the next step, red/yellow/green by meaning.",
       "html": "<button class=\"ds-act\"><span class=\"ds-t\">Issue VAL III</span><span class=\"ds-h\">Ready since Tuesday</span></button>",
       "css": ".ds-act { display:flex; flex-direction:column; align-items:flex-start; width:100%; min-height:64px; padding:14px 16px; border:none; border-radius:12px; background:#0040FF; color:#fff; text-align:left; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; cursor:pointer; } .ds-act:hover { filter:brightness(.95); } .ds-act:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; } .ds-t { font-weight:700; font-size:16px; line-height:1.25; } .ds-h { font-size:14px; font-weight:500; margin-top:2px; }"
+    },
+    {
+      "name": "Claim Button",
+      "kind": "button",
+      "refersTo": "button-claim",
+      "description": "The front page's primary: an ink block naming the next place, the numeral in neon at 125%.",
+      "html": "<button class=\"ds-claim\"><span>Claim place <b>XIV</b></span><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></button>",
+      "css": ".ds-claim { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; max-width:420px; min-height:60px; padding:0 20px; border:1.5px solid #0A0A0B; border-radius:12px; background:#0A0A0B; color:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-size:18px; font-weight:700; text-align:left; cursor:pointer; transition:background .15s, transform .08s; } .ds-claim b { color:#00E5FF; font-stretch:125%; font-weight:800; letter-spacing:.02em; margin-left:.2em; } .ds-claim:hover { background:#27272A; } .ds-claim:active { transform:translateY(1px); } .ds-claim:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; }"
+    },
+    {
+      "name": "Founding Register",
+      "kind": "custom",
+      "refersTo": "register-board",
+      "description": "Front-page signature: fifty Roman-numeral places on a black board; taken filled Shell Rule, free outlined, next neon, yours white with a neon ring.",
+      "html": "<section class=\"ds-board\"><div class=\"ds-board-head\"><span class=\"ds-board-title\">Founding register</span><span class=\"ds-board-count\">13 of 50 taken · 37 left</span></div><ol class=\"ds-tiles\"><li class=\"ds-tile taken\"><span>I</span></li><li class=\"ds-tile taken\"><span>II</span></li><li class=\"ds-tile taken\"><span>III</span></li><li class=\"ds-tile yours\"><span>IV</span></li><li class=\"ds-tile taken\"><span>V</span></li><li class=\"ds-tile taken\"><span>VI</span></li><li class=\"ds-tile taken\"><span>VII</span></li><li class=\"ds-tile taken\"><span>VIII</span></li><li class=\"ds-tile taken\"><span>IX</span></li><li class=\"ds-tile taken\"><span>X</span></li><li class=\"ds-tile taken\"><span>XI</span></li><li class=\"ds-tile taken\"><span>XII</span></li><li class=\"ds-tile taken\"><span>XIII</span></li><li class=\"ds-tile next\"><span>XIV</span></li><li class=\"ds-tile free\"><span>XV</span></li><li class=\"ds-tile free\"><span>XVI</span></li><li class=\"ds-tile free\"><span>XVII</span></li><li class=\"ds-tile free\"><span>XVIII</span></li><li class=\"ds-tile free\"><span>XIX</span></li><li class=\"ds-tile free\"><span>XX</span></li></ol><ul class=\"ds-key\"><li><i class=\"ds-k taken\"></i>Taken</li><li><i class=\"ds-k next\"></i>Next free</li><li><i class=\"ds-k free\"></i>Free</li></ul></section>",
+      "css": ".ds-board { background:#0A0A0B; color:#fff; border-radius:24px; padding:18px 12px 14px; max-width:460px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-board-head, .ds-key { padding:0 4px; } .ds-board-head { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; } .ds-board-title { font-stretch:125%; font-weight:750; font-size:14px; letter-spacing:.07em; text-transform:uppercase; } .ds-board-count { font-size:14px; font-weight:600; color:#A1A1AA; font-variant-numeric:tabular-nums; } .ds-tiles { list-style:none; margin:16px 0 0; padding:0; display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:5px; } .ds-tile { display:grid; place-items:center; min-height:44px; border-radius:6px; color:#A1A1AA; box-shadow:inset 0 0 0 1.5px #2E2E33; } .ds-tile > span { font-weight:750; font-size:13px; line-height:1; } .ds-tile.taken { background:#2E2E33; color:#fff; box-shadow:none; } .ds-tile.next { background:#00E5FF; color:#0A0A0B; box-shadow:none; } .ds-tile.yours { background:#fff; color:#0A0A0B; box-shadow:none; outline:2px solid #00E5FF; outline-offset:2px; } .ds-key { list-style:none; margin:14px 0 0; display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:#A1A1AA; } .ds-key li { display:inline-flex; align-items:center; gap:8px; } .ds-k { width:20px; height:16px; border-radius:6px; display:inline-block; } .ds-k.taken { background:#2E2E33; } .ds-k.next { background:#00E5FF; } .ds-k.free { box-shadow:inset 0 0 0 1.5px #2E2E33; }"
+    },
+    {
+      "name": "Next Place Strip",
+      "kind": "custom",
+      "refersTo": "next-strip",
+      "description": "Phones only: a black strip naming the next place on a neon tile, linking to the register below the form.",
+      "html": "<a href=\"#register\" class=\"ds-next\"><span class=\"ds-next-tile\">XIV</span><span>is the next founding place. <b>37 of 50</b> left.</span></a>",
+      "css": ".ds-next { display:flex; align-items:center; gap:12px; max-width:420px; padding:8px 14px 8px 8px; border-radius:12px; background:#0A0A0B; color:#A1A1AA; text-decoration:none; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-size:15px; font-weight:600; line-height:1.3; } .ds-next b { color:#fff; font-weight:650; } .ds-next:focus-visible { outline:2.5px solid #00E5FF; outline-offset:2px; } .ds-next-tile { flex:none; display:grid; place-items:center; min-width:56px; min-height:40px; padding:0 8px; border-radius:6px; background:#00E5FF; color:#0A0A0B; font-stretch:112%; font-weight:800; font-size:16px; letter-spacing:.02em; }"
     }
   ],
   "narrative": {
@@ -668,7 +744,8 @@
       "Warning colours carry meaning only, always paired with a sign shape and a word.",
       "Archivo at 125% (headings, labels), 112% (figures), 100% (reading).",
       "Signature: the neon progress rail along the foot of the job header.",
-      "Light only, by decision."
+      "Light only, by decision.",
+      "The public front page lives in the same world; its one lit thing is the next free place on the Founding Register."
     ],
     "rules": [
       {
@@ -735,6 +812,26 @@
         "name": "The No Glow Rule",
         "body": "Neon is a flat fill or line. No glow, no blur, no glass.",
         "section": "elevation"
+      },
+      {
+        "name": "The Page Display Rule",
+        "body": "Page Display and Page Headline belong to the front page. App screens keep Display and Headline; a marketing size never lands inside the app.",
+        "section": "typography"
+      },
+      {
+        "name": "The Register Numeral Rule",
+        "body": "Under 560px the register's numerals act as labels for places, so they follow the Narrow Label Rule: one size, 13px at 100% width, every numeral (the longest is XXXVIII) clear of its tile edge. From 560px they take the 112% cut and fit their tile.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled Register Rule",
+        "body": "Front-page sections are registers, not cards: a 1.5px ink rule heads each list, 1px Hairline rules separate its rows, and no panel wraps the reading content. A white 16px panel appears on the page only to show a piece of the product, such as the example variation register on the black band.",
+        "section": "layout"
+      },
+      {
+        "name": "The Register Board Rule",
+        "body": "Taken is filled Shell Rule, never Shell Raised: Raised is about 1.1:1 on Shell and reads as empty. Filled against outlined, and a white numeral against a muted one, keep taken and free apart; neon marks only the next place.",
+        "section": "components"
       }
     ],
     "dos": [
@@ -746,7 +843,9 @@
       "Do let figures fit their box (`--len`, container units, 15px floor) rather than truncate.",
       "Do keep panels flat with a 1px Hairline and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.",
       "Do keep tap targets at 44px minimum and primary controls at 48–64px.",
-      "Do show unknowns honestly: \"Unpriced\", \"not measured\", an em dash, never £0."
+      "Do show unknowns honestly: \"Unpriced\", \"not measured\", an em dash, never £0.",
+      "Do light only the next free place on the front page: its neon register tile, the phone strip's tile and the claim button's numeral show the same place.",
+      "Do fill taken register tiles with Shell Rule and outline free ones in Shell Rule."
     ],
     "donts": [
       "Don't put neon on a white ground, or use it as text on white.",

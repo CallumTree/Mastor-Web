@@ -147,6 +147,44 @@ typography:
     fontSize: "clamp(26px, 9vw, 40px)"
     fontWeight: 600
     letterSpacing: "0.28em"
+  page-display:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "clamp(24px, 9.3cqi, 60px)"
+    fontWeight: 800
+    lineHeight: 0.98
+    letterSpacing: "-0.015em"
+    fontVariation: "'wdth' 125"
+  page-headline:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "clamp(26px, 6.4vw, 44px)"
+    fontWeight: 800
+    lineHeight: 1.02
+    letterSpacing: "-0.01em"
+    fontVariation: "'wdth' 125"
+  stage-numeral:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 750
+    lineHeight: 1
+    letterSpacing: "0.02em"
+    fontVariation: "'wdth' 125"
+  register-numeral:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 750
+    lineHeight: 1
+    letterSpacing: "0"
+    fontVariation: "'wdth' 100"
+  lede:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 400
+    lineHeight: 1.45
+  body-large:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 400
+    lineHeight: 1.5
 rounded:
   sm: "6px"
   base: "10px"
@@ -322,6 +360,47 @@ components:
     backgroundColor: "{colors.panel}"
     rounded: "{rounded.xl}"
     padding: "12px 18px 28px"
+  button-claim:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.shell-text}"
+    rounded: "{rounded.md}"
+    padding: "0 20px"
+    height: "60px"
+  button-claim-hover:
+    backgroundColor: "#27272A"
+  register-board:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.shell-text}"
+    typography: "{typography.section-head}"
+    rounded: "{rounded.xl}"
+    padding: "18px 12px 14px"
+  register-tile-free:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.shell-muted}"
+    typography: "{typography.register-numeral}"
+    rounded: "{rounded.sm}"
+    height: "44px"
+  register-tile-taken:
+    backgroundColor: "{colors.shell-line}"
+    textColor: "{colors.shell-text}"
+  register-tile-next:
+    backgroundColor: "{colors.neon}"
+    textColor: "{colors.ink}"
+  register-tile-yours:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+  next-strip:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.shell-muted}"
+    typography: "{typography.row-text}"
+    rounded: "{rounded.md}"
+    padding: "8px 14px 8px 8px"
+  next-tile:
+    backgroundColor: "{colors.neon}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sm}"
+    width: "56px"
+    height: "40px"
 ---
 
 # Design System: Mastor
@@ -343,6 +422,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 - Warning colours carry meaning only, always paired with a sign shape and a word.
 - Archivo at 125% (headings, labels), 112% (figures), 100% (reading).
 - Signature: the neon progress rail along the foot of the job header.
+- The public front page lives in the same world; its one lit thing is the next free place on the Founding Register.
 - Light only, by decision.
 
 ## Colors
@@ -407,6 +487,14 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Roman Ref** (750, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
 - **Code** (JetBrains Mono 400/500, 13–14px, tabular): job refs, SoR codes, the rail's percentage.
 
+**Front page (Persuade).** The public page adds a marketing ramp on the same three widths:
+- **Page Display** (800, 125% width, uppercase, 0.98, -0.015em, balanced): the front-page headline. Sized to its column in container units (9.3cqi, 24px floor) so its longest word holds one line, capped at 60px.
+- **Page Headline** (800, 125% width, uppercase, clamp 26–44px, 1.02, balanced): front-page section heads, ink on white and white on black.
+- **Stage Numeral** (750, 125% width, 0.02em): the Roman numeral leading each row of the stages register; 26px, 32px from 560px, 40px from 1024px.
+- **Register Numeral** (750): the numerals on the Founding Register tiles. 13px at 100% width on phones; from 560px the 112% cut, fitted to the tile (`min(16px, max(13px, 132cqi / --len))`).
+- **Lede** (400, 17px, 1.45, Slate Ink, 34em measure) under the headline and in the terms list; **Body Large** (400, 18px, 1.5, Slate Ink, 62ch) for section copy, Shell Muted with white bold words on black.
+- Front-page row heads (the stage titles, the firm facts) are Row Title; front-page term labels are Label in Muted Ink.
+
 ### Named Rules
 **The Three Widths Rule.** 125% for headings and labels, 112% for figures, 100% for reading. A figure at 112% runs about 0.6em a character, so a ten-character amount (£11,879.22) fits a three-across phone cell at the 15px floor; 125% does not.
 
@@ -420,6 +508,10 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 
 **The Wordmark Rule.** Cinzel exists only in the MΛSTΘR wordmark and the opening titles.
 
+**The Page Display Rule.** Page Display and Page Headline belong to the front page. App screens keep Display and Headline; a marketing size never lands inside the app.
+
+**The Register Numeral Rule.** Under 560px the register's numerals act as labels for places, so they follow the Narrow Label Rule: one size, 13px at 100% width, every numeral (the longest is XXXVIII) clear of its tile edge. From 560px they take the 112% cut and fit their tile.
+
 ## Layout
 
 Phone first, one column. Pages cap at 720px with 16px side padding and clear the floating dock (64px plus 20px). The black job header bleeds edge to edge above the column with 24px rounded foot corners. Panels stack 12px apart, inline groups use 8px gaps, rows pad at 12–14px, panels at 16px, and section heads sit 26px above and 10px below.
@@ -431,6 +523,10 @@ The dock floats 10px in from the sides and foot (max 560px). At 1024px and up it
 Under 360px cell padding tightens. Under 300px (a phone at about 200% zoom) the layout reflows instead of scrolling sideways: grids go to one column, paired buttons and fields stack, the wordmark takes its own row (22px, tracking 0.16em), the dock wraps into rows of three 60px keys with labels kept for screen readers (the active key raised to Shell Raised, a second-row bar on its own bottom edge), the job name goes full width at 18px beneath back and setup, property and workstream amounts drop to their own line, the title block goes one figure per row, and diary photos go one across.
 
 The page keeps scroll padding the height of the dock so a focused control near the bottom scrolls clear of it.
+
+**The front page** runs on a wider column: 1200px max, 16px side padding, 32px from 760px, 48px from 1024px, between a 64px black top bar (wordmark, Sign in) and an 88px black foot. The first screen is the offer, the form and the register: stacked on a phone (28px apart, register under the form), and from 1024px a two-column grid of copy and a 460px register column 64px apart, the register sticky 24px from the top. Sections sit 56px apart on a phone and 88px from 1024px, divided by a 1px Hairline; one full-bleed Shell Black band carries the "never makes a number up" section. The sign-up fields are one column, two from 360px with the work select full width, and from 1024px two rows on a six-track grid (two wide, three narrow) so the claim button stays above a laptop's fold. The stages register is a 64px numeral / text grid (88px from 560px) and from 1024px three columns: 120px numeral, 300px title, text. The firm facts go two across from 760px; term rows become a 200px label / text grid from 760px. The register board is five places a row, four under 390px, three at 300px and under; at 300px and under the claim button drops to 16px with 14px padding and the stages go to one column.
+
+**The Ruled Register Rule.** Front-page sections are registers, not cards: a 1.5px ink rule heads each list, 1px Hairline rules separate its rows, and no panel wraps the reading content. A white 16px panel appears on the page only to show a piece of the product, such as the example variation register on the black band.
 
 ## Elevation & Depth
 
@@ -512,6 +608,25 @@ A 40px ink tile with a white numeral, the name in Row Title, and the amount righ
 ### Neon Progress Rail (signature)
 How far the job has got, along the foot of the job header on every tab. A 4px Shell Rule track with 2px ends: certified work is solid neon, the open valuation is a neon dash (4px on, 3px off) at 60%, and a 2 by 12px neon tick marks the certified point. Its label sits right in 13px mono, Shell Muted on job home and neon with just the figure on the work tabs. It grows in from the left over 0.9s (`cubic-bezier(.16, 1, .3, 1)`); under reduced motion it is simply drawn.
 
+### Founding Register (front-page signature)
+A Shell Black board, 24px corners (padding 18px 12px 14px; 22px from 560px; 26px 26px 22px from 1024px), headed by a Section Head title and a 14px tabular count in Shell Muted ("14 of 50 taken · 36 left"; never padded, and when the count can't be read it says "50 places, I to L"). Below sit fifty Roman-numeral tiles, I to L, in a 5px-gap grid: 6px corners, 44px tall (48px from 560px, 50px from 1024px). A legend of 20×16px swatches with 6px corners, 13px Shell Muted text, sits beneath.
+- **Free:** Shell Black with a 1.5px inset Shell Rule outline and a Shell Muted numeral.
+- **Taken:** filled Shell Rule with a white numeral.
+- **Next:** solid neon with an ink numeral; the page's one live thing.
+- **Yours:** white with an ink numeral and a 2px neon ring at 2px offset, shown once a place is claimed.
+- **Motion:** taken tiles fill in turn (0.45s, 14ms apart), the next tile's neon wipes in from the left (0.7s after 0.35s), and the yours ring closes in from 10px. All three are off under reduced motion.
+
+**The Register Board Rule.** Taken is filled Shell Rule, never Shell Raised: Raised is about 1.1:1 on Shell and reads as empty. Filled against outlined, and a white numeral against a muted one, keep taken and free apart; neon marks only the next place.
+
+### Next Place Strip
+Phones only (hidden from 1024px, where the register sits beside the form): a Shell Black strip with 12px corners and 8px 14px 8px 8px padding, linking to the register. It leads with a neon tile (56×40px minimum, 6px corners, the numeral in ink at 112% 800 16px), then 15px 600 Shell Muted text with the places left in white.
+
+### Claim Button
+The front page's primary: an ink block, 60px tall, 12px corners, 0 20px padding, 18px 700 white text with an arrow at the right. The next numeral sits in the label in neon at 125% 800 ("Claim place XIV"); neon on an ink fill keeps to the Neon Lives on Black Rule. Hover lightens to #27272A, press nudges 1px, and the focus ring is neon (volt on the terms-section copy, which sits on white). Disabled while claiming: Hairline fill, Slate Ink text. Full width in the form; auto width, at least 360px, at the foot of the terms. A claimed result replaces the form: a 1.5px ink-outlined 16px box led by a 40px green square with a white tick.
+
+### Warn Plate in Page Content
+The yellow warn plate (ink text, led by the SignMark triangle) is reused on the front page to show honest unknowns in the example variation register: "Unpriced" and "Not measured" in place of a value.
+
 ### Sheets
 Bottom sheets on a phone (24px top corners, rising from the edge in 0.26s; a fade under reduced motion), centred 640px dialogs on desktop. A 44px pill close button with a 1.5px ink outline. Unsaved changes raise a sticky yellow ask bar; discard is red.
 
@@ -533,6 +648,8 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 - **Do** keep panels flat with a 1px Hairline and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
 - **Do** keep tap targets at 44px minimum and primary controls at 48–64px.
 - **Do** show unknowns honestly: "Unpriced", "not measured", an em dash, never £0.
+- **Do** light only the next free place on the front page: its neon register tile, the phone strip's tile and the claim button's numeral show the same place.
+- **Do** fill taken register tiles with Shell Rule and outline free ones in Shell Rule.
 
 ### Don't:
 - **Don't** put neon on a white ground, or use it as text on white.

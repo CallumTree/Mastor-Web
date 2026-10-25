@@ -71,7 +71,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .field select:focus { outline: none; border-color: var(--ink); }
 .field select:focus-visible { outline: 2.5px solid var(--volt); outline-offset: 1px; }
 .robot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
-.err { background: var(--red); color: #fff; border-radius: 6px; padding: 10px 12px; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.err { display: flex; gap: 8px; align-items: flex-start; background: var(--red); color: #fff; border-radius: 6px; padding: 10px 12px 10px 10px; font-size: 15px; font-weight: 600; line-height: 1.35; }
 .claim { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 60px; padding: 0 20px; border: 1.5px solid var(--ink); border-radius: 12px;
   background: var(--ink); color: #fff; font-size: 18px; font-weight: 700; text-align: left; transition: background .15s, transform .08s; }
 .claim b { color: var(--neon); font-stretch: 125%; font-weight: 800; letter-spacing: .02em; margin-left: .2em; }

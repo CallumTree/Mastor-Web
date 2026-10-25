@@ -103,7 +103,7 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
       </div>
       {/* not for people: left empty by anyone who can see the form */}
       <input ref={robot} name="website" tabIndex={-1} autoComplete="off" className="robot" aria-hidden="true" />
-      {err && <p className="err" role="alert">{err}</p>}
+      {err && <p className="err" role="alert"><SignMark kind="stop" size={16} /><span>{err}</span></p>}
       <button className="claim" disabled={busy}>
         <span>{busy ? 'Claiming…' : full ? 'Join the waiting list' : next ? <>Claim place <b>{roman(next)}</b></> : 'Claim a founding place'}</span>
         <IconArrow size={22} />
