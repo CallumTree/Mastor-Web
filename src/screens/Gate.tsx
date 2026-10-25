@@ -73,7 +73,7 @@ function SignIn() {
   const resend = async () => {
     if (!email.includes('@')) { setMsg({ ok: false, text: 'Enter your email first.' }); return }
     setBusy(true)
-    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: location.origin } })
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: `${location.origin}/app` } })
     setBusy(false)
     setMsg(error ? { ok: false, text: error.message } : { ok: true, text: 'New confirmation email sent — tap the link in it, then sign in here.' })
   }
@@ -81,7 +81,7 @@ function SignIn() {
     setBusy(true); setMsg(null)
     const r = mode === 'in'
       ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
-      : await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: location.origin } })
+      : await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: `${location.origin}/app` } })
     setBusy(false)
     if (r.error && /not confirmed/i.test(r.error.message)) { setUnconfirmed(true); setMsg({ ok: false, text: 'Your email isn’t confirmed yet. Tap “Resend confirmation email” and use the link in the new email.' }) }
     else if (r.error) setMsg({ ok: false, text: r.error.message })
@@ -102,7 +102,7 @@ function SignIn() {
       {(unconfirmed || mode === 'up') && <button className="btn btn-secondary" disabled={busy} onClick={resend}>Resend confirmation email</button>}
       {mode === 'in' && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={async () => {
         if (!email.includes('@')) { setMsg({ ok: false, text: 'Enter your email first.' }); return }
-        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin })
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/app` })
         setMsg(error ? { ok: false, text: error.message } : { ok: true, text: 'Password reset email sent.' })
       }}>Forgotten password</button>}
     </div>

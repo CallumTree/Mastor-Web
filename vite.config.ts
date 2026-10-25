@@ -1,12 +1,24 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// Two pages: the front page (index.html → src/landing) for people who haven't joined, and the app
+// (app.html → src/main.tsx) at /app. Vercel serves /app and /oauth/consent from app.html (vercel.json);
+// this does the same for `vite` and `vite preview`.
+const appRoutes = (): Plugin => {
+  const rewrite = (req: { url?: string }, _res: unknown, next: () => void) => {
+    if (req.url && /^\/(app(\/|\?|#|$)|oauth\/consent)/.test(req.url)) req.url = '/app.html' + (req.url.match(/[?#].*$/)?.[0] ?? '')
+    next()
+  }
+  return { name: 'mastor-app-routes', configureServer: s => { s.middlewares.use(rewrite) }, configurePreviewServer: s => { s.middlewares.use(rewrite) } }
+}
 
 // The service worker keeps the app itself on the phone, so it opens with no signal (the data is already
 // on the device in IndexedDB). New versions wait until you choose to reload — never mid-form.
 export default defineConfig({
   plugins: [
     react(),
+    appRoutes(),
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,          // registered in main.tsx, which shows the "update ready" bar
@@ -20,8 +32,8 @@ export default defineConfig({
         // jsPDF's optional extras (html2canvas, DOMPurify, canvg — for doc.html() and SVG images) are never called by Mastor.
         globIgnores: ['**/pdf-*.js', '**/pdf.worker*.js', '**/xlsx-*.js', '**/mammoth-*.js', '**/html2canvas*.js', '**/purify*.js', '**/index.es-*.js'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallback: '/app.html',            // offline, the app opens from the phone
+        navigateFallbackAllowlist: [/^\/app(\/|$)/, /^\/oauth\//],   // the front page and /api are never served as the app
         cleanupOutdatedCaches: true,
         runtimeCaching: [{
           // the readers (and jsPDF's extras) left out of the precache: hashed file names, so once fetched they never change
@@ -39,6 +51,7 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
+      input: { index: 'index.html', app: 'app.html' },
       // name the Word reader's chunk so the precache can leave it out (see globIgnores). A manual chunk also takes in
       // the shared CommonJS helpers, which other chunks then import from it — so they get a small chunk of their own,
       // and nothing precached ever depends on the (not precached) reader.
