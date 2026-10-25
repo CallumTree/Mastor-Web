@@ -53,11 +53,12 @@ export function Consent() {
               <ul className="consent-list">
                 <li>Read your jobs, scope, VOs{who?.money === false ? '' : ', valuations and what’s owed'}, notes and site diary</li>
                 <li>Look at site photos and hear voice notes and videos — each new clip counts as one of your company’s daily AI reads</li>
+                <li>{who?.money === false ? 'Log VOs, add notes and fill in the site day' : 'Tick lines into the open valuation, log and price VOs, add notes and fill in the site day'} — when you say yes in the chat. Everything it changes is marked “by Claude” in the app</li>
               </ul>
               <h2 className="label sec">It can’t</h2>
               <ul className="consent-list">
-                <li>Issue a valuation or an invoice — that always stays in the app with a person</li>
-                <li>Change anything yet: this first version only reads</li>
+                <li>Issue a valuation or create an invoice — that always stays in the app with a person</li>
+                <li>Delete anything, or change a valuation that’s been issued</li>
               </ul>
             </div>
             <button className="btn btn-primary" disabled={busy} onClick={() => decide(true)}>{busy ? 'Connecting…' : `Allow ${app}`}</button>

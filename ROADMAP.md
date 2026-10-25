@@ -19,6 +19,7 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 | ✓ | Xero / QuickBooks invoice export | No typing invoices twice |
 | ✓ | Team invites, AI reading locked to members | Multi-user, and no one else can spend the AI credit |
 | ✓ | Claude connector, phase 1 (reads) | Mastor as a Claude connector: ask Claude about any job — figures, what needs action, scope, VOs, valuations, the site diary — and it looks at site photos and hears voice notes and videos. Signed in as yourself through Supabase Auth, same company and role as the app (operatives get no money). Use it alongside Claude's Outlook / Gmail connectors |
+| ✓ | Claude connector, phase 2 (does things) | Claude can tick priced lines into the open valuation and take them out, log VOs (with a site photo as evidence), price and update them, add notes & decisions and fill in the site day, all under the app's own rules (locked once issued, unpriced lines can't be claimed, the next VO number, operatives never touch money). It says what it will change and gets a yes first. Every change is marked “by Claude” in the app until a person saves it, and Claude's lines appear as a check before issuing. It can also give invoice figures, worked out by Mastor. Scope totals cover exactly the lines asked for, so Claude never does its own sums. **Never issues**: issuing a valuation or creating an invoice (which takes the next number) always stays in the app with a person |
 
 ## Cut or slimmed
 
@@ -29,7 +30,7 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 
 ## Next
 
-- Claude connector, phase 2 (does things): Claude can tick lines into the open valuation, log, measure and price VOs, add diary notes, and prepare valuations and invoice drafts — every change marked “by Claude” in the app and approved in the chat. **Never issues**: issuing a valuation or an invoice always stays in the app with a person (owner's rule, Oct 2026).
+- Claude connector, next: approve or reject the site-capture suggestions waiting in Vals; works-order status and sign-off.
 - Claude connector, phase 3: a scheduled morning briefing (overdue, ready to claim, what came in overnight).
 - Send to accounts: for firms whose accounts team invoices in Sage — the issued valuation (certificate, breakdown, Sage CSV) emailed to accounts; they enter the Sage invoice number back.
 - Read a WhatsApp job-group export (messages + photos) the same way as site captures.

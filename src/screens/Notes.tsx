@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { DiaryEntry, Job, NoteCategory } from '../lib/types'
 import { IconPin } from '../components/Icons'
+import { ByClaude } from '../components/Sign'
 import { NOTE_CATEGORIES } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { uid } from '../lib/db'
@@ -25,6 +26,7 @@ export function NoteRow({ n, onOpen }: { n: DiaryEntry; onOpen: () => void }) {
       <div className="row">
         <span className="label" style={{ color: catColour[n.category ?? 'Other'] }}>{n.category ?? 'Other'}</span>
         {n.pinned && <span role="img" aria-label="Pinned" style={{ color: 'var(--ink-2)', display: 'inline-flex' }}><IconPin size={14} /></span>}
+        <ByClaude at={n.byClaude} />
         <span className="grow" />
         <span className="hint">{prettyDay(n.date)}{time(n.createdAt)}</span>
       </div>

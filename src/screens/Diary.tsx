@@ -3,6 +3,7 @@ import type { DiaryEntry, Job, Variation } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { Markup } from '../components/Markup'
 import { TabMenu } from '../components/TabMenu'
+import { ByClaude } from '../components/Sign'
 import { usePhotoThumb, usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
 import { weatherFor } from '../lib/weather'
@@ -158,6 +159,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate">
             <textarea ref={noteRef} rows={4} value={note} onChange={e => typeNote(e.target.value)} onBlur={flushNote} placeholder="What happened on site today?" />
           </Field>
+          <ByClaude at={day?.byClaude} />
         </div>
       </div>
 
