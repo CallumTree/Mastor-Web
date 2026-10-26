@@ -313,9 +313,9 @@ export function Landing() {
                 <thead><tr><th scope="col">VO</th><th scope="col">Work</th><th scope="col" className="r">Value</th></tr></thead>
                 <tbody>
                   <tr><td className="ref">I</td><td>Renew rotten joists under bath<small>No. 4 bathroom · 2.40 LM @ £38.60</small></td><td className="r">£92.64</td></tr>
+                  <tr><td className="ref">II</td><td>Replace defective consumer unit<small>No. 8 hall · 1 NO @ £420.00 · sent to the client</small></td><td className="r">£420.00</td></tr>
                   <tr><td className="ref">III</td><td>Additional plaster patching to kitchen walls<small>No. 6 kitchen · 6.50 SM</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Unpriced</span></td></tr>
                   <tr><td className="ref">IV</td><td>Replace cracked lintel over the back door<small>No. 6 back door · 1.20 LM</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Unpriced</span></td></tr>
-                  <tr><td className="ref">V</td><td>Fit new external door frame<small>No. 8 rear · size to be taken</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Not measured</span></td></tr>
                 </tbody>
               </table>
             </figure>
