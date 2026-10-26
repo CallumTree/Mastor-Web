@@ -49,7 +49,7 @@ export function Forecast() {
             <label role="cell" className="fc-in"><input inputMode="decimal" value={t.often} onChange={e => set(t.id, 'often', e.target.value)} aria-label={`${t.what}: ${t.per}`} /><small>{t.per}</small></label>
             <label role="cell" className="fc-in"><input inputMode="decimal" value={t.now} onChange={e => set(t.id, 'now', e.target.value)} aria-label={`${t.what}: minutes each now`} /><small>min each now</small></label>
             <label role="cell" className="fc-in"><input inputMode="decimal" value={t.after} onChange={e => set(t.id, 'after', e.target.value)} aria-label={`${t.what}: minutes each with Mastor`} /><small>min with Mastor</small></label>
-            <span role="cell" className="fc-saved r">{hrs(saved(t))} h</span>
+            <span role="cell" className="fc-saved r"><span className="fc-saved-l">Back a month: </span>{hrs(saved(t))} h</span>
           </div>
         ))}
       </div>

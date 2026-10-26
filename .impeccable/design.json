@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-25T12:00:00+00:00",
+  "generatedAt": "2026-10-26T12:00:00+00:00",
   "title": "Design System: Mastor",
   "extensions": {
     "colorMeta": {
@@ -496,7 +496,15 @@
       },
       "stage-numeral": {
         "displayName": "Stage Numeral",
-        "purpose": "Roman numeral leading each stages-register row: 26px, 32px from 560px, 40px from 1024px."
+        "purpose": "Front-page display size: the Roman numeral leading each stages-register row; 26px, 32px from 560px, 40px from 1024px."
+      },
+      "step-numeral": {
+        "displayName": "Step Numeral",
+        "purpose": "Front-page display size: the I-III numerals leading the main feature's steps on its black slab; 28px, 125% width, white."
+      },
+      "forecast-figure": {
+        "displayName": "Forecast Figure",
+        "purpose": "Front-page display size: the hours back on the forecast's black summary, neon, clamp 36-52px, 112% width, tabular."
       },
       "register-numeral": {
         "displayName": "Register Numeral",
@@ -546,6 +554,11 @@
         "name": "scrim",
         "value": "rgba(10, 10, 11, .55)",
         "purpose": "Backdrop behind sheets and dialogs."
+      },
+      {
+        "name": "phone-ring",
+        "value": "0 0 0 1.5px #2E2E33",
+        "purpose": "A line, not elevation: the front-page phone frame's edge where it sits on a black slab. The frame itself never casts a shadow."
       }
     ],
     "motion": [
@@ -593,6 +606,11 @@
         "name": "claimed-rise",
         "value": "0.5s cubic-bezier(.16, 1, .3, 1), 8px rise and fade",
         "purpose": "The claimed confirmation replacing the form; off under reduced motion."
+      },
+      {
+        "name": "recording-in-view",
+        "value": "IntersectionObserver, threshold 0.4",
+        "purpose": "The front-page screen recording plays in view and pauses out of view; under reduced motion it waits for its Play button."
       }
     ],
     "breakpoints": [
@@ -729,9 +747,33 @@
       "name": "Next Place Strip",
       "kind": "custom",
       "refersTo": "next-strip",
-      "description": "Phones only: a black strip naming the next place on a neon tile, linking to the register below the form.",
-      "html": "<a href=\"#register\" class=\"ds-next\"><span class=\"ds-next-tile\">XIV</span><span>is the next founding place. <b>37 of 50</b> left.</span></a>",
+      "description": "A black strip between the offer and the form, at every width, naming the next place on a neon tile and linking to the founding places.",
+      "html": "<a href=\"#places\" class=\"ds-next\"><span class=\"ds-next-tile\">XIV</span><span>is the next founding place. <b>37 of 50</b> left.</span></a>",
       "css": ".ds-next { display:flex; align-items:center; gap:12px; max-width:420px; padding:8px 14px 8px 8px; border-radius:12px; background:#0A0A0B; color:#A1A1AA; text-decoration:none; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-size:15px; font-weight:600; line-height:1.3; } .ds-next b { color:#fff; font-weight:650; } .ds-next:focus-visible { outline:2.5px solid #00E5FF; outline-offset:2px; } .ds-next-tile { flex:none; display:grid; place-items:center; min-width:56px; min-height:40px; padding:0 8px; border-radius:6px; background:#00E5FF; color:#0A0A0B; font-stretch:112%; font-weight:800; font-size:16px; letter-spacing:.02em; }"
+    },
+    {
+      "name": "Phone Frame",
+      "kind": "custom",
+      "refersTo": "phone-frame",
+      "description": "Front-page device frame for the real app: a flat black slab, 34px outer and 27px screen corners (outside the radius scale: it draws a phone's hardware). Ringed in Shell Rule on a black slab; never a shadow.",
+      "html": "<div class=\"ds-onblack\"><div class=\"ds-phone\"><div class=\"ds-screen\"></div></div></div>",
+      "css": ".ds-onblack { background:#0A0A0B; padding:24px; display:inline-block; border-radius:24px; } .ds-phone { width:180px; background:#0A0A0B; border-radius:34px; padding:8px; box-shadow:0 0 0 1.5px #2E2E33; } .ds-screen { aspect-ratio:780 / 1688; border-radius:27px; background:#18181B; }"
+    },
+    {
+      "name": "Forecast Summary",
+      "kind": "card",
+      "refersTo": "forecast-summary",
+      "description": "Black summary slab: the hours back each month in neon, labelled as estimated, two ruled companion figures, and the estimates note directly beneath.",
+      "html": "<div class=\"ds-fc\"><div class=\"ds-fc-sum\"><div class=\"ds-fc-head\"><span class=\"ds-fc-l\">Back each month · estimated</span><span class=\"ds-fc-big\">31.9 hours</span></div><div class=\"ds-fc-row\"><div><span class=\"ds-fc-l\">Each year</span><span class=\"ds-fc-v\">383 hours</span></div><div><span class=\"ds-fc-l\">Working days a year</span><span class=\"ds-fc-v\">48 days</span></div></div></div><p class=\"ds-fc-note\">These are our estimates, not measurements. Put in your own numbers.</p></div>",
+      "css": ".ds-fc { max-width:360px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-fc-sum { background:#0A0A0B; color:#fff; border-radius:24px; overflow:hidden; } .ds-fc-head { padding:18px 20px 20px; } .ds-fc-l { display:block; font-stretch:125%; font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#A1A1AA; line-height:1.25; } .ds-fc-big { display:block; margin-top:6px; font-stretch:112%; font-weight:750; font-size:clamp(36px, 11vw, 52px); line-height:1.02; color:#00E5FF; font-variant-numeric:tabular-nums; } .ds-fc-row { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid #2E2E33; } .ds-fc-row > div { padding:14px 20px 16px; display:flex; flex-direction:column; justify-content:space-between; gap:6px; } .ds-fc-row > div + div { border-left:1px solid #2E2E33; } .ds-fc-v { font-stretch:112%; font-weight:750; font-size:24px; line-height:1.05; font-variant-numeric:tabular-nums; } .ds-fc-note { margin:14px 0 0; font-size:14px; line-height:1.4; color:#5E5E66; }"
+    },
+    {
+      "name": "Claimed Slab",
+      "kind": "custom",
+      "refersTo": "claimed-slab",
+      "description": "Replaces the form once a place is claimed: a black slab carrying the visitor's place as the register's white tile with the neon ring.",
+      "html": "<div class=\"ds-claimed\"><span class=\"ds-claimed-tile\">XIV</span><div><p class=\"ds-claimed-h\">Place XIV is yours.</p><p class=\"ds-claimed-t\">It's held for your firm. We'll email you to get your first job in.</p></div></div>",
+      "css": ".ds-claimed { display:flex; gap:16px; align-items:flex-start; max-width:480px; padding:20px; border-radius:16px; background:#0A0A0B; color:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-claimed p { margin:0; } .ds-claimed-tile { flex:none; display:grid; place-items:center; min-width:60px; min-height:48px; padding:0 8px; margin:2px; border-radius:6px; background:#fff; color:#0A0A0B; outline:2px solid #00E5FF; outline-offset:2px; font-stretch:112%; font-weight:800; font-size:18px; letter-spacing:.02em; } .ds-claimed-h { font-stretch:125%; font-weight:800; text-transform:uppercase; font-size:22px; line-height:1.08; } .ds-claimed-t { margin-top:8px !important; color:#A1A1AA; }"
     }
   ],
   "narrative": {
@@ -744,8 +786,8 @@
       "Warning colours carry meaning only, always paired with a sign shape and a word.",
       "Archivo at 125% (headings, labels), 112% (figures), 100% (reading).",
       "Signature: the neon progress rail along the foot of the job header.",
-      "Light only, by decision.",
-      "The public front page lives in the same world; its one lit thing is the next free place on the Founding Register."
+      "The public front page lives in the same world: real site photographs and the real app in a flat black phone frame carry it, and each black slab lights one thing (the next free founding place; the forecast's hours back).",
+      "Light only, by decision."
     ],
     "rules": [
       {
@@ -804,6 +846,21 @@
         "section": "typography"
       },
       {
+        "name": "The Page Display Rule",
+        "body": "Page Display, Page Headline and the front-page display sizes (Step Numeral 28px, Stage Numeral 26/32/40px, Forecast Figure 36–52px) belong to the front page. App screens keep Display, Headline and the figure steps; a marketing size never lands inside the app.",
+        "section": "typography"
+      },
+      {
+        "name": "The Register Numeral Rule",
+        "body": "Under 560px the register's numerals act as labels for places, so they follow the Narrow Label Rule: one size, 13px at 100% width, every numeral (the longest is XXXVIII) clear of its tile edge. From 560px they take the 112% cut and fit their tile.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ruled Register Rule",
+        "body": "Front-page sections are registers, not cards: a 1.5px ink rule heads each list, 1px Hairline rules separate its rows, and no panel wraps the reading content. A panel or frame appears on the page only to show a piece of the product: the example variation register's white 16px panel on its black slab, the desk screenshot's hairline card, the phone frames.",
+        "section": "layout"
+      },
+      {
         "name": "The Flat Board Rule",
         "body": "Nothing at rest casts a shadow. To make something stand out, make it black or give it its warning plate; only floating layers (dock, sheet) cast shadow.",
         "section": "elevation"
@@ -814,23 +871,13 @@
         "section": "elevation"
       },
       {
-        "name": "The Page Display Rule",
-        "body": "Page Display and Page Headline belong to the front page. App screens keep Display and Headline; a marketing size never lands inside the app.",
-        "section": "typography"
-      },
-      {
-        "name": "The Register Numeral Rule",
-        "body": "Under 560px the register's numerals act as labels for places, so they follow the Narrow Label Rule: one size, 13px at 100% width, every numeral (the longest is XXXVIII) clear of its tile edge. From 560px they take the 112% cut and fit their tile.",
-        "section": "typography"
-      },
-      {
-        "name": "The Ruled Register Rule",
-        "body": "Front-page sections are registers, not cards: a 1.5px ink rule heads each list, 1px Hairline rules separate its rows, and no panel wraps the reading content. A white 16px panel appears on the page only to show a piece of the product, such as the example variation register on the black band.",
-        "section": "layout"
-      },
-      {
         "name": "The Register Board Rule",
         "body": "Taken is filled Shell Rule, never Shell Raised: Raised is about 1.1:1 on Shell and reads as empty. Filled against outlined, and a white numeral against a muted one, keep taken and free apart; neon marks only the next place.",
+        "section": "components"
+      },
+      {
+        "name": "The Black Plate Rule",
+        "body": "On the front page, type never sits on a photograph except on a solid Shell Black plate. Captions go beneath the picture. (The app's play glyph over a video frame is a control, not type, and keeps its media-glyph shadow.)",
         "section": "components"
       }
     ],
@@ -844,7 +891,9 @@
       "Do keep panels flat with a 1px Hairline and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.",
       "Do keep tap targets at 44px minimum and primary controls at 48–64px.",
       "Do show unknowns honestly: \"Unpriced\", \"not measured\", an em dash, never £0.",
-      "Do light only the next free place on the front page: its neon register tile, the phone strip's tile and the claim button's numeral show the same place.",
+      "Do light one thing per black slab on the front page: the next free place (its register tile, the strip's tile and the claim button's numeral show the same place) and, on the forecast, the hours back.",
+      "Do keep type off photographs on the front page except on the solid black band plate, and credit every stock photograph in the footer.",
+      "Do show the real app in the flat black phone frame, ringed in Shell Rule when it sits on black.",
       "Do fill taken register tiles with Shell Rule and outline free ones in Shell Rule."
     ],
     "donts": [
@@ -856,7 +905,8 @@
       "Don't use Cinzel outside the wordmark and opening titles, Mono outside codes and references, or copper outside the opening-titles arch.",
       "Don't set text below 13px, or size small text inline.",
       "Don't draw an input's edge in Hairline; fields use Field Line.",
-      "Don't add a dark theme; light only is a decision."
+      "Don't add a dark theme; light only is a decision.",
+      "Don't give the phone frame a shadow, tilt or glare, or use its 34px / 27px corners on anything else."
     ]
   }
 }

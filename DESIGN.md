@@ -168,6 +168,19 @@ typography:
     lineHeight: 1
     letterSpacing: "0.02em"
     fontVariation: "'wdth' 125"
+  step-numeral:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "28px"
+    fontWeight: 750
+    lineHeight: 1
+    fontVariation: "'wdth' 125"
+  forecast-figure:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "clamp(36px, 11vw, 52px)"
+    fontWeight: 750
+    lineHeight: 1.02
+    fontFeature: "tnum"
+    fontVariation: "'wdth' 112"
   register-numeral:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "13px"
@@ -401,6 +414,51 @@ components:
     rounded: "{rounded.sm}"
     width: "56px"
     height: "40px"
+  claimed-slab:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.shell-text}"
+    rounded: "{rounded.lg}"
+    padding: "20px"
+  claimed-tile:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sm}"
+    width: "60px"
+    height: "48px"
+  phone-frame:
+    backgroundColor: "{colors.shell}"
+    rounded: "34px"
+    padding: "8px"
+  phone-screen:
+    backgroundColor: "{colors.shell-2}"
+    rounded: "27px"
+  video-button:
+    backgroundColor: "{colors.shell-2}"
+    textColor: "{colors.shell-text}"
+    rounded: "{rounded.md}"
+    padding: "0 16px 0 12px"
+    height: "44px"
+  desk-card:
+    backgroundColor: "{colors.panel}"
+    rounded: "{rounded.lg}"
+  band-plate:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.shell-text}"
+    rounded: "{rounded.lg}"
+    padding: "16px 20px"
+  forecast-summary:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.neon}"
+    typography: "{typography.forecast-figure}"
+    rounded: "{rounded.xl}"
+    padding: "18px 20px 20px"
+  forecast-input:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.md}"
+    padding: "10px 12px"
+    height: "48px"
 ---
 
 # Design System: Mastor
@@ -422,7 +480,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 - Warning colours carry meaning only, always paired with a sign shape and a word.
 - Archivo at 125% (headings, labels), 112% (figures), 100% (reading).
 - Signature: the neon progress rail along the foot of the job header.
-- The public front page lives in the same world; its one lit thing is the next free place on the Founding Register.
+- The public front page lives in the same world: real site photographs and the real app in a flat black phone frame carry it, and each black slab lights one thing (the next free founding place; the forecast's hours back).
 - Light only, by decision.
 
 ## Colors
@@ -487,13 +545,16 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Roman Ref** (750, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
 - **Code** (JetBrains Mono 400/500, 13–14px, tabular): job refs, SoR codes, the rail's percentage.
 
-**Front page (Persuade).** The public page adds a marketing ramp on the same three widths:
+**Front page (Persuade).** The public page adds a marketing ramp on the same three widths. Everything in this list is a front-page display size, not an app step:
 - **Page Display** (800, 125% width, uppercase, 0.98, -0.015em, balanced): the front-page headline. Sized to its column in container units (9.3cqi, 24px floor) so its longest word holds one line, capped at 60px.
 - **Page Headline** (800, 125% width, uppercase, clamp 26–44px, 1.02, balanced): front-page section heads, ink on white and white on black.
+- **Step Numeral** (750, 28px, 1, 125% width, white): the I–III numerals leading the main feature's steps on its black slab.
 - **Stage Numeral** (750, 125% width, 0.02em): the Roman numeral leading each row of the stages register; 26px, 32px from 560px, 40px from 1024px.
+- **Forecast Figure** (750, clamp 36–52px, 1.02, 112% width, tabular, neon): the hours back on the forecast's black summary. Its two companion figures (each year, working days) are 112% 750 white at 24px, 22px from 1024px; each row's hours back is 112% 700 18px.
 - **Register Numeral** (750): the numerals on the Founding Register tiles. 13px at 100% width on phones; from 560px the 112% cut, fitted to the tile (`min(16px, max(13px, 132cqi / --len))`).
 - **Lede** (400, 17px, 1.45, Slate Ink, 34em measure) under the headline and in the terms list; **Body Large** (400, 18px, 1.5, Slate Ink, 62ch) for section copy, Shell Muted with white bold words on black.
-- Front-page row heads (the stage titles, the firm facts) are Row Title; front-page term labels are Label in Muted Ink.
+- Front-page row heads (stage, step and screenshot titles, the firm facts) are Row Title; term labels and the forecast's column heads are Label in Muted Ink; the forecast summary's labels are Label in Shell Muted.
+- The band plate's line is 112% 750, 18px (22px from 1024px), 1.3, white, 32ch. The claimed heading is 125% 800 uppercase 22px, 1.08.
 
 ### Named Rules
 **The Three Widths Rule.** 125% for headings and labels, 112% for figures, 100% for reading. A figure at 112% runs about 0.6em a character, so a ten-character amount (£11,879.22) fits a three-across phone cell at the 15px floor; 125% does not.
@@ -508,7 +569,7 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 
 **The Wordmark Rule.** Cinzel exists only in the MΛSTΘR wordmark and the opening titles.
 
-**The Page Display Rule.** Page Display and Page Headline belong to the front page. App screens keep Display and Headline; a marketing size never lands inside the app.
+**The Page Display Rule.** Page Display, Page Headline and the front-page display sizes (Step Numeral 28px, Stage Numeral 26/32/40px, Forecast Figure 36–52px) belong to the front page. App screens keep Display, Headline and the figure steps; a marketing size never lands inside the app.
 
 **The Register Numeral Rule.** Under 560px the register's numerals act as labels for places, so they follow the Narrow Label Rule: one size, 13px at 100% width, every numeral (the longest is XXXVIII) clear of its tile edge. From 560px they take the 112% cut and fit their tile.
 
@@ -524,18 +585,29 @@ Under 360px cell padding tightens. Under 300px (a phone at about 200% zoom) the 
 
 The page keeps scroll padding the height of the dock so a focused control near the bottom scrolls clear of it.
 
-**The front page** runs on a wider column: 1200px max, 16px side padding, 32px from 760px, 48px from 1024px, between a 64px black top bar (wordmark, Sign in) and an 88px black foot. The first screen is the offer, the form and the register: stacked on a phone (28px apart, register under the form), and from 1024px a two-column grid of copy and a 460px register column 64px apart, the register sticky 24px from the top. Sections sit 56px apart on a phone and 88px from 1024px, divided by a 1px Hairline; one full-bleed Shell Black band carries the "never makes a number up" section. The sign-up fields are one column, two from 360px with the work select full width, and from 1024px two rows on a six-track grid (two wide, three narrow) so the claim button stays above a laptop's fold. The stages register is a 64px numeral / text grid (88px from 560px) and from 1024px three columns: 120px numeral, 300px title, text. The firm facts go two across from 760px; term rows become a 200px label / text grid from 760px. The register board is five places a row, four under 390px, three at 300px and under; at 300px and under the claim button drops to 16px with 14px padding and the stages go to one column.
+**The front page** runs on a wider column: 1200px max, 16px side padding, 32px from 760px, 48px from 1024px, between a 64px black top bar and an 88px black foot. The top bar carries the wordmark (22px, 26px from 1024px) and an underlined white Sign in; from 1024px three section links (600 15px white, a 2px neon underline on hover) sit before it.
 
-**The Ruled Register Rule.** Front-page sections are registers, not cards: a 1.5px ink rule heads each list, 1px Hairline rules separate its rows, and no panel wraps the reading content. A white 16px panel appears on the page only to show a piece of the product, such as the example variation register on the black band.
+The first screen: on the left the headline, the lede, the one-line offer (18px, 1.4, under a 1.5px ink rule, 34em), the black next-place strip and the sign-up form; on the right (below on a phone, 28px apart) a 4:5 site photograph with the app's job screen in a black phone frame over its lower edge, captioned beneath in 13px Muted Ink as an example job. On a phone the frame sits 12px in from the photo's right edge, 44% wide (230px max), its foot over the photo's lower edge. From 1024px the hero is copy and a 480px art column 64px apart; the frame (220px) moves to the photo's lower-left corner and hangs 56px past it into the gap, and the caption aligns right. The hero pads 22px above and 56px below, 32px and 88px from 1024px.
+
+Section order, top to bottom: the hero · who it's for (a site photograph beside the heading and a ruled list of firm facts) · the main feature on a full-bleed black slab (three ruled steps and the screen recording in a phone frame) · screenshots (four phones, then the desk screen) · a full-bleed photo band with its black plate · a job, start to finish (six ruled stages, then the Claude line) · time back (the forecast) · never makes a number up (a full-bleed black slab with the example variation register) · fifty founding places (the terms and the register board) · origin (the 44px app icon, 10px corners, beside one 15px Muted Ink line) · the black footer with its photo credits (13px Shell Muted, white underlined links).
+
+Sections pad 56px on a phone and 88px from 1024px; a white section that follows white opens with a 1px Hairline. The black slabs and the photo band run full bleed, so the page alternates white board and black slab.
+
+From 1024px: who it's for is a 520px photo beside the copy, 64px apart; the main feature is copy beside a 340px recording column, 80px apart and centred on each other; the screenshots go four across, 28px apart (on a phone they are a scroll-snapped row, each phone min(64%, 260px) wide and 18px apart, bleeding to the screen edge); the forecast is a 360px summary, sticky 24px from the top, beside its table, 48px apart; never makes a number up is copy beside a 520px register, 64px apart; founding places is the terms beside a 460px register board, 64px apart, the board sticky 24px from the top. The sign-up fields are one column, two from 360px with the work select full width, and from 1024px two rows on a six-track grid (two wide, three narrow) so the claim button stays above a laptop's fold; fields are 52px tall, 48px from 1024px. The stages register is a 64px numeral / text grid (88px from 560px) and from 1024px three columns: 120px numeral, 300px title, text. The firm facts go two across from 760px; term rows become a 200px label / text grid from 760px. The register board is five places a row, four under 390px, three at 300px and under; at 300px and under the claim button drops to 16px with 14px padding and the stages go to one column.
+
+**The Ruled Register Rule.** Front-page sections are registers, not cards: a 1.5px ink rule heads each list, 1px Hairline rules separate its rows, and no panel wraps the reading content. A panel or frame appears on the page only to show a piece of the product: the example variation register's white 16px panel on its black slab, the desk screenshot's hairline card, the phone frames.
 
 ## Elevation & Depth
 
 Flat at rest. Panels are white on white, separated by a 1px hairline, never by shadow; an expanded row tints to Open Row. Black slabs are not lifted: they read as weight, not height. Only the two things that genuinely float cast a soft, ink-tinted shadow: the dock on a phone and the sheet. The scrim behind a sheet is ink at 55%. Outlined plates (wait, slate badge) are drawn with a 1.5px inset ink line; the open property tile and the chosen mark-up swatch are ringed by a gap and an outer ring. The one text shadow sits on media: the play glyph over a video frame.
 
+The front page is flatter still: nothing on it casts a shadow. Its phone frames are black slabs like the job header, not floating objects; where a frame sits on a black slab (the main feature) its edge is drawn by a 1.5px Shell Rule ring, a line with no blur.
+
 ### Shadow Vocabulary
 - **Dock float** (`box-shadow: 0 16px 36px -14px rgba(10, 10, 11, .5)`): the floating dock on phones; removed on the desktop rail.
 - **Sheet rise** (`box-shadow: 0 -18px 48px -20px rgba(10, 10, 11, .35)`): bottom sheets; on desktop dialogs `0 32px 80px -24px rgba(10, 10, 11, .45)`.
 - **Media glyph** (`text-shadow: 0 1px 6px rgba(10, 10, 11, .6)`): a white glyph over a photo or video frame.
+- **Phone ring** (`box-shadow: 0 0 0 1.5px` Shell Rule): a line, not elevation; only around a phone frame on a black slab.
 
 ### Named Rules
 **The Flat Board Rule.** Nothing at rest casts a shadow. To make something stand out, make it black or give it its warning plate; only floating layers (dock, sheet) cast shadow.
@@ -545,6 +617,8 @@ Flat at rest. Panels are white on white, separated by a 1px hairline, never by s
 ## Shapes
 
 Softly rounded on a fixed scale: 6px for plates, badges and small tiles; 10px for choice cards, ask bars, tick boxes and thumbnails; 12px for buttons, inputs, icon buttons, action plates and the property tile; 16px for panels, figure grids, strips, the update bar and the capture key; 24px for the black slabs (job header foot, dock, title block) and sheet tops. Chips and the sheet close button are pills. The 2px ends on 4px progress bars are hairline rounding, not a scale step.
+
+**Device frame.** The front page's phone frame has 34px outer corners and 27px screen corners, with 8px of black between so the curves stay concentric. These sit outside the 6–24px scale on purpose: they draw a phone's hardware, not a Mastor surface, and nothing else uses them. Photographs inside the column take 24px corners; the full-bleed band is square.
 
 Lines: secondary controls take a 1.5px ink outline, inputs a 1.5px Field Line edge, panels a 1px Hairline. Icons are drawn on a 24-unit grid with a 1.6 stroke, square caps and mitred joins, plus one small accent dot (volt on white, neon on black).
 
@@ -609,7 +683,7 @@ A 40px ink tile with a white numeral, the name in Row Title, and the amount righ
 How far the job has got, along the foot of the job header on every tab. A 4px Shell Rule track with 2px ends: certified work is solid neon, the open valuation is a neon dash (4px on, 3px off) at 60%, and a 2 by 12px neon tick marks the certified point. Its label sits right in 13px mono, Shell Muted on job home and neon with just the figure on the work tabs. It grows in from the left over 0.9s (`cubic-bezier(.16, 1, .3, 1)`); under reduced motion it is simply drawn.
 
 ### Founding Register (front-page signature)
-A Shell Black board, 24px corners (padding 18px 12px 14px; 22px from 560px; 26px 26px 22px from 1024px), headed by a Section Head title and a 14px tabular count in Shell Muted ("14 of 50 taken · 36 left"; never padded, and when the count can't be read it says "50 places, I to L"). Below sit fifty Roman-numeral tiles, I to L, in a 5px-gap grid: 6px corners, 44px tall (48px from 560px, 50px from 1024px). A legend of 20×16px swatches with 6px corners, 13px Shell Muted text, sits beneath.
+A Shell Black board, 24px corners (padding 18px 12px 14px; 22px from 560px; 26px 26px 22px from 1024px), headed by a Section Head title and a 14px tabular count in Shell Muted ("14 of 50 taken · 36 left"; never padded, and when the count can't be read it says "50 places, I to L"). Below sit fifty Roman-numeral tiles, I to L, in a 5px-gap grid: 6px corners, 44px tall (48px from 560px, 50px from 1024px). A legend of 20×16px swatches with 6px corners, 13px Shell Muted text, sits beneath. The board closes the page, beside the founding terms.
 - **Free:** Shell Black with a 1.5px inset Shell Rule outline and a Shell Muted numeral.
 - **Taken:** filled Shell Rule with a white numeral.
 - **Next:** solid neon with an ink numeral; the page's one live thing.
@@ -619,10 +693,35 @@ A Shell Black board, 24px corners (padding 18px 12px 14px; 22px from 560px; 26px
 **The Register Board Rule.** Taken is filled Shell Rule, never Shell Raised: Raised is about 1.1:1 on Shell and reads as empty. Filled against outlined, and a white numeral against a muted one, keep taken and free apart; neon marks only the next place.
 
 ### Next Place Strip
-Phones only (hidden from 1024px, where the register sits beside the form): a Shell Black strip with 12px corners and 8px 14px 8px 8px padding, linking to the register. It leads with a neon tile (56×40px minimum, 6px corners, the numeral in ink at 112% 800 16px), then 15px 600 Shell Muted text with the places left in white.
+Between the offer and the form, at every width, while the count is known and nothing has been claimed: a Shell Black strip with 12px corners and 8px 14px 8px 8px padding, linking down to the founding places. It leads with a neon tile (56×40px minimum, 6px corners, the numeral in ink at 112% 800 16px), then 15px 600 Shell Muted text with the places left in white.
 
 ### Claim Button
-The front page's primary: an ink block, 60px tall, 12px corners, 0 20px padding, 18px 700 white text with an arrow at the right. The next numeral sits in the label in neon at 125% 800 ("Claim place XIV"); neon on an ink fill keeps to the Neon Lives on Black Rule. Hover lightens to #27272A, press nudges 1px, and the focus ring is neon (volt on the terms-section copy, which sits on white). Disabled while claiming: Hairline fill, Slate Ink text. Full width in the form; auto width, at least 360px, at the foot of the terms. A claimed result replaces the form: a 1.5px ink-outlined 16px box led by a 40px green square with a white tick.
+The front page's primary: an ink block, 60px tall, 12px corners, 0 20px padding, 18px 700 white text with an arrow at the right. The next numeral sits in the label in neon at 125% 800 ("Claim place XIV"); neon on an ink fill keeps to the Neon Lives on Black Rule. Hover lightens to #27272A, press nudges 1px, and the focus ring is neon (volt on the terms-section copy, which sits on white). Disabled while claiming: Hairline fill, Slate Ink text. Full width in the form; auto width, at least 360px, at the foot of the terms. A claimed result replaces the form (see Claimed Slab).
+
+### Claimed Slab
+What replaces the form once a place is claimed: a Shell Black slab, 16px corners, 20px padding, 16px gap. It leads with the visitor's place drawn as the register draws it: a white tile (60×48px minimum, 6px corners) with the numeral in ink at 112% 800 18px and the 2px neon ring at 2px offset. Without a place (the waiting list), a 40px green square with a white tick leads instead. The heading is 125% 800 uppercase 22px in white, the line beneath Shell Muted. It rises 8px and fades in over 0.5s; still under reduced motion.
+
+### Phone Frame
+The real app on the front page sits in a black phone frame: Shell Black, 34px outer corners, 8px all round, the screenshot or recording inside at 27px corners on Shell Raised while it loads. Flat: no shadow, tilt or glare, because it is a black slab, not a floating object. On a black slab it is drawn with the 1.5px Shell Rule ring. Used over the hero photograph, for the four screenshots, and around the screen recording.
+
+### Screen Recording
+The main feature's recording plays in a phone frame, muted, looped and inline from a poster frame. It plays when 40% of it is in view and pauses when it leaves; under reduced motion (or where the browser can't watch the viewport) it waits for its button. The Play/Pause button sits below the frame, 12px under it: 44px tall, 12px corners, Shell Raised with a 1.5px Shell Rule edge that turns neon on hover, a 20px filled play or pause shape and a 650 15px white word. A Shell Muted caption, centred, sits under the button.
+
+### Desk Screenshot
+The office dashboard sits in a white card with a 1px Hairline edge and 16px corners. On phones the image keeps a readable 900px width and the card pans sideways (keyboard-focusable, labelled); from 1024px it fills the card. A 15px Slate Ink caption with a bold lead sits beneath.
+
+### Photographs (front page)
+Real Unsplash photographs, loaded from Unsplash at the width asked for (640, 960, 1400 or 1920px, cropped there to the ratio) and credited by photographer in the footer. They stand in for the firm's own: swapping one means pointing it at a file in public/landing and dropping its credit. Crops: the hero 4:5; who it's for 4:3 on a phone and 4:5 from 1024px; the band at its own ratio, cut to clamp(320px, 56vw, 600px) high. Column photos take 24px corners and an Open Row fill while loading; the band sits on Shell Raised.
+
+**The Black Plate Rule.** On the front page, type never sits on a photograph except on a solid Shell Black plate. Captions go beneath the picture. (The app's play glyph over a video frame is a control, not type, and keeps its media-glyph shadow.)
+
+### Band Plate
+The one plate on a photograph: Shell Black, 16px corners, 16px 20px padding (20px 24px from 1024px), set inside the column 20px above the band's foot (40px from 1024px), its line in 112% 750 white at 18px (22px from 1024px), 32ch.
+
+### Time-back Forecast
+- **Summary:** a Shell Black slab, 24px corners. Its label names the figure as estimated (Label in Shell Muted), the hours back each month sit beneath in the neon Forecast Figure, and two ruled cells below give each year and working days in white. Sticky beside the table from 1024px.
+- **Note:** directly under the summary, 14px Muted Ink, saying the figures are estimates; once anything is changed a volt underlined text button (44px) puts the estimates back.
+- **Table:** a ruled register, not cards: a 1.5px ink rule heads it (from 1024px a Label header row sits over that rule) and 1px Hairline rules separate the tasks. Each row is the task (16px 650) over a 13px Muted Ink line of why, three editable inputs, and the hours back (112% 700 18px). Inputs are 48px, 12px corners, a 1.5px Field Line edge, 10px 12px padding, tabular, with a 13px Muted Ink unit line under each. On a phone the task spans the row, the inputs go three across, and the hours back gets a 14px Muted Ink "Back a month" lead; from 1024px the row is a 2fr / 1fr / 1fr / 1fr / 96px grid.
 
 ### Warn Plate in Page Content
 The yellow warn plate (ink text, led by the SignMark triangle) is reused on the front page to show honest unknowns in the example variation register: "Unpriced" and "Not measured" in place of a value.
@@ -648,7 +747,9 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 - **Do** keep panels flat with a 1px Hairline and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
 - **Do** keep tap targets at 44px minimum and primary controls at 48–64px.
 - **Do** show unknowns honestly: "Unpriced", "not measured", an em dash, never £0.
-- **Do** light only the next free place on the front page: its neon register tile, the phone strip's tile and the claim button's numeral show the same place.
+- **Do** light one thing per black slab on the front page: the next free place (its register tile, the strip's tile and the claim button's numeral show the same place) and, on the forecast, the hours back.
+- **Do** keep type off photographs on the front page except on the solid black band plate, and credit every stock photograph in the footer.
+- **Do** show the real app in the flat black phone frame, ringed in Shell Rule when it sits on black.
 - **Do** fill taken register tiles with Shell Rule and outline free ones in Shell Rule.
 
 ### Don't:
@@ -661,3 +762,4 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 - **Don't** set text below 13px, or size small text inline.
 - **Don't** draw an input's edge in Hairline; fields use Field Line.
 - **Don't** add a dark theme; light only is a decision.
+- **Don't** give the phone frame a shadow, tilt or glare, or use its 34px / 27px corners on anything else.

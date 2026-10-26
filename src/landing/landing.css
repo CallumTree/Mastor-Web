@@ -202,7 +202,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .fc-in input:focus { outline: none; border-color: var(--ink); }
 .fc-in input:focus-visible { outline: 2.5px solid var(--volt); outline-offset: 1px; }
 .fc-saved { grid-column: 1 / -1; font-stretch: 112%; font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
-.fc-saved::before { content: "Back a month: "; font-stretch: 100%; font-weight: 600; font-size: 14px; color: var(--ink-muted); }
+.fc-saved-l { font-stretch: 100%; font-weight: 600; font-size: 14px; color: var(--ink-muted); }
 .r { text-align: right; }
 .fc-note { margin-top: 14px; font-size: 14px; line-height: 1.4; color: var(--ink-muted); }
 .fc-reset { background: none; border: 0; padding: 0; color: var(--volt); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; }
@@ -299,7 +299,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   .fc-table { border-top: 0; }
   .fc-tr { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 96px; gap: 14px; align-items: center; }
   .fc-task, .fc-saved { grid-column: auto; }
-  .fc-saved::before { content: none; }
+  .fc-saved-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }   /* the column head says it; kept for screen readers */
   .places-in { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 64px; align-items: start; }
   .stages-sec { padding-top: 88px; padding-bottom: 88px; }
   .stages li { grid-template-columns: 120px minmax(0, 300px) minmax(0, 1fr); align-items: baseline; gap: 32px; padding: 26px 0; }

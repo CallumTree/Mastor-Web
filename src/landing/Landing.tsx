@@ -217,7 +217,7 @@ export function Landing() {
             <SignUp taken={taken} claimed={claimed} nameRef={nameRef} onClaimed={(c, t) => { setClaimed(c); if (t != null) setTaken(t) }} />
           </div>
           <figure className="hero-art">
-            <Pic p={PHOTOS.phone} ratio={4 / 5} sizes="(min-width: 1024px) 520px, 100vw" className="hero-photo" eager />
+            <Pic p={PHOTOS.phone} ratio={4 / 5} sizes="(min-width: 1024px) 480px, 100vw" className="hero-photo" eager />
             <Phone name="app-home" alt={SHOT_ALT['app-home']} eager />
             <figcaption>The app is shown with an example job.</figcaption>
           </figure>
