@@ -119,7 +119,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .k.taken { background: var(--shell-line); } .k.next { background: var(--neon); } .k.free { box-shadow: inset 0 0 0 1.5px var(--shell-line); }
 
 /* ---------- a job, start to finish: a register of the stages ---------- */
-.stages-sec { padding-top: 8px; padding-bottom: 64px; }
+.stages-sec { padding-top: 56px; padding-bottom: 56px; }
 .stages { list-style: none; margin: 24px 0 0; padding: 0; border-top: 1.5px solid var(--ink); }
 .stages li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 12px; padding: 20px 0; border-bottom: 1px solid var(--line); }
 .stage-n { font-stretch: 125%; font-weight: 750; font-size: 26px; line-height: 1; letter-spacing: .02em; }
@@ -167,6 +167,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .desk { margin-top: 28px; }
 .desk-pan { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; scrollbar-width: thin; }
 .desk-pan img { display: block; width: 900px; max-width: none; height: auto; }   /* phones: the office screen at a readable size, panned sideways */
+.desk-swipe { color: var(--ink-muted); }
 .desk figcaption { margin-top: 12px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
 
 /* ---------- a photo band ---------- */
@@ -175,7 +176,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .band-in { position: absolute; left: 0; right: 0; bottom: 20px; }
 .band-plate { display: inline-block; max-width: 32ch; background: var(--shell); color: #fff; padding: 16px 20px; border-radius: 16px; font-stretch: 112%; font-weight: 750; font-size: 18px; line-height: 1.3; }
 
-.claude-line { margin-top: 28px; padding: 18px 20px; border: 1.5px solid var(--ink); border-radius: 16px; font-size: 16px; line-height: 1.45; color: var(--ink-2); max-width: 72ch; }
+.claude-line { margin-top: 20px; font-size: 16px; line-height: 1.45; color: var(--ink-2); max-width: 72ch; }   /* a ruled line like the rest, not a box */
 .claude-line b { color: var(--ink); }
 
 /* ---------- time back: the forecast ---------- */
@@ -191,7 +192,13 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .fc-row > div { padding: 14px 20px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
 .fc-row > div + div { border-left: 1px solid var(--shell-line); }
 .fc-val { font-stretch: 112%; font-weight: 750; font-size: 24px; line-height: 1.05; font-variant-numeric: tabular-nums; }
-.fc-table { border-top: 1.5px solid var(--ink); }
+.fc-jobs { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0 16px; border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); }
+.fc-jobs b { display: block; font-stretch: 112%; font-weight: 750; font-size: 17px; text-transform: uppercase; letter-spacing: .02em; }
+.fc-jobs small { display: block; margin-top: 4px; font-size: 13px; line-height: 1.35; color: var(--ink-muted); max-width: 40ch; }
+.fc-jobs input { flex: none; width: 88px; min-height: 52px; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: 12px; font-stretch: 112%; font-weight: 750; font-size: 20px; text-align: center; font-variant-numeric: tabular-nums; caret-color: var(--volt); background: var(--panel); }
+.fc-jobs input:focus { outline: none; }
+.fc-jobs input:focus-visible { outline: 2.5px solid var(--volt); outline-offset: 2px; }
+.fc-table { border-top: 0; }
 .fc-tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: start; }
 .fc-tr.fc-th { display: none; }   /* phones: each input carries its own label */
 .fc-task { grid-column: 1 / -1; }
@@ -276,8 +283,8 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   .fields > :nth-child(n+3) { grid-column: span 2; }
   .field input, .field select { min-height: 48px; }
   .top-nav { display: flex; gap: 28px; margin-left: auto; margin-right: 12px; }
-  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: 64px; padding-top: 32px; padding-bottom: 88px; align-items: start; }
-  .hero-art .phone { left: -56px; right: auto; bottom: 0; width: 220px; }
+  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: 80px; padding-top: 32px; padding-bottom: 88px; align-items: start; }
+  .hero-art .phone { left: -32px; right: auto; bottom: 0; width: 220px; }
   .hero-art { padding-bottom: 0; }
   .hero-art figcaption { text-align: right; }
   .board { position: sticky; top: 24px; padding: 26px 26px 22px; }
@@ -290,6 +297,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   .desk { margin-top: 56px; }
   .desk-pan { overflow: hidden; }
   .desk-pan img { width: 100%; }
+  .desk-swipe { display: none; }
   .band-in { bottom: 40px; }
   .band-plate { font-size: 22px; padding: 20px 24px; }
   .forecast { grid-template-columns: 360px minmax(0, 1fr); gap: 48px; }
@@ -297,7 +305,9 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   .fc-side { position: sticky; top: 24px; }
   .fc-tr.fc-th { display: grid; padding: 0 0 10px; font-stretch: 125%; font-size: 13px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-muted); border-bottom: 1.5px solid var(--ink); align-items: end; }
   .fc-table { border-top: 0; }
-  .fc-tr { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 96px; gap: 14px; align-items: center; }
+  .fc-tr { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 96px; gap: 14px; align-items: start; }
+  .fc-tr.fc-th { align-items: end; }
+  .fc-saved { padding-top: 11px; }
   .fc-task, .fc-saved { grid-column: auto; }
   .fc-saved-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }   /* the column head says it; kept for screen readers */
   .places-in { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 64px; align-items: start; }

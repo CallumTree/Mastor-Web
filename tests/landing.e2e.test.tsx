@@ -21,6 +21,13 @@ describe('front page', () => {
     expect(container.querySelectorAll('.tile.taken').length).toBe(13)
     const claim = screen.getAllByRole('button', { name: /Claim place XIV/ })[0]
 
+    // the forecast: per-job counts times the jobs on the go, never a month of more days than it has
+    expect(screen.getByText('20.9 hours')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText(/Jobs on the go/), { target: { value: '1' } })
+    expect(screen.getByText('12.1 hours')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Back to our estimates' }))
+    expect(screen.getByText('20.9 hours')).toBeTruthy()
+
     fireEvent.click(claim)
     expect((await screen.findByRole('alert')).textContent).toMatch(/Add your name and your firm and an email address that works/)
     expect(sent.length).toBe(0)

@@ -269,7 +269,7 @@ export function Landing() {
             <div className="desk-pan" tabIndex={0} aria-label="The dashboard screenshot; scroll sideways on a phone">
               <img src="/landing/app-dashboard.webp" alt="Mastor on a desktop: the director’s dashboard showing £12,473.66 owed, £8,087.19 ready to claim, payments to chase and every job’s margin" width={1540} height={930} loading="lazy" decoding="async" />
             </div>
-            <figcaption><b>Back at the desk:</b> what you’re owed, what’s ready to claim and what to chase, across every job.</figcaption>
+            <figcaption><b>Back at the desk:</b> what you’re owed, what’s ready to claim and what to chase, across every job. <span className="desk-swipe">Swipe the picture to see all of it.</span></figcaption>
           </figure>
         </section>
 
