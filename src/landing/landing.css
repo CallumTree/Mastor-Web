@@ -86,10 +86,12 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .claim.on-white { width: auto; min-width: min(100%, 360px); margin-top: 28px; }
 .fine { font-size: 13px; line-height: 1.35; color: var(--ink-muted); }
 
-.claimed { display: flex; gap: 14px; align-items: flex-start; margin-top: 22px; padding: 20px; border: 1.5px solid var(--ink); border-radius: 16px; animation: rise .5s var(--ease) both; }
+.claimed { display: flex; gap: 16px; align-items: flex-start; margin-top: 22px; padding: 20px; border-radius: 16px; background: var(--shell); color: #fff; animation: rise .5s var(--ease) both; }
+/* the visitor's own place, drawn as the register draws it: white, with the neon ring */
+.claimed-tile { flex: none; display: grid; place-items: center; min-width: 60px; min-height: 48px; padding: 0 8px; margin: 2px; border-radius: 6px; background: #fff; color: var(--ink); outline: 2px solid var(--neon); outline-offset: 2px; font-stretch: 112%; font-weight: 800; font-size: 18px; letter-spacing: .02em; }
 .claimed-mark { flex: none; width: 40px; height: 40px; border-radius: 6px; background: var(--green); color: #fff; display: grid; place-items: center; --icon-dot: #fff; }
 .claimed-h { font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.08; }
-.claimed-t { margin-top: 8px; color: var(--ink-2); }
+.claimed-t { margin-top: 8px; color: var(--shell-muted); }
 @keyframes rise { from { transform: translateY(8px); opacity: 0; } }
 
 /* the register: fifty places on a black board */
@@ -124,7 +126,8 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .stages p { margin-top: 8px; color: var(--ink-2); max-width: 62ch; }
 
 /* ---------- the app in a phone: a black slab around a real screenshot ---------- */
-.phone { background: var(--shell); border-radius: 34px; padding: 8px; box-shadow: 0 24px 48px -22px rgba(10, 10, 11, .5); }
+.phone { background: var(--shell); border-radius: 34px; padding: 8px; }   /* a black slab, flat like every other: it doesn't float */
+.feature .phone { box-shadow: 0 0 0 1.5px var(--shell-line); }   /* black on black: drawn with the register's rule line */
 .phone img, .phone video { display: block; width: 100%; height: auto; border-radius: 27px; background: var(--shell-2); }
 
 /* ---------- first screen art: a photo from site with the app over it ---------- */
@@ -147,10 +150,10 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .steps li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--shell-line); }
 .step-n { font-stretch: 125%; font-weight: 750; font-size: 28px; line-height: 1; color: #fff; }
 .steps p { margin-top: 6px; color: var(--shell-muted); max-width: 52ch; }
-.feature-video { justify-self: center; width: min(100%, 320px); }
-.feature-video figcaption { color: var(--shell-muted); text-align: center; }
-.phone-video { position: relative; }
-.vid-btn { position: absolute; right: 18px; bottom: 18px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; border: 1.5px solid var(--shell-line); background: var(--shell-2); color: #fff; }
+.feature-video { justify-self: center; width: min(100%, 320px); display: grid; justify-items: center; gap: 12px; }
+.feature-video .phone { width: 100%; }
+.feature-video figcaption { color: var(--shell-muted); text-align: center; margin-top: 0; }
+.vid-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 12px; border-radius: 12px; border: 1.5px solid var(--shell-line); background: var(--shell-2); color: #fff; font-weight: 650; font-size: 15px; }
 .vid-btn:hover { border-color: var(--neon); }
 .vid-btn:focus-visible { outline-color: var(--neon); }
 
@@ -162,7 +165,8 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .shots .h3 { margin-top: 16px; }
 .shots p { margin-top: 6px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
 .desk { margin-top: 28px; }
-.desk img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 16px; }
+.desk-pan { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; scrollbar-width: thin; }
+.desk-pan img { display: block; width: 900px; max-width: none; height: auto; }   /* phones: the office screen at a readable size, panned sideways */
 .desk figcaption { margin-top: 12px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
 
 /* ---------- a photo band ---------- */
@@ -178,6 +182,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .time { border-top: 1px solid var(--line); padding: 56px 0; }
 .time .body-l { margin-top: 14px; }
 .forecast { margin-top: 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+.fc-side { min-width: 0; }
 .fc-sum { background: var(--shell); color: #fff; border-radius: 24px; overflow: hidden; }
 .fc-head { padding: 18px 20px 20px; }
 .fc-label { display: block; font-stretch: 125%; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--shell-muted); line-height: 1.25; }
@@ -238,7 +243,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .term-list dt { font-stretch: 125%; font-weight: 650; font-size: 13px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-muted); }
 .term-list dd { font-size: 17px; line-height: 1.4; }
 
-.origin { padding-bottom: 56px; }
+.origin { margin-bottom: 56px; }
 .origin { display: flex; gap: 14px; align-items: center; }
 .origin img { flex: none; border-radius: 10px; }
 .origin p { font-size: 15px; line-height: 1.45; color: var(--ink-muted); max-width: 60ch; }
@@ -278,20 +283,22 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   .board { position: sticky; top: 24px; padding: 26px 26px 22px; }
   .tile { min-height: 50px; }
   .honest, .who, .feature, .shots-sec, .time, .places { padding-top: 88px; padding-bottom: 88px; }
-  .who-in { grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 64px; align-items: center; }
+  .who-in { grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 64px; align-items: start; }
+  .who-photo { aspect-ratio: 4 / 5; }
   .feature-in { grid-template-columns: minmax(0, 1fr) 340px; gap: 80px; align-items: center; }
   .shots { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; margin: 36px 0 0; padding: 0; gap: 28px; }
   .desk { margin-top: 56px; }
+  .desk-pan { overflow: hidden; }
+  .desk-pan img { width: 100%; }
   .band-in { bottom: 40px; }
   .band-plate { font-size: 22px; padding: 20px 24px; }
   .forecast { grid-template-columns: 360px minmax(0, 1fr); gap: 48px; }
   .fc-val { font-size: 22px; }
-  .fc-sum { position: sticky; top: 24px; }
+  .fc-side { position: sticky; top: 24px; }
   .fc-tr.fc-th { display: grid; padding: 0 0 10px; font-stretch: 125%; font-size: 13px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-muted); border-bottom: 1.5px solid var(--ink); align-items: end; }
   .fc-table { border-top: 0; }
   .fc-tr { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 96px; gap: 14px; align-items: center; }
   .fc-task, .fc-saved { grid-column: auto; }
-  .fc-in small { display: none; }   /* the column heads name them */
   .fc-saved::before { content: none; }
   .places-in { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 64px; align-items: start; }
   .stages-sec { padding-top: 88px; padding-bottom: 88px; }

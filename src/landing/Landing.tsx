@@ -79,11 +79,11 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
     const { place, already, listed } = claimed
     return (
       <div className="claimed" role="status">
-        <span className="claimed-mark"><IconCheck size={22} /></span>
+        {place ? <span className="claimed-tile" aria-hidden="true">{roman(place)}</span> : <span className="claimed-mark"><IconCheck size={22} /></span>}
         <div>
           <p className="claimed-h">{place ? (already ? `Place ${roman(place)} is already yours.` : `Place ${roman(place)} is yours.`) : listed ? 'You’re on the list.' : already ? 'You’re already on the waiting list.' : 'You’re on the waiting list.'}</p>
           <p className="claimed-t">{place
-            ? 'Free through the pilot, then half price for as long as you stay. We’ll email you to get your first job in.'
+            ? 'It’s held for your firm. We’ll email you to get your first job in, and you’ll see the price before you pay anything.'
             : listed ? 'We’ve got your details and we’ll email you about your founding place.' : 'All fifty founding places have gone. We’ll email you as soon as Mastor opens to more firms.'}</p>
         </div>
       </div>
@@ -160,6 +160,7 @@ function Recording() {
     io.observe(el); return () => io.disconnect()
   }, [])
   return (
+    <>
     <div className="phone phone-video">
       <video ref={v} muted loop playsInline preload="metadata" poster="/landing/site-to-valuation-poster.webp" width={640} height={1384}
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
@@ -167,11 +168,13 @@ function Recording() {
         <source src="/landing/site-to-valuation.webm" type="video/webm" />
         <source src="/landing/site-to-valuation.mp4" type="video/mp4" />
       </video>
-      <button type="button" className="vid-btn" onClick={() => { const el = v.current; if (el) { if (el.paused) el.play().catch(() => {}); else el.pause() } }} aria-label={playing ? 'Pause the recording' : 'Play the recording'}>
+    </div>
+    <button type="button" className="vid-btn" onClick={() => { const el = v.current; if (el) { if (el.paused) el.play().catch(() => {}); else el.pause() } }} aria-label={playing ? 'Pause the recording' : 'Play the recording'}>
         {playing ? <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor" /></svg>
           : <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>}
-      </button>
-    </div>
+      <span>{playing ? 'Pause' : 'Play'}</span>
+    </button>
+    </>
   )
 }
 
@@ -263,7 +266,9 @@ export function Landing() {
             ))}
           </ul>
           <figure className="desk">
-            <img src="/landing/app-dashboard.webp" alt="Mastor on a desktop: the director’s dashboard showing £12,473.66 owed, £8,087.19 ready to claim, payments to chase and every job’s margin" width={1600} height={711} loading="lazy" decoding="async" />
+            <div className="desk-pan" tabIndex={0} aria-label="The dashboard screenshot; scroll sideways on a phone">
+              <img src="/landing/app-dashboard.webp" alt="Mastor on a desktop: the director’s dashboard showing £12,473.66 owed, £8,087.19 ready to claim, payments to chase and every job’s margin" width={1540} height={930} loading="lazy" decoding="async" />
+            </div>
             <figcaption><b>Back at the desk:</b> what you’re owed, what’s ready to claim and what to chase, across every job.</figcaption>
           </figure>
         </section>
@@ -308,8 +313,9 @@ export function Landing() {
                 <thead><tr><th scope="col">VO</th><th scope="col">Work</th><th scope="col" className="r">Value</th></tr></thead>
                 <tbody>
                   <tr><td className="ref">I</td><td>Renew rotten joists under bath<small>No. 4 bathroom · 2.40 LM @ £38.60</small></td><td className="r">£92.64</td></tr>
-                  <tr><td className="ref">III</td><td>Additional plaster patching to kitchen walls<small>No. 6 kitchen</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Not measured</span></td></tr>
+                  <tr><td className="ref">III</td><td>Additional plaster patching to kitchen walls<small>No. 6 kitchen · 6.50 SM</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Unpriced</span></td></tr>
                   <tr><td className="ref">IV</td><td>Replace cracked lintel over the back door<small>No. 6 back door · 1.20 LM</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Unpriced</span></td></tr>
+                  <tr><td className="ref">V</td><td>Fit new external door frame<small>No. 8 rear · size to be taken</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Not measured</span></td></tr>
                 </tbody>
               </table>
             </figure>
@@ -346,7 +352,7 @@ export function Landing() {
           <a href="/app" className="top-link">Sign in</a>
         </div>
         <div className="wrap credits">
-          <p>Photographs on <a href="https://unsplash.com/?utm_source=mastor&amp;utm_medium=referral">Unsplash</a> by {Object.values(PHOTOS).map((p, i, a) => <span key={p.id}><a href={p.profile}>{p.by}</a>{i < a.length - 2 ? ', ' : i === a.length - 2 ? ' and ' : '.'}</span>)} App screens show an example job; its names and figures are made up.</p>
+          <p>Photographs on <a href="https://unsplash.com/?utm_source=mastor&amp;utm_medium=referral">Unsplash</a> by {[PHOTOS.phone, PHOTOS.street, PHOTOS.roof].map((p, i, a) => <span key={p.id}><a href={p.profile}>{p.by}</a>{i < a.length - 2 ? ', ' : i === a.length - 2 ? ' and ' : '.'}</span>)} App screens show an example job; its names and figures are made up.</p>
         </div>
       </footer>
     </>

@@ -27,12 +27,17 @@ export function Forecast() {
 
   return (
     <div className="forecast">
-      <div className="fc-sum" aria-live="polite">
-        <div className="fc-head"><span className="fc-label">Back each month</span><span className="fc-big">{hrs(month)} hours</span></div>
-        <div className="fc-row">
-          <div><span className="fc-label">Each year</span><span className="fc-val">{Math.round(month * 12 / 60)} hours</span></div>
-          <div><span className="fc-label">Working days a year</span><span className="fc-val">{Math.round(month * 12 / 60 / 8)} days</span></div>
+      <div className="fc-side">
+        <div className="fc-sum" aria-live="polite">
+          <div className="fc-head"><span className="fc-label">Back each month · estimated</span><span className="fc-big">{hrs(month)} hours</span></div>
+          <div className="fc-row">
+            <div><span className="fc-label">Each year</span><span className="fc-val">{Math.round(month * 12 / 60)} hours</span></div>
+            <div><span className="fc-label">Working days a year</span><span className="fc-val">{Math.round(month * 12 / 60 / 8)} days</span></div>
+          </div>
         </div>
+        <p className="fc-note">
+          These are our estimates, not measurements. Put in your own numbers.{changed && <> <button type="button" className="fc-reset" onClick={() => setTasks(TASKS)}>Back to our estimates</button></>}
+        </p>
       </div>
       <div className="fc-table" role="table" aria-label="Time per task, now and with Mastor">
         <div className="fc-tr fc-th" role="row">
@@ -48,9 +53,6 @@ export function Forecast() {
           </div>
         ))}
       </div>
-      <p className="fc-note">
-        These are our estimates, not measurements. Put in your own numbers.{changed && <> <button type="button" className="fc-reset" onClick={() => setTasks(TASKS)}>Back to our estimates</button></>}
-      </p>
     </div>
   )
 }
