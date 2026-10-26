@@ -1,9 +1,12 @@
 /**
- * The front page: what Mastor is, and fifty numbered founding places to claim. The register shows
- * the places as they really are (counted in the database by /api/early-signup). It is never
- * padded, and when the count can't be read it doesn't guess.
+ * The front page: Mastor for firms that run their jobs from site, shown with the real app (an example
+ * job, marked as one), real photographs, a time forecast built on stated estimates, and fifty numbered
+ * founding places to claim. The register shows the places as they really are (counted in the database
+ * by /api/early-signup). It is never padded, and when the count can't be read it doesn't guess.
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Forecast } from './Forecast'
+import { PHOTOS, sized, srcSet, type Photo } from './photos'
 import { Wordmark } from '../components/Wordmark'
 import { IconArrow, IconCheck } from '../components/Icons'
 import { roman } from '../lib/format'
@@ -115,14 +118,62 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
 
 const STAGES: [string, string][] = [
   ['Works order in', 'Import the BoQ from the client’s Excel or PDF. Every rate is checked against your framework schedule of rates, and a line paid under the schedule is flagged before you start.'],
-  ['On site', 'Photos, video and voice notes go into the site diary from a phone, signal or not. Mastor reads them against the scope and suggests what’s done and what’s extra; a person approves every one.'],
+  ['On site', 'Photos, video and voice notes go into the site diary from a phone, signal or not. Weather fills itself in. Operatives log what they did without seeing a single rate.'],
   ['Variations', 'Every VO numbered and never reused, priced from your schedule, carrying the client’s own reference and showing whose court it’s in. The Variation Register goes to the client as a PDF.'],
   ['Valuation', 'Tick what’s done. Uplifts, previously certified and the cumulative total are worked out, and the questions a client QS would ask are checked before you issue the certificate.'],
   ['Invoice and paid', 'A VAT invoice from the issued valuation, on your own numbering, out to Xero or QuickBooks. What’s owed and what’s overdue, across every job.'],
   ['Margin', 'Subbie quotes, labour and materials set against what the client pays, job by job, so you know what each one makes.'],
 ]
 
-const STACK = ['Master Schedule v6.xlsx', 'Val 4 FINAL (2).xlsx', 'Subbie comparison.xlsx', 'OneNote: site notes', 'The planner', 'Sticky notes']
+const SHOTS: [string, string, string][] = [
+  ['app-home', 'The job', 'What it’s worth, what’s certified, and what needs doing next, in order.'],
+  ['app-scope', 'Scope by house', 'Every property’s lines and how much of each is claimed.'],
+  ['app-vos', 'Variations', 'The VO register, priced and chased, ready to send.'],
+  ['app-vals', 'Valuations', 'What’s certified, paid and owed, and what the open valuation will claim.'],
+]
+
+const SHOT_ALT: Record<string, string> = {
+  'app-home': 'Mastor on a phone: the example job Hill Street WHQS, with its contract, certified and margin figures and the actions needed',
+  'app-scope': 'Mastor on a phone: the scope grouped by house, 2, 4 and 6 Hill Street, with how much of each is claimed',
+  'app-vos': 'Mastor on a phone: the variations register with totals for claimed, awaiting instruction and rejected VOs',
+  'app-vals': 'Mastor on a phone: valuations, with certified, paid and owed, and the open VAL III',
+}
+
+/** A phone, drawn the way the app's own black slabs are: a screenshot of the real app inside. */
+function Phone({ name, alt, eager }: { name: string; alt: string; eager?: boolean }) {
+  return <div className="phone"><img src={`/landing/${name}.webp`} alt={alt} width={780} height={1688} loading={eager ? 'eager' : 'lazy'} decoding="async" /></div>
+}
+
+function Pic({ p, ratio, sizes, className, eager }: { p: Photo; ratio?: number; sizes: string; className?: string; eager?: boolean }) {
+  return <img className={className} src={sized(p, 1400, ratio)} srcSet={srcSet(p, ratio)} sizes={sizes} alt={p.alt} width={1400} height={Math.round(1400 / (ratio ?? p.w / p.h))} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+}
+
+/** The main feature, recorded from the real app: plays by itself unless the visitor has asked for less motion, and can always be paused. */
+function Recording() {
+  const v = useRef<HTMLVideoElement>(null)
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const el = v.current
+    // asked for less motion, or a browser without these: it waits for the play button
+    if (!el || typeof IntersectionObserver === 'undefined' || typeof matchMedia !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) el.play().catch(() => {}); else el.pause() }, { threshold: 0.4 })
+    io.observe(el); return () => io.disconnect()
+  }, [])
+  return (
+    <div className="phone phone-video">
+      <video ref={v} muted loop playsInline preload="metadata" poster="/landing/site-to-valuation-poster.webp" width={640} height={1384}
+        onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
+        aria-label="Screen recording of Mastor: a voice note from site is read against the scope, two kitchen lines go into the open valuation, and a cracked lintel becomes VO IV">
+        <source src="/landing/site-to-valuation.webm" type="video/webm" />
+        <source src="/landing/site-to-valuation.mp4" type="video/mp4" />
+      </video>
+      <button type="button" className="vid-btn" onClick={() => { const el = v.current; if (el) { if (el.paused) el.play().catch(() => {}); else el.pause() } }} aria-label={playing ? 'Pause the recording' : 'Play the recording'}>
+        {playing ? <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor" /></svg>
+          : <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>}
+      </button>
+    </div>
+  )
+}
 
 export function Landing() {
   const [taken, setTaken] = useState<number | null>(null)
@@ -141,6 +192,9 @@ export function Landing() {
       <header className="top">
         <div className="wrap top-in">
           <a href="/?site" className="top-mark" aria-label="Mastor, home"><Wordmark /></a>
+          <nav className="top-nav" aria-label="On this page">
+            <a href="#site">How it works</a><a href="#time">Time back</a><a href="#places">Founding places</a>
+          </nav>
           <a href="/app" className="top-link">Sign in</a>
         </div>
       </header>
@@ -148,28 +202,76 @@ export function Landing() {
       <main>
         <section className="hero wrap" id="claim">
           <div className="hero-copy">
-            <h1 className="h1">The master schedule, without the spreadsheets.</h1>
-            <p className="lede">Scope, site diary, variations, valuations and invoices for each job in one place, for contractors on council and housing-association framework work.</p>
+            <h1 className="h1">Run the job from site, not from a desk.</h1>
+            <p className="lede">Scope, site diary, variations, valuations and invoices for contractors on council and housing-association framework work, in the phone in your pocket. Say it or snap it on site, approve it, and it’s in the valuation.</p>
             <p className="offer"><b>Fifty founding places.</b> Free through the pilot, then half price for as long as you stay.</p>
-            {/* phones: the register is below the form, so the next place is shown up here too */}
             {next && taken != null && !claimed && (
-              <a href="#register" className="next-strip">
+              <a href="#places" className="next-strip">
                 <span className="next-tile">{roman(next)}</span>
                 <span>is the next founding place. <b>{PLACES - taken} of {PLACES}</b> left.</span>
               </a>
             )}
             <SignUp taken={taken} claimed={claimed} nameRef={nameRef} onClaimed={(c, t) => { setClaimed(c); if (t != null) setTaken(t) }} />
           </div>
-          <Register taken={taken} yours={claimed?.place ?? null} />
+          <figure className="hero-art">
+            <Pic p={PHOTOS.phone} ratio={4 / 5} sizes="(min-width: 1024px) 520px, 100vw" className="hero-photo" eager />
+            <Phone name="app-home" alt={SHOT_ALT['app-home']} eager />
+            <figcaption>The app is shown with an example job.</figcaption>
+          </figure>
         </section>
 
-        <section className="stack-sec">
-          <div className="wrap">
-            <h2 className="h2">One job, one place.</h2>
-            <ul className="stack" aria-label="What it replaces">
-              {STACK.map(s => <li key={s}><s>{s}</s></li>)}
-            </ul>
-            <p className="body-l">A job’s money and record end up across spreadsheets, notebooks, planners and the backs of envelopes. Trade job apps are built for domestic quotes and know nothing about SoR codes, uplifts, client VOs or valuations. Enterprise software is priced for firms with a commercial department. Mastor is for the firms in between: it does the in-between work a QS would, and grows with you without changing how it works.</p>
+        <section className="who">
+          <div className="wrap who-in">
+            <Pic p={PHOTOS.street} ratio={4 / 3} sizes="(min-width: 1024px) 560px, 100vw" className="who-photo" />
+            <div>
+              <h2 className="h2">For firms that are out on the job.</h2>
+              <p className="body-l">Small contractors, two to thirty people, working to a council’s or housing association’s schedule of rates. No commercial department, and the director prices the work, runs the site and chases the money.</p>
+              <dl className="facts">
+                <div><dt>The work</dt><dd>Planned programmes (PPR, WHQS, Decent Homes), responsive repairs and voids.</dd></div>
+                <div><dt>The director</dt><dd>Valuations, the VO register, invoices and what’s owed, from the van or the kitchen table.</dd></div>
+                <div><dt>Site managers</dt><dd>The diary, photos, voice notes and VOs as they’re found, with gloves on and no signal.</dd></div>
+                <div><dt>Operatives</dt><dd>Log work, photos and voice notes without ever seeing a rate, a value or a margin.</dd></div>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        <section className="feature" id="site">
+          <div className="wrap feature-in">
+            <div className="feature-copy">
+              <h2 className="h2 on-dark">The site diary runs the valuation.</h2>
+              <p className="body-l on-dark">Most apps keep your site photos. Mastor reads them, and your voice notes and videos, against the job’s own scope, then lines up what’s done and what’s extra for you to approve. It quotes the words it heard, so you can see why.</p>
+              <ol className="steps">
+                <li><span className="step-n">I</span><div><h3 className="h3 on-dark">Say it or snap it</h3><p>A voice note at No. 6: “kitchen’s fitted, lintel over the back door’s cracked.”</p></div></li>
+                <li><span className="step-n">II</span><div><h3 className="h3 on-dark">Mastor reads it</h3><p>Against the scope: the kitchen lines at No. 6 are done, and the lintel isn’t in the scope, so it’s extra work.</p></div></li>
+                <li><span className="step-n">III</span><div><h3 className="h3 on-dark">You approve it</h3><p>Two taps: the lines go into the open valuation and the lintel becomes VO IV. Nothing is claimed until you say so.</p></div></li>
+              </ol>
+            </div>
+            <figure className="feature-video">
+              <Recording />
+              <figcaption>Recorded in the app with an example job. 23 seconds, no sound.</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section className="wrap shots-sec">
+          <h2 className="h2">The whole job, in your pocket.</h2>
+          <p className="body-l">The same job on site and in the office. These are screens from the app with the example job in.</p>
+          <ul className="shots">
+            {SHOTS.map(([name, t, d]) => (
+              <li key={name}><Phone name={name} alt={SHOT_ALT[name]} /><h3 className="h3">{t}</h3><p>{d}</p></li>
+            ))}
+          </ul>
+          <figure className="desk">
+            <img src="/landing/app-dashboard.webp" alt="Mastor on a desktop: the director’s dashboard showing £12,473.66 owed, £8,087.19 ready to claim, payments to chase and every job’s margin" width={1600} height={711} loading="lazy" decoding="async" />
+            <figcaption><b>Back at the desk:</b> what you’re owed, what’s ready to claim and what to chase, across every job.</figcaption>
+          </figure>
+        </section>
+
+        <section className="band">
+          <Pic p={PHOTOS.roof} sizes="100vw" className="band-photo" />
+          <div className="wrap band-in">
+            <p className="band-plate">No signal on the roof? Mastor keeps working and catches up when you’re back in range.</p>
           </div>
         </section>
 
@@ -183,6 +285,15 @@ export function Landing() {
               </li>
             ))}
           </ol>
+          <p className="claude-line"><b>Ask Claude about any job.</b> Connect Mastor to Claude and it can read a job, tick lines into the valuation and log VOs when you say yes. Issuing always stays with you.</p>
+        </section>
+
+        <section className="time" id="time">
+          <div className="wrap">
+            <h2 className="h2">How much time it could give back.</h2>
+            <p className="body-l">Put in your own workload. Every figure here is an estimate you can change.</p>
+            <Forecast />
+          </div>
         </section>
 
         <section className="honest">
@@ -196,36 +307,30 @@ export function Landing() {
               <table>
                 <thead><tr><th scope="col">VO</th><th scope="col">Work</th><th scope="col" className="r">Value</th></tr></thead>
                 <tbody>
-                  <tr><td className="ref">I</td><td>Renew rotten joists under bath<small>No. 4 bathroom · 2.00 LM</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Unpriced</span></td></tr>
-                  <tr><td className="ref">II</td><td>Extra skirting<small>No. 3 · 3.00 LM @ £10.00 · ref PCC-1</small></td><td className="r">£30.00</td></tr>
-                  <tr><td className="ref">III</td><td>Replace cracked lintel over back door<small>No. 4 rear</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Not measured</span></td></tr>
+                  <tr><td className="ref">I</td><td>Renew rotten joists under bath<small>No. 4 bathroom · 2.40 LM @ £38.60</small></td><td className="r">£92.64</td></tr>
+                  <tr><td className="ref">III</td><td>Additional plaster patching to kitchen walls<small>No. 6 kitchen</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Not measured</span></td></tr>
+                  <tr><td className="ref">IV</td><td>Replace cracked lintel over the back door<small>No. 6 back door · 1.20 LM</small></td><td className="r"><span className="unk"><SignMark kind="warn" size={14} />Unpriced</span></td></tr>
                 </tbody>
               </table>
             </figure>
           </div>
         </section>
 
-        <section className="wrap firm-sec">
-          <h2 className="h2">Built for the whole firm.</h2>
-          <dl className="facts">
-            <div><dt>On site</dt><dd>Works on a phone in the rain with gloves on, and keeps working with no signal. It catches up when you’re back in range.</dd></div>
-            <div><dt>Operatives</dt><dd>Log work, photos and voice notes without ever seeing a rate, a value or a margin.</dd></div>
-            <div><dt>Office</dt><dd>Valuations, certificates, the VO register, invoices and what’s owed, from the same jobs the site is filling in.</dd></div>
-            <div><dt>With Claude</dt><dd>Connect Mastor to Claude and ask it about any job. It can tick lines into the valuation and log VOs when you say yes; issuing always stays with you.</dd></div>
-          </dl>
-        </section>
-
-        <section className="terms">
-          <div className="wrap terms-in">
-            <h2 className="h2">Founding terms.</h2>
-            <dl className="term-list">
-              <div><dt>Places</dt><dd>Fifty, numbered I to L, one per firm.</dd></div>
-              <div><dt>The pilot</dt><dd>Free for the whole pilot. No card needed.</dd></div>
-              <div><dt>After the pilot</dt><dd>Half the standard price, for as long as your firm stays with Mastor.</dd></div>
-              <div><dt>The price</dt><dd>Not set yet. You’ll see it before you pay anything, and you can leave whenever you like.</dd></div>
-              <div><dt>For</dt><dd>UK contractors on council and housing-association schedule-of-rates work: planned, WHQS and Decent Homes, responsive and voids.</dd></div>
-            </dl>
-            {cta && <button className="claim on-white" onClick={toForm}><span>{cta}</span><IconArrow size={22} /></button>}
+        <section className="places" id="places">
+          <div className="wrap places-in">
+            <div>
+              <h2 className="h2">Fifty founding places.</h2>
+              <p className="body-l">Mastor is opening to fifty firms first. Each gets a numbered place on the register and keeps it.</p>
+              <dl className="term-list">
+                <div><dt>Places</dt><dd>Fifty, numbered I to L, one per firm.</dd></div>
+                <div><dt>The pilot</dt><dd>Free for the whole pilot. No card needed.</dd></div>
+                <div><dt>After the pilot</dt><dd>Half the standard price, for as long as your firm stays with Mastor.</dd></div>
+                <div><dt>The price</dt><dd>Not set yet. You’ll see it before you pay anything, and you can leave whenever you like.</dd></div>
+                <div><dt>For</dt><dd>UK contractors on council and housing-association schedule-of-rates work: planned, WHQS and Decent Homes, responsive and voids.</dd></div>
+              </dl>
+              {cta && <button className="claim on-white" onClick={toForm}><span>{cta}</span><IconArrow size={22} /></button>}
+            </div>
+            <Register taken={taken} yours={claimed?.place ?? null} />
           </div>
         </section>
 
@@ -239,6 +344,9 @@ export function Landing() {
         <div className="wrap foot-in">
           <Wordmark />
           <a href="/app" className="top-link">Sign in</a>
+        </div>
+        <div className="wrap credits">
+          <p>Photographs on <a href="https://unsplash.com/?utm_source=mastor&amp;utm_medium=referral">Unsplash</a> by {Object.values(PHOTOS).map((p, i, a) => <span key={p.id}><a href={p.profile}>{p.by}</a>{i < a.length - 2 ? ', ' : i === a.length - 2 ? ' and ' : '.'}</span>)} App screens show an example job; its names and figures are made up.</p>
         </div>
       </footer>
     </>
