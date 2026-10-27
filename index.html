@@ -5,16 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0A0A0B" />
     <meta name="color-scheme" content="only light" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Mastor · Job money for framework contractors</title>
+    <meta name="description" content="Scope, site diary, variations, valuations and invoices in one place, for small UK contractors on council and housing-association schedule-of-rates work. Fifty founding places: free through the pilot, then half price for as long as you stay." />
+    <meta property="og:title" content="Mastor: the master schedule, without the spreadsheets" />
+    <meta property="og:description" content="For small contractors on council and housing-association framework work. Fifty founding places: free through the pilot, then half price for as long as you stay." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon-512.png" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
-    <title>Mastor</title>
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      // People already using Mastor skip the front page and go straight to the app: the installed app,
+      // anyone signed in on this browser, and sign-in links from emails (their tokens ride on the address).
+      // /?site always shows the front page.
+      (function () {
+        try {
+          var l = location, q = l.search, h = l.hash
+          if (/[?&]site\b/.test(q)) return
+          var fromEmail = /access_token=|refresh_token=|error_description=/.test(h) || /[?&](code|token_hash)=/.test(q)
+          var installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true
+          var signedIn = false
+          for (var i = 0; i < localStorage.length; i++) if (/^sb-.+-auth-token$/.test(localStorage.key(i) || '')) { signedIn = true; break }
+          if (fromEmail || installed || signedIn) l.replace('/app' + q + h)
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/landing/main.tsx"></script>
   </body>
 </html>

@@ -29,7 +29,7 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
   const manage = canManage(me?.role)
   const members = rows?.filter(r => r.kind === 'member') ?? []
   const invites = rows?.filter(r => r.kind === 'invite') ?? []
-  const link = location.origin
+  const link = `${location.origin}/app`   // the app itself; the front page is for people who haven't joined
   const msg = shareFor ? inviteMessage(name, shareFor.email, shareFor.role, link) : ''
   const share = async () => {
     if (navigator.share) { try { await navigator.share({ title: 'Join us on Mastor', text: msg }); return } catch { /* cancelled — fall through to copy */ } }

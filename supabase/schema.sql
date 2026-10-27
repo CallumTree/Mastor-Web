@@ -272,3 +272,56 @@ begin
     $f$, t);
   end loop;
 end $$;
+
+-- =====================================================================
+-- v7: founding sign-ups from the front page. Fifty numbered places (I to L); after that people
+-- still sign up, on the waiting list (place is null). Nobody outside reads the table: the page
+-- only claims a place and asks how many are taken, through the two functions below.
+-- =====================================================================
+create table if not exists public.early_signups (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  place int unique,                      -- 1–50 = founding place; null = waiting list
+  name text not null,
+  firm text not null,
+  email text not null,
+  phone text not null default '',
+  work text not null default '',         -- the work they do (PPR / WHQS, responsive, …)
+  size text not null default '',         -- how many people
+  note text not null default '',
+  source text not null default ''
+);
+create unique index if not exists early_signups_email on public.early_signups (lower(email));
+alter table public.early_signups enable row level security;   -- no policies: reached only through the functions
+
+create or replace function public.founding_places_taken() returns int
+language sql security definer stable set search_path = public as $$
+  select count(*)::int from public.early_signups where place is not null
+$$;
+
+-- Claim the next founding place. The same email again gets its own place back (signing up twice
+-- never takes two). Returns the place (null = waiting list) and whether it was already claimed.
+create or replace function public.claim_founding_place(p_name text, p_firm text, p_email text, p_phone text default '',
+  p_work text default '', p_size text default '', p_note text default '', p_source text default '')
+returns table (place int, already boolean)
+language plpgsql security definer set search_path = public as $$
+#variable_conflict use_column
+declare existing public.early_signups; next_place int;
+begin
+  if coalesce(trim(p_name), '') = '' or coalesce(trim(p_firm), '') = '' or p_email !~* '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
+    raise exception 'signup_invalid';
+  end if;
+  perform pg_advisory_xact_lock(hashtext('early_signups'));   -- one claim at a time, so no place is given twice
+  select * into existing from public.early_signups e where lower(e.email) = lower(trim(p_email));
+  if found then return query select existing.place, true; return; end if;
+  select count(*) + 1 into next_place from public.early_signups e where e.place is not null;
+  if next_place > 50 then next_place := null; end if;
+  insert into public.early_signups (place, name, firm, email, phone, work, size, note, source)
+  values (next_place, left(trim(p_name), 120), left(trim(p_firm), 160), left(lower(trim(p_email)), 200), left(trim(coalesce(p_phone, '')), 40),
+          left(coalesce(p_work, ''), 120), left(coalesce(p_size, ''), 40), left(coalesce(p_note, ''), 1000), left(coalesce(p_source, ''), 200));
+  return query select next_place, false;
+end $$;
+
+revoke all on function public.claim_founding_place(text, text, text, text, text, text, text, text) from public;
+grant execute on function public.founding_places_taken() to anon, authenticated;
+grant execute on function public.claim_founding_place(text, text, text, text, text, text, text, text) to anon, authenticated;
