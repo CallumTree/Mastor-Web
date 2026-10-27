@@ -141,6 +141,13 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .who-in { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
 .who-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 24px; background: var(--row-open); }
 .who .body-l { margin-top: 16px; }
+/* the work it's for: three photographs from one real build, ruled captions under each */
+.work { list-style: none; margin-top: 40px; padding-top: 0; padding-bottom: 0; display: grid; grid-auto-flow: column; grid-auto-columns: min(80%, 300px); gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+.work li { scroll-snap-align: start; min-width: 0; padding-bottom: 8px; }
+.work-photo { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 16px; background: var(--row-open); }
+.work .h3 { margin-top: 14px; padding-top: 12px; border-top: 1.5px solid var(--ink); }
+.work p { margin-top: 6px; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.fc-photo { display: none; }
 
 /* ---------- the main feature: the site diary runs the valuation ---------- */
 .feature { background: var(--shell); padding: 56px 0; }
@@ -295,6 +302,10 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   .feature-in { grid-template-columns: minmax(0, 1fr) 340px; gap: 80px; align-items: center; }
   .shots { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; margin: 36px 0 0; padding: 0; gap: 28px; }
   .desk { margin-top: 56px; }
+  .work { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; gap: 28px; margin-top: 64px; }
+  .fc-photo { display: block; margin-top: 24px; }
+  .fc-photo img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 16px; background: var(--row-open); }
+  .fc-photo figcaption { margin-top: 10px; font-size: 13px; line-height: 1.35; color: var(--ink-muted); }
   .desk-pan { overflow: hidden; }
   .desk-pan img { width: 100%; }
   .desk-swipe { display: none; }

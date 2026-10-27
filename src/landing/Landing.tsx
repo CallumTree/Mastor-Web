@@ -237,6 +237,13 @@ export function Landing() {
               </dl>
             </div>
           </div>
+          <ul className="wrap work" aria-label="The work Mastor is built for">
+            {([[PHOTOS.planned, 'Planned programmes', 'PPR, WHQS and Decent Homes: a scheme of houses, one BoQ, valuations as it goes.'],
+              [PHOTOS.repairs, 'Responsive repairs', 'A stream of small works orders, each one priced from the schedule and signed off.'],
+              [PHOTOS.voids, 'Voids', 'Empty homes turned round fast, with the evidence the client asks for.']] as const).map(([p, t, d]) => (
+              <li key={t}><Pic p={p} ratio={4 / 5} sizes="(min-width: 1024px) 360px, (min-width: 760px) 33vw, 80vw" className="work-photo" /><h3 className="h3">{t}</h3><p>{d}</p></li>
+            ))}
+          </ul>
         </section>
 
         <section className="feature" id="site">
@@ -297,7 +304,7 @@ export function Landing() {
           <div className="wrap">
             <h2 className="h2">How much time it could give back.</h2>
             <p className="body-l">Put in your own workload. Every figure here is an estimate you can change.</p>
-            <Forecast />
+            <Forecast aside={<figure className="fc-photo"><Pic p={PHOTOS.kitchen} ratio={4 / 5} sizes="360px" /><figcaption>The hours go back on site, where the work is.</figcaption></figure>} />
           </div>
         </section>
 
@@ -352,7 +359,7 @@ export function Landing() {
           <a href="/app" className="top-link">Sign in</a>
         </div>
         <div className="wrap credits">
-          <p>Photographs on <a href="https://unsplash.com/?utm_source=mastor&amp;utm_medium=referral">Unsplash</a> by {[PHOTOS.phone, PHOTOS.street, PHOTOS.roof].map((p, i, a) => <span key={p.id}><a href={p.profile}>{p.by}</a>{i < a.length - 2 ? ', ' : i === a.length - 2 ? ' and ' : '.'}</span>)} App screens show an example job; its names and figures are made up.</p>
+          <p>Photographs on <a href="https://unsplash.com/?utm_source=mastor&amp;utm_medium=referral">Unsplash</a> by {[...new Map(Object.values(PHOTOS).map(p => [p.by, p])).values()].map((p, i, a) => <span key={p.id}><a href={p.profile}>{p.by}</a>{i < a.length - 2 ? ', ' : i === a.length - 2 ? ' and ' : '.'}</span>)} App screens show an example job; its names and figures are made up.</p>
         </div>
       </footer>
     </>

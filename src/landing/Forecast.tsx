@@ -4,7 +4,7 @@
  * reads the way a builder would say it ("20 days on site a month, on each job"). Every number is an
  * estimate, shown and editable. Nothing is claimed as measured.
  */
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 interface Task { id: string; what: string; per: string; perJob: boolean; often: string; now: string; after: string; why: string }
 
@@ -23,7 +23,7 @@ const num = (v: string) => { const x = Number(v.replace(',', '.')); return Numbe
 const hrs = (min: number) => Math.round(min / 6) / 10   // one decimal place
 const typed = (v: string) => v.replace(/[^\d.,]/g, '').slice(0, 6)   // numbers only, as typed (so "1." can become "1.5")
 
-export function Forecast() {
+export function Forecast({ aside }: { aside?: ReactNode }) {
   const [jobs, setJobs] = useState(JOBS)
   const [tasks, setTasks] = useState(TASKS)
   const set = (id: string, k: 'often' | 'now' | 'after', v: string) => setTasks(ts => ts.map(t => (t.id === id ? { ...t, [k]: typed(v) } : t)))
@@ -45,6 +45,7 @@ export function Forecast() {
         <p className="fc-note">
           These are our estimates, not measurements. Put in your own numbers.{changed && <> <button type="button" className="fc-reset" onClick={() => { setJobs(JOBS); setTasks(TASKS) }}>Back to our estimates</button></>}
         </p>
+        {aside}
       </div>
       <div>
         <label className="fc-jobs">
