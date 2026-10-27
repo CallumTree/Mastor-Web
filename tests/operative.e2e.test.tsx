@@ -59,7 +59,7 @@ describe('operative', () => {
       expect(v.rate).toBe(55)   // the rate they never saw is kept
     })
 
-    click(screen.getByRole('button', { name: 'All jobs' }))
+    click(screen.getByRole('button', { name: 'Jobs' }))
     click(await screen.findByRole('button', { name: 'Settings' }))
     await screen.findByText('Open team')
     expect(screen.queryByText('Company settings')).toBeNull()

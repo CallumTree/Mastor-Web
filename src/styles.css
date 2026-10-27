@@ -46,6 +46,8 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body, #root { margin: 0; min-height: 100%; }
+/* no pull-to-refresh: a fast scroll up on a phone must never reload the app out of the job you're in */
+html, body { overscroll-behavior-y: none; }
 /* a control that takes keyboard focus near the bottom scrolls clear of the fixed bottom nav (reset for the desktop rail) */
 html { scroll-padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px); }
 body { font-family: var(--sans); background: var(--ground); color: var(--ink); font-size: 16px; line-height: 1.45; font-weight: 400; -webkit-font-smoothing: antialiased; }
@@ -166,6 +168,9 @@ label.btn { cursor: pointer; }
 .bleed { width: 100vw; margin-left: calc(50% - 50vw); }
 .jbar { background: var(--shell); color: #fff; margin-bottom: 22px; border-radius: 0 0 var(--r-xl) var(--r-xl); }
 .jbar-in { max-width: 720px; margin: 0 auto; display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px 16px; }
+/* the way back, named: a labelled button on the black header, the size of an icon button */
+.back-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 12px 0 8px; border-radius: var(--r-md); border: 1.5px solid var(--shell-line); background: var(--shell-2); color: #fff; font-weight: 650; font-size: 15px; --icon-dot: var(--neon); }
+.back-btn:hover { border-color: var(--neon); }
 .jbar-title { flex: 1; min-width: 0; padding-top: 2px; }
 .jbar-ref { font-size: 13px; color: var(--shell-muted); overflow-wrap: anywhere; }   /* a contract ref with no spaces breaks instead of running under the setup button */
 .jbar-name { font-family: var(--sans); font-stretch: 125%; font-weight: 800; font-size: clamp(22px, 6.4vw, 30px); line-height: 1.08; letter-spacing: -.02em; margin-top: 4px; overflow-wrap: break-word; }

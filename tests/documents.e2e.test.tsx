@@ -30,7 +30,7 @@ describe('job documents', () => {
     // an operative on the same device: can see and open it, not remove it
     await meta.set('company', { id: 'c', name: 'Tree & Sons', user: 'u', role: 'operative' })
     cleanup(); render(<App />)
-    click(await screen.findByRole('button', { name: /12 Castle Way/ }))
+    await screen.findByRole('heading', { name: '12 Castle Way' })   // still in the job after the reload
     await screen.findByText('CW12 RAMS rev B')
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Remove CW12 RAMS rev B' })).toBeNull())
   })

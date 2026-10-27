@@ -6,6 +6,7 @@ import { OrdersTab } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
+import { placeParam, setPlace } from '../lib/place'
 import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
@@ -47,7 +48,7 @@ function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: bool
   return (
     <header className={'jbar bleed' + (compact ? ' compact' : '')}>
       <div className="jbar-in">
-        <button className="icon-btn on-dark" onClick={onBack} aria-label="All jobs"><IconBack size={20} /></button>
+        <button className="back-btn" onClick={onBack}><IconBack size={18} /><span>Jobs</span></button>
         <div className="jbar-title">
           <div className="jbar-ref mono">{job.contractRef || job.workType}{job.status !== 'Active' ? ` · ${job.status}` : ''}</div>
           <h1 className="jbar-name">{job.name}</h1>
@@ -170,7 +171,9 @@ export function JobView(p: {
   const { job, vos, scope, vals, onBack, onSetup, onLogVariation, onEditVariation } = p
   const access = useAccess()
   const nav = NAV.filter(n => access.money || !MONEY_TABS.includes(n.tab))
-  const [tab, setTab] = useState<Tab>('home')
+  // the tab is kept in the address with the job, so a reload comes back to it
+  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return nav.find(n => n.tab === t)?.tab ?? 'home' })
+  const setTab = (t: Tab) => { setTabState(t); setPlace({ tab: t === 'home' ? null : t }) }
   const [diaryDate, setDiaryDate] = useState(dayKey())
   const [capture, setCapture] = useState(false)
   const [focusNote, setFocusNote] = useState(false)

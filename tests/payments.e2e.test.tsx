@@ -52,7 +52,7 @@ describe('payments and chasing', () => {
     await screen.findByText(/^Paid /)
 
     // dashboard
-    click(screen.getByRole('button', { name: /all jobs/i }))
+    click(screen.getByRole('button', { name: 'Jobs' }))
     click(await screen.findByRole('button', { name: /director dashboard/i }))
     await screen.findByText('Paid this year')
     await waitFor(() => expect(screen.getAllByText('£100').length).toBeGreaterThan(0))
