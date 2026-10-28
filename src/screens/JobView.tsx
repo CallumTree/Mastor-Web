@@ -203,7 +203,8 @@ export function JobView(p: {
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} />}
       </main>
-      <nav className="nav">
+      {/* the capture key sits dead centre: two tabs left, the rest right, each side the same width (left cells R fr, right cells 2 fr) */}
+      <nav className="nav" style={{ '--dock-cols': `repeat(2, ${nav.length - 2}fr) 68px repeat(${nav.length - 2}, 2fr)` } as React.CSSProperties}>
         {nav.map(({ tab: t, label: navLabel, Icon }, i) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
           <Fragment key={t}>{i === 2 && (
             <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={26} /></span></button>
