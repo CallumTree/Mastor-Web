@@ -10,12 +10,14 @@ import { ProblemBar, ProblemBoundary } from './components/Problem'
 import { Consent } from './screens/Consent'
 import { useState } from 'react'
 import './styles.css'
+import { startPressTrace } from './lib/trace'
 import { HOME, isBranchPreview, shouldGoHome } from './lib/host'
 // One live address; branch previews stay where they are so changes can be checked before merging
 if (shouldGoHome(location.hostname)) {
   location.replace(`https://${HOME}${location.pathname}${location.search}${location.hash}`)
 }
 if (isBranchPreview(location.hostname)) document.title = 'Preview · Mastor'
+startPressTrace()
 // everything renders the app
 // Claude (or another app) asking to use Mastor as you: sign in as usual, then allow or refuse
 const ConsentRoot = () => <><ProblemBoundary><Gate><Consent /></Gate></ProblemBoundary><ProblemBar /></>

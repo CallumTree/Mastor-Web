@@ -8,6 +8,8 @@ colors:
   ground: "#FFFFFF"
   panel: "#FFFFFF"
   line: "#E4E4E7"
+  edge: "rgba(0, 64, 255, 0.42)"
+  neon-hair: "rgba(0, 229, 255, 0.38)"
   field-line: "#8B8B93"
   row-open: "#F4F4F5"
   flag-row: "rgba(255, 205, 0, 0.18)"
@@ -480,6 +482,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 - Warning colours carry meaning only, always paired with a sign shape and a word.
 - Archivo at 125% (headings, labels), 112% (figures), 100% (reading).
 - Signature: the neon progress rail along the foot of the job header.
+- The live wire: every edge is one device pixel. White panels are drawn in a volt blueprint line, black slabs carry a neon contour just inside their edge, and the live thing on a screen has a pulse of current running round its contour.
 - The public front page lives in the same world: real site photographs and the real app in a flat black phone frame carry it, and each black slab lights one thing (the next free founding place; the forecast's hours back).
 - Light only, by decision.
 
@@ -504,7 +507,9 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Slate Ink** (ink-2): codes and refs beside body text, ghost buttons, disabled-button text.
 - **Muted Ink** (ink-muted): labels, hints, secondary lines.
 - **White Ground / Panel** (ground, panel): page and panels; both are pure white.
-- **Hairline** (line): dividers and panel edges only. Also the disabled fill (disabled).
+- **Hairline** (line): dividers inside panels, one device pixel. Also the disabled fill (disabled).
+- **Blueprint Edge** (edge): volt at 42%, the outer edge of a white container (panel, card, figure grid, summary strip, jobs and rate lists). One device pixel.
+- **Neon Contour** (neon-hair): neon at 38%, the contour drawn just inside a black slab (dock, title block, primary button, the job header's and cover's foot) and the edge of a dark control.
 - **Field Line** (field-line): input and choice-card edges, 3.4:1 on white.
 - **Open Row** (row-open): hover, expanded rows, secondary-button hover.
 - **Shell Black** (shell), **Shell Raised** (shell-2), **Shell Rule** (shell-line), **Shell Muted** (shell-muted): the black slabs, their raised controls, their rules and their secondary text. White (shell-text) is their primary text.
@@ -612,7 +617,9 @@ The front page is flatter still: nothing on it casts a shadow. Its phone frames 
 ### Named Rules
 **The Flat Board Rule.** Nothing at rest casts a shadow. To make something stand out, make it black or give it its warning plate; only floating layers (dock, sheet) cast shadow.
 
-**The No Glow Rule.** Neon is a flat fill or line. No glow, no blur, no glass.
+**The No Glow Rule.** Neon is a flat fill or line. No glow, no blur, no glass. The pulse is a flat line too.
+
+**The Live Wire Rule.** Lines are one device pixel (`--hair`: 1px, 0.5px on a 2x screen). The one live thing on a screen (the volt next-step plate, a hot figure cell, the dashboard title block) carries a pulse: a three-dash comet that runs once round its contour in about 3s, then rests 2s (`<Trace />`). Anything pressed (plates, buttons, chips, rows) sends two pulses from under the finger round its edge in opposite directions, meeting on the far side in 0.6s (`src/lib/trace.ts`): volt on white, neon on black and volt, white on red and green, ink on yellow. Under reduced motion the contour lights instead of running. Nothing else animates on its own.
 
 ## Shapes
 
@@ -620,7 +627,7 @@ Softly rounded on a fixed scale: 6px for plates, badges and small tiles; 10px fo
 
 **Device frame.** The front page's phone frame has 34px outer corners and 27px screen corners, with 8px of black between so the curves stay concentric. These sit outside the 6–24px scale on purpose: they draw a phone's hardware, not a Mastor surface, and nothing else uses them. Photographs inside the column take 24px corners; the full-bleed band is square.
 
-Lines: secondary controls take a 1.5px ink outline, inputs a 1.5px Field Line edge, panels a 1px Hairline. Icons are drawn on a 24-unit grid with a 1.6 stroke, square caps and mitred joins, plus one small accent dot (volt on white, neon on black).
+Lines: secondary controls (buttons, chips, icon buttons, outlined plates) take a 1px ink outline; inputs keep a 1.5px Field Line edge and tick boxes a 1.5px ink edge, for gloves and glare; register heads keep their 1.5px ink rule. Panels take a one-device-pixel Blueprint Edge and their inner rules a one-device-pixel Hairline. Black slabs take a Neon Contour 4–5px inside the edge, following the corner; on the full-bleed job header and cover it runs round the foot only and fades out towards the top. Sign plates (red, yellow, green) carry the inset border a real sign has: a one-device-pixel line 4px inside, white on red and green, ink on yellow. Icons are drawn on a 24-unit grid with a 1.6 stroke, square caps and mitred joins, plus one small accent dot (volt on white, neon on black).
 
 Status shapes follow safety signs: **stop** a red circle with a white bar, **warn** a yellow triangle with an ink exclamation, **do** a volt circle with a white arrow, **ok** a green square with a white tick; 14px in plates, larger in action plates.
 
@@ -646,7 +653,7 @@ Full-width blocks on a phone, blunt and black.
 - **Badges** are the same plate at 3px 8px for record states; "Active" and "Instructed" are the ink outline badge.
 
 ### Action Plates
-Full-width tappable signs on job home under "Action needed": 64px minimum, 14px 16px padding, 6px apart, 12px corners, a 16px 700 heading over a 14px hint, ending in a chevron. Red, yellow and green by meaning; volt for the next step. Hover darkens slightly. When nothing is outstanding, one green all-clear plate.
+Full-width tappable signs on job home under "Action needed": 64px minimum, 14px 16px padding, 6px apart, 12px corners, a 16px 700 heading over a 14px hint, ending in a chevron. Red, yellow and green by meaning, each with a sign's inset border; volt for the next step, which carries the pulse. Hover darkens slightly. When nothing is outstanding, one green all-clear plate.
 
 ### Cards / Containers
 - **Corner Style:** 16px.
@@ -656,7 +663,7 @@ Full-width tappable signs on job home under "Action needed": 64px minimum, 14px 
 - **Internal Padding:** 16px; list panels drop padding and rule their rows.
 
 ### Figures and Summary Strips
-White ruled grids of 112% figures over 125% labels. The cell carrying the figure that matters turns black with a neon figure (hot). Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work.
+White ruled grids of 112% figures over 125% labels. The cell carrying the figure that matters turns black with a neon figure (hot), and the pulse runs round its contour. Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work.
 
 ### Inputs / Fields
 - **Style:** white, 1.5px Field Line edge, 12px corners, 50px tall, 12px 14px padding, 16px text; label above in 600 14px, hint below at 13px Muted Ink.
@@ -674,7 +681,7 @@ Pills, 44px tall, 1.5px ink outline, 600 15px; selected fills ink with white tex
 - **Cover head:** Shell Black with the white wordmark centred, a 125% tracked sub-line in Shell Muted, and the sync state.
 
 ### Dashboard Title Block
-A Shell Black block, 24px corners, labels at 125% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule.
+A Shell Black block, 24px corners, labels at 125% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule. Its contour, 5px inside the edge, carries the pulse.
 
 ### Property Rows
 A 40px ink tile with a white numeral, the name in Row Title, and the amount right. Open, the row tints Open Row and the numeral turns neon inside a double ring; workstream groups indent beneath as 48px toggle rows with green progress bars.
@@ -745,7 +752,7 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 - **Do** put ink text on yellow and neon; white text on red, green, volt and black.
 - **Do** set headings and labels at 125% width, figures at 112%, and reading text at normal width.
 - **Do** let figures fit their box (`--len`, container units, 15px floor) rather than truncate.
-- **Do** keep panels flat with a 1px Hairline and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
+- **Do** keep panels flat with a one-device-pixel Blueprint Edge and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
 - **Do** keep tap targets at 44px minimum and primary controls at 48–64px.
 - **Do** show unknowns honestly: "Unpriced", "not measured", an em dash, never £0.
 - **Do** light one thing per black slab on the front page: the next free place (its register tile, the strip's tile and the claim button's numeral show the same place) and, on the forecast, the hours back.
@@ -758,6 +765,7 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 - **Don't** use green for anything but done; an active or in-progress state is an ink outline.
 - **Don't** use yellow as a text colour.
 - **Don't** add glow, glass, gradients or texture, or shadows on anything at rest.
+- **Don't** run the pulse on more than the live thing, or thicken a line past one device pixel to make it stand out; make it black instead.
 - **Don't** build a grey dashboard with a brand-blue button, or a dark neon console.
 - **Don't** use Cinzel outside the wordmark and opening titles, Mono outside codes and references, or copper outside the opening-titles arch.
 - **Don't** set text below 13px, or size small text inline.

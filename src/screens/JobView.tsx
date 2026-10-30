@@ -6,6 +6,7 @@ import { OrdersTab } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
+import { Trace } from '../components/Trace'
 import { placeParam, setPlace } from '../lib/place'
 import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus } from '../components/Icons'
 import { VariationsTab } from './Variations'
@@ -112,7 +113,8 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         {actions.map((a, i) => {
           const kind: SignKind = a.kind
           return (
-            <button key={i} className={'act act-' + kind} onClick={a.onClick}>
+            <button key={i} className={'act act-' + kind + (kind === 'do' ? ' live' : '')} onClick={a.onClick}>
+              {kind === 'do' && <Trace r={8} />}
               <SignMark kind={kind} size={22} />
               <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{a.text}</span><span className="act-h">{a.hint}</span></span>
               <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
