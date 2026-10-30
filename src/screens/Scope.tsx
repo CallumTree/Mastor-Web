@@ -25,7 +25,7 @@ export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; o
 
 export function ValBadge({ val }: { val?: Valuation }) {
   if (!val) return null
-  return <span className={'badge ' + (val.status === 'Issued' ? 'b-slate' : 'b-amber')}>{val.status === 'Issued' && <IconLock size={12} />}{valRef(val.number)}</span>
+  return <span className={'badge ' + (val.status === 'Issued' ? 'b-slate' : 'b-volt')}>{val.status === 'Issued' && <IconLock size={12} />}{valRef(val.number)}</span>
 }
 
 type Filter = 'all' | 'live' | 'claimed'

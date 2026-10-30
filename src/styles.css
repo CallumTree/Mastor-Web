@@ -15,7 +15,10 @@
   --ink: #0A0A0B; --ink-2: #3F3F46; --ink-muted: #5E5E66;
   --ground: #FFFFFF; --panel: #FFFFFF; --line: #E4E4E7; --line-strong: #0A0A0B; --row-open: #F4F4F5;
   --field-line: #8B8B93;                /* input borders: 3.4:1 on white (WCAG 1.4.11) — --line is for dividers only */
-  --flag-row: rgba(255, 205, 0, .18);   /* a row that needs checking: a wash of warning yellow */
+  --flag-row: rgba(255, 205, 0, .12);   /* a row that needs checking: a pale wash of warning yellow */
+  /* pastel grounds for status tags: the colour lives in the small mark, the tag is only tinted */
+  --tint-red: #FBE7E8; --tint-yellow: #FFF5CC; --tint-green: #E2F1E8; --tint-volt: #E8EEFF;
+  --red-ink: #9E0F1A;                   /* warning red as text on its pastel: 7:1 */
   --disabled: #E4E4E7;                  /* disabled buttons, with ink-2 text */
   /* black slabs */
   --shell: #0A0A0B; --shell-2: #18181B; --shell-line: #2E2E33; --shell-text: #FFFFFF; --shell-muted: #A1A1AA;
@@ -700,8 +703,6 @@ label.row { cursor: pointer; }
 .jbar, .cover-head { position: relative; }
 .jbar::after, .cover-head::after { content: ""; position: absolute; left: 5px; right: 5px; bottom: 5px; top: -1px; border: var(--hair) solid var(--neon-hair); border-top: 0; border-radius: 0 0 calc(var(--r-xl) - 5px) calc(var(--r-xl) - 5px); pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 70%); mask-image: linear-gradient(to bottom, transparent, #000 70%); }   /* the contour rises out of the black */
-.act-stop, .act-ok, .act-clear { outline: var(--hair) solid rgba(255, 255, 255, .55); outline-offset: -4px; }
-.act-warn { outline: var(--hair) solid rgba(10, 10, 11, .5); outline-offset: -4px; }
 .act:focus-visible { outline: 2.5px solid var(--volt); outline-offset: 2px; }
 .prop-item.open .prop-no { box-shadow: 0 0 0 2px var(--row-open), 0 0 0 calc(2px + var(--hair)) var(--ink); outline: var(--hair) solid var(--neon-hair); outline-offset: -3px; }
 
@@ -738,3 +739,40 @@ label.row { cursor: pointer; }
   .press-trace .tl { animation-duration: .3s; }
 }
 @media (min-width: 1024px) { .nav { outline: 0; } }
+
+/* ---------- quiet signals: status is a small mark, not a painted plate ----------
+   Red, yellow and green are no longer surfaces. A tag is a pale tint with ink text and the sign mark
+   (red disc, the "!" triangle, green square); an action is a white row led by the mark; the next step is
+   the one black slab, with the pulse. Meaning still comes from shape and word as well as colour. */
+.act { background: var(--panel); color: var(--ink); border: var(--hair) solid var(--edge); }
+.act:hover { filter: none; background: var(--row-open); }
+.act-stop, .act-warn, .act-ok, .act-clear { background: var(--panel); color: var(--ink); }
+.act-stop svg circle { fill: var(--red); } .act-stop svg rect { fill: #fff; }
+.act-ok svg rect:first-child, .act-clear svg rect:first-child { fill: var(--green); } .act-ok svg path, .act-clear svg path { stroke: #fff; }
+.act .act-h { color: var(--ink-muted); }
+.act .act-chev { color: var(--ink-muted); }
+.act-do { background: var(--shell); color: #fff; border-color: var(--shell); }
+.act-do:hover { background: #18181B; }
+.act-do svg circle { fill: var(--neon); } .act-do svg path { stroke: var(--ink); }
+.act-do .act-h, .act-do .act-chev { color: var(--shell-muted); }
+
+.plate, .badge { font-family: var(--sans); font-stretch: 100%; font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.plate { padding: 4px 9px 4px 6px; gap: 5px; }
+.plate-stop { background: var(--tint-red); color: var(--ink); }
+.plate-stop svg circle { fill: var(--red); } .plate-stop svg rect { fill: #fff; }
+.plate-warn { background: var(--tint-yellow); color: var(--ink); }
+.plate-ok { background: var(--tint-green); color: var(--ink); }
+.plate-ok svg rect:first-child { fill: var(--green); } .plate-ok svg path { stroke: #fff; }
+.plate-do { background: var(--tint-volt); color: var(--volt); padding-left: 9px; }
+.b-red { background: var(--tint-red); color: var(--red-ink); }
+.b-amber { background: var(--tint-yellow); color: var(--ink); }
+.b-green { background: var(--tint-green); color: var(--green); }
+.b-red:not(:has(svg))::before, .b-green:not(:has(svg))::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.b-amber:not(:has(svg))::before { content: ""; width: 13px; height: 12px; flex: none; background: var(--warn-mark) no-repeat center / contain; }
+.fig-note { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 6px; background: var(--tint-yellow); font-family: var(--sans); font-stretch: 100%; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.fig-note::before { content: ""; width: 13px; height: 12px; flex: none; background: var(--warn-mark) no-repeat center / contain; }
+.tb-val.tb-alert { background: none; color: var(--red-on-dark); padding: 0; }
+.b-volt { background: var(--tint-volt); color: var(--volt); }   /* the open valuation: current, not a warning */
+.b-volt:not(:has(svg))::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.b-quiet { background: var(--panel); }
+.act-do .act-chev { color: #fff; }

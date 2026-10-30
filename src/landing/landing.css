@@ -244,7 +244,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .vo-reg td small { display: block; margin-top: 3px; font-size: 13px; font-weight: 400; color: var(--ink-muted); }
 .vo-reg .ref { font-stretch: 125%; font-weight: 750; font-size: 19px; line-height: 1.1; width: 48px; }
 .vo-reg .r { text-align: right; padding-right: 0; white-space: nowrap; font-stretch: 112%; font-weight: 700; font-variant-numeric: tabular-nums; }
-.unk { display: inline-flex; align-items: center; gap: 6px; background: var(--yellow); color: var(--ink); border-radius: 6px; padding: 4px 9px 4px 6px; font-stretch: 112%; font-size: 13px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; line-height: 1.2; }
+.unk { display: inline-flex; align-items: center; gap: 5px; background: #FFF5CC; color: var(--ink); border-radius: 6px; padding: 4px 9px 4px 6px; font-size: 13px; font-weight: 600; line-height: 1.2; }   /* the app's quiet tag: a pale tint, the triangle mark, ink text */
 
 /* ---------- ruled fact lists ---------- */
 .facts { margin-top: 24px; display: grid; border-top: 1.5px solid var(--ink); }

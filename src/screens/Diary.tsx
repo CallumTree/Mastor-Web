@@ -27,7 +27,7 @@ function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         : <img src={url} alt={e.note || 'Site photo'} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />)}
       {e.type === 'video' && <span aria-hidden="true" className="d-thumb-play"><IconPlay size={28} /></span>}
-      {e.originalMediaId && <span className="badge b-amber" style={{ position: 'absolute', left: 4, bottom: 4 }}>Marked up</span>}
+      {e.originalMediaId && <span className="badge b-quiet" style={{ position: 'absolute', left: 4, bottom: 4 }}>Marked up</span>}
       {(e.read || e.voId) && <span style={{ position: 'absolute', left: 4, right: 4, top: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         {e.read && <span className={'badge ' + (e.read.suggestions.some(x => x.state === 'open') ? 'b-amber' : 'b-green')}>{e.read.suggestions.some(x => x.state === 'open') ? `${e.read.suggestions.filter(x => x.state === 'open').length} to review` : 'Read'}</span>}
         {e.voId && <span className="badge b-slate" style={{ marginLeft: 'auto' }}>VO</span>}

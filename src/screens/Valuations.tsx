@@ -90,7 +90,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         <div className="card" style={{ padding: 12 }}>
           <div className="row" style={{ marginBottom: 10 }}>
             <span className="ref-roman" style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{valRef(open.number)}</span>
-            <span className="badge b-amber">Open</span><span className="grow" />
+            <span className="badge b-volt">Open</span><span className="grow" />
             <span className="hint">started {ukDate(open.createdAt)}</span>
           </div>
           <SumStrip label={`${valRef(open.number)} figures`} cells={[

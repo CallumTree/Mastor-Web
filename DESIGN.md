@@ -29,6 +29,11 @@ colors:
   red-on-dark: "#FF9B9B"
   done-green: "#0B7A3E"
   arch-copper: "#C97B3F"
+  tint-red: "#FBE7E8"
+  tint-yellow: "#FFF5CC"
+  tint-green: "#E2F1E8"
+  tint-volt: "#E8EEFF"
+  red-ink: "#9E0F1A"
 typography:
   display:
     fontFamily: "'Archivo Variable', Archivo, system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -128,10 +133,9 @@ typography:
   plate:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "13px"
-    fontWeight: 700
+    fontWeight: 600
     lineHeight: 1.2
-    letterSpacing: "0.03em"
-    fontVariation: "'wdth' 112"
+    letterSpacing: "0"
   roman-ref:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "19px"
@@ -263,26 +267,26 @@ components:
     rounded: "{rounded.md}"
     size: "44px"
   plate-do:
-    backgroundColor: "{colors.volt}"
-    textColor: "{colors.shell-text}"
+    backgroundColor: "{colors.tint-volt}"
+    textColor: "{colors.volt}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
     padding: "5px 10px"
   plate-stop:
-    backgroundColor: "{colors.warn-red}"
-    textColor: "{colors.shell-text}"
+    backgroundColor: "{colors.tint-red}"
+    textColor: "{colors.ink}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
     padding: "5px 10px 5px 7px"
   plate-warn:
-    backgroundColor: "{colors.warn-yellow}"
+    backgroundColor: "{colors.tint-yellow}"
     textColor: "{colors.ink}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
     padding: "5px 10px 5px 7px"
   plate-ok:
-    backgroundColor: "{colors.done-green}"
-    textColor: "{colors.shell-text}"
+    backgroundColor: "{colors.tint-green}"
+    textColor: "{colors.ink}"
     typography: "{typography.plate}"
     rounded: "{rounded.sm}"
     padding: "5px 10px 5px 7px"
@@ -303,17 +307,17 @@ components:
     padding: "14px 16px"
     height: "64px"
   action-plate-do:
-    backgroundColor: "{colors.volt}"
+    backgroundColor: "{colors.shell}"
     textColor: "{colors.shell-text}"
   action-plate-stop:
-    backgroundColor: "{colors.warn-red}"
-    textColor: "{colors.shell-text}"
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
   action-plate-warn:
-    backgroundColor: "{colors.warn-yellow}"
+    backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
   action-plate-ok:
-    backgroundColor: "{colors.done-green}"
-    textColor: "{colors.shell-text}"
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
   panel:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
@@ -479,7 +483,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 - Pure white ground, hairline panels, no shadow at rest.
 - Black slabs for structure: job header, dock, title block, hot figures, property tiles.
 - One lit thing per screen: neon on black, volt on white.
-- Warning colours carry meaning only, always paired with a sign shape and a word.
+- Warning colours carry meaning only, and live in a small sign mark (red disc, the "!" triangle, green square) on a pale tint, never as a painted plate.
 - Archivo at 125% (headings, labels), 112% (figures), 100% (reading).
 - Signature: the neon progress rail along the foot of the job header.
 - The live wire: every edge is one device pixel. White panels are drawn in a volt blueprint line, black slabs carry a neon contour just inside their edge, and the live thing on a screen has a pulse of current running round its contour.
@@ -494,10 +498,11 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Live Neon** (neon): the one live thing on a black slab. The progress rail and its tick, the active-tab bar on the dock, the capture key, the headline figure on the title block, a hot figure cell, the open property numeral, the mark-up layer's main action, focus rings on black. 13:1 on Shell Black; it is never text or a mark on white.
 - **Volt Blue** (volt): neon's twin on white. Links, focus rings, checkbox and radio accents, the loading bar, the small accent dot in icons on white, and the next-step plate and action plate ("do this next"). Volt Press (volt-press) is its pressed state. 6.6:1 on white.
 
-### Secondary (warning plates)
-- **Warning Red** (warn-red): overdue, missing, urgent, destructive. Plates take white text; as text on white it marks a negative figure. On black it becomes **Red on Dark** (red-on-dark) for text, since the plate red is only 3:1 there.
-- **To-do Yellow** (warn-yellow): needs doing. A plate colour only, always with ink text; the flagged-row wash (flag-row) and the unsaved-changes ask bar are the same yellow.
-- **Done Green** (done-green): done, complete, certified, paid. Plates take white text; progress fills on white that measure claimed or complete work are green.
+### Secondary (warning marks)
+- **Warning Red** (warn-red): overdue, missing, urgent, destructive. The fill of the stop mark; as text on white it marks a negative figure. On its pastel (tint-red) a tag's text is ink, or Red Ink (red-ink) where the tag has no mark. On black it becomes **Red on Dark** (red-on-dark) for text.
+- **To-do Yellow** (warn-yellow): needs doing. The fill of the "!" triangle mark only, always with an ink edge and ink "!"; tags that need doing sit on its pastel (tint-yellow) with ink text, and the flagged-row wash (flag-row) is yellow at 12%.
+- **Done Green** (done-green): done, complete, certified, paid. The fill of the ok mark and the colour of done tags' text on their pastel (tint-green); progress fills on white that measure claimed or complete work are green.
+- **Pastel Tints** (tint-red, tint-yellow, tint-green, tint-volt): the grounds of status tags. Never a panel, row or button fill.
 
 ### Tertiary
 - **Arch Copper** (arch-copper): the arch and keystone in the opening titles, and the app icon. Nowhere else.
@@ -521,7 +526,7 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 
 **The Warning Meaning Rule.** Red is overdue or missing, yellow is needs doing, green is done. Green means done only: an "Active" job status is an ink outline badge, not green.
 
-**The Yellow Is a Plate Rule.** Yellow is a surface, never a text colour. "Needs doing" as text is ink beside a yellow sign.
+**The Mark Not Plate Rule.** Red, yellow and green are marks, not surfaces. A status is a small sign mark beside ink text, on a pale tint at most; no row, button or panel is painted red, yellow or green. Yellow is never a text colour. (This replaced the solid sign plates in October 2026: painted plates made the app read like a hazard register.)
 
 **The Light Only Rule.** Mastor is light only, and that is a decision (`color-scheme: only light`). The black slabs are the only dark surfaces; there is no dark palette to keep in step.
 
@@ -546,7 +551,7 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Row text** (600, 15px, 1.3, normal width): the title line of a list row (a rate, a cost, a check result, a document) and short bold messages in bars and plates — between body and note, so a row's title outranks its meta without shouting.
 - **Section Head** (750, 14px, 0.07em, 125% width, uppercase): section headings inside a screen.
 - **Label** (650–700, 13px, 0.06–0.07em, 125% width, uppercase): figure labels, sheet titles, register heads.
-- **Plate** (700, 13px, 0.03em plates / 0.05em badges, 112% width, uppercase): sign plates and badges.
+- **Tag** (600, 13px, normal width, sentence case): status tags (plates and badges).
 - **Roman Ref** (750, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
 - **Code** (JetBrains Mono 400/500, 13–14px, tabular): job refs, SoR codes, the rail's percentage.
 
@@ -615,11 +620,11 @@ The front page is flatter still: nothing on it casts a shadow. Its phone frames 
 - **Phone ring** (`box-shadow: 0 0 0 1.5px` Shell Rule): a line, not elevation; only around a phone frame on a black slab.
 
 ### Named Rules
-**The Flat Board Rule.** Nothing at rest casts a shadow. To make something stand out, make it black or give it its warning plate; only floating layers (dock, sheet) cast shadow.
+**The Flat Board Rule.** Nothing at rest casts a shadow. To make something stand out, make it black or give it its sign mark; only floating layers (dock, sheet) cast shadow.
 
 **The No Glow Rule.** Neon is a flat fill or line. No glow, no blur, no glass. The pulse is a flat line too.
 
-**The Live Wire Rule.** Lines are one device pixel (`--hair`: 1px, 0.5px on a 2x screen). The one live thing on a screen (the volt next-step plate, a hot figure cell, the dashboard title block) carries a pulse: a three-dash comet that runs once round its contour in about 3s, then rests 2s (`<Trace />`). Anything pressed (plates, buttons, chips, rows) sends two pulses from under the finger round its edge in opposite directions, meeting on the far side in 0.6s (`src/lib/trace.ts`): volt on white, neon on black and volt, white on red and green, ink on yellow. Under reduced motion the contour lights instead of running. Nothing else animates on its own.
+**The Live Wire Rule.** Lines are one device pixel (`--hair`: 1px, 0.5px on a 2x screen). The one live thing on a screen (the black next-step row, a hot figure cell, the dashboard title block) carries a pulse: a three-dash comet that runs once round its contour in about 3s, then rests 2s (`<Trace />`). Anything pressed (action rows, buttons, chips, list rows) sends two pulses from under the finger round its edge in opposite directions, meeting on the far side in 0.6s (`src/lib/trace.ts`): volt on white, neon on black. Under reduced motion the contour lights instead of running. Nothing else animates on its own.
 
 ## Shapes
 
@@ -627,7 +632,7 @@ Softly rounded on a fixed scale: 6px for plates, badges and small tiles; 10px fo
 
 **Device frame.** The front page's phone frame has 34px outer corners and 27px screen corners, with 8px of black between so the curves stay concentric. These sit outside the 6–24px scale on purpose: they draw a phone's hardware, not a Mastor surface, and nothing else uses them. Photographs inside the column take 24px corners; the full-bleed band is square.
 
-Lines: secondary controls (buttons, chips, icon buttons, outlined plates) take a 1px ink outline; inputs keep a 1.5px Field Line edge and tick boxes a 1.5px ink edge, for gloves and glare; register heads keep their 1.5px ink rule. Panels take a one-device-pixel Blueprint Edge and their inner rules a one-device-pixel Hairline. Black slabs take a Neon Contour 4–5px inside the edge, following the corner; on the full-bleed job header and cover it runs round the foot only and fades out towards the top. Sign plates (red, yellow, green) carry the inset border a real sign has: a one-device-pixel line 4px inside, white on red and green, ink on yellow. Icons are drawn on a 24-unit grid with a 1.6 stroke, square caps and mitred joins, plus one small accent dot (volt on white, neon on black).
+Lines: secondary controls (buttons, chips, icon buttons, outlined plates) take a 1px ink outline; inputs keep a 1.5px Field Line edge and tick boxes a 1.5px ink edge, for gloves and glare; register heads keep their 1.5px ink rule. Panels take a one-device-pixel Blueprint Edge and their inner rules a one-device-pixel Hairline. Black slabs take a Neon Contour 4–5px inside the edge, following the corner; on the full-bleed job header and cover it runs round the foot only and fades out towards the top. Icons are drawn on a 24-unit grid with a 1.6 stroke, square caps and mitred joins, plus one small accent dot (volt on white, neon on black).
 
 Status shapes follow safety signs: **stop** a red circle with a white bar, **warn** a yellow triangle with an ink exclamation, **do** a volt circle with a white arrow, **ok** a green square with a white tick; 14px in plates, larger in action plates.
 
@@ -645,15 +650,15 @@ Full-width blocks on a phone, blunt and black.
 - **On the mark-up layer** the main action is neon with ink text (Mark-up is a black layer).
 - **File pickers** are button labels around a visually hidden file input, so the keyboard reaches them; the focus ring draws on the label.
 
-### Sign Plates and Badges
-- **Style:** solid plate, 6px corners, 13px capitals at 112% width, led by a 14px sign mark.
-- **Stop / Warn / OK:** red, yellow (ink text), green.
-- **Do:** volt with white text and a leading arrow, naming the one next step.
-- **Wait:** white with a 1.5px inset ink line, for things waiting on someone else.
-- **Badges** are the same plate at 3px 8px for record states; "Active" and "Instructed" are the ink outline badge.
+### Status Tags (plates and badges)
+- **Style:** a pale tint, 6px corners, 13px 600 sentence case at normal width, led by the 14px sign mark (or a 7px dot in the text colour where there is no mark). Ink text.
+- **Stop / Warn / OK:** tint-red, tint-yellow, tint-green, with the red disc, the "!" triangle and the green square.
+- **Do and current:** tint-volt with volt text and a leading arrow (the next step) or dot (the open valuation).
+- **Wait:** white with a 1px inset ink line, for things waiting on someone else. "Active" and "Instructed" are this outline tag.
+- **Figure notes** ("+ 1 not priced", "Provisional") are the warn tag under a figure.
 
 ### Action Plates
-Full-width tappable signs on job home under "Action needed": 64px minimum, 14px 16px padding, 6px apart, 12px corners, a 16px 700 heading over a 14px hint, ending in a chevron. Red, yellow and green by meaning, each with a sign's inset border; volt for the next step, which carries the pulse. Hover darkens slightly. When nothing is outstanding, one green all-clear plate.
+Full-width tappable rows on job home under "Action needed": 64px minimum, 14px 16px padding, 6px apart, 12px corners, white with a Blueprint Edge, the 22px sign mark leading a 16px 700 ink heading over a 14px Muted Ink hint, ending in a Muted Ink chevron. The mark alone carries red, yellow or green. The next step is the one black slab in the list: Shell Black, white heading, a neon arrow disc, and the pulse round its contour. Hover tints Open Row. When nothing is outstanding, one all-clear row with the green mark.
 
 ### Cards / Containers
 - **Corner Style:** 16px.
@@ -732,7 +737,7 @@ The one plate on a photograph: Shell Black, 16px corners, 16px 20px padding (20p
 - **Table:** a ruled register, not cards: a Label header row (from 1024px) sits under the jobs row (from 1024px a Label header row sits over that rule) and 1px Hairline rules separate the tasks. Each row is the task (16px 650) over a 13px Muted Ink line of why, three editable inputs, and the hours back (112% 700 18px). Inputs are 48px, 12px corners, a 1.5px Field Line edge, 10px 12px padding, tabular, with a 13px Muted Ink unit line under each. On a phone the task spans the row, the inputs go three across, and the hours back gets a 14px Muted Ink "Back a month" lead; from 1024px the row is a 2fr / 1fr / 1fr / 1fr / 96px grid, top-aligned so the three inputs share a line whatever their units wrap to.
 
 ### Warn Plate in Page Content
-The yellow warn plate (ink text, led by the SignMark triangle) is reused on the front page to show honest unknowns in the example variation register: "Unpriced" and "Not measured" in place of a value.
+The warn tag (tint-yellow, ink text, led by the triangle mark) is reused on the front page to show honest unknowns in the example variation register: "Unpriced" and "Not measured" in place of a value.
 
 ### Sheets
 Bottom sheets on a phone (24px top corners, rising from the edge in 0.26s; a fade under reduced motion), centred 640px dialogs on desktop. A 44px pill close button with a 1.5px ink outline. Unsaved changes raise a sticky yellow ask bar; discard is red.
@@ -748,8 +753,8 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 ### Do:
 - **Do** keep each screen to one lit thing: neon on black, volt on white.
 - **Do** turn a white-ground element black before lighting it neon (the open property tile).
-- **Do** use red, yellow and green only for overdue, needs doing and done, each with its sign shape and a spoken word.
-- **Do** put ink text on yellow and neon; white text on red, green, volt and black.
+- **Do** use red, yellow and green only for overdue, needs doing and done, as a small sign mark with a spoken word, on a pale tint at most.
+- **Do** put ink text on neon and on the pastel tints; white text on volt and black.
 - **Do** set headings and labels at 125% width, figures at 112%, and reading text at normal width.
 - **Do** let figures fit their box (`--len`, container units, 15px floor) rather than truncate.
 - **Do** keep panels flat with a one-device-pixel Blueprint Edge and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
@@ -763,7 +768,7 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 ### Don't:
 - **Don't** put neon on a white ground, or use it as text on white.
 - **Don't** use green for anything but done; an active or in-progress state is an ink outline.
-- **Don't** use yellow as a text colour.
+- **Don't** use yellow as a text colour, or paint a row, button or panel red, yellow or green.
 - **Don't** add glow, glass, gradients or texture, or shadows on anything at rest.
 - **Don't** run the pulse on more than the live thing, or thicken a line past one device pixel to make it stand out; make it black instead.
 - **Don't** build a grey dashboard with a brand-blue button, or a dark neon console.
