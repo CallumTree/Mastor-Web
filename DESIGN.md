@@ -34,6 +34,14 @@ colors:
   tint-green: "#E2F1E8"
   tint-volt: "#E8EEFF"
   red-ink: "#9E0F1A"
+  core-clay: "#B55F40"
+  core-bronze: "#9F702F"
+  core-olive: "#79813F"
+  core-teal: "#238B8B"
+  core-slate: "#617692"
+  core-violet: "#8560AC"
+  core-rose: "#BB5C84"
+  core-graphite: "#636363"
 typography:
   display:
     fontFamily: "'Archivo Variable', Archivo, system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -488,6 +496,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 - Signature: the neon progress rail along the foot of the job header.
 - The live wire: every edge is one device pixel. White panels are drawn in a volt blueprint line, black slabs carry a neon contour just inside their edge, and the live thing on a screen has a pulse of current running round its contour.
 - The public front page lives in the same world: real site photographs and the real app in a flat black phone frame carry it, and each black slab lights one thing (the next free founding place; the forecast's hours back).
+- Trades are colour-coded like the cores of a cable: a small muted band beside each trade's name, the same on every job.
 - Light only, by decision.
 
 ## Colors
@@ -503,6 +512,17 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **To-do Yellow** (warn-yellow): needs doing. The fill of the "!" triangle mark only, always with an ink edge and ink "!"; tags that need doing sit on its pastel (tint-yellow) with ink text, and the flagged-row wash (flag-row) is yellow at 12%.
 - **Done Green** (done-green): done, complete, certified, paid. The fill of the ok mark and the colour of done tags' text on their pastel (tint-green); progress fills on white that measure claimed or complete work are green.
 - **Pastel Tints** (tint-red, tint-yellow, tint-green, tint-volt): the grounds of status tags. Never a panel, row or button fill.
+
+### Trade Cores (categorical)
+Eight muted colours, one per trade, set in OKLCH at mid lightness (4–6:1 on white) and kept clear of the warning hues, volt and neon. Named trades keep their core on every job (`src/lib/trade.ts`); any other workstream takes a stable core from its name.
+- **Clay Core** (core-clay): kitchens.
+- **Bronze Core** (core-bronze): electrics (the live core of a cable).
+- **Olive Core** (core-olive): decarbonisation, insulation, solar, ventilation.
+- **Teal Core** (core-teal): bathrooms, wet rooms, plumbing, heating.
+- **Slate Core** (core-slate): roofing, gutters, chimneys.
+- **Violet Core** (core-violet): windows and doors.
+- **Rose Core** (core-rose): painting, decorating, plastering, render.
+- **Graphite Core** (core-graphite): scaffold, prelims, general items.
 
 ### Tertiary
 - **Arch Copper** (arch-copper): the arch and keystone in the opening titles, and the app icon. Nowhere else.
@@ -527,6 +547,8 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 **The Warning Meaning Rule.** Red is overdue or missing, yellow is needs doing, green is done. Green means done only: an "Active" job status is an ink outline badge, not green.
 
 **The Mark Not Plate Rule.** Red, yellow and green are marks, not surfaces. A status is a small sign mark beside ink text, on a pale tint at most; no row, button or panel is painted red, yellow or green. Yellow is never a text colour. (This replaced the solid sign plates in October 2026: painted plates made the app read like a hazard register.)
+
+**The Cable Core Rule.** A trade's colour is only ever a 14×6px band (3px rounding) beside its name: before a workstream heading, before a valuation line's trade, before a trade in Costs, and as a bundle of bands (3px apart) leading a property row's trade list, so every trade shows even when the names are cut short. It is never a fill, a text colour, a progress bar or a status; the name always says it too.
 
 **The Light Only Rule.** Mastor is light only, and that is a decision (`color-scheme: only light`). The black slabs are the only dark surfaces; there is no dark palette to keep in step.
 
@@ -692,7 +714,7 @@ Named after a clerk of works. The last tab in the job dock (the capture key sits
 A Shell Black block, 24px corners, sentence-case labels at 112% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule. Its contour, 5px inside the edge, carries the pulse.
 
 ### Property Rows
-The name in Row Title ("No. 4" or the house's address), the workstreams beneath in Muted Ink, the amount right, and a green progress bar along the foot. No number tile: the name already says it. Open, the row tints Open Row and the chevron turns down; workstream groups indent beneath as 48px toggle rows with green progress bars.
+The name in Row Title ("No. 4" or the house's address), the workstreams beneath in Muted Ink led by a bundle of their core bands, the amount right, and a green progress bar along the foot. No number tile: the name already says it. Open, the row tints Open Row and the chevron turns down; workstream groups indent beneath as 48px toggle rows, each name led by its core band, with green progress bars.
 
 ### Neon Progress Rail (signature)
 How far the job has got, along the foot of the job header on every tab. A 4px Shell Rule track with 2px ends: certified work is solid neon, the open valuation is a neon dash (4px on, 3px off) at 60%, and a 2 by 12px neon tick marks the certified point. Its label sits right in 13px mono, Shell Muted on job home and neon with just the figure on the work tabs. It grows in from the left over 0.9s (`cubic-bezier(.16, 1, .3, 1)`); under reduced motion it is simply drawn.
@@ -763,6 +785,7 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 - **Do** let figures fit their box (`--len`, container units, 15px floor) rather than truncate.
 - **Do** keep panels flat with a one-device-pixel Blueprint Edge and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
 - **Do** keep tap targets at 44px minimum and primary controls at 48–64px.
+- **Do** lead a trade's name with its core band, and keep the band the only place its colour appears.
 - **Do** show unknowns honestly: "Unpriced", "not measured", an em dash, never £0.
 - **Do** light one thing per black slab on the front page: the next free place (its register tile, the strip's tile and the claim button's numeral show the same place) and, on the forecast, the hours back.
 - **Do** keep type off photographs on the front page except on the solid black band plate, and credit every stock photograph in the footer.

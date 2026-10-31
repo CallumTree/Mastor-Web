@@ -5,6 +5,7 @@ import { money, ukDate } from '../lib/format'
 import { uid } from '../lib/db'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { SumStrip } from '../components/Register'
+import { TradeMark } from '../components/Trade'
 import { Plate } from '../components/Sign'
 
 const KINDS: { k: CostKind; label: string }[] = [{ k: 'subbie', label: 'Subcontractor' }, { k: 'labour', label: 'Labour' }, { k: 'materials', label: 'Materials' }, { k: 'plant', label: 'Plant / hire' }, { k: 'other', label: 'Other' }]
@@ -59,7 +60,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
             {trades.map(t => (
               <div key={t.trade} className="panel trade">
                 <div className="trade-head">
-                  <b>{t.trade}</b>
+                  <b><TradeMark name={t.trade} />{t.trade}</b>
                   <span className="muted">{t.lines ? `${t.lines} line${t.lines === 1 ? '' : 's'}: ${money(t.base)} base · ${money(t.value)} with uplifts` : 'No scope lines in this trade'}{t.unpriced ? ` · + ${t.unpriced} unpriced` : ''}</span>
                 </div>
                 {t.accepted != null && <div className="trade-row"><span className="grow">Agreed / paid</span><span className="amt">{money(t.accepted)}</span>

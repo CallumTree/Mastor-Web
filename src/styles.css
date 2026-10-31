@@ -37,6 +37,9 @@
   --cream: var(--ground); --cream-line: var(--line); --cream-text: var(--ink); --cream-muted: var(--ink-muted);
   --paper: var(--ground); --paper-2: var(--panel); --ink-line: var(--line); --ink-hair: rgba(10,10,11,.06);
   --icon-dot: var(--volt);
+  /* trade cores: one muted colour per trade, as a small band beside its name only (src/lib/trade.ts); 4–6:1 on white */
+  --core-clay: #B55F40; --core-bronze: #9F702F; --core-olive: #79813F; --core-teal: #238B8B;
+  --core-slate: #617692; --core-violet: #8560AC; --core-rose: #BB5C84; --core-graphite: #636363;
   /* the live wire: every edge one device pixel thick; volt hairlines draw the board, neon hairlines the slabs */
   --hair: 1px;
   --edge: rgba(0, 64, 255, .42);        /* a container's outer edge on white: a blueprint line */
@@ -284,6 +287,11 @@ label.btn { cursor: pointer; }
 .prop-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; min-height: 64px; background: none; border: none; text-align: left; color: var(--ink); font: inherit; }
 .prop-main { flex: 1; min-width: 0; }
 .prop-name { font-family: var(--cond); font-stretch: 112%; font-weight: 750; font-size: 17px; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; }
+.core { display: inline-block; flex: none; width: 14px; height: 6px; margin-right: 6px; border-radius: 3px; vertical-align: 0.12em; background: var(--core-graphite); }
+.core-clay { background: var(--core-clay); } .core-bronze { background: var(--core-bronze); } .core-olive { background: var(--core-olive); } .core-teal { background: var(--core-teal); }
+.core-slate { background: var(--core-slate); } .core-violet { background: var(--core-violet); } .core-rose { background: var(--core-rose); } .core-graphite { background: var(--core-graphite); }
+.core-bundle { display: inline-flex; gap: 3px; margin-right: 8px; vertical-align: 0.12em; }
+.core-bundle .core { margin-right: 0; vertical-align: top; }
 .prop-meta { font-size: 14px; color: var(--ink-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prop-amt { text-align: right; flex: none; }
 .prop-amt .mono { font-family: var(--cond); font-stretch: 112%; font-weight: 700; font-size: 18px; }
