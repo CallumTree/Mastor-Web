@@ -13,13 +13,13 @@ function colourOn(el: Element): string {
     const m = getComputedStyle(n).backgroundColor.match(/[\d.]+/g)?.map(Number)
     if (!m || (m.length > 3 && m[3] < .5)) continue
     const [r, g, b] = m
-    if (r > 200 && g > 150 && b < 90) return '#0A0A0B'                    // yellow plate
-    if (r > 140 && g < 70 && b < 70) return '#FFFFFF'                     // red plate
-    if (g > 90 && r < 40 && b < 100) return '#FFFFFF'                     // green plate
-    if (r + g + b < 120 || (b > 200 && r < 60 && g < 110)) return '#00E5FF' // black slab or volt plate
-    return '#0040FF'                                                      // white board
+    if (r > 200 && g > 150 && b < 90) return 'var(--ink)'                  // yellow plate
+    if (r > 140 && g < 70 && b < 70) return 'var(--shell-text)'           // red plate
+    if (g > 90 && r < 40 && b < 100) return 'var(--shell-text)'           // green plate
+    if (r + g + b < 120 || (b > 200 && r < 60 && g < 110)) return 'var(--neon)' // black slab or volt plate
+    return 'var(--volt)'                                                  // white board
   }
-  return '#0040FF'
+  return 'var(--volt)'
 }
 
 /** The length of a rounded rectangle's contour, as SVG draws a <rect> with that rx. */

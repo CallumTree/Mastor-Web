@@ -28,10 +28,20 @@ export function AskTab({ job }: { job: Job }) {
   const rec = useRef<Rec | null>(null)
   const end = useRef<HTMLDivElement>(null)
   const box = useRef<HTMLTextAreaElement>(null)
+  const yes = useRef<HTMLButtonElement>(null)
 
   useEffect(() => { let live = true; loadConvo(job.id).then(c => live && setConvo(c)); return () => { live = false } }, [job.id])
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [convo, busy])
   useEffect(() => () => rec.current?.stop(), [])
+  // the decision is the next thing to do, so it takes focus (keyboard and screen readers land on it)
+  const deciding = convo.pending.length > 0 && !busy
+  useEffect(() => { if (deciding) yes.current?.focus({ preventScroll: true }) }, [deciding])
+  // the box grows with the words; CSS does this where field-sizing exists (older Safari needs a hand)
+  useEffect(() => {
+    const t = box.current
+    if (!t || CSS.supports?.('field-sizing', 'content')) return
+    t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 3, 144) + 'px'
+  }, [text])
 
   const online = !!currentCompany()
   const shown = lines(convo)
@@ -94,7 +104,7 @@ export function AskTab({ job }: { job: Job }) {
           ))}
 
         {waiting.length > 0 && !busy && (
-          <div className="ask-card live">
+          <div className="ask-card live" role="group" aria-label="Change waiting for your yes">
             <Trace r={12} inset={4} />
             {waiting.map(w => (
               <div key={w.id} className="ask-card-item">
@@ -103,7 +113,7 @@ export function AskTab({ job }: { job: Job }) {
               </div>
             ))}
             <div className="ask-card-do">
-              <button className="btn ask-yes" onClick={() => go({ decision: 'approve' })}>Do it</button>
+              <button ref={yes} className="btn ask-yes" onClick={() => go({ decision: 'approve' })}>Do it</button>
               <button className="btn ask-no" onClick={() => go({ decision: 'cancel' })}>Cancel</button>
             </div>
             <div className="ask-card-note">Saved changes are marked “by Claude” in the app.</div>

@@ -237,7 +237,7 @@ export function Landing() {
               </dl>
             </div>
           </div>
-          <ul className="wrap work" aria-label="The work Mastor is built for">
+          <ul className="wrap work" aria-label="The work Mastor is built for" tabIndex={0}>
             {([[PHOTOS.planned, 'Planned programmes', 'PPR, WHQS and Decent Homes: a scheme of houses, one BoQ, valuations as it goes.'],
               [PHOTOS.repairs, 'Responsive repairs', 'A stream of small works orders, each one priced from the schedule and signed off.'],
               [PHOTOS.voids, 'Voids', 'Empty homes turned round fast, with the evidence the client asks for.']] as const).map(([p, t, d]) => (
@@ -267,7 +267,7 @@ export function Landing() {
         <section className="wrap shots-sec">
           <h2 className="h2">The whole job, in your pocket.</h2>
           <p className="body-l">The same job on site and in the office. These are screens from the app with the example job in.</p>
-          <ul className="shots">
+          <ul className="shots" aria-label="Screens from the app" tabIndex={0}>
             {SHOTS.map(([name, t, d]) => (
               <li key={name}><Phone name={name} alt={SHOT_ALT[name]} /><h3 className="h3">{t}</h3><p>{d}</p></li>
             ))}
