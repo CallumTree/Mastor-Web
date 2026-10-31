@@ -14,7 +14,8 @@ import { registerSummary } from '../../src/lib/voRegister'
 import { portfolio } from '../../src/lib/portfolio'
 import { jobAlerts } from '../../src/lib/alerts'
 import { jobMargin } from '../../src/lib/margin'
-import { findJob, jobData, records, settings, type Ctx } from './data'
+import { findJob, jobData, rateBookItems, records, settings, type Ctx } from './data'
+import { findRates } from './rates'
 import { siteMedia } from './media'
 import { day, NO_MONEY, text, ukToday } from './shared'
 import { registerWrites } from './writes'
@@ -160,6 +161,32 @@ export function mastorServer(ctx: Ctx) {
           claimedIn: val ? valRef(val.number) : undefined, photos: v.photoIds.length || undefined, attachments: v.attachments?.map(a => a.name),
         }
       }),
+    })
+  })
+
+  server.registerTool('find_rate', {
+    title: 'Find a rate',
+    description: 'Finds the SoR code and rate for a piece of work from what the company already has: the schedules of rates loaded in Mastor (the job’s own schedule first) and the priced scope lines and VOs on all its jobs. Use it before pricing or logging a VO when the person hasn’t given a rate: a wet room VO at No. 18 can take the code a wet room was priced with at No. 12. Search with the words a schedule would use (e.g. “lintel”, “wet room floor”, “renew WC”), and again with other wording if nothing fits; or look up a code. Each match says what the schedule prints and where it was used before. Rates are base rates, before the job’s uplifts. Office roles only.',
+    inputSchema: {
+      job: z.string().describe('The job being priced: id, or part of its name, contract ref or address'),
+      what: z.string().optional().describe('The work, in a few words'),
+      code: z.string().optional().describe('An SoR code to look up'),
+      unit: z.string().optional().describe('Only codes priced in this unit (LM, SM, NO, IT)'),
+    },
+    annotations: READ,
+  }, async (a) => {
+    if (!ctx.money) throw new Error(NO_MONEY)
+    if (!a.what?.trim() && !a.code?.trim()) throw new Error('Say what the work is, or give a code.')
+    const [jobs, scope, vos, st] = await Promise.all([records<Job>(ctx, 'jobs'), records<ScopeItem>(ctx, 'scope'), records<Variation>(ctx, 'variations'), settings(ctx)])
+    const job = findJob(jobs, a.job)
+    const books = st?.rateBooks ?? []
+    const items = (await Promise.all(books.map(b => rateBookItems(ctx, b.id)))).flat()
+    const r = findRates({ job, what: a.what, code: a.code, unit: a.unit }, { jobs, books, items, scope, vos })
+    return text({
+      job: job.name, schedule: r.book?.name ?? (books.length ? 'none of the loaded rate books matches this job’s codes' : 'no rate books loaded (Settings → Rates in the app)'),
+      ...(r.book?.notes.length ? { scheduleNotes: r.book.notes.slice(0, 4) } : {}),
+      matches: r.matches.length ? r.matches : 'nothing fits those words. Try the words a schedule would use, or fewer words.',
+      howToUse: 'Only use a match that is clearly the same work in the same unit. Pass its code, suggestedRate and rateFrom to log_variation or update_variation, and tell the person where the rate came from. If several fit, or a rateCheck is shown, give them the choice instead of picking.',
     })
   })
 

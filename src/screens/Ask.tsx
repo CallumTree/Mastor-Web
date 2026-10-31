@@ -11,11 +11,11 @@ import { IconMic, IconSend } from '../components/Icons'
 type Rec = { lang: string; interimResults: boolean; continuous: boolean; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null }
 const Speech = (typeof window !== 'undefined' && ((window as unknown as { SpeechRecognition?: new () => Rec }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: new () => Rec }).webkitSpeechRecognition)) || null
 
-const EXAMPLES_MONEY = ['What’s still to claim at No. 6?', 'Tick the finished kitchen lines into the open val', 'Log a VO: cracked lintel over the back door, 1.2 m', 'What’s overdue and who do I chase?']
+const EXAMPLES_MONEY = ['What’s still to claim at No. 6?', 'Tick the finished kitchen lines into the open val', 'Log a VO for a wet room at No. 18, priced like the last one', 'What’s overdue and who do I chase?']
 const EXAMPLES_SITE = ['What’s left to do at No. 4?', 'Log a VO: cracked lintel over the back door, 1.2 m', 'Today: dry, 5 on site, scaffold struck at No. 2', 'Add a note: tenant at No. 8 away until Friday']
 
 /**
- * Ask: Mastor's assistant for this job. Type or speak; it reads the job with the app's own figures and
+ * Clerk: Mastor's assistant for this job (named after a clerk of works). Type or speak; it reads the job with the app's own figures and
  * proposes changes as a card that runs only on Do it. Issuing and invoicing stay with a person.
  */
 export function AskTab({ job }: { job: Job }) {
@@ -70,21 +70,21 @@ export function AskTab({ job }: { job: Job }) {
 
   if (!online) return (
     <section className="ask">
-      <h1 className="tab-title">Ask</h1>
-      <div className="card empty">Ask works when this phone is signed in to Mastor’s cloud, so it can read and change the job you share with the office. Sign in from Settings.</div>
+      <h1 className="tab-title">Clerk</h1>
+      <div className="card empty">Clerk works when this phone is signed in to Mastor’s cloud, so it can read and change the job you share with the office. Sign in from Settings.</div>
     </section>
   )
 
   return (
     <section className="ask">
       <div className="row ask-head">
-        <h1 className="tab-title grow">Ask</h1>
+        <h1 className="tab-title grow">Clerk</h1>
         {convo.messages.length > 0 && !busy && <button className="btn btn-secondary ask-new" onClick={() => { keep(EMPTY); setErr(null) }}>New chat</button>}
       </div>
 
       {!convo.messages.length && (
         <div className="ask-intro">
-          <p>Ask about {job.name}, or tell it what to change. It reads the job the way the app does, and nothing changes until you tap <b>Do it</b>.</p>
+          <p>Ask Clerk about {job.name}, or tell it what to change. It reads the job the way the app does, finds rates from your schedule and past work, and nothing changes until you tap <b>Do it</b>.</p>
           <div className="ask-try">
             {(access.money ? EXAMPLES_MONEY : EXAMPLES_SITE).map(x => <button key={x} className="chip" onClick={() => { setText(x); box.current?.focus() }}>{x}</button>)}
           </div>
@@ -126,7 +126,7 @@ export function AskTab({ job }: { job: Job }) {
       </div>
 
       <form className="ask-bar" onSubmit={e => { e.preventDefault(); send() }}>
-        <textarea ref={box} rows={1} value={text} disabled={!!waiting.length && !busy} aria-label="Ask Mastor"
+        <textarea ref={box} rows={1} value={text} disabled={!!waiting.length && !busy} aria-label="Ask Clerk"
           placeholder={waiting.length ? 'Tap Do it or Cancel first' : Speech ? 'Ask, or tap the mic' : 'Ask, or use your keyboard’s mic'}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); send() } }} />
