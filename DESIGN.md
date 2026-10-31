@@ -685,6 +685,9 @@ Pills, 44px tall, 1.5px ink outline, 600 15px; selected fills ink with white tex
 - **Dock:** a floating 64px Shell Black bar, 24px corners, 24px icons over 13px 600 labels in Shell Muted. The active tab turns white with an 18px by 3px neon bar above its icon. The capture key is a 52 by 48px neon key with an ink plus, 16px corners. On desktop it becomes the left rail with the active bar on the left edge.
 - **Cover head:** Shell Black with the white wordmark centred, a 125% tracked sub-line in Shell Muted, and the sync state.
 
+### Ask (the assistant tab)
+The last tab in the job dock (the capture key sits between three tabs each side). Opens on the tab title, one plain line of what it does, and four example asks as left-aligned chips with a Blueprint Edge. What the person says sits right, on a pale volt tint (14px corners, the corner nearest the bar squared to 4px); Ask answers in plain 16px body text on white, 62ch at most, no headings or tables. A change Ask wants to make waits as the one black slab on the screen: 16px corners, the change's name in 16px 700 white, its details in 14px Shell Muted, then Do it (neon, ink text) and Cancel (white on a Shell Rule outline), with the pulse round its contour. Nothing is saved until Do it; afterwards the card becomes a white row led by the green mark ("Done: …"), or a hollow square for Cancelled. While Ask works, its status line ("Reading the scope…") is a white row with the pulse running round in volt. The bar to type or speak sticks above the dock: a 48px field, a microphone (red while listening, where the browser offers speech) and an ink send key.
+
 ### Dashboard Title Block
 A Shell Black block, 24px corners, sentence-case labels at 112% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule. Its contour, 5px inside the edge, carries the pulse.
 
