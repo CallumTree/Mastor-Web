@@ -82,7 +82,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         { label: 'Contract + VOs', value: money(target), nil: !target, note: target ? `${pct}% claimed incl. this valuation` : 'No contract value yet — add it in job setup' },
         { label: 'Certified', value: money(certified), note: `${issued.length} valuation${issued.length === 1 ? '' : 's'} issued`, nil: !issued.length },
         { label: 'Paid', value: money(paid), note: 'as received', nil: !paid },
-        { label: 'Owed', value: money(owed), note: overdue ? `${overdue} overdue` : 'incl. VAT once invoiced', hot: owed > 0, nil: !owed },
+        { label: 'Owed', value: money(owed), note: overdue ? `${overdue} overdue` : 'incl. VAT once invoiced', hot: owed > 0 && !open, nil: !owed },
       ]} />
 
       {onDecideSite && <SiteReview diary={diary} scope={scope} valLabel={valRef(open?.number ?? nextNo)} onDecide={onDecideSite} />}

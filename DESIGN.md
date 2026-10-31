@@ -8,7 +8,7 @@ colors:
   ground: "#FFFFFF"
   panel: "#FFFFFF"
   line: "#E4E4E7"
-  edge: "rgba(0, 64, 255, 0.42)"
+  edge: "rgba(0, 64, 255, 0.3)"
   neon-hair: "rgba(0, 229, 255, 0.38)"
   field-line: "#8B8B93"
   row-open: "#F4F4F5"
@@ -46,14 +46,14 @@ typography:
   display:
     fontFamily: "'Archivo Variable', Archivo, system-ui, -apple-system, 'Segoe UI', sans-serif"
     fontSize: "clamp(22px, 6.4vw, 30px)"
-    fontWeight: 800
+    fontWeight: 720
     lineHeight: 1.08
     letterSpacing: "-0.02em"
     fontVariation: "'wdth' 125"
   headline:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "26px"
-    fontWeight: 800
+    fontWeight: 720
     lineHeight: 1.05
     letterSpacing: "-0.01em"
     fontVariation: "'wdth' 125"
@@ -66,8 +66,8 @@ typography:
     fontVariation: "'wdth' 112"
   figure:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
-    fontSize: "min(clamp(22px, 7vw, 32px), max(15px, calc(160cqi / var(--len, 6))))"
-    fontWeight: 750
+    fontSize: "min(clamp(22px, 6.4vw, 28px), max(15px, calc(160cqi / var(--len, 6))))"
+    fontWeight: 680
     lineHeight: 1
     letterSpacing: "-0.02em"
     fontFeature: "tnum"
@@ -75,28 +75,28 @@ typography:
   figure-board:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "26px"
-    fontWeight: 750
+    fontWeight: 680
     lineHeight: 1.05
     fontFeature: "tnum"
     fontVariation: "'wdth' 112"
   figure-sm:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "min(clamp(19px, 5.6vw, 24px), max(15px, calc(160cqi / var(--len, 6))))"
-    fontWeight: 750
+    fontWeight: 680
     lineHeight: 1.05
     fontFeature: "tnum"
     fontVariation: "'wdth' 112"
   amount:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "18px"
-    fontWeight: 700
+    fontWeight: 650
     lineHeight: 1.1
     fontFeature: "tnum"
     fontVariation: "'wdth' 112"
   row-title:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "17px"
-    fontWeight: 750
+    fontWeight: 680
     lineHeight: 1.1
     letterSpacing: "0.02em"
     fontVariation: "'wdth' 112"
@@ -147,7 +147,7 @@ typography:
   roman-ref:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "19px"
-    fontWeight: 750
+    fontWeight: 650
     lineHeight: 1
     letterSpacing: "0.02em"
     fontVariation: "'wdth' 125"
@@ -533,16 +533,18 @@ Eight muted colours, one per trade, set in OKLCH at mid lightness (4–6:1 on wh
 - **Muted Ink** (ink-muted): labels, hints, secondary lines.
 - **White Ground / Panel** (ground, panel): page and panels; both are pure white.
 - **Hairline** (line): dividers inside panels, one device pixel. Also the disabled fill (disabled).
-- **Blueprint Edge** (edge): volt at 42%, the outer edge of a white container (panel, card, figure grid, summary strip, jobs and rate lists). One device pixel.
+- **Blueprint Edge** (edge): volt at 30%, drawn light so a screen of panels stays calm, the outer edge of a white container (panel, card, figure grid, summary strip, jobs and rate lists). One device pixel.
 - **Neon Contour** (neon-hair): neon at 38%, the contour drawn just inside a black slab (dock, title block, primary button, the job header's and cover's foot) and the edge of a dark control.
 - **Field Line** (field-line): input and choice-card edges, 3.4:1 on white.
 - **Open Row** (row-open): hover, expanded rows, secondary-button hover.
 - **Shell Black** (shell), **Shell Raised** (shell-2), **Shell Rule** (shell-line), **Shell Muted** (shell-muted): the black slabs, their raised controls, their rules and their secondary text. White (shell-text) is their primary text.
 
 ### Named Rules
-**The One Live Thing Rule.** Neon (on black) or volt (on white) marks only where you are, what's next, or how far the job has got. If it isn't one of those, it is ink or white.
+**The One Live Thing Rule.** Neon (on black) or volt (on white) marks only where you are, what's next, or how far the job has got. If it isn't one of those, it is ink or white. One hot figure per screen: on Valuations, while a valuation is open its figure is the lit one and Owed stays a plain cell.
 
 **The Neon Lives on Black Rule.** Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (a hot figure cell is a black cell with a neon figure).
+
+**The Quiet Weight Rule.** Only the job name and tab title are heavy (720); figures sit at 680, numerals at 650 and row text at 600, so no two things shout at once. Tags that wait on someone else ("With client · Awaiting instruction") are a grey Open Row tag in Slate Ink, never an outlined box; outline badges ("Active", "Instructed") use a Field Line edge.
 
 **The Warning Meaning Rule.** Red is overdue or missing, yellow is needs doing, green is done. Green means done only: an "Active" job status is an ink outline badge, not green.
 
@@ -561,20 +563,20 @@ Eight muted colours, one per trade, set in OKLCH at mid lightness (4–6:1 on wh
 **Character:** One grotesque stretched to three widths: wide, flat capitals that read like stencilled site lettering for tab titles and names, a slightly narrower cut for figures and for the sentence-case heads and labels, and a plain normal width for sentences. Width is the hierarchy, as much as size.
 
 ### Hierarchy
-- **Display** (800, clamp 22–30px, 1.08, 125% width): the job name in the black header. 19–24px on the work tabs; 18px under 300px.
-- **Headline** (800, 26px, 1.05, 125% width, uppercase): tab titles.
+- **Display** (720, clamp 22–30px, 1.08, 125% width): the job name in the black header. 19–24px on the work tabs; 18px under 300px.
+- **Headline** (720, 26px, 1.05, 125% width, uppercase): tab titles.
 - **Figure XL** (750, clamp 34–48px, 112% width, tabular): the title block's headline figure, in neon.
-- **Figure** (750, up to 32px, 112% width, tabular): job-home figures. Shrinks to its cell, down to 15px, then breaks.
-- **Figure Board / Figure Small** (750, 26px / up to 24px, 112% width): title-block cells and summary strips.
-- **Amount** (700, 18px, 112% width, tabular): right-hand amounts in registers, property rows and job rows (20px there).
-- **Row Title** (750, 17px, 112% width, uppercase, 0.02em): property names, set deliberately between the 16px title and 18px amount steps.
+- **Figure** (680, up to 28px, 112% width, tabular): job-home figures. Shrinks to its cell, down to 15px, then breaks.
+- **Figure Board / Figure Small** (680, 26px / up to 24px, 112% width): title-block cells and summary strips.
+- **Amount** (650, 18px, 112% width, tabular): right-hand amounts in registers, property rows and job rows (20px there).
+- **Row Title** (680, 17px, 112% width, uppercase, 0.02em): property names, set deliberately between the 16px title and 18px amount steps.
 - **Title** (700, 16px, 1.25, normal width): action-plate headings, button text (650).
 - **Body** (400, 16px, 1.45, normal width): everything read as sentences. Notes 14px/1.4; small 13px/1.35.
 - **Row text** (600, 15px, 1.3, normal width): the title line of a list row (a rate, a cost, a check result, a document) and short bold messages in bars and plates — between body and note, so a row's title outranks its meta without shouting.
 - **Section Head** (700, 16px, 112% width, sentence case): section headings inside a screen.
 - **Label** (600, 13px, 0.01em, 112% width, sentence case): figure labels, title-block labels, sheet titles, register heads. 100% width in phone grids.
 - **Tag** (600, 13px, normal width, sentence case): status tags (plates and badges).
-- **Roman Ref** (750, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
+- **Roman Ref** (650, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
 - **Code** (JetBrains Mono 400/500, 13–14px, tabular): job refs, SoR codes, the rail's percentage.
 
 **Front page (Persuade).** The public page adds a marketing ramp on the same three widths. Everything in this list is a front-page display size, not an app step:
