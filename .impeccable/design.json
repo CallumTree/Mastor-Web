@@ -460,18 +460,18 @@
       },
       "section-head": {
         "displayName": "Section Head",
-        "purpose": "Section headings inside a screen; 125% width.",
-        "fontStretch": "125%"
+        "purpose": "Section headings inside a screen; 112% width, sentence case.",
+        "fontStretch": "112%"
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Figure labels, sheet titles, register heads; 125% width, uppercase; 100% in phone grids.",
-        "fontStretch": "125%"
+        "purpose": "Figure labels, title-block labels, sheet titles, register heads; 112% width, sentence case; 100% in phone grids.",
+        "fontStretch": "112%"
       },
       "plate": {
         "displayName": "Plate",
-        "purpose": "Sign plates and badges; 112% width, uppercase.",
-        "fontStretch": "112%"
+        "purpose": "Status tags (plates and badges); normal width, sentence case.",
+        "fontStretch": "100%"
       },
       "roman-ref": {
         "displayName": "Roman Ref",
@@ -701,7 +701,7 @@
       "refersTo": "panel",
       "description": "Hairline panel of 112% figures over 125% labels; the figure that matters is a black cell with a neon figure.",
       "html": "<div class=\"ds-figs\"><div class=\"ds-fig ds-hot\"><div class=\"ds-n\">£11,879.22</div><div class=\"ds-l\">Certified</div></div><div class=\"ds-fig\"><div class=\"ds-n\">£2,410.00</div><div class=\"ds-l\">In valuation</div></div></div>",
-      "css": ".ds-figs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid #E4E4E7; border-radius:16px; overflow:hidden; background:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-fig { padding:14px 14px 15px; box-shadow:inset -1px -1px 0 #E4E4E7; } .ds-n { font-stretch:112%; font-weight:750; font-size:24px; line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:#0A0A0B; } .ds-l { font-stretch:125%; font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#5E5E66; margin-top:6px; } .ds-hot { background:#0A0A0B; box-shadow:none; } .ds-hot .ds-n { color:#00E5FF; } .ds-hot .ds-l { color:#A1A1AA; }"
+      "css": ".ds-figs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid #E4E4E7; border-radius:16px; overflow:hidden; background:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-fig { padding:14px 14px 15px; box-shadow:inset -1px -1px 0 #E4E4E7; } .ds-n { font-stretch:112%; font-weight:750; font-size:24px; line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:#0A0A0B; } .ds-l { font-stretch:112%; font-weight:600; font-size:13px; letter-spacing:.01em; color:#5E5E66; margin-top:6px; } .ds-hot { background:#0A0A0B; box-shadow:none; } .ds-hot .ds-n { color:#00E5FF; } .ds-hot .ds-l { color:#A1A1AA; }"
     },
     {
       "name": "Job Header with Neon Progress Rail",

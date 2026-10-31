@@ -57,7 +57,7 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
       <TitleBlock
         head={['Owed to you · incl. VAT', money(p.owed)]}
         rows={[
-          [['Overdue', p.overdueCount ? `${k(p.overdue)} · ${p.overdueCount}` : '—', p.overdueCount ? 'var(--red)' : undefined], ['Ready to claim', k(p.inValuation)]],
+          [[p.overdueCount ? `Overdue · ${p.overdueCount} valuation${p.overdueCount === 1 ? '' : 's'}` : 'Overdue', p.overdueCount ? k(p.overdue) : '—', p.overdueCount ? 'var(--red)' : undefined], ['Ready to claim', k(p.inValuation)]],
           [['Unpriced lines', unpricedTotal ? String(unpricedTotal) : '—'], // the qualifier rides in the label, so the figure keeps to its cell
           [`Margin${!withCosts.length ? '' : anyProvisional ? ' · provisional' : valueTotal > 0 ? ` · ${Math.round((marginTotal / valueTotal) * 1000) / 10}%` : ''}`, withCosts.length ? signedK(marginTotal) : '—']],
           [['Certified this year · excl. VAT', k(p.certifiedThisYear)], ['Paid this year', k(p.paidThisYear)]],

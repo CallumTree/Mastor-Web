@@ -119,17 +119,17 @@ typography:
     lineHeight: 1.35
   section-head:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 750
-    letterSpacing: "0.07em"
-    fontVariation: "'wdth' 125"
+    fontSize: "16px"
+    fontWeight: 700
+    letterSpacing: "0"
+    fontVariation: "'wdth' 112"
   label:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "13px"
-    fontWeight: 650
+    fontWeight: 600
     lineHeight: 1.2
-    letterSpacing: "0.07em"
-    fontVariation: "'wdth' 125"
+    letterSpacing: "0.01em"
+    fontVariation: "'wdth' 112"
   plate:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "13px"
@@ -475,7 +475,7 @@ components:
 
 Mastor is a white drawing board with black slabs bolted to it. The ground is pure white; structure is carried by near-black ink and by solid black slabs for the things that frame a job: the job header, the floating dock, the dashboard title block and the one figure on a screen that matters most. On top of that structure exactly one thing is lit: where you are, what's next, how far the job has got. On black it is lit in neon cyan; on white its twin, volt blue, takes over. Red, yellow and green are not decoration; they are warnings, and appear only where something is overdue, needs doing or is done.
 
-The type is one variable family, Archivo, used at three widths: expanded capitals (125%) for headings and labels, a narrower expanded cut (112%) for figures so long amounts fit a phone cell, and normal width for anything that is read as sentences. JetBrains Mono sets codes and references; Cinzel lives only in the MΛSTΘR wordmark. The density is a site phone's: large targets, 13px floor, figures that shrink to their box rather than overflow it.
+The type is one variable family, Archivo, used at three widths: expanded capitals (125%) for tab titles and the job name, a narrower expanded cut (112%) for figures, section heads and labels (in sentence case, so a screen reads as an instrument rather than signage), and normal width for anything that is read as sentences. JetBrains Mono sets codes and references; Cinzel lives only in the MΛSTΘR wordmark. The density is a site phone's: large targets, 13px floor, figures that shrink to their box rather than overflow it.
 
 This world refuses the category default of a grey dashboard with a brand-blue button, and it refuses the dark neon "cyber" console: neon here is a signal on black slabs inside a light page, never an atmosphere, never a glow.
 
@@ -536,7 +536,7 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 **Body Font:** Archivo Variable, normal width
 **Label/Mono Font:** JetBrains Mono for codes and references; Cinzel 600 for the wordmark only
 
-**Character:** One grotesque stretched to three widths: wide, flat capitals that read like stencilled site lettering for headings and labels, a slightly narrower cut for figures, and a plain normal width for sentences. Width is the hierarchy, as much as size.
+**Character:** One grotesque stretched to three widths: wide, flat capitals that read like stencilled site lettering for tab titles and names, a slightly narrower cut for figures and for the sentence-case heads and labels, and a plain normal width for sentences. Width is the hierarchy, as much as size.
 
 ### Hierarchy
 - **Display** (800, clamp 22–30px, 1.08, 125% width): the job name in the black header. 19–24px on the work tabs; 18px under 300px.
@@ -549,8 +549,8 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Title** (700, 16px, 1.25, normal width): action-plate headings, button text (650).
 - **Body** (400, 16px, 1.45, normal width): everything read as sentences. Notes 14px/1.4; small 13px/1.35.
 - **Row text** (600, 15px, 1.3, normal width): the title line of a list row (a rate, a cost, a check result, a document) and short bold messages in bars and plates — between body and note, so a row's title outranks its meta without shouting.
-- **Section Head** (750, 14px, 0.07em, 125% width, uppercase): section headings inside a screen.
-- **Label** (650–700, 13px, 0.06–0.07em, 125% width, uppercase): figure labels, sheet titles, register heads.
+- **Section Head** (700, 16px, 112% width, sentence case): section headings inside a screen.
+- **Label** (600, 13px, 0.01em, 112% width, sentence case): figure labels, title-block labels, sheet titles, register heads. 100% width in phone grids.
 - **Tag** (600, 13px, normal width, sentence case): status tags (plates and badges).
 - **Roman Ref** (750, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
 - **Code** (JetBrains Mono 400/500, 13–14px, tabular): job refs, SoR codes, the rail's percentage.
@@ -624,7 +624,7 @@ The front page is flatter still: nothing on it casts a shadow. Its phone frames 
 
 **The No Glow Rule.** Neon is a flat fill or line. No glow, no blur, no glass. The pulse is a flat line too.
 
-**The Live Wire Rule.** Lines are one device pixel (`--hair`: 1px, 0.5px on a 2x screen). The one live thing on a screen (the black next-step row, a hot figure cell, the dashboard title block) carries a pulse: a three-dash comet that runs once round its contour in about 3s, then rests 2s (`<Trace />`). Anything pressed (action rows, buttons, chips, list rows) sends two pulses from under the finger round its edge in opposite directions, meeting on the far side in 0.6s (`src/lib/trace.ts`): volt on white, neon on black. Under reduced motion the contour lights instead of running. Nothing else animates on its own.
+**The Live Wire Rule.** Lines are one device pixel (`--hair`: 1px, 0.5px on a 2x screen). The one live thing on a screen (the black next-step row, a hot figure cell, the dashboard title block) carries a pulse: a three-dash comet that runs once round its contour in about 3.8s, 0.6s after the screen opens, then rests about 6s (`<Trace />`, a 10s cycle). Anything pressed (action rows, buttons, chips, list rows) sends two pulses from under the finger round its edge in opposite directions, meeting on the far side in 0.6s (`src/lib/trace.ts`): volt on white, neon on black. Under reduced motion the contour lights instead of running. Nothing else animates on its own.
 
 ## Shapes
 
@@ -668,7 +668,7 @@ Full-width tappable rows on job home under "Action needed": 64px minimum, 14px 1
 - **Internal Padding:** 16px; list panels drop padding and rule their rows.
 
 ### Figures and Summary Strips
-White ruled grids of 112% figures over 125% labels. The cell carrying the figure that matters turns black with a neon figure (hot), and the pulse runs round its contour. Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work.
+White ruled grids of 112% figures over 112% sentence-case labels. The cell carrying the figure that matters turns black with a neon figure (hot), and the pulse runs round its contour. Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work.
 
 ### Inputs / Fields
 - **Style:** white, 1.5px Field Line edge, 12px corners, 50px tall, 12px 14px padding, 16px text; label above in 600 14px, hint below at 13px Muted Ink.
@@ -686,7 +686,7 @@ Pills, 44px tall, 1.5px ink outline, 600 15px; selected fills ink with white tex
 - **Cover head:** Shell Black with the white wordmark centred, a 125% tracked sub-line in Shell Muted, and the sync state.
 
 ### Dashboard Title Block
-A Shell Black block, 24px corners, labels at 125% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule. Its contour, 5px inside the edge, carries the pulse.
+A Shell Black block, 24px corners, sentence-case labels at 112% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule. Its contour, 5px inside the edge, carries the pulse.
 
 ### Property Rows
 A 40px ink tile with a white numeral, the name in Row Title, and the amount right. Open, the row tints Open Row and the numeral turns neon inside a double ring; workstream groups indent beneath as 48px toggle rows with green progress bars.
