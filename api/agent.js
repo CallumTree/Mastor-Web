@@ -66847,6 +66847,7 @@ async function handler(req, res) {
         return run(u);
       }));
       messages.push({ role: "user", content: results });
+      send({ type: "checkpoint", messages });
     }
     for (let call = 0; call < MAX_CALLS; call++) {
       send({ type: "status", text: call ? "Thinking" : body.decision ? "Carrying on" : "Reading your question" });
@@ -66876,7 +66877,7 @@ async function handler(req, res) {
     send({ type: "error", error: "That took too many steps. Try asking for one thing at a time.", messages });
   } catch (e) {
     const msg = e instanceof Anthropic.RateLimitError ? "Ask is busy right now. Try again in a minute." : e instanceof Anthropic.AuthenticationError ? "Ask isn\u2019t set up right: the Anthropic key in Vercel was refused." : e instanceof Anthropic.APIError ? `Ask couldn\u2019t answer (${e.status ?? "no connection"}). Try again.` : "Ask couldn\u2019t answer. Check signal and try again.";
-    send({ type: "error", error: msg });
+    send({ type: "error", error: msg, ...messages.length > body.messages.length || body.decision ? { messages } : {} });
   } finally {
     await mcp?.close().catch(() => {
     });

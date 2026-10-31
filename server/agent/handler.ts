@@ -36,6 +36,7 @@ export interface AgentBody { messages: Msg[]; jobId?: string; decision?: 'approv
 export type AgentEvent =
   | { type: 'status'; text: string }
   | { type: 'done'; messages: Msg[]; pending: { id: string; name: string; title: string; input: unknown }[] }
+  | { type: 'checkpoint'; messages: Msg[] }
   | { type: 'error'; error: string; messages?: Msg[] }
 
 const SYSTEM = (ctx: Ctx) => `You are Ask, the assistant inside Mastor, the app ${ctx.company || 'this company'} runs its building jobs on: scope (BoQ) lines by property, variations (VOs), valuations, the site diary and what is owed. You are talking to ${ctx.email} (${ctx.role}) on their phone, often on site.
@@ -147,6 +148,8 @@ export default async function handler(req: Req, res: Res) {
         return run(u)
       }))
       messages.push({ role: 'user', content: results })
+      // the change is saved: the phone keeps this even if what follows fails, so the card never comes back
+      send({ type: 'checkpoint', messages })
     }
 
     for (let call = 0; call < MAX_CALLS; call++) {
@@ -174,7 +177,8 @@ export default async function handler(req: Req, res: Res) {
       : e instanceof Anthropic.AuthenticationError ? 'Ask isn’t set up right: the Anthropic key in Vercel was refused.'
       : e instanceof Anthropic.APIError ? `Ask couldn’t answer (${e.status ?? 'no connection'}). Try again.`
       : 'Ask couldn’t answer. Check signal and try again.'
-    send({ type: 'error', error: msg })
+    // whatever ran before the failure (a saved change above all) stays in the phone's conversation
+    send({ type: 'error', error: msg, ...(messages.length > body.messages.length || body.decision ? { messages } : {}) })
   } finally {
     await mcp?.close().catch(() => {})
     res.end()

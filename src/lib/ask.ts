@@ -7,12 +7,12 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { meta } from './db'
 import { authHeader } from './supabase'
-import { syncNow } from './sync'
+import { settle, syncNow } from './sync'
 
 export type Msg = Anthropic.Beta.BetaMessageParam
 export type Pending = { id: string; name: string; title: string; input: Record<string, unknown> }
 export type Convo = { messages: Msg[]; pending: Pending[] }
-type Event = { type: 'status'; text: string } | { type: 'done'; messages: Msg[]; pending: Pending[] } | { type: 'error'; error: string; messages?: Msg[] }
+type Event = { type: 'status'; text: string } | { type: 'checkpoint'; messages: Msg[] } | { type: 'done'; messages: Msg[]; pending: Pending[] } | { type: 'error'; error: string; messages?: Msg[] }
 
 const KEY = (jobId: string) => `ask:${jobId}`
 export const EMPTY: Convo = { messages: [], pending: [] }
@@ -36,25 +36,34 @@ export async function askMastor(jobId: string, c: Convo, step: { text: string } 
     throw new Error(e.error || `Ask couldn’t answer (${r.status}).`)
   }
   const reader = r.body.getReader(), dec = new TextDecoder()
-  let buf = '', out: Convo | null = null, err: string | null = null
-  for (;;) {
-    const { value, done } = await reader.read()
-    if (value) buf += dec.decode(value, { stream: true })
-    let nl: number
-    while ((nl = buf.indexOf('\n')) >= 0) {
-      const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1)
-      if (!line) continue
-      const e = JSON.parse(line) as Event
-      if (e.type === 'status') onStatus(e.text)
-      else if (e.type === 'done') out = { messages: e.messages, pending: e.pending as Pending[] }
-      else { err = e.error; if (e.messages) out = { messages: e.messages, pending: [] } }
+  // `saved`: the change on the card ran (the server says so before Claude replies), so even if the reply
+  // fails or the signal drops, the phone keeps it and the card never comes back to be tapped twice
+  let buf = '', out: Convo | null = null, saved: Convo | null = null, err: string | null = null
+  try {
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (value) buf += dec.decode(value, { stream: true })
+      let nl: number
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1)
+        if (!line) continue
+        const e = JSON.parse(line) as Event
+        if (e.type === 'status') onStatus(e.text)
+        else if (e.type === 'checkpoint') saved = { messages: e.messages, pending: [] }
+        else if (e.type === 'done') out = { messages: e.messages, pending: e.pending as Pending[] }
+        else { err = e.error; if (e.messages) out = { messages: e.messages, pending: [] } }
+      }
+      if (done) break
     }
-    if (done) break
+  } catch { err = err ?? 'The connection dropped before Ask finished.' }
+  await settle().catch(() => {})    // bring any change Ask made onto this phone, waiting for a sync already running
+  if (!out && !err) err = 'Ask’s answer was cut off. Try again.'
+  if (err) {
+    const keep = out ?? saved
+    const done = 'decision' in step && step.decision === 'approve' && saved
+    throw Object.assign(new Error(done ? `Your change was saved. ${err.replace(/ Try again\.?$/, '')}` : err), { convo: keep })
   }
-  await syncNow().catch(() => {})   // bring any change Ask made onto this phone
-  if (err) throw Object.assign(new Error(err), { convo: out })
-  if (!out) throw new Error('Ask’s answer was cut off. Try again.')
-  return out
+  return out!
 }
 
 // ---------- reading the conversation back for the screen ----------
@@ -104,7 +113,9 @@ export function lines(c: Convo): Line[] {
       const r = results.get(b.id)
       if (!r) continue   // waiting: shown as the card
       const outcome = /tapped Cancel/.test(r.text) ? 'cancelled' : r.error ? 'failed' : 'done'
-      out.push({ kind: 'change', title: changeTitle(b.name), detail: changeDetail(b.input as Record<string, unknown>), outcome, ...(outcome === 'failed' ? { note: r.text } : {}) })
+      let note = outcome === 'failed' ? r.text : undefined
+      if (outcome === 'done') try { const o = JSON.parse(r.text) as { logged?: unknown; job?: unknown }; if (typeof o.logged === 'string') note = `${o.logged} · in the VOs tab${typeof o.job === 'string' ? ` on ${o.job}` : ''}` } catch { /* not JSON: nothing to add */ }
+      out.push({ kind: 'change', title: changeTitle(b.name), detail: changeDetail(b.input as Record<string, unknown>), outcome, ...(note ? { note } : {}) })
     }
   }
   return out

@@ -19,17 +19,20 @@ const SB = 'https://susecnvepvwmqhziferf.supabase.co'
 const job: Job = { id: 'j1', name: 'Windsor Road WHQS', client: 'PCC', address: 'Windsor Road', contractRef: 'MH21180', poNumber: 'PO1', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
 const S = (id: string, property: string, valuationId: string | null): ScopeItem =>
   ({ id, jobId: 'j1', code: '4360BD', description: `Masonry paint ${id}`, room: 'Walls', qty: 10, unit: 'SM', rate: 5.62, valuationId, order: 1, property, workstream: 'Paint', createdAt: 1 })
-const scope = [S('s1', '3', 'vb'), S('s3', '4', null)]
+const scope = [S('s1', '3', 'vb'), S('s3', '4', null), S('s4', '5', null)]
 const vals: Valuation[] = [{ id: 'vb', jobId: 'j1', number: 1, status: 'Open', createdAt: 2, issuedAt: null }]
 const TABLES: Record<string, () => unknown[]> = { jobs: () => [job], scope_items: () => scope, valuations: () => vals, variations: () => [], diary_entries: () => [], work_orders: () => [], job_documents: () => [], costs: () => [], company_settings: () => [] }
 
 // ---------- a scripted Claude: what it says next, by what it has seen ----------
 const asked: any[] = []
+let failReply = false   // Claude errors on its reply after a change has run
 const reply = (content: any[], stop: string) => ({ id: 'msg', type: 'message', role: 'assistant', model: 'claude-opus-5-5', content, stop_reason: stop, stop_sequence: null, usage: { input_tokens: 1, output_tokens: 1 } })
 function claude(body: any) {
   const last = body.messages[body.messages.length - 1]
   const said = (t: string) => typeof last.content === 'string' ? last.content.includes(t) : last.content.some((b: any) => b.type === 'text' && b.text.includes(t))
   const results = Array.isArray(last.content) ? last.content.filter((b: any) => b.type === 'tool_result') : []
+  if (failReply && results.length) return null
+  if (said('one more')) return reply([{ type: 'tool_use', id: 'w3', name: 'add_to_valuation', input: { job: 'j1', scope_line_ids: ['s4'] } }], 'tool_use')
   if (results.some((r: any) => r.content.some((c: any) => /Cancel/.test(c.text)))) return reply([{ type: 'text', text: 'Left it as it is.' }], 'end_turn')
   if (results.some((r: any) => r.tool_use_id === 'w1' || r.tool_use_id === 'w2')) return reply([{ type: 'text', text: 'Done: No. 4 paint is in VAL I.' }], 'end_turn')
   if (results.length) return reply([{ type: 'thinking', thinking: '', signature: 'sig' }, { type: 'text', text: 'I’ll add No. 4 masonry paint, £56.20.' }, { type: 'tool_use', id: 'w1', name: 'add_to_valuation', input: { job: 'j1', scope_line_ids: ['s3'] } }], 'tool_use')
@@ -46,7 +49,9 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
     const req = input instanceof Request ? input : new Request(url, init)
     const body = JSON.parse(await req.text())
     asked.push({ body, beta: req.headers.get('anthropic-beta'), key: req.headers.get('x-api-key') ?? req.headers.get('authorization')?.replace('Bearer ', '') })
-    return new Response(JSON.stringify(claude(body)), { headers: { 'content-type': 'application/json' } })
+    const out = claude(body)
+    return out ? new Response(JSON.stringify(out), { headers: { 'content-type': 'application/json' } })
+      : new Response(JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', message: 'boom' } }), { status: 400, headers: { 'content-type': 'application/json' } })
   }
   const h = init.headers instanceof Headers ? Object.fromEntries(init.headers) : init.headers ?? {}
   const token = String(h.authorization ?? '').replace('Bearer ', '')
@@ -122,6 +127,16 @@ const saved = upserts.find(u => u.table === 'scope_items')?.rows[0]?.data
 ok(saved?.id === 's3' && saved.valuationId === 'vb' && typeof saved.byClaude === 'number', 'Do it: the line goes into the open valuation, marked by Claude')
 ok(/Done/.test(r.done?.messages.at(-1).content[0].text ?? ''), 'and Claude confirms')
 ok(hits.length === 2, 'two questions, two counts')
+
+// the change runs, then Claude's reply fails: the phone still gets the saved change, so the card can't come back
+r = await ask('office', { messages: [...r.done.messages, { role: 'user', content: 'Add one more' }] })
+ok(r.done?.pending[0]?.id === 'w3', 'another card')
+failReply = true
+r = await ask('office', { messages: r.done.messages, decision: 'approve' })
+const err = r.lines.find((l: any) => l.type === 'error'), cp = r.lines.find((l: any) => l.type === 'checkpoint')
+ok(upserts.some(u => u.rows[0]?.data?.id === 's4' && u.rows[0].data.valuationId === 'vb'), 'Do it saves even though the reply then fails')
+ok(cp && cp.messages.at(-1).content[0].tool_use_id === 'w3', 'a checkpoint with the saved change goes to the phone before Claude replies')
+ok(err && err.messages?.at(-1).content[0].tool_use_id === 'w3', 'the error carries the conversation with the change answered, so the card is gone')
 
 srv.close()
 
