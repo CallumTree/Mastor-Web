@@ -102,7 +102,7 @@ describe('College Park, end to end', () => {
     // --- everything survives a full reload
     cleanup()
     render(<App />)
-    click(await screen.findByRole('button', { name: /32 College Park/ }))
+    await screen.findByRole('heading', { name: '32 College Park' })   // still in the job after the reload
     nav('scope')
     await screen.findByText('58 items')
     expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)
@@ -111,6 +111,7 @@ describe('College Park, end to end', () => {
     // --- director dashboard reflects it
     cleanup()
     render(<App />)
+    click(await screen.findByRole('button', { name: 'Jobs' }))   // the reload kept the job open; back to the list
     click(await screen.findByRole('button', { name: /director dashboard/i }))
     await screen.findByText('Needs action')
     expect(screen.getByText('Certified this year · excl. VAT')).toBeTruthy()

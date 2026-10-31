@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { blankSettings, type CompanySettings, type Cost, type Dayworks, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder } from './lib/types'
+import { placeParam, setPlace } from './lib/place'
 import { db, nextVoNumber, rates, uid } from './lib/db'
 import { dayKey } from './lib/dates'
 import { RatesSheet } from './screens/Rates'
@@ -56,7 +57,9 @@ export default function App() {
   const [access, setAccess] = useState(accessFor(null))
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
-  const [openId, setOpenId] = useState<string | null>(null)
+  // the open job is kept in the address, so a reload comes back to it (src/lib/place.ts)
+  const [openId, setOpenIdState] = useState<string | null>(() => placeParam('job'))
+  const setOpenId = (id: string | null) => { setOpenIdState(id); setPlace({ job: id, tab: null }) }
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
   const [logging, setLogging] = useState(false)
   const [editing, setEditing] = useState<Variation | null>(null)

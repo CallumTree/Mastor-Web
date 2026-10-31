@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { IconClose } from './Icons'
+import { Trace } from './Trace'
 
 /**
  * Bottom sheet. Once anything has been typed or changed inside it, a stray tap on the backdrop,
@@ -96,6 +97,7 @@ export function TitleBlock({ head, rows, sheetRef, progress }: {
   return (
     <div className="tb-wrap">
       <div className="tb">
+        <Trace r={19} inset={5} />
         <div className="tb-cell tb-head">
           <div className="row"><div className="tb-label grow">{head[0]}</div>{sheetRef && <div className="tb-label">{sheetRef}</div>}</div>
           <div className="tb-val">{head[1]}</div>

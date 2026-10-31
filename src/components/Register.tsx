@@ -3,6 +3,7 @@
  * one header (the tab's name — the job is named in the page header above), one boxed summary strip (like the Variation Register PDF), ruled schedules below.
  */
 import type { CSSProperties, ReactNode } from 'react'
+import { Trace } from './Trace'
 
 export function TabHead({ label, meta, menu }: { label: string; title?: string; meta?: ReactNode; menu?: ReactNode }) {
   return (
@@ -23,7 +24,8 @@ export function SumStrip({ cells, cols = 2, progress, label, caption }: { cells:
   const strip = (
     <div className={'sum sum-' + cols} data-n={cells.length} aria-label={label}>
       {cells.map(c => (
-        <div key={c.key ?? c.label} className={'sum-cell' + (c.hot ? ' hot' : '') + (c.nil ? ' nil' : '')}>
+        <div key={c.key ?? c.label} className={'sum-cell' + (c.hot ? ' hot live' : '') + (c.nil ? ' nil' : '')}>
+          {c.hot && <Trace r={3} />}
           <div className="label">{c.label}</div>
           <div className="mono n" style={fitLen(c.nil ? '—' : c.value)}>{c.nil ? '—' : c.value}</div>
           {c.note && <small>{c.note}</small>}

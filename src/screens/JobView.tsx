@@ -6,7 +6,9 @@ import { OrdersTab } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
-import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus } from '../components/Icons'
+import { Trace } from '../components/Trace'
+import { placeParam, setPlace } from '../lib/place'
+import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
@@ -15,6 +17,7 @@ import { dayKey } from '../lib/dates'
 import { Sheet, TitleBlock } from '../components/Ui'
 import { SignMark, SIGN_WORD, type SignKind } from '../components/Sign'
 import { ValuationsTab } from './Valuations'
+import { AskTab } from './Ask'
 import { valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
 import { fitLen } from '../components/Register'
@@ -23,7 +26,7 @@ import { jobAlerts, type AlertPlace } from '../lib/alerts'
 /** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
 const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
 
-export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals'
+export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals' | 'ask'
 
 export interface Rail { done: number; next: number; label: string; short: string }
 
@@ -47,7 +50,7 @@ function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: bool
   return (
     <header className={'jbar bleed' + (compact ? ' compact' : '')}>
       <div className="jbar-in">
-        <button className="icon-btn on-dark" onClick={onBack} aria-label="All jobs"><IconBack size={20} /></button>
+        <button className="back-btn" onClick={onBack}><IconBack size={18} /><span>Jobs</span></button>
         <div className="jbar-title">
           <div className="jbar-ref mono">{job.contractRef || job.workType}{job.status !== 'Active' ? ` · ${job.status}` : ''}</div>
           <h1 className="jbar-name">{job.name}</h1>
@@ -111,7 +114,8 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         {actions.map((a, i) => {
           const kind: SignKind = a.kind
           return (
-            <button key={i} className={'act act-' + kind} onClick={a.onClick}>
+            <button key={i} className={'act act-' + kind + (kind === 'do' ? ' live' : '')} onClick={a.onClick}>
+              {kind === 'do' && <Trace r={8} />}
               <SignMark kind={kind} size={22} />
               <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{a.text}</span><span className="act-h">{a.hint}</span></span>
               <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
@@ -151,6 +155,7 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
   { tab: 'scope', label: 'Scope', Icon: IconScope },
   { tab: 'vos', label: 'VOs', Icon: IconMarkup },
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
+  { tab: 'ask', label: 'Ask', Icon: IconAsk },
 ]
 
 export function JobView(p: {
@@ -170,7 +175,10 @@ export function JobView(p: {
   const { job, vos, scope, vals, onBack, onSetup, onLogVariation, onEditVariation } = p
   const access = useAccess()
   const nav = NAV.filter(n => access.money || !MONEY_TABS.includes(n.tab))
-  const [tab, setTab] = useState<Tab>('home')
+  const left = Math.ceil(nav.length / 2)
+  // the tab is kept in the address with the job, so a reload comes back to it
+  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return nav.find(n => n.tab === t)?.tab ?? 'home' })
+  const setTab = (t: Tab) => { setTabState(t); setPlace({ tab: t === 'home' ? null : t }) }
   const [diaryDate, setDiaryDate] = useState(dayKey())
   const [capture, setCapture] = useState(false)
   const [focusNote, setFocusNote] = useState(false)
@@ -199,10 +207,12 @@ export function JobView(p: {
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} />}
+        {tab === 'ask' && <AskTab job={job} />}
       </main>
-      <nav className="nav">
+      {/* the capture key sits dead centre: half the tabs left (the odd one too), the rest right, each side the same width (left cells R fr, right cells L fr) */}
+      <nav className="nav" style={{ '--dock-cols': `repeat(${left}, ${nav.length - left}fr) 68px repeat(${nav.length - left}, ${left}fr)` } as React.CSSProperties}>
         {nav.map(({ tab: t, label: navLabel, Icon }, i) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
-          <Fragment key={t}>{i === 2 && (
+          <Fragment key={t}>{i === left && (
             <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={26} /></span></button>
           )}
           <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>

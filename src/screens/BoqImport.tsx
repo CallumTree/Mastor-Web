@@ -172,7 +172,6 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
           return (
             <div key={p} className={'prop-item' + (isOpen ? ' open' : '')}>
               <button className="prop-row" aria-label={`Review property ${p}`} aria-expanded={isOpen} onClick={() => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })}>
-                <span className="prop-no">{p === '—' ? '?' : p}</span>
                 <span className="prop-main">
                   <span className="prop-name">{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
                   <span className="prop-meta" style={{ display: 'block' }}>{groups.join(' · ')}</span>

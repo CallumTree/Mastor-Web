@@ -59,9 +59,9 @@ export function Forecast({ aside }: { aside?: ReactNode }) {
           {tasks.map(t => (
             <div className="fc-tr" role="row" key={t.id}>
               <span role="cell" className="fc-task"><b>{t.what}</b><small>{t.why}</small></span>
-              <label role="cell" className="fc-in"><input inputMode="decimal" value={t.often} onChange={e => set(t.id, 'often', e.target.value)} aria-label={`${t.what}: ${t.per}`} /><small>{t.per}</small></label>
-              <label role="cell" className="fc-in"><input inputMode="decimal" value={t.now} onChange={e => set(t.id, 'now', e.target.value)} aria-label={`${t.what}: minutes each time now`} /><small>min each time now</small></label>
-              <label role="cell" className="fc-in"><input inputMode="decimal" value={t.after} onChange={e => set(t.id, 'after', e.target.value)} aria-label={`${t.what}: minutes each time with Mastor`} /><small>min with Mastor</small></label>
+              <span role="cell"><label className="fc-in"><input inputMode="decimal" value={t.often} onChange={e => set(t.id, 'often', e.target.value)} aria-label={`${t.what}: ${t.per}`} /><small>{t.per}</small></label></span>
+              <span role="cell"><label className="fc-in"><input inputMode="decimal" value={t.now} onChange={e => set(t.id, 'now', e.target.value)} aria-label={`${t.what}: minutes each time now`} /><small>min each time now</small></label></span>
+              <span role="cell"><label className="fc-in"><input inputMode="decimal" value={t.after} onChange={e => set(t.id, 'after', e.target.value)} aria-label={`${t.what}: minutes each time with Mastor`} /><small>min with Mastor</small></label></span>
               <span role="cell" className="fc-saved r"><span className="fc-saved-l">Back a month: </span>{hrs(saved(t))} h</span>
             </div>
           ))}

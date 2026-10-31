@@ -460,18 +460,18 @@
       },
       "section-head": {
         "displayName": "Section Head",
-        "purpose": "Section headings inside a screen; 125% width.",
-        "fontStretch": "125%"
+        "purpose": "Section headings inside a screen; 112% width, sentence case.",
+        "fontStretch": "112%"
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Figure labels, sheet titles, register heads; 125% width, uppercase; 100% in phone grids.",
-        "fontStretch": "125%"
+        "purpose": "Figure labels, title-block labels, sheet titles, register heads; 112% width, sentence case; 100% in phone grids.",
+        "fontStretch": "112%"
       },
       "plate": {
         "displayName": "Plate",
-        "purpose": "Sign plates and badges; 112% width, uppercase.",
-        "fontStretch": "112%"
+        "purpose": "Status tags (plates and badges); normal width, sentence case.",
+        "fontStretch": "100%"
       },
       "roman-ref": {
         "displayName": "Roman Ref",
@@ -539,11 +539,6 @@
         "name": "outline-plate",
         "value": "inset 0 0 0 1.5px #0A0A0B",
         "purpose": "Stroke for the wait plate and ink outline badge (not elevation)."
-      },
-      {
-        "name": "tile-open-ring",
-        "value": "0 0 0 2px #F4F4F5, 0 0 0 4px #0A0A0B",
-        "purpose": "Open property tile ring (not elevation)."
       },
       {
         "name": "media-glyph",
@@ -667,9 +662,9 @@
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Everything that is not the main action: white with a 1.5px ink outline.",
+      "description": "Everything that is not the main action: white with a 1px ink outline.",
       "html": "<button class=\"ds-btn2\">Add a line</button>",
-      "css": ".ds-btn2 { display:inline-flex; align-items:center; justify-content:center; min-height:52px; padding:0 20px; border-radius:12px; border:1.5px solid #0A0A0B; background:#fff; color:#0A0A0B; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-weight:650; font-size:16px; cursor:pointer; transition:background .15s; } .ds-btn2:hover { background:#F4F4F5; } .ds-btn2:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; }"
+      "css": ".ds-btn2 { display:inline-flex; align-items:center; justify-content:center; min-height:52px; padding:0 20px; border-radius:12px; border:1px solid #0A0A0B; background:#fff; color:#0A0A0B; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-weight:650; font-size:16px; cursor:pointer; transition:background .15s; } .ds-btn2:hover { background:#F4F4F5; } .ds-btn2:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; }"
     },
     {
       "name": "Text Field",
@@ -685,7 +680,7 @@
       "refersTo": "plate-do",
       "description": "Status plates: red stop, yellow warn, green ok by meaning; volt for the next step; ink outline for waiting.",
       "html": "<div class=\"ds-plates\"><span class=\"ds-plate ds-do\">&#8594; Price it</span><span class=\"ds-plate ds-stop\">Overdue</span><span class=\"ds-plate ds-warn\">To do</span><span class=\"ds-plate ds-ok\">Done</span><span class=\"ds-plate ds-wait\">With client</span></div>",
-      "css": ".ds-plates { display:flex; flex-wrap:wrap; gap:6px; } .ds-plate { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:6px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-stretch:112%; font-size:13px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; line-height:1.2; } .ds-do { background:#0040FF; color:#fff; } .ds-stop { background:#C1121F; color:#fff; } .ds-warn { background:#FFCD00; color:#0A0A0B; } .ds-ok { background:#0B7A3E; color:#fff; } .ds-wait { background:#fff; color:#0A0A0B; box-shadow:inset 0 0 0 1.5px #0A0A0B; }"
+      "css": ".ds-plates { display:flex; flex-wrap:wrap; gap:6px; } .ds-plate { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:6px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-size:13px; font-weight:600; line-height:1.2; } .ds-do { background:#E8EEFF; color:#0040FF; } .ds-stop { background:#FBE7E8; color:#0A0A0B; } .ds-warn { background:#FFF5CC; color:#0A0A0B; } .ds-ok { background:#E2F1E8; color:#0A0A0B; } .ds-wait { background:#fff; color:#0A0A0B; box-shadow:inset 0 0 0 1px #0A0A0B; }"
     },
     {
       "name": "Chip",
@@ -693,7 +688,7 @@
       "refersTo": "chip",
       "description": "Pill choice for modes and filters; selected fills ink.",
       "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-chip ds-on\">All</button><button class=\"ds-chip\">Open</button></div>",
-      "css": ".ds-chip { min-height:44px; padding:0 16px; border-radius:999px; border:1.5px solid #0A0A0B; background:#fff; color:#0A0A0B; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-weight:600; font-size:15px; cursor:pointer; } .ds-chip:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; } .ds-chip.ds-on { background:#0A0A0B; color:#fff; }"
+      "css": ".ds-chip { min-height:44px; padding:0 16px; border-radius:999px; border:1px solid #0A0A0B; background:#fff; color:#0A0A0B; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-weight:600; font-size:15px; cursor:pointer; } .ds-chip:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; } .ds-chip.ds-on { background:#0A0A0B; color:#fff; }"
     },
     {
       "name": "Figure Grid",
@@ -701,7 +696,7 @@
       "refersTo": "panel",
       "description": "Hairline panel of 112% figures over 125% labels; the figure that matters is a black cell with a neon figure.",
       "html": "<div class=\"ds-figs\"><div class=\"ds-fig ds-hot\"><div class=\"ds-n\">£11,879.22</div><div class=\"ds-l\">Certified</div></div><div class=\"ds-fig\"><div class=\"ds-n\">£2,410.00</div><div class=\"ds-l\">In valuation</div></div></div>",
-      "css": ".ds-figs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid #E4E4E7; border-radius:16px; overflow:hidden; background:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-fig { padding:14px 14px 15px; box-shadow:inset -1px -1px 0 #E4E4E7; } .ds-n { font-stretch:112%; font-weight:750; font-size:24px; line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:#0A0A0B; } .ds-l { font-stretch:125%; font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#5E5E66; margin-top:6px; } .ds-hot { background:#0A0A0B; box-shadow:none; } .ds-hot .ds-n { color:#00E5FF; } .ds-hot .ds-l { color:#A1A1AA; }"
+      "css": ".ds-figs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid #E4E4E7; border-radius:16px; overflow:hidden; background:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-fig { padding:14px 14px 15px; box-shadow:inset -1px -1px 0 #E4E4E7; } .ds-n { font-stretch:112%; font-weight:750; font-size:24px; line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:#0A0A0B; } .ds-l { font-stretch:112%; font-weight:600; font-size:13px; letter-spacing:.01em; color:#5E5E66; margin-top:6px; } .ds-hot { background:#0A0A0B; box-shadow:none; } .ds-hot .ds-n { color:#00E5FF; } .ds-hot .ds-l { color:#A1A1AA; }"
     },
     {
       "name": "Job Header with Neon Progress Rail",
@@ -781,7 +776,8 @@
     "overview": "**Creative North Star: \"The Live Wire on the Drawing Board\"**\n\nMastor is a white drawing board with black slabs bolted to it. The ground is pure white; structure is carried by near-black ink and by solid black slabs for the things that frame a job: the job header, the floating dock, the dashboard title block and the one figure on a screen that matters most. On top of that structure exactly one thing is lit: where you are, what's next, how far the job has got. On black it is lit in neon cyan; on white its twin, volt blue, takes over. Red, yellow and green are not decoration; they are warnings, and appear only where something is overdue, needs doing or is done.\n\nThe type is one variable family, Archivo, used at three widths: expanded capitals (125%) for headings and labels, a narrower expanded cut (112%) for figures so long amounts fit a phone cell, and normal width for anything that is read as sentences. JetBrains Mono sets codes and references; Cinzel lives only in the MΛSTΘR wordmark. The density is a site phone's: large targets, 13px floor, figures that shrink to their box rather than overflow it.\n\nThis world refuses the category default of a grey dashboard with a brand-blue button, and it refuses the dark neon \"cyber\" console: neon here is a signal on black slabs inside a light page, never an atmosphere, never a glow.",
     "keyCharacteristics": [
       "Pure white ground, hairline panels, no shadow at rest.",
-      "Black slabs for structure: job header, dock, title block, hot figures, property tiles.",
+      "The live wire: one-device-pixel lines, a volt blueprint edge on white panels, a neon contour inside black slabs, and a pulse round the one live thing.",
+      "Black slabs for structure: job header, dock, title block, hot figures.",
       "One lit thing per screen: neon on black, volt on white.",
       "Warning colours carry meaning only, always paired with a sign shape and a word.",
       "Archivo at 125% (headings, labels), 112% (figures), 100% (reading).",
@@ -797,7 +793,7 @@
       },
       {
         "name": "The Neon Lives on Black Rule",
-        "body": "Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (the open property tile is an ink tile with a neon numeral).",
+        "body": "Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (a hot figure cell is a black cell with a neon figure).",
         "section": "colors"
       },
       {
@@ -883,12 +879,13 @@
     ],
     "dos": [
       "Do keep each screen to one lit thing: neon on black, volt on white.",
-      "Do turn a white-ground element black before lighting it neon (the open property tile).",
+      "Do turn a white-ground element black before lighting it neon (a hot figure cell).",
+      "Don't repeat what a row already says: a property row is its name, never a number tile beside \"No. 4\".",
       "Do use red, yellow and green only for overdue, needs doing and done, each with its sign shape and a spoken word.",
       "Do put ink text on yellow and neon; white text on red, green, volt and black.",
       "Do set headings and labels at 125% width, figures at 112%, and reading text at normal width.",
       "Do let figures fit their box (`--len`, container units, 15px floor) rather than truncate.",
-      "Do keep panels flat with a 1px Hairline and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.",
+      "Do keep panels flat with a one-device-pixel Blueprint Edge and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.",
       "Do keep tap targets at 44px minimum and primary controls at 48–64px.",
       "Do show unknowns honestly: \"Unpriced\", \"not measured\", an em dash, never £0.",
       "Do light one thing per black slab on the front page: the next free place (its register tile, the strip's tile and the claim button's numeral show the same place) and, on the forecast, the hours back.",
