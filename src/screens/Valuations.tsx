@@ -6,6 +6,7 @@ import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
 import { issuePlan, lineValue, valRef, valTotals } from '../lib/valuation'
 import { ByClaude, Plate } from '../components/Sign'
+import { TradeMark } from '../components/Trade'
 import { CourtLine, valCourt } from '../lib/chase'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
@@ -19,7 +20,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => byProp ? (a.property ?? '').localeCompare(b.property ?? '', 'en', { numeric: true }) || a.order - b.order : a.room.localeCompare(b.room) || a.order - b.order)
   const o = vos.filter(x => x.valuationId === val.id).sort((a, b) => a.number - b.number)
   const open = val.status === 'Open'   // Claude's marks matter while the valuation can still change
-  const row = (key: string, ref: string, desc: string, sub: string, value: number, onRemove?: () => void, claude?: number | null) => (
+  const row = (key: string, ref: string, desc: string, sub: React.ReactNode, value: number, onRemove?: () => void, claude?: number | null) => (
     <div key={key} className="row val-line" style={{ padding: '10px 0', borderTop: '1px solid var(--line)', alignItems: 'flex-start' }}>
       <div className="grow">
         <div className="row" style={{ gap: 6 }}>{ref && <span className="mono t-small slate">{ref}</span>}{open && <ByClaude at={claude} />}</div>
@@ -33,7 +34,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   return (
     <div>
       {s.length > 0 && !byProp && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, `${i.room}${i.workstream ? ` · ${i.workstream}` : ''} · ${qtyText(i.qty!)} ${i.unit} @ ${money(i.rate!)}`, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}{i.room && i.room !== i.workstream ? ` · ${i.room}` : ''}</>}{!i.workstream && i.room} · {qtyText(i.qty!)} {i.unit} @ {money(i.rate!)}</>, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
       {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
       {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
     </div>
@@ -81,7 +82,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         { label: 'Contract + VOs', value: money(target), nil: !target, note: target ? `${pct}% claimed incl. this valuation` : 'No contract value yet — add it in job setup' },
         { label: 'Certified', value: money(certified), note: `${issued.length} valuation${issued.length === 1 ? '' : 's'} issued`, nil: !issued.length },
         { label: 'Paid', value: money(paid), note: 'as received', nil: !paid },
-        { label: 'Owed', value: money(owed), note: overdue ? `${overdue} overdue` : 'incl. VAT once invoiced', hot: owed > 0, nil: !owed },
+        { label: 'Owed', value: money(owed), note: overdue ? `${overdue} overdue` : 'incl. VAT once invoiced', hot: owed > 0 && !open, nil: !owed },
       ]} />
 
       {onDecideSite && <SiteReview diary={diary} scope={scope} valLabel={valRef(open?.number ?? nextNo)} onDecide={onDecideSite} />}
@@ -96,11 +97,11 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           <SumStrip label={`${valRef(open.number)} figures`} cells={[
             { label: 'This valuation', value: money(current.gross), note: 'incl. uplifts, excl. VAT', hot: true },
             { label: 'Cumulative', value: money(certified + current.gross), note: `${money(certified)} previously certified` },
-            { label: 'Scope', value: money(current.scopeBase), note: 'base rates', nil: !current.scopeBase },
-            { label: 'Variations', value: money(current.voBase), note: 'base rates', nil: !current.voBase },
-            { label: 'Base total', value: money(current.base) },
-            { label: 'Uplifts', value: `${job.uplift1}%\u00a0+\u00a0${job.uplift2}%` },
           ]} />
+          {current.lines > 0 && <div className="val-build">
+            {current.voBase ? <>{money(current.scopeBase)} scope + {money(current.voBase)} VOs = <b>{money(current.base)}</b> at base rates</> : <><b>{money(current.base)}</b> scope at base rates</>}
+            {(job.uplift1 || job.uplift2) ? <>, plus uplifts of {job.uplift1}%{job.uplift2 ? <>&nbsp;+&nbsp;{job.uplift2}%</> : null}</> : null}
+          </div>}
           {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
           <div className="stack" style={{ marginTop: 14 }}>

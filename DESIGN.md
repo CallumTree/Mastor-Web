@@ -8,7 +8,7 @@ colors:
   ground: "#FFFFFF"
   panel: "#FFFFFF"
   line: "#E4E4E7"
-  edge: "rgba(0, 64, 255, 0.42)"
+  edge: "rgba(0, 64, 255, 0.3)"
   neon-hair: "rgba(0, 229, 255, 0.38)"
   field-line: "#8B8B93"
   row-open: "#F4F4F5"
@@ -34,18 +34,26 @@ colors:
   tint-green: "#E2F1E8"
   tint-volt: "#E8EEFF"
   red-ink: "#9E0F1A"
+  core-clay: "#B55F40"
+  core-bronze: "#9F702F"
+  core-olive: "#79813F"
+  core-teal: "#238B8B"
+  core-slate: "#617692"
+  core-violet: "#8560AC"
+  core-rose: "#BB5C84"
+  core-graphite: "#636363"
 typography:
   display:
     fontFamily: "'Archivo Variable', Archivo, system-ui, -apple-system, 'Segoe UI', sans-serif"
     fontSize: "clamp(22px, 6.4vw, 30px)"
-    fontWeight: 800
+    fontWeight: 720
     lineHeight: 1.08
     letterSpacing: "-0.02em"
     fontVariation: "'wdth' 125"
   headline:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "26px"
-    fontWeight: 800
+    fontWeight: 720
     lineHeight: 1.05
     letterSpacing: "-0.01em"
     fontVariation: "'wdth' 125"
@@ -58,8 +66,8 @@ typography:
     fontVariation: "'wdth' 112"
   figure:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
-    fontSize: "min(clamp(22px, 7vw, 32px), max(15px, calc(160cqi / var(--len, 6))))"
-    fontWeight: 750
+    fontSize: "min(clamp(22px, 6.4vw, 28px), max(15px, calc(160cqi / var(--len, 6))))"
+    fontWeight: 680
     lineHeight: 1
     letterSpacing: "-0.02em"
     fontFeature: "tnum"
@@ -67,28 +75,28 @@ typography:
   figure-board:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "26px"
-    fontWeight: 750
+    fontWeight: 680
     lineHeight: 1.05
     fontFeature: "tnum"
     fontVariation: "'wdth' 112"
   figure-sm:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "min(clamp(19px, 5.6vw, 24px), max(15px, calc(160cqi / var(--len, 6))))"
-    fontWeight: 750
+    fontWeight: 680
     lineHeight: 1.05
     fontFeature: "tnum"
     fontVariation: "'wdth' 112"
   amount:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "18px"
-    fontWeight: 700
+    fontWeight: 650
     lineHeight: 1.1
     fontFeature: "tnum"
     fontVariation: "'wdth' 112"
   row-title:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "17px"
-    fontWeight: 750
+    fontWeight: 680
     lineHeight: 1.1
     letterSpacing: "0.02em"
     fontVariation: "'wdth' 112"
@@ -139,7 +147,7 @@ typography:
   roman-ref:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "19px"
-    fontWeight: 750
+    fontWeight: 650
     lineHeight: 1
     letterSpacing: "0.02em"
     fontVariation: "'wdth' 125"
@@ -488,6 +496,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 - Signature: the neon progress rail along the foot of the job header.
 - The live wire: every edge is one device pixel. White panels are drawn in a volt blueprint line, black slabs carry a neon contour just inside their edge, and the live thing on a screen has a pulse of current running round its contour.
 - The public front page lives in the same world: real site photographs and the real app in a flat black phone frame carry it, and each black slab lights one thing (the next free founding place; the forecast's hours back).
+- Trades are colour-coded like the cores of a cable: a small muted band beside each trade's name, the same on every job.
 - Light only, by decision.
 
 ## Colors
@@ -504,6 +513,17 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Done Green** (done-green): done, complete, certified, paid. The fill of the ok mark and the colour of done tags' text on their pastel (tint-green); progress fills on white that measure claimed or complete work are green.
 - **Pastel Tints** (tint-red, tint-yellow, tint-green, tint-volt): the grounds of status tags. Never a panel, row or button fill.
 
+### Trade Cores (categorical)
+Eight muted colours, one per trade, set in OKLCH at mid lightness (4–6:1 on white) and kept clear of the warning hues, volt and neon. Named trades keep their core on every job (`src/lib/trade.ts`); any other workstream takes a stable core from its name.
+- **Clay Core** (core-clay): kitchens.
+- **Bronze Core** (core-bronze): electrics (the live core of a cable).
+- **Olive Core** (core-olive): decarbonisation, insulation, solar, ventilation.
+- **Teal Core** (core-teal): bathrooms, wet rooms, plumbing, heating.
+- **Slate Core** (core-slate): roofing, gutters, chimneys.
+- **Violet Core** (core-violet): windows and doors.
+- **Rose Core** (core-rose): painting, decorating, plastering, render.
+- **Graphite Core** (core-graphite): scaffold, prelims, general items.
+
 ### Tertiary
 - **Arch Copper** (arch-copper): the arch and keystone in the opening titles, and the app icon. Nowhere else.
 
@@ -513,20 +533,24 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Muted Ink** (ink-muted): labels, hints, secondary lines.
 - **White Ground / Panel** (ground, panel): page and panels; both are pure white.
 - **Hairline** (line): dividers inside panels, one device pixel. Also the disabled fill (disabled).
-- **Blueprint Edge** (edge): volt at 42%, the outer edge of a white container (panel, card, figure grid, summary strip, jobs and rate lists). One device pixel.
+- **Blueprint Edge** (edge): volt at 30%, drawn light so a screen of panels stays calm, the outer edge of a white container (panel, card, figure grid, summary strip, jobs and rate lists). One device pixel.
 - **Neon Contour** (neon-hair): neon at 38%, the contour drawn just inside a black slab (dock, title block, primary button, the job header's and cover's foot) and the edge of a dark control.
 - **Field Line** (field-line): input and choice-card edges, 3.4:1 on white.
 - **Open Row** (row-open): hover, expanded rows, secondary-button hover.
 - **Shell Black** (shell), **Shell Raised** (shell-2), **Shell Rule** (shell-line), **Shell Muted** (shell-muted): the black slabs, their raised controls, their rules and their secondary text. White (shell-text) is their primary text.
 
 ### Named Rules
-**The One Live Thing Rule.** Neon (on black) or volt (on white) marks only where you are, what's next, or how far the job has got. If it isn't one of those, it is ink or white.
+**The One Live Thing Rule.** Neon (on black) or volt (on white) marks only where you are, what's next, or how far the job has got. If it isn't one of those, it is ink or white. One hot figure per screen: on Valuations, while a valuation is open its figure is the lit one and Owed stays a plain cell.
 
 **The Neon Lives on Black Rule.** Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (a hot figure cell is a black cell with a neon figure).
+
+**The Quiet Weight Rule.** Only the job name and tab title are heavy (720); figures sit at 680, numerals at 650 and row text at 600, so no two things shout at once. Tags that wait on someone else ("With client · Awaiting instruction") are a grey Open Row tag in Slate Ink, never an outlined box; outline badges ("Active", "Instructed") use a Field Line edge.
 
 **The Warning Meaning Rule.** Red is overdue or missing, yellow is needs doing, green is done. Green means done only: an "Active" job status is an ink outline badge, not green.
 
 **The Mark Not Plate Rule.** Red, yellow and green are marks, not surfaces. A status is a small sign mark beside ink text, on a pale tint at most; no row, button or panel is painted red, yellow or green. Yellow is never a text colour. (This replaced the solid sign plates in October 2026: painted plates made the app read like a hazard register.)
+
+**The Cable Core Rule.** A trade's colour is only ever a 14×6px band (3px rounding) beside its name: before a workstream heading, before a valuation line's trade, before a trade in Costs, and as a bundle of bands (3px apart) leading a property row's trade list, so every trade shows even when the names are cut short. It is never a fill, a text colour, a progress bar or a status; the name always says it too.
 
 **The Light Only Rule.** Mastor is light only, and that is a decision (`color-scheme: only light`). The black slabs are the only dark surfaces; there is no dark palette to keep in step.
 
@@ -539,20 +563,20 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 **Character:** One grotesque stretched to three widths: wide, flat capitals that read like stencilled site lettering for tab titles and names, a slightly narrower cut for figures and for the sentence-case heads and labels, and a plain normal width for sentences. Width is the hierarchy, as much as size.
 
 ### Hierarchy
-- **Display** (800, clamp 22–30px, 1.08, 125% width): the job name in the black header. 19–24px on the work tabs; 18px under 300px.
-- **Headline** (800, 26px, 1.05, 125% width, uppercase): tab titles.
+- **Display** (720, clamp 22–30px, 1.08, 125% width): the job name in the black header. 19–24px on the work tabs; 18px under 300px.
+- **Headline** (720, 26px, 1.05, 125% width, uppercase): tab titles.
 - **Figure XL** (750, clamp 34–48px, 112% width, tabular): the title block's headline figure, in neon.
-- **Figure** (750, up to 32px, 112% width, tabular): job-home figures. Shrinks to its cell, down to 15px, then breaks.
-- **Figure Board / Figure Small** (750, 26px / up to 24px, 112% width): title-block cells and summary strips.
-- **Amount** (700, 18px, 112% width, tabular): right-hand amounts in registers, property rows and job rows (20px there).
-- **Row Title** (750, 17px, 112% width, uppercase, 0.02em): property names, set deliberately between the 16px title and 18px amount steps.
+- **Figure** (680, up to 28px, 112% width, tabular): job-home figures. Shrinks to its cell, down to 15px, then breaks.
+- **Figure Board / Figure Small** (680, 26px / up to 24px, 112% width): title-block cells and summary strips.
+- **Amount** (650, 18px, 112% width, tabular): right-hand amounts in registers, property rows and job rows (20px there).
+- **Row Title** (680, 17px, 112% width, uppercase, 0.02em): property names, set deliberately between the 16px title and 18px amount steps.
 - **Title** (700, 16px, 1.25, normal width): action-plate headings, button text (650).
 - **Body** (400, 16px, 1.45, normal width): everything read as sentences. Notes 14px/1.4; small 13px/1.35.
 - **Row text** (600, 15px, 1.3, normal width): the title line of a list row (a rate, a cost, a check result, a document) and short bold messages in bars and plates — between body and note, so a row's title outranks its meta without shouting.
 - **Section Head** (700, 16px, 112% width, sentence case): section headings inside a screen.
 - **Label** (600, 13px, 0.01em, 112% width, sentence case): figure labels, title-block labels, sheet titles, register heads. 100% width in phone grids.
 - **Tag** (600, 13px, normal width, sentence case): status tags (plates and badges).
-- **Roman Ref** (750, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
+- **Roman Ref** (650, 19px, 125% width): VO and valuation numbers (VO XII, VAL III).
 - **Code** (JetBrains Mono 400/500, 13–14px, tabular): job refs, SoR codes, the rail's percentage.
 
 **Front page (Persuade).** The public page adds a marketing ramp on the same three widths. Everything in this list is a front-page display size, not an app step:
@@ -668,7 +692,10 @@ Full-width tappable rows on job home under "Action needed": 64px minimum, 14px 1
 - **Internal Padding:** 16px; list panels drop padding and rule their rows.
 
 ### Figures and Summary Strips
-White ruled grids of 112% figures over 112% sentence-case labels. The cell carrying the figure that matters turns black with a neon figure (hot), and the pulse runs round its contour. Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work.
+White ruled grids of 112% figures over 112% sentence-case labels. The cell carrying the figure that matters turns black with a neon figure (hot), and the pulse runs round its contour. Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work. A strip shows only the boxes that hold something: the VO summary has a box for each stage that has VOs plus the total, and the empty stages become one line under it ("None ready to claim, instructed or rejected."). With an odd number of boxes on a phone, and with five at any width, the last box (the total) spans the row so the grid has no hole. Inside a card the strip drops its own frame: the card is the frame. The open valuation shows two figures (this valuation, cumulative) and one build-up line beneath in 14px Slate Ink with the base total in ink ("£6,846.30 scope at base rates, plus uplifts of 12.5% + 5%"), not a box per term.
+
+### VO and Valuation Lists
+A ruled list: a 96px reference column (the numeral never breaks: "VO III", "VAL VIII" stay on one line), the description and status, the value right. Under 560px each entry heads itself instead: the tick, the numeral and its code on one line with the value at the right, and the description, meta and status at full width beneath; the column header is dropped. Under 360px a pair of buttons stacks rather than wrap its labels.
 
 ### Inputs / Fields
 - **Style:** white, 1.5px Field Line edge, 12px corners, 50px tall, 12px 14px padding, 16px text; label above in 600 14px, hint below at 13px Muted Ink.
@@ -692,7 +719,7 @@ Named after a clerk of works. The last tab in the job dock (the capture key sits
 A Shell Black block, 24px corners, sentence-case labels at 112% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule. Its contour, 5px inside the edge, carries the pulse.
 
 ### Property Rows
-The name in Row Title ("No. 4" or the house's address), the workstreams beneath in Muted Ink, the amount right, and a green progress bar along the foot. No number tile: the name already says it. Open, the row tints Open Row and the chevron turns down; workstream groups indent beneath as 48px toggle rows with green progress bars.
+The name in Row Title ("No. 4" or the house's address), the workstreams beneath in Muted Ink led by a bundle of their core bands, the amount right, and a green progress bar along the foot. No number tile: the name already says it. Open, the row tints Open Row and the chevron turns down; workstream groups indent beneath as 48px toggle rows, each name led by its core band, with green progress bars.
 
 ### Neon Progress Rail (signature)
 How far the job has got, along the foot of the job header on every tab. A 4px Shell Rule track with 2px ends: certified work is solid neon, the open valuation is a neon dash (4px on, 3px off) at 60%, and a 2 by 12px neon tick marks the certified point. Its label sits right in 13px mono, Shell Muted on job home and neon with just the figure on the work tabs. It grows in from the left over 0.9s (`cubic-bezier(.16, 1, .3, 1)`); under reduced motion it is simply drawn.
@@ -763,6 +790,7 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 - **Do** let figures fit their box (`--len`, container units, 15px floor) rather than truncate.
 - **Do** keep panels flat with a one-device-pixel Blueprint Edge and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.
 - **Do** keep tap targets at 44px minimum and primary controls at 48–64px.
+- **Do** lead a trade's name with its core band, and keep the band the only place its colour appears.
 - **Do** show unknowns honestly: "Unpriced", "not measured", an em dash, never £0.
 - **Do** light one thing per black slab on the front page: the next free place (its register tile, the strip's tile and the claim button's numeral show the same place) and, on the forecast, the hours back.
 - **Do** keep type off photographs on the front page except on the solid black band plate, and credit every stock photograph in the footer.

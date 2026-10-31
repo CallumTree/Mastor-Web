@@ -8,6 +8,7 @@ import { readPackFiles, type PackResult } from '../lib/packIntake'
 import { Plate } from '../components/Sign'
 import type { PackFacts, Source } from '../lib/packFacts'
 import { lineValue } from '../lib/valuation'
+import { TradeList, TradeMark } from '../components/Trade'
 import { IconChevron, IconScope } from '../components/Icons'
 
 type Stage = { s: 'pick' } | { s: 'reading'; name: string; of: number } | { s: 'review'; boq: PackResult } | { s: 'error'; msg: string }
@@ -174,7 +175,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
               <button className="prop-row" aria-label={`Review property ${p}`} aria-expanded={isOpen} onClick={() => setOpenProps(s => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n })}>
                 <span className="prop-main">
                   <span className="prop-name">{p === '—' ? 'Unassigned' : `No. ${p}`}</span>
-                  <span className="prop-meta" style={{ display: 'block' }}>{groups.join(' · ')}</span>
+                  <span className="prop-meta" style={{ display: 'block' }}><TradeList names={groups} /></span>
                 </span>
                 <span className="prop-amt"><span className="mono">{money(sum)}</span><small>{rows.length} lines{flagged ? ` · ${flagged} to check` : ''}</small></span>
                 <span className="prop-chev" aria-hidden="true"><IconChevron size={16} /></span>
@@ -183,7 +184,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
                 const gRows = rows.filter(({ l }) => (l.workstream || l.room) === g)
                 return (
                   <div key={g}>
-                    <h3 className="label" style={{ padding: '8px 14px', borderTop: '1px solid var(--line)', color: 'var(--ink-2)' }}>{g}</h3>
+                    <h3 className="label" style={{ padding: '8px 14px', borderTop: '1px solid var(--line)', color: 'var(--ink-2)' }}><TradeMark name={g} />{g}</h3>
                     {gRows.map(lineRow)}
                   </div>
 )

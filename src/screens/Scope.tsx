@@ -10,6 +10,7 @@ import { uid } from '../lib/db'
 import { IconCheck, IconChevron, IconLock, IconPlus, IconScope } from '../components/Icons'
 import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
+import { TradeList, TradeMark } from '../components/Trade'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 
 /** Valuation tick. 44px to hit with a glove; the visible box sits inside. */
@@ -160,7 +161,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
             <button className="prop-row" onClick={() => toggleProp(p)} aria-expanded={isOpen} aria-label={`Property ${p}`}>
               <span className="prop-main">
                 <span className="prop-name">{p === '—' ? 'Unassigned' : job.properties?.[p]?.split(',')[0] || `No. ${p}`}</span>
-                <span className="prop-meta" style={{ display: 'block' }}>{[...new Set(all.map(groupName))].join(' · ')}</span>
+                <span className="prop-meta" style={{ display: 'block' }}><TradeList names={[...new Set(all.map(groupName))]} /></span>
               </span>
               <span className="prop-amt"><span className="mono">{money(tot)}</span><small style={{ color: pct === 100 ? 'var(--green)' : undefined }}>{pct === 100 ? <><IconCheck size={14} /> all claimed</> : `${pct}% claimed`}</small></span>
               <span className="prop-chev" aria-hidden="true"><IconChevron size={16} /></span>
@@ -191,7 +192,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
                       <button onClick={() => toggleGroup(key)} aria-expanded={gOpen} aria-label={`No. ${p} ${g}`}
                         className={'row grp-row' + (gOpen ? ' open' : '')}>
                         <span aria-hidden="true" className="grp-chev"><IconChevron size={14} /></span>
-                        <span className="grow t-note t-strong">{g} <span className="hint" style={{ fontWeight: 400 }}>· {gall.length}</span></span>
+                        <span className="grow t-note t-strong"><TradeMark name={g} />{g} <span className="hint" style={{ fontWeight: 400 }}>· {gall.length}</span></span>
                         <span className="amt t-small grp-amt">{money(gt)}</span>
                         <span className="amt t-small grp-pct" style={{ color: gpct === 100 ? 'var(--green)' : 'var(--ink-2)' }}>{gpct}%</span>
                       </button>

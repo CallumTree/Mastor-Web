@@ -395,6 +395,150 @@
           "#FAB98B",
           "#FFE1B8"
         ]
+      },
+      "core-clay": {
+        "role": "categorical",
+        "displayName": "Clay Core",
+        "canonical": "#B55F40",
+        "oklch": "oklch(58.0% 0.120 40)",
+        "tonalRamp": [
+          "#110906",
+          "#361C14",
+          "#5E3222",
+          "#8A4932",
+          "#B96649",
+          "#D4927B",
+          "#EDBFAF",
+          "#FFE8DF"
+        ],
+        "cssVar": "--core-clay",
+        "usage": "Trade core for kitchens: a 14×6px band beside the trade name only."
+      },
+      "core-bronze": {
+        "role": "categorical",
+        "displayName": "Bronze Core",
+        "canonical": "#9F702F",
+        "oklch": "oklch(58.0% 0.100 72)",
+        "tonalRamp": [
+          "#0F0A05",
+          "#2F210F",
+          "#533A1A",
+          "#795625",
+          "#A4763A",
+          "#C19E72",
+          "#DFC6A9",
+          "#FAECDC"
+        ],
+        "cssVar": "--core-bronze",
+        "usage": "Trade core for electrics: a 14×6px band beside the trade name only."
+      },
+      "core-olive": {
+        "role": "categorical",
+        "displayName": "Olive Core",
+        "canonical": "#79813F",
+        "oklch": "oklch(58.0% 0.090 115)",
+        "tonalRamp": [
+          "#0B0C06",
+          "#232613",
+          "#3F4322",
+          "#5C6231",
+          "#7E8648",
+          "#A3AA7B",
+          "#C9CEAF",
+          "#EEF1DF"
+        ],
+        "cssVar": "--core-olive",
+        "usage": "Trade core for decarbonisation, insulation, solar, ventilation: a 14×6px band beside the trade name only."
+      },
+      "core-teal": {
+        "role": "categorical",
+        "displayName": "Teal Core",
+        "canonical": "#238B8B",
+        "oklch": "oklch(58.0% 0.090 195)",
+        "tonalRamp": [
+          "#050D0D",
+          "#0E2929",
+          "#174848",
+          "#1D6A6A",
+          "#329090",
+          "#73B2B1",
+          "#ABD4D3",
+          "#DDF4F3"
+        ],
+        "cssVar": "--core-teal",
+        "usage": "Trade core for bathrooms, wet rooms, plumbing, heating: a 14×6px band beside the trade name only."
+      },
+      "core-slate": {
+        "role": "categorical",
+        "displayName": "Slate Core",
+        "canonical": "#617692",
+        "oklch": "oklch(56.0% 0.050 255)",
+        "tonalRamp": [
+          "#090B0E",
+          "#1E252D",
+          "#35414F",
+          "#4F5F74",
+          "#6D829D",
+          "#96A6BB",
+          "#C0CCDA",
+          "#E9EFF7"
+        ],
+        "cssVar": "--core-slate",
+        "usage": "Trade core for roofing, gutters, chimneys: a 14×6px band beside the trade name only."
+      },
+      "core-violet": {
+        "role": "categorical",
+        "displayName": "Violet Core",
+        "canonical": "#8560AC",
+        "oklch": "oklch(56.0% 0.120 305)",
+        "tonalRamp": [
+          "#0D0911",
+          "#291E35",
+          "#48365D",
+          "#6A4E89",
+          "#906DB7",
+          "#B197D0",
+          "#D3C2E9",
+          "#F3EAFF"
+        ],
+        "cssVar": "--core-violet",
+        "usage": "Trade core for windows and doors: a 14×6px band beside the trade name only."
+      },
+      "core-rose": {
+        "role": "categorical",
+        "displayName": "Rose Core",
+        "canonical": "#BB5C84",
+        "oklch": "oklch(60.0% 0.130 355)",
+        "tonalRamp": [
+          "#11080B",
+          "#361A25",
+          "#5E2D42",
+          "#8A4261",
+          "#B95E84",
+          "#D48CA7",
+          "#EDBACC",
+          "#FFE6F0"
+        ],
+        "cssVar": "--core-rose",
+        "usage": "Trade core for painting, decorating, plastering, render: a 14×6px band beside the trade name only."
+      },
+      "core-graphite": {
+        "role": "categorical",
+        "displayName": "Graphite Core",
+        "canonical": "#636363",
+        "oklch": "oklch(50.0% 0.000 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#242424",
+          "#404040",
+          "#5D5D5D",
+          "#808080",
+          "#A4A4A4",
+          "#CACACA",
+          "#EEEEEE"
+        ],
+        "cssVar": "--core-graphite",
+        "usage": "Trade core for scaffold, prelims, general: a 14×6px band beside the trade name only."
       }
     },
     "typographyMeta": {
