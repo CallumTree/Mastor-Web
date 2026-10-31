@@ -66129,6 +66129,140 @@ function findRates(q, s, limit2 = 6) {
   };
 }
 
+// server/mcp/docs.ts
+var MONEY_DOCS = ["Purchase order"];
+var MAX_CHARS = 6e4;
+var MAX_SCAN_BYTES = 12 * 1024 * 1024;
+var IMAGES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+function findDoc(docs, q) {
+  const exact = docs.find((d) => d.id === q);
+  if (exact) return exact;
+  const s = q.trim().toLowerCase();
+  const hits = docs.filter((d) => d.name.toLowerCase().includes(s) || d.kind.toLowerCase() === s);
+  if (hits.length === 1) return hits[0];
+  const list = docs.map((d) => `${d.name} (${d.kind})`).join("; ") || "none yet";
+  if (!hits.length) throw new Error(`No document matches \u201C${q}\u201D. This job\u2019s documents: ${list}.`);
+  throw new Error(`\u201C${q}\u201D matches ${hits.length} documents \u2014 say which: ${hits.map((d) => `${d.name} (${d.kind}, id ${d.id})`).join("; ")}.`);
+}
+function pageList(spec, n) {
+  if (!spec?.trim()) return Array.from({ length: n }, (_, i) => i + 1);
+  const out = /* @__PURE__ */ new Set();
+  for (const part of spec.split(",")) {
+    const m = part.trim().match(/^(\d+)(?:\s*[-–]\s*(\d+))?$/);
+    if (!m) throw new Error(`Pages \u201C${spec}\u201D \u2014 give pages like 3, 2-5 or 1,4-6.`);
+    const a = Number(m[1]), b = Number(m[2] ?? m[1]);
+    for (let p = Math.max(1, Math.min(a, b)); p <= Math.min(n, Math.max(a, b)); p++) out.add(p);
+  }
+  if (!out.size) throw new Error(`This document has ${n} page${n === 1 ? "" : "s"}.`);
+  return [...out].sort((x, y) => x - y);
+}
+function pageText(items) {
+  const lines = /* @__PURE__ */ new Map();
+  for (const it of items) {
+    if (!it.str.trim()) continue;
+    const y = Math.round(it.transform[5] / 3) * 3;
+    const key = [...lines.keys()].find((k) => Math.abs(k - y) <= 3) ?? y;
+    lines.set(key, [...lines.get(key) ?? [], it]);
+  }
+  return [...lines.entries()].sort((a, b) => b[0] - a[0]).map(([, row]) => {
+    row.sort((a, b) => a.transform[4] - b.transform[4]);
+    let out = "", end = -Infinity;
+    for (const it of row) {
+      out += (out ? it.transform[4] - end > 12 ? "   " : " " : "") + it.str.trim();
+      end = it.transform[4] + it.width;
+    }
+    return out;
+  }).join("\n").replace(/»(?=\s?\d)/g, "\xA3");
+}
+async function pdfPages(bytes) {
+  const g = globalThis;
+  g.pdfjsWorker ??= await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const task = pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: true, disableFontFace: true });
+  const doc = await task.promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++) pages.push(pageText((await (await doc.getPage(i)).getTextContent()).items));
+  await task.destroy();
+  return pages;
+}
+function choose(pages, spec, find) {
+  let picked = pageList(spec, pages.length);
+  const words2 = find?.toLowerCase().split(/\s+/).filter((w) => w.length > 1) ?? [];
+  if (words2.length) picked = picked.filter((p) => words2.some((w) => pages[p - 1].toLowerCase().includes(w)));
+  const kept = [];
+  let size = 0;
+  for (const p of picked) {
+    if (kept.length && size + pages[p - 1].length > MAX_CHARS) break;
+    kept.push(p);
+    size += pages[p - 1].length;
+  }
+  return { kept, matched: picked.length, words: words2 };
+}
+async function readDocument(ctx, d, opts = {}) {
+  if (!ctx.money && MONEY_DOCS.includes(d.kind)) throw new Error(`${d.name} is a purchase order, which carries money \u2014 your Mastor role doesn\u2019t include it. Ask someone in the office.`);
+  const head2 = `${d.name} (${d.kind}) \xB7 added ${ukDate(d.addedAt)}. This is the document as filed: quote it by name and page, and say so if Mastor\u2019s own figures differ.`;
+  const f = await media(ctx, d.fileId);
+  if (!f) return [{ type: "text", text: `${head2}
+Not uploaded from the phone yet (it syncs when the phone that added it has signal).` }];
+  const type = (d.type || f.type || "").toLowerCase();
+  const name = d.name.toLowerCase();
+  if (type === "application/pdf" || name.endsWith(".pdf") || f.bytes.subarray(0, 5).toString() === "%PDF-") {
+    let pages;
+    try {
+      pages = await pdfPages(f.bytes);
+    } catch {
+      throw new Error(`${d.name} couldn\u2019t be opened as a PDF \u2014 it may be damaged or password-protected.`);
+    }
+    const textual = pages.join("").replace(/\s/g, "").length > 12 * pages.length;
+    if (!textual) {
+      if (f.bytes.length > MAX_SCAN_BYTES) return [{ type: "text", text: `${head2}
+A scanned PDF of ${pages.length} pages, too large to read in one go (${Math.round(f.bytes.length / 1e6)} MB). Ask the office for a smaller copy, or add the pages that matter as their own document.` }];
+      return [
+        { type: "text", text: `${head2}
+A scanned PDF of ${pages.length} page${pages.length === 1 ? "" : "s"}, with no text layer: here is the PDF itself to read.` },
+        { type: "resource", resource: { uri: `mastor://documents/${d.id}`, mimeType: "application/pdf", blob: f.bytes.toString("base64") } }
+      ];
+    }
+    const { kept, matched, words: words2 } = choose(pages, opts.pages, opts.find);
+    if (!kept.length) return [{ type: "text", text: `${head2}
+${pages.length} pages. No page${opts.pages ? ` in ${opts.pages}` : ""} mentions ${words2.join(" or ")}.` }];
+    const more = matched > kept.length ? `
+Showing pages ${kept[0]}\u2013${kept[kept.length - 1]} of the ${matched} asked for (the rest didn\u2019t fit). Ask for pages from ${kept[kept.length - 1] + 1}.` : "";
+    return [{ type: "text", text: `${head2}
+${pages.length} page${pages.length === 1 ? "" : "s"}${words2.length ? `; pages mentioning ${words2.join(" or ")}: ${kept.join(", ")}` : ""}.${more}
+
+${kept.map((p) => `\u2014 page ${p} \u2014
+${pages[p - 1]}`).join("\n\n")}` }];
+  }
+  if (IMAGES.includes(type) || /\.(jpe?g|png|gif|webp)$/.test(name)) {
+    return [{ type: "text", text: head2 }, { type: "image", data: f.bytes.toString("base64"), mimeType: IMAGES.includes(type) ? type : "image/jpeg" }];
+  }
+  if (type.includes("wordprocessingml") || name.endsWith(".docx")) {
+    const mammoth = (await import("mammoth")).default;
+    const { value } = await mammoth.extractRawText({ buffer: f.bytes });
+    const t = value.trim();
+    return [{ type: "text", text: `${head2}
+
+${t.length > MAX_CHARS ? t.slice(0, MAX_CHARS) + "\n\n[The rest is longer than can be read at once: ask about a part of it.]" : t}` }];
+  }
+  if (type.includes("spreadsheet") || type.includes("excel") || type === "text/csv" || /\.(xlsx|xls|csv)$/.test(name)) {
+    const X = await import("xlsx");
+    const XLSX = X.default ?? X;
+    const wb = XLSX.read(f.bytes, { type: "buffer" });
+    let t = wb.SheetNames.map((s) => `\u2014 sheet ${s} \u2014
+${XLSX.utils.sheet_to_csv(wb.Sheets[s], { blankrows: false })}`).join("\n\n");
+    if (t.length > MAX_CHARS) t = t.slice(0, MAX_CHARS) + "\n\n[The rest is longer than can be read at once: ask about a sheet or a part of it.]";
+    return [{ type: "text", text: `${head2}
+
+${t}` }];
+  }
+  if (type.startsWith("text/") || /\.(txt|md)$/.test(name)) return [{ type: "text", text: `${head2}
+
+${f.bytes.toString("utf8").slice(0, MAX_CHARS)}` }];
+  return [{ type: "text", text: `${head2}
+Mastor can\u2019t read this kind of file (${type || "unknown type"}). Open it in the app, or add it as a PDF.` }];
+}
+
 // api/read-site.js
 var CLAUDE_MODEL = process.env.ANTHROPIC_SITE_MODEL || "claude-opus-5-5";
 var GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
@@ -66678,8 +66812,24 @@ function mastorServer(ctx) {
       actionNeeded: alerts.filter((a) => ctx.money || a.site).map((a) => ({ level: a.kind === "stop" ? "urgent" : a.kind === "do" ? "next step" : "to do", what: a.text, detail: a.hint })),
       counts: { scopeLines: d.scope.length, variations: d.vos.length, valuations: d.vals.length, diaryDays: new Set(d.diary.filter((e) => e.type !== "note").map((e) => e.date)).size, siteCaptures: d.diary.filter((e) => e.mediaId).length, workOrders: d.orders.length },
       notesAndDecisions: notes.map((n) => ({ date: n.date, category: n.category ?? "Site", pinned: !!n.pinned, text: n.note })),
-      documents: d.docs.map((x) => ({ name: x.name, kind: x.kind, added: day(x.addedAt) }))
+      documents: d.docs.filter((x) => ctx.money || !MONEY_DOCS.includes(x.kind)).map((x) => ({ id: x.id, name: x.name, kind: x.kind, added: day(x.addedAt) }))
     });
+  });
+  server.registerTool("read_document", {
+    title: "Read a job document",
+    description: "Reads one of the job\u2019s documents as filed: the purchase order, the client\u2019s pack or spec, the programme, RAMS, a certificate, a drawing. The documents are the source of truth: read one whenever a question turns on what it says (the PO number, value or uplifts, a spec clause, a date, a hazard) rather than answering from memory, and quote it by name and page. get_job lists the job\u2019s documents. For a long document, look for words (find) or ask for pages; a scanned PDF comes back as the PDF itself. Purchase orders: office roles only.",
+    inputSchema: {
+      job: external_exports.string().describe("Job id, or part of its name, contract ref or address"),
+      document: external_exports.string().describe("The document\u2019s id from get_job, or part of its name, or its kind (e.g. \u201CPurchase order\u201D)"),
+      find: external_exports.string().optional().describe("Only the pages that mention these words, e.g. \u201Cuplift\u201D or \u201Casbestos\u201D"),
+      pages: external_exports.string().optional().describe("Pages to read, e.g. \u201C3\u201D, \u201C2-5\u201D or \u201C1,4-6\u201D")
+    },
+    annotations: READ2
+  }, async (a) => {
+    const job = findJob(await records(ctx, "jobs"), a.job);
+    const docs = (await records(ctx, "docs", job.id)).filter((x) => ctx.money || !MONEY_DOCS.includes(x.kind));
+    if (!docs.length) return text({ job: job.name, documents: "none yet \u2014 add them in the app (job home \u2192 Documents)" });
+    return { content: await readDocument(ctx, findDoc(docs, a.document), { find: a.find, pages: a.pages }) };
   });
   server.registerTool("get_scope", {
     title: "Scope (BoQ) lines",
@@ -66896,6 +67046,7 @@ How to work:
 - You can change things for them: tick scope lines and VOs into the open valuation or take them out, log a VO, price or update a VO, add a note or decision, fill in the site day. Call the tool when they ask for the change. Don't ask "shall I?" in chat: the app shows each change as a card with Do it and Cancel, and it runs only when they tap Do it. Just before the call, say in one or two short lines exactly what will change, with Mastor's figures (which lines, how many, the totals).
 - Never invent a quantity, rate, SoR code or reference. If they didn't say it and no tool shows it, leave it out or ask.${ctx.money ? `
 - Pricing: when they log or price a VO without giving a rate, look it up with find_rate first (the job's own schedule, and the same work priced on other properties and jobs; try a second wording if the first finds nothing). If one match is clearly the same work in the same unit, put its code and suggestedRate in the change with rate_from, and say in a line where it came from ("WR100 at \xA31,500.00, the wet room rate in Planned Maint v8, as used on No. 12"). If several fit, or a rateCheck shows different rates, list the two or three best and ask which. If nothing fits, log it unpriced and say so. Never adjust a rate or do sums on it.` : ""}
+- The job's documents are the source of truth: the purchase order, the client's pack and spec, the programme, RAMS, certificates, drawings (get_job lists them). When a question turns on what one says, read it with read_document and quote it by its name and page; never answer from memory. If Mastor's own figures differ from a document (the PO number or value, the uplifts, a date), say so plainly and change nothing unless they ask.
 - If a request is ambiguous (which job, which property, which lines), ask one short question instead of guessing.
 - Issuing a valuation or creating an invoice is never done here: a person does that in the app (Vals). Say so if asked.${ctx.money ? "" : "\n- They are an operative: Mastor gives them no money figures (rates, values, valuations, invoices), and money changes are refused. Help with the diary, notes, the site day and logging VOs without prices."}
 - If a tool says Cancel was tapped, accept it in a few words and don't try the change again unless asked.
@@ -66921,13 +67072,14 @@ var DOING = {
   get_variations: "Reading the VOs",
   get_valuations: "Reading the valuations",
   find_rate: "Looking up the rate",
+  read_document: "Reading the documents",
   get_site_diary: "Reading the diary",
   view_site_media: "Looking at the site photos and notes",
   invoice_figures: "Working out the invoice figures"
 };
 function asResult(id, r) {
   const parts = Array.isArray(r.content) ? r.content : [];
-  const content = parts.map((p) => p.type === "text" ? { type: "text", text: p.text ?? "" } : p.type === "image" && p.data ? { type: "image", source: { type: "base64", media_type: p.mimeType ?? "image/jpeg", data: p.data } } : { type: "text", text: JSON.stringify(p) });
+  const content = parts.map((p) => p.type === "text" ? { type: "text", text: p.text ?? "" } : p.type === "image" && p.data ? { type: "image", source: { type: "base64", media_type: p.mimeType ?? "image/jpeg", data: p.data } } : p.type === "resource" && p.resource?.mimeType === "application/pdf" && p.resource.blob ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: p.resource.blob } } : { type: "text", text: JSON.stringify(p) });
   return { type: "tool_result", tool_use_id: id, content: content.length ? content : [{ type: "text", text: "(nothing)" }], ...r.isError ? { is_error: true } : {} };
 }
 var usesOf = (m) => m && m.role === "assistant" && Array.isArray(m.content) ? m.content.filter((b) => b.type === "tool_use") : [];
@@ -67038,6 +67190,7 @@ async function handler(req, res) {
 }
 export {
   MODEL,
+  asResult,
   checkBody,
   config2 as config,
   handler as default

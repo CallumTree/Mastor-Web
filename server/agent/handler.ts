@@ -47,6 +47,7 @@ How to work:
 - You can change things for them: tick scope lines and VOs into the open valuation or take them out, log a VO, price or update a VO, add a note or decision, fill in the site day. Call the tool when they ask for the change. Don't ask "shall I?" in chat: the app shows each change as a card with Do it and Cancel, and it runs only when they tap Do it. Just before the call, say in one or two short lines exactly what will change, with Mastor's figures (which lines, how many, the totals).
 - Never invent a quantity, rate, SoR code or reference. If they didn't say it and no tool shows it, leave it out or ask.${ctx.money ? `
 - Pricing: when they log or price a VO without giving a rate, look it up with find_rate first (the job's own schedule, and the same work priced on other properties and jobs; try a second wording if the first finds nothing). If one match is clearly the same work in the same unit, put its code and suggestedRate in the change with rate_from, and say in a line where it came from ("WR100 at £1,500.00, the wet room rate in Planned Maint v8, as used on No. 12"). If several fit, or a rateCheck shows different rates, list the two or three best and ask which. If nothing fits, log it unpriced and say so. Never adjust a rate or do sums on it.` : ''}
+- The job's documents are the source of truth: the purchase order, the client's pack and spec, the programme, RAMS, certificates, drawings (get_job lists them). When a question turns on what one says, read it with read_document and quote it by its name and page; never answer from memory. If Mastor's own figures differ from a document (the PO number or value, the uplifts, a date), say so plainly and change nothing unless they ask.
 - If a request is ambiguous (which job, which property, which lines), ask one short question instead of guessing.
 - Issuing a valuation or creating an invoice is never done here: a person does that in the app (Vals). Say so if asked.${ctx.money ? '' : '\n- They are an operative: Mastor gives them no money figures (rates, values, valuations, invoices), and money changes are refused. Help with the diary, notes, the site day and logging VOs without prices.'}
 - If a tool says Cancel was tapped, accept it in a few words and don't try the change again unless asked.
@@ -68,16 +69,18 @@ const isWrite = (t: { annotations?: { readOnlyHint?: boolean } }) => t.annotatio
 /** What the phone shows while Clerk uses a tool. */
 const DOING: Record<string, string> = {
   mastor_overview: 'Looking over your jobs', get_job: 'Reading the job', get_scope: 'Reading the scope', get_variations: 'Reading the VOs',
-  get_valuations: 'Reading the valuations', find_rate: 'Looking up the rate', get_site_diary: 'Reading the diary', view_site_media: 'Looking at the site photos and notes',
+  get_valuations: 'Reading the valuations', find_rate: 'Looking up the rate', read_document: 'Reading the documents', get_site_diary: 'Reading the diary', view_site_media: 'Looking at the site photos and notes',
   invoice_figures: 'Working out the invoice figures',
 }
 
 /** An MCP tool result as Claude's tool_result content. */
-function asResult(id: string, r: { content?: unknown; isError?: unknown }): Anthropic.Beta.BetaToolResultBlockParam {
-  const parts = (Array.isArray(r.content) ? r.content : []) as { type: string; text?: string; data?: string; mimeType?: string }[]
-  const content = parts.map(p =>
+export function asResult(id: string, r: { content?: unknown; isError?: unknown }): Anthropic.Beta.BetaToolResultBlockParam {
+  const parts = (Array.isArray(r.content) ? r.content : []) as { type: string; text?: string; data?: string; mimeType?: string; resource?: { mimeType?: string; blob?: string; uri?: string } }[]
+  const content: NonNullable<Anthropic.Beta.BetaToolResultBlockParam['content']> & unknown[] = parts.map(p =>
     p.type === 'text' ? { type: 'text' as const, text: p.text ?? '' }
     : p.type === 'image' && p.data ? { type: 'image' as const, source: { type: 'base64' as const, media_type: (p.mimeType ?? 'image/jpeg') as 'image/jpeg', data: p.data } }
+    // a scanned document: Claude reads the PDF itself
+    : p.type === 'resource' && p.resource?.mimeType === 'application/pdf' && p.resource.blob ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: p.resource.blob } }
     : { type: 'text' as const, text: JSON.stringify(p) })
   return { type: 'tool_result', tool_use_id: id, content: content.length ? content : [{ type: 'text', text: '(nothing)' }], ...(r.isError ? { is_error: true } : {}) }
 }

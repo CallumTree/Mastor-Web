@@ -6,7 +6,7 @@
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { DiaryEntry, Job, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
+import type { DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
 import { money, qtyText, voRef } from '../../src/lib/format'
 import { isPriced, issuePlan, lineValue, lockedIn, pennies, upliftAmounts, valRef, valTotals } from '../../src/lib/valuation'
 import { valCourt, voCourt } from '../../src/lib/chase'
@@ -16,6 +16,7 @@ import { jobAlerts } from '../../src/lib/alerts'
 import { jobMargin } from '../../src/lib/margin'
 import { findJob, jobData, rateBookItems, records, settings, type Ctx } from './data'
 import { findRates } from './rates'
+import { findDoc, MONEY_DOCS, readDocument } from './docs'
 import { siteMedia } from './media'
 import { day, NO_MONEY, text, ukToday } from './shared'
 import { registerWrites } from './writes'
@@ -93,8 +94,25 @@ export function mastorServer(ctx: Ctx) {
       actionNeeded: alerts.filter(a => ctx.money || a.site).map(a => ({ level: a.kind === 'stop' ? 'urgent' : a.kind === 'do' ? 'next step' : 'to do', what: a.text, detail: a.hint })),
       counts: { scopeLines: d.scope.length, variations: d.vos.length, valuations: d.vals.length, diaryDays: new Set(d.diary.filter(e => e.type !== 'note').map(e => e.date)).size, siteCaptures: d.diary.filter(e => e.mediaId).length, workOrders: d.orders.length },
       notesAndDecisions: notes.map(n => ({ date: n.date, category: n.category ?? 'Site', pinned: !!n.pinned, text: n.note })),
-      documents: d.docs.map(x => ({ name: x.name, kind: x.kind, added: day(x.addedAt) })),
+      documents: d.docs.filter(x => ctx.money || !MONEY_DOCS.includes(x.kind)).map(x => ({ id: x.id, name: x.name, kind: x.kind, added: day(x.addedAt) })),
     })
+  })
+
+  server.registerTool('read_document', {
+    title: 'Read a job document',
+    description: 'Reads one of the job’s documents as filed: the purchase order, the client’s pack or spec, the programme, RAMS, a certificate, a drawing. The documents are the source of truth: read one whenever a question turns on what it says (the PO number, value or uplifts, a spec clause, a date, a hazard) rather than answering from memory, and quote it by name and page. get_job lists the job’s documents. For a long document, look for words (find) or ask for pages; a scanned PDF comes back as the PDF itself. Purchase orders: office roles only.',
+    inputSchema: {
+      job: z.string().describe('Job id, or part of its name, contract ref or address'),
+      document: z.string().describe('The document’s id from get_job, or part of its name, or its kind (e.g. “Purchase order”)'),
+      find: z.string().optional().describe('Only the pages that mention these words, e.g. “uplift” or “asbestos”'),
+      pages: z.string().optional().describe('Pages to read, e.g. “3”, “2-5” or “1,4-6”'),
+    },
+    annotations: READ,
+  }, async (a) => {
+    const job = findJob(await records<Job>(ctx, 'jobs'), a.job)
+    const docs = (await records<JobDocument>(ctx, 'docs', job.id)).filter(x => ctx.money || !MONEY_DOCS.includes(x.kind))
+    if (!docs.length) return text({ job: job.name, documents: 'none yet — add them in the app (job home → Documents)' })
+    return { content: await readDocument(ctx, findDoc(docs, a.document), { find: a.find, pages: a.pages }) }
   })
 
   server.registerTool('get_scope', {

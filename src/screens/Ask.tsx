@@ -11,8 +11,8 @@ import { IconMic, IconSend } from '../components/Icons'
 type Rec = { lang: string; interimResults: boolean; continuous: boolean; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null }
 const Speech = (typeof window !== 'undefined' && ((window as unknown as { SpeechRecognition?: new () => Rec }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: new () => Rec }).webkitSpeechRecognition)) || null
 
-const EXAMPLES_MONEY = ['What’s still to claim at No. 6?', 'Tick the finished kitchen lines into the open val', 'Log a VO for a wet room at No. 18, priced like the last one', 'What’s overdue and who do I chase?']
-const EXAMPLES_SITE = ['What’s left to do at No. 4?', 'Log a VO: cracked lintel over the back door, 1.2 m', 'Today: dry, 5 on site, scaffold struck at No. 2', 'Add a note: tenant at No. 8 away until Friday']
+const EXAMPLES_MONEY = ['What’s still to claim at No. 6?', 'Tick the finished kitchen lines into the open val', 'Log a VO for a wet room at No. 18, priced like the last one', 'Does the PO match the job’s value and uplifts?']
+const EXAMPLES_SITE = ['What’s left to do at No. 4?', 'Log a VO: cracked lintel over the back door, 1.2 m', 'Today: dry, 5 on site, scaffold struck at No. 2', 'What does the client’s pack say about asbestos?']
 
 /**
  * Clerk: Mastor's assistant for this job (named after a clerk of works). Type or speak; it reads the job with the app's own figures and
@@ -84,7 +84,7 @@ export function AskTab({ job }: { job: Job }) {
 
       {!convo.messages.length && (
         <div className="ask-intro">
-          <p>Ask Clerk about {job.name}, or tell it what to change. It reads the job the way the app does, finds rates from your schedule and past work, and nothing changes until you tap <b>Do it</b>.</p>
+          <p>Ask Clerk about {job.name}, or tell it what to change. It reads the job the way the app does, reads the job’s documents as filed, finds rates from your schedule and past work, and nothing changes until you tap <b>Do it</b>.</p>
           <div className="ask-try">
             {(access.money ? EXAMPLES_MONEY : EXAMPLES_SITE).map(x => <button key={x} className="chip" onClick={() => { setText(x); box.current?.focus() }}>{x}</button>)}
           </div>
