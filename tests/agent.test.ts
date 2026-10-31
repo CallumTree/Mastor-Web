@@ -71,7 +71,7 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   return realFetch(input, init)
 }) as typeof fetch
 
-const { default: handler } = await import('../server/agent/handler')
+const { default: handler, asResult } = await import('../server/agent/handler')
 const srv = http.createServer((req, res) => {
   let raw = ''; req.on('data', c => (raw += c)); req.on('end', async () => {
     const r = req as any, s = res as any
@@ -107,7 +107,7 @@ ok(upserts.length === 0, 'nothing is saved before Do it')
 ok(hits.length === 1, 'the question counts once against the daily AI limit')
 const first = asked[0]
 ok(first.key === 'ak' && first.body.model === 'claude-opus-5-5' && first.body.fallbacks === 'default' && /server-side-fallback-2026-07-01/.test(first.beta ?? ''), 'Claude Opus 5.5, with refusal fallbacks')
-ok(first.body.tools.length === 15 && /You are Clerk/.test(first.body.system) && /Do it and Cancel/.test(first.body.system), 'the connector’s fifteen tools, and told that changes wait for Do it')
+ok(first.body.tools.length === 16 && /You are Clerk/.test(first.body.system) && /Do it and Cancel/.test(first.body.system), 'the connector’s sixteen tools, and told that changes wait for Do it')
 ok(/<context>Today is .*"j1"/.test(first.body.messages[0].content[0].text) && first.body.messages[0].content[1].text === 'Tick No. 4 paint into the open val', 'the first question carries the date and the open job')
 let convo = r.done.messages
 ok(convo[1].content[0].name === 'get_scope' && convo[2].content[0].type === 'tool_result' && convo[3].content[0].type === 'thinking', 'the conversation comes back whole, thinking blocks untouched')
@@ -143,6 +143,9 @@ srv.close()
 // the deployed file is this build
 const { options } = await import('../scripts/build-mcp.mjs')
 const fresh = await build({ ...options, entryPoints: ['server/agent/handler.ts'], write: false, outfile: 'api/agent.js', logLevel: 'silent' })
+const scanned = asResult('t1', { content: [{ type: 'text', text: 'A scanned PDF' }, { type: 'resource', resource: { uri: 'mastor://documents/d', mimeType: 'application/pdf', blob: 'JVBERi0=' } }] })
+ok(Array.isArray(scanned.content) && (scanned.content[1] as any).type === 'document' && (scanned.content[1] as any).source.media_type === 'application/pdf' && (scanned.content[1] as any).source.data === 'JVBERi0=',
+  'a scanned document reaches Claude as the PDF itself')
 ok(fresh.outputFiles[0].text === readFileSync('api/agent.js', 'utf8'), 'api/agent.js is up to date (run npm run build:mcp after changing server/ or the src/lib it uses)')
 
 console.log(`\nagent: ${pass} passed, ${fail} failed`)

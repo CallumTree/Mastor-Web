@@ -238,7 +238,7 @@ export interface JobDocument {
   id: string
   jobId: string
   name: string
-  kind: 'Client pack' | 'RAMS' | 'Programme' | 'Certificate' | 'Drawing' | 'Other'
+  kind: 'Purchase order' | 'Client pack' | 'RAMS' | 'Programme' | 'Certificate' | 'Drawing' | 'Other'
   fileId: string
   type: string
   size: number

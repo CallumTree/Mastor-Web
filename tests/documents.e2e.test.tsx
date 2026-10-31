@@ -1,4 +1,4 @@
-/** Job documents: a RAMS PDF added on the job home, listed by kind; operatives can open but not remove. */
+/** Job documents: a RAMS PDF and the client's purchase order added on the job home, listed by kind; operatives can open but not remove, and never see the PO (it carries money). */
 import { describe, it, expect, afterAll } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import App from '../src/App'
@@ -14,7 +14,8 @@ describe('job documents', () => {
     await db.putJob(job)
     render(<App />)
     click(await screen.findByRole('button', { name: /12 Castle Way/ }))
-    await screen.findByText(/RAMS, programme, certificates, drawings/)
+    await screen.findByText(/purchase order, the client’s pack, programme, RAMS, certificates, drawings/)
+    await screen.findByText(/Clerk reads them too/)
     const input = screen.getByText('+ Add document').querySelector('input[type=file]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['%PDF-1.4 rams'], 'CW12 RAMS rev B.pdf', { type: 'application/pdf' })] } })
     await screen.findByText('Add document')
@@ -27,11 +28,21 @@ describe('job documents', () => {
     expect(d.kind).toBe('RAMS'); expect(d.type).toBe('application/pdf')
     expect(screen.getByRole('button', { name: 'Remove CW12 RAMS rev B' })).toBeTruthy()
 
+    // the client's purchase order: guessed from the council's order number in the file name
+    fireEvent.change(input, { target: { files: [new File(['%PDF-1.4 po'], 'Order-PC10001_Roof.pdf', { type: 'application/pdf' })] } })
+    await screen.findByText('Add document')
+    expect(screen.getByRole('button', { name: 'Purchase order' }).getAttribute('aria-pressed')).toBe('true')
+    click(screen.getByRole('button', { name: 'Add to job' }))
+    await screen.findByText('Order-PC10001_Roof')
+    expect(screen.getByText('Documents · 2')).toBeTruthy()
+
     // an operative on the same device: can see and open it, not remove it
     await meta.set('company', { id: 'c', name: 'Tree & Sons', user: 'u', role: 'operative' })
     cleanup(); render(<App />)
     await screen.findByRole('heading', { name: '12 Castle Way' })   // still in the job after the reload
     await screen.findByText('CW12 RAMS rev B')
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Remove CW12 RAMS rev B' })).toBeNull())
+    expect(screen.queryByText('Order-PC10001_Roof')).toBeNull()   // the PO carries money: not listed for an operative
+    expect(screen.getByText('Documents · 1')).toBeTruthy()
   })
 })

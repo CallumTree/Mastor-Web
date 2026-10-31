@@ -13,6 +13,8 @@ import { jobAlerts } from '../src/lib/alerts'
 import { pennies, upliftAmounts, valTotals } from '../src/lib/valuation'
 import { money } from '../src/lib/format'
 import { invoiceAmounts } from '../src/lib/invoice'
+import { jsPDF } from 'jspdf'
+import * as XLSX from 'xlsx'
 
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
@@ -41,9 +43,22 @@ let diary: DiaryEntry[] = [
 ]
 const TABLES: Record<string, () => { id: string; jobId?: string; data?: unknown }[]> = {
   jobs: () => [job, other], scope_items: () => scope, valuations: () => vals, variations: () => vos, diary_entries: () => diary,
-  work_orders: () => [], job_documents: () => [{ id: 'doc1', jobId: 'j1', name: 'RAMS.pdf', kind: 'RAMS', fileId: 'f', type: 'application/pdf', size: 1, addedAt: 1 }],
+  work_orders: () => [], job_documents: () => DOCS,
   costs: () => [], company_settings: () => [],
 }
+
+// documents as filed: a typed PO (two pages), a scan with no text layer, a spreadsheet and a photo — all made up here
+const poPdf = (() => { const d = new jsPDF(); d.text('PURCHASE ORDER', 20, 20); d.text('Order Number: PC10001', 120, 30); d.text('Contractor Uplift 30%:', 20, 60); d.text('»1,000.00', 120, 60)
+  d.addPage(); d.text('Deliver to: Unit 1, Example Park', 20, 20); return Buffer.from(d.output('arraybuffer')) })()
+const scanPdf = (() => { const d = new jsPDF(); d.addImage('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'PNG', 10, 10, 100, 100); return Buffer.from(d.output('arraybuffer')) })()
+const sheet = (() => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Task', 'Start'], ['Scaffold up', '03/11/2026']]), 'Programme'); return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })) })()
+const FILES: Record<string, { body: Buffer; type: string }> = {
+  'f-po': { body: poPdf, type: 'application/pdf' }, 'f-scan': { body: scanPdf, type: 'application/pdf' },
+  'f-xlsx': { body: sheet, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }, 'f-pic': { body: Buffer.from([0x89, 0x50, 0x4e, 0x47]), type: 'image/png' },
+}
+const D = (id: string, name: string, kind: string, fileId: string, type: string) => ({ id, jobId: 'j1', name, kind, fileId, type, size: 1, addedAt: 1 })
+const DOCS = [D('doc1', 'RAMS', 'RAMS', 'f-missing', 'application/pdf'), D('doc-po', 'Order PC10001', 'Purchase order', 'f-po', 'application/pdf'),
+  D('doc-scan', 'Signed instruction', 'Other', 'f-scan', 'application/pdf'), D('doc-prog', 'Programme', 'Programme', 'f-xlsx', FILES['f-xlsx'].type), D('doc-pic', 'Drawing photo', 'Drawing', 'f-pic', 'image/png')]
 
 // a schedule of rates the app has synced: the same codes the scope uses, so it's this job's book
 const BOOK = [
@@ -83,6 +98,9 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
     return new Response(JSON.stringify(rows.map(data => ({ data }))))
   }
   if (url.startsWith(SB + '/storage/v1/object/photos/c1/rates/b1.json')) return new Response(JSON.stringify(BOOK))
+  const file = /\/storage\/v1\/object\/photos\/c1\/([^/?]+)\.jpg/.exec(url)?.[1]
+  if (file && FILES[file]) return new Response(new Uint8Array(FILES[file].body), { headers: { 'content-type': FILES[file].type } })
+  if (file?.startsWith('f-')) return new Response('{"error":"not_found"}', { status: 400 })
   if (url.startsWith(SB + '/storage/v1/object/photos/c1/m-photo.jpg')) return new Response(new Uint8Array([0xff, 0xd8, 0xff, 1, 2, 3]), { headers: { 'content-type': 'image/jpeg' } })
   if (url.startsWith(SB + '/storage/v1/object/photos/c1/m-voice.jpg')) return new Response(new Uint8Array([82, 73, 70, 70]), { headers: { 'content-type': 'audio/wav' } })
   if (url.includes(':generateContent')) { hits.push('gemini'); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Number four masonry paint is finished.' }] } }] })) }
@@ -125,9 +143,9 @@ r = await rpc('office', 'initialize', { protocolVersion: '2025-06-18', capabilit
 ok(r.status === 200 && r.body.result.serverInfo.name === 'mastor' && /Tree & Sons/.test(r.body.result.instructions) && /never here/.test(r.body.result.instructions), 'initialize: Mastor, the company, and “issuing is never here”')
 r = await rpc('office', 'tools/list')
 const tools = r.body.result.tools as any[]
-const READS = ['mastor_overview', 'get_job', 'get_scope', 'get_variations', 'get_valuations', 'get_site_diary', 'view_site_media', 'invoice_figures', 'find_rate']
+const READS = ['mastor_overview', 'get_job', 'get_scope', 'get_variations', 'get_valuations', 'get_site_diary', 'view_site_media', 'invoice_figures', 'find_rate', 'read_document']
 const WRITES = ['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day']
-ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'fifteen tools: nine that read, six that change')
+ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'sixteen tools: ten that read, six that change')
 ok(tools.every(t => t.annotations?.readOnlyHint === READS.includes(t.name)), 'only the read tools say they’re read-only, so Claude asks before every change')
 ok(!tools.some(t => /issue_|create_invoice|delete/.test(t.name)), 'no tool issues a valuation, creates an invoice or deletes anything')
 
@@ -141,7 +159,7 @@ ok(wr.actionNeeded.some((x: string) => /^NEXT: VAL II/.test(x)) && wr.actionNeed
 
 const gj = json(await call('office', 'get_job', { job: 'MH21180' }))
 ok(gj.id === 'j1' && gj.notesAndDecisions[0].pinned === true && gj.notesAndDecisions.some((x: any) => x.category === 'Commercial'), 'get_job by contract ref: pinned note first, commercial notes for the office')
-ok(gj.documents[0].name === 'RAMS.pdf' && gj.counts.siteCaptures === 2, 'documents and capture counts')
+ok(gj.documents.some((x: any) => x.name === 'RAMS' && x.id === 'doc1') && gj.documents.some((x: any) => x.kind === 'Purchase order') && gj.counts.siteCaptures === 2, 'documents (with ids, the PO among them) and capture counts')
 const amb = await call('office', 'get_job', { job: 'windsor' })
 ok(amb.isError === true && /matches 2 jobs/.test(amb.content[0].text), 'ambiguous job: an error that lists both, so Claude asks')
 
@@ -260,6 +278,26 @@ w = json(await call('office', 'log_variation', { job: 'j1', description: 'Form w
 const wet = vos.find(v => v.description === 'Form wet room' && v.jobId === 'j1')
 ok(wet?.code === 'WR100' && wet.rate === 1500 && wet.rateBook === 'Planned Maint v8' && /£1,?500\.00 base/.test(w.value), 'log_variation keeps where the rate came from, for the VO screen to show')
 ok(/operative/.test(err(await call('op', 'log_variation', { job: 'j1', description: 'Wet room', rate_from: 'Planned Maint v8' }))), 'operative: no rate source either')
+
+// the job's documents: read as filed, the source of truth
+const po = await call('office', 'read_document', { job: 'j1', document: 'purchase order' })
+const poText = po.content[0].text as string
+ok(/Order PC10001 \(Purchase order\)/.test(poText) && /— page 1 —/.test(poText) && /— page 2 —/.test(poText) && /quote it by name and page/.test(poText), 'read_document: a PDF comes back as its text, page by page, with how to quote it')
+ok(/Order Number: PC10001/.test(poText) && /Contractor Uplift 30%:\s+£1,000\.00/.test(poText), 'lines keep their reading order (a label and its figure on one line), and a council font’s » is the £ it prints')
+const found = (await call('office', 'read_document', { job: 'j1', document: 'doc-po', find: 'deliver' })).content[0].text as string
+ok(/pages mentioning deliver: 2/.test(found) && !/— page 1 —/.test(found) && /Unit 1, Example Park/.test(found), 'find: only the pages that mention the words')
+ok(/— page 2 —/.test((await call('office', 'read_document', { job: 'j1', document: 'doc-po', pages: '2' })).content[0].text) , 'pages: just the pages asked for')
+const scan = await call('office', 'read_document', { job: 'j1', document: 'Signed instruction' })
+ok(/scanned PDF/.test(scan.content[0].text) && scan.content[1]?.type === 'resource' && scan.content[1].resource.mimeType === 'application/pdf' && Buffer.from(scan.content[1].resource.blob, 'base64').subarray(0, 5).toString() === '%PDF-', 'a scan with no text layer comes back as the PDF itself, to read')
+ok(/sheet Programme[\s\S]*Scaffold up,03\/11\/2026/.test((await call('office', 'read_document', { job: 'j1', document: 'Programme' })).content[0].text), 'a spreadsheet comes back as its sheets')
+const pic = await call('office', 'read_document', { job: 'j1', document: 'Drawing photo' })
+ok(pic.content[1]?.type === 'image' && pic.content[1].mimeType === 'image/png', 'a photo of a document stays an image')
+const rams = await call('office', 'read_document', { job: 'j1', document: 'RAMS' })
+ok(/Not uploaded from the phone yet/.test(rams.content[0].text), 'a document still on the phone: says so')
+ok(/matches 0|No document matches/.test(err(await call('office', 'read_document', { job: 'j1', document: 'asbestos survey' }))) , 'no such document: an error that lists what there is')
+ok(/No document matches/.test(err(await call('op', 'read_document', { job: 'j1', document: 'purchase order' }))) && !json(await call('op', 'get_job', { job: 'j1' })).documents.some((x: any) => x.kind === 'Purchase order'),
+  'operative: purchase orders are neither listed nor readable')
+ok(/Signed instruction/.test((await call('op', 'read_document', { job: 'j1', document: 'Signed instruction' })).content[0].text), 'operative: other documents read as normal')
 
 srv.close(); meta.close()
 
