@@ -282,8 +282,6 @@ label.btn { cursor: pointer; }
 .prop-item + .prop-item { border-top: var(--hair) solid var(--line); }
 .prop-item.open { background: var(--row-open); }
 .prop-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; min-height: 64px; background: none; border: none; text-align: left; color: var(--ink); font: inherit; }
-.prop-no { width: 40px; height: 40px; flex: none; border-radius: var(--r-md); background: var(--ink); color: #fff; display: grid; place-items: center; font-family: var(--cond); font-stretch: 125%; font-size: 20px; font-weight: 700; }
-.prop-item.open .prop-no { background: var(--ink); color: var(--neon); box-shadow: 0 0 0 2px var(--row-open), 0 0 0 4px var(--ink); }   /* open: the numeral lights up; neon stays on black */
 .prop-main { flex: 1; min-width: 0; }
 .prop-name { font-family: var(--cond); font-stretch: 112%; font-weight: 750; font-size: 17px; line-height: 1.1; text-transform: uppercase; letter-spacing: .02em; }
 .prop-meta { font-size: 14px; color: var(--ink-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -293,13 +291,13 @@ label.btn { cursor: pointer; }
 .prop-amt small { display: block; font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
 .prop-chev { width: 16px; height: 16px; display: grid; place-items: center; color: var(--ink-muted); flex: none; transition: transform .2s; }
 .prop-item.open .prop-chev { transform: rotate(90deg); color: var(--ink); }
-/* a workstream group inside an open property: a 48px toggle row, indented under the property tile */
+/* a workstream group inside an open property: a 48px toggle row, indented under the property's name */
 .grp-row { width: 100%; min-height: 48px; padding: 10px 14px 10px 30px; background: none; border: none; color: var(--ink); text-align: left; }
 .grp-row.open { background: var(--row-open); }
 .grp-chev { width: 14px; height: 14px; display: grid; place-items: center; flex: none; color: var(--ink-2); transition: transform .2s; }
 .grp-row.open .grp-chev { transform: rotate(90deg); }
 .grp-pct { width: 40px; text-align: right; }
-.prop-bar { height: 4px; border-radius: 2px; overflow: hidden; margin: 0 14px 12px 66px; background: var(--ground); }
+.prop-bar { height: 4px; border-radius: 2px; overflow: hidden; margin: 0 14px 12px; background: var(--ground); }
 .prop-bar > div { height: 100%; background: var(--green); }
 .prop-body { border-top: 1.5px solid var(--ink); }
 .thumbs { display: flex; gap: 6px; overflow-x: auto; }
@@ -498,14 +496,11 @@ label.row { cursor: pointer; }
   .jbar-in { flex-wrap: wrap; justify-content: space-between; }
   .jbar-title { order: 1; flex: 1 1 100%; }
   .jbar-name, .jbar.compact .jbar-name { font-size: 18px; }
-  /* properties: the number tile and chevron head the row, then the name and the amount each take a full line;
-     workstream groups keep the name beside the chevron and drop the amount to its own line */
+  /* properties: the name keeps its chevron, the amount drops to its own line;
+     workstream groups do the same */
   .prop-row { flex-wrap: wrap; }
-  .prop-chev { margin-left: auto; }
-  .prop-main { order: 1; flex: 1 1 100%; }
   .prop-name { overflow-wrap: break-word; }
   .prop-amt { order: 2; flex: 1 1 100%; text-align: left; }
-  .prop-bar { margin-left: 14px; }
   .grp-row { flex-wrap: wrap; }
   .grp-row > .grow { flex: 1 1 calc(100% - 20px); }
   .grp-row .grp-amt { margin-left: 20px; }
@@ -704,7 +699,6 @@ label.row { cursor: pointer; }
 .jbar::after, .cover-head::after { content: ""; position: absolute; left: 5px; right: 5px; bottom: 5px; top: -1px; border: var(--hair) solid var(--neon-hair); border-top: 0; border-radius: 0 0 calc(var(--r-xl) - 5px) calc(var(--r-xl) - 5px); pointer-events: none;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 70%); mask-image: linear-gradient(to bottom, transparent, #000 70%); }   /* the contour rises out of the black */
 .act:focus-visible { outline: 2.5px solid var(--volt); outline-offset: 2px; }
-.prop-item.open .prop-no { box-shadow: 0 0 0 2px var(--row-open), 0 0 0 calc(2px + var(--hair)) var(--ink); outline: var(--hair) solid var(--neon-hair); outline-offset: -3px; }
 
 /* the pulse: a comet of three dashes (tail, body, head) sharing one head, once round the contour, then a rest */
 .live { position: relative; }

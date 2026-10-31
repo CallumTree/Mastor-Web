@@ -541,11 +541,6 @@
         "purpose": "Stroke for the wait plate and ink outline badge (not elevation)."
       },
       {
-        "name": "tile-open-ring",
-        "value": "0 0 0 2px #F4F4F5, 0 0 0 4px #0A0A0B",
-        "purpose": "Open property tile ring (not elevation)."
-      },
-      {
         "name": "media-glyph",
         "value": "text-shadow: 0 1px 6px rgba(10, 10, 11, .6)",
         "purpose": "A white glyph over a photo or video frame."
@@ -782,7 +777,7 @@
     "keyCharacteristics": [
       "Pure white ground, hairline panels, no shadow at rest.",
       "The live wire: one-device-pixel lines, a volt blueprint edge on white panels, a neon contour inside black slabs, and a pulse round the one live thing.",
-      "Black slabs for structure: job header, dock, title block, hot figures, property tiles.",
+      "Black slabs for structure: job header, dock, title block, hot figures.",
       "One lit thing per screen: neon on black, volt on white.",
       "Warning colours carry meaning only, always paired with a sign shape and a word.",
       "Archivo at 125% (headings, labels), 112% (figures), 100% (reading).",
@@ -798,7 +793,7 @@
       },
       {
         "name": "The Neon Lives on Black Rule",
-        "body": "Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (the open property tile is an ink tile with a neon numeral).",
+        "body": "Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (a hot figure cell is a black cell with a neon figure).",
         "section": "colors"
       },
       {
@@ -884,7 +879,8 @@
     ],
     "dos": [
       "Do keep each screen to one lit thing: neon on black, volt on white.",
-      "Do turn a white-ground element black before lighting it neon (the open property tile).",
+      "Do turn a white-ground element black before lighting it neon (a hot figure cell).",
+      "Don't repeat what a row already says: a property row is its name, never a number tile beside \"No. 4\".",
       "Do use red, yellow and green only for overdue, needs doing and done, each with its sign shape and a spoken word.",
       "Do put ink text on yellow and neon; white text on red, green, volt and black.",
       "Do set headings and labels at 125% width, figures at 112%, and reading text at normal width.",

@@ -481,7 +481,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 
 **Key Characteristics:**
 - Pure white ground, hairline panels, no shadow at rest.
-- Black slabs for structure: job header, dock, title block, hot figures, property tiles.
+- Black slabs for structure: job header, dock, title block, hot figures.
 - One lit thing per screen: neon on black, volt on white.
 - Warning colours carry meaning only, and live in a small sign mark (red disc, the "!" triangle, green square) on a pale tint, never as a painted plate.
 - Archivo at 125% (headings, labels), 112% (figures), 100% (reading).
@@ -495,7 +495,7 @@ This world refuses the category default of a grey dashboard with a brand-blue bu
 A black-and-white board with one live colour in two forms (neon on black, volt on white) and three warning colours that mean only what they say.
 
 ### Primary
-- **Live Neon** (neon): the one live thing on a black slab. The progress rail and its tick, the active-tab bar on the dock, the capture key, the headline figure on the title block, a hot figure cell, the open property numeral, the mark-up layer's main action, focus rings on black. 13:1 on Shell Black; it is never text or a mark on white.
+- **Live Neon** (neon): the one live thing on a black slab. The progress rail and its tick, the active-tab bar on the dock, the capture key, the headline figure on the title block, a hot figure cell, the mark-up layer's main action, focus rings on black. 13:1 on Shell Black; it is never text or a mark on white.
 - **Volt Blue** (volt): neon's twin on white. Links, focus rings, checkbox and radio accents, the loading bar, the small accent dot in icons on white, and the next-step plate and action plate ("do this next"). Volt Press (volt-press) is its pressed state. 6.6:1 on white.
 
 ### Secondary (warning marks)
@@ -508,7 +508,7 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 - **Arch Copper** (arch-copper): the arch and keystone in the opening titles, and the app icon. Nowhere else.
 
 ### Neutral
-- **Ink** (ink): text, outlines of secondary controls, the primary button fill, property tiles, 1.5px register header rules.
+- **Ink** (ink): text, outlines of secondary controls, the primary button fill, 1.5px register header rules.
 - **Slate Ink** (ink-2): codes and refs beside body text, ghost buttons, disabled-button text.
 - **Muted Ink** (ink-muted): labels, hints, secondary lines.
 - **White Ground / Panel** (ground, panel): page and panels; both are pure white.
@@ -522,7 +522,7 @@ A black-and-white board with one live colour in two forms (neon on black, volt o
 ### Named Rules
 **The One Live Thing Rule.** Neon (on black) or volt (on white) marks only where you are, what's next, or how far the job has got. If it isn't one of those, it is ink or white.
 
-**The Neon Lives on Black Rule.** Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (the open property tile is an ink tile with a neon numeral).
+**The Neon Lives on Black Rule.** Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (a hot figure cell is a black cell with a neon figure).
 
 **The Warning Meaning Rule.** Red is overdue or missing, yellow is needs doing, green is done. Green means done only: an "Active" job status is an ink outline badge, not green.
 
@@ -609,7 +609,7 @@ From 1024px: who it's for is a 520px photo beside the copy, 64px apart; the main
 
 ## Elevation & Depth
 
-Flat at rest. Panels are white on white, separated by a 1px hairline, never by shadow; an expanded row tints to Open Row. Black slabs are not lifted: they read as weight, not height. Only the two things that genuinely float cast a soft, ink-tinted shadow: the dock on a phone and the sheet. The scrim behind a sheet is ink at 55%. Outlined plates (wait, slate badge) are drawn with a 1.5px inset ink line; the open property tile and the chosen mark-up swatch are ringed by a gap and an outer ring. The one text shadow sits on media: the play glyph over a video frame.
+Flat at rest. Panels are white on white, separated by a 1px hairline, never by shadow; an expanded row tints to Open Row. Black slabs are not lifted: they read as weight, not height. Only the two things that genuinely float cast a soft, ink-tinted shadow: the dock on a phone and the sheet. The scrim behind a sheet is ink at 55%. Outlined plates (wait, slate badge) are drawn with a 1.5px inset ink line; the chosen mark-up swatch is ringed by a gap and an outer ring. The one text shadow sits on media: the play glyph over a video frame.
 
 The front page is flatter still: nothing on it casts a shadow. Its phone frames are black slabs like the job header, not floating objects; where a frame sits on a black slab (the main feature) its edge is drawn by a 1.5px Shell Rule ring, a line with no blur.
 
@@ -628,7 +628,7 @@ The front page is flatter still: nothing on it casts a shadow. Its phone frames 
 
 ## Shapes
 
-Softly rounded on a fixed scale: 6px for plates, badges and small tiles; 10px for choice cards, ask bars, tick boxes and thumbnails; 12px for buttons, inputs, icon buttons, action plates and the property tile; 16px for panels, figure grids, strips, the update bar and the capture key; 24px for the black slabs (job header foot, dock, title block) and sheet tops. Chips and the sheet close button are pills. The 2px ends on 4px progress bars are hairline rounding, not a scale step.
+Softly rounded on a fixed scale: 6px for plates, badges and small tiles; 10px for choice cards, ask bars, tick boxes and thumbnails; 12px for buttons, inputs, icon buttons, action plates; 16px for panels, figure grids, strips, the update bar and the capture key; 24px for the black slabs (job header foot, dock, title block) and sheet tops. Chips and the sheet close button are pills. The 2px ends on 4px progress bars are hairline rounding, not a scale step.
 
 **Device frame.** The front page's phone frame has 34px outer corners and 27px screen corners, with 8px of black between so the curves stay concentric. These sit outside the 6–24px scale on purpose: they draw a phone's hardware, not a Mastor surface, and nothing else uses them. Photographs inside the column take 24px corners; the full-bleed band is square.
 
@@ -692,7 +692,7 @@ The last tab in the job dock (the capture key sits between three tabs each side)
 A Shell Black block, 24px corners, sentence-case labels at 112% in Shell Muted, figures at 112% white, the headline figure in neon, cells ruled in Shell Rule and foot-aligned. A red plate marks an alert figure; scale bars are neon on Shell Rule. Its contour, 5px inside the edge, carries the pulse.
 
 ### Property Rows
-A 40px ink tile with a white numeral, the name in Row Title, and the amount right. Open, the row tints Open Row and the numeral turns neon inside a double ring; workstream groups indent beneath as 48px toggle rows with green progress bars.
+The name in Row Title ("No. 4" or the house's address), the workstreams beneath in Muted Ink, the amount right, and a green progress bar along the foot. No number tile: the name already says it. Open, the row tints Open Row and the chevron turns down; workstream groups indent beneath as 48px toggle rows with green progress bars.
 
 ### Neon Progress Rail (signature)
 How far the job has got, along the foot of the job header on every tab. A 4px Shell Rule track with 2px ends: certified work is solid neon, the open valuation is a neon dash (4px on, 3px off) at 60%, and a 2 by 12px neon tick marks the certified point. Its label sits right in 13px mono, Shell Muted on job home and neon with just the figure on the work tabs. It grows in from the left over 0.9s (`cubic-bezier(.16, 1, .3, 1)`); under reduced motion it is simply drawn.
@@ -755,7 +755,8 @@ Shell Black. The copper arch draws itself, the keystone drops in, the MΛSTΘR l
 
 ### Do:
 - **Do** keep each screen to one lit thing: neon on black, volt on white.
-- **Do** turn a white-ground element black before lighting it neon (the open property tile).
+- **Do** turn a white-ground element black before lighting it neon (a hot figure cell).
+- **Don't** repeat what a row already says: a property row is its name, never a number tile beside "No. 4".
 - **Do** use red, yellow and green only for overdue, needs doing and done, as a small sign mark with a spoken word, on a pale tint at most.
 - **Do** put ink text on neon and on the pastel tints; white text on volt and black.
 - **Do** set headings and labels at 125% width, figures at 112%, and reading text at normal width.

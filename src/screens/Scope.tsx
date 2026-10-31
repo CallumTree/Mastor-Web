@@ -158,7 +158,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         return (
           <div key={p} className={'prop-item' + (isOpen ? ' open' : '')}>
             <button className="prop-row" onClick={() => toggleProp(p)} aria-expanded={isOpen} aria-label={`Property ${p}`}>
-              <span className="prop-no">{p === '—' ? '?' : p}</span>
               <span className="prop-main">
                 <span className="prop-name">{p === '—' ? 'Unassigned' : job.properties?.[p]?.split(',')[0] || `No. ${p}`}</span>
                 <span className="prop-meta" style={{ display: 'block' }}>{[...new Set(all.map(groupName))].join(' · ')}</span>
