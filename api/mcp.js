@@ -31083,6 +31083,12 @@ async function copyMedia(ctx, mediaId) {
   }).catch(() => null);
   return r?.ok ? id : null;
 }
+async function rateBookItems(ctx, bookId) {
+  const r = await fetch(`${SB_URL}/storage/v1/object/photos/${encodeURIComponent(ctx.companyId)}/rates/${encodeURIComponent(bookId)}.json`, { headers: headers(ctx.token) }).catch(() => null);
+  if (!r?.ok) return [];
+  const items = await r.json().catch(() => []);
+  return Array.isArray(items) ? items.map((i) => ({ ...i, bookId })) : [];
+}
 
 // node_modules/zod/v3/helpers/util.js
 var util;
@@ -39466,6 +39472,121 @@ function jobMargin(job, scope, vos, costs, diary, dayRate, dayworksValue = 0) {
   };
 }
 
+// server/mcp/rates.ts
+var STOP = new Set("a an and any as at be by for from in into is it of off on or per the to up with without new existing no nr each item all one two this that x".split(" "));
+var UNIT = (u) => u.trim().toUpperCase().replace(/^(NR|NO\.?|EA|EACH)$/, "NO").replace(/^(ITEM|IT)$/, "IT").replace(/^(M2|SQM|M²)$/, "SM").replace(/^(M|LIN M|LM)$/, "LM");
+function words(s) {
+  const w = s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9.]+/g, " ").split(" ").map((t) => t.replace(/^\.+|\.+$/g, "")).filter((t) => t && !STOP.has(t)).map((t) => t.length > 4 && /[^s]s$/.test(t) ? t.slice(0, -1) : t);
+  const out = new Set(w);
+  for (let i = 0; i + 1 < w.length; i++) out.add(w[i] + w[i + 1]);
+  return out;
+}
+function fit(q, t, rarity) {
+  let have = 0, all = 0;
+  for (const w of q) {
+    const r = rarity(w);
+    if (r == null) continue;
+    all += r;
+    if (t.has(w)) have += r;
+  }
+  return all ? have / all : 0;
+}
+function jobBook(job, s) {
+  const codes = new Set(s.scope.filter((i) => i.jobId === job.id).map((i) => i.code.trim().toUpperCase()).filter(Boolean));
+  let best = null, hits = 0;
+  for (const b of s.books) {
+    const n = s.items.reduce((t, i) => t + (i.bookId === b.id && codes.has(i.code.toUpperCase()) ? 1 : 0), 0);
+    if (n > hits) {
+      best = b;
+      hits = n;
+    }
+  }
+  return best;
+}
+function findRates(q, s, limit = 6) {
+  const book = jobBook(q.job, s);
+  const jobsById = new Map(s.jobs.map((j) => [j.id, j]));
+  const used = [];
+  for (const i of s.scope) {
+    const job = jobsById.get(i.jobId);
+    if (!job || i.rate == null || !i.code.trim()) continue;
+    used.push({ job, where: `${job.name}${i.property ? ` \xB7 No. ${i.property}` : ""}${i.room && i.room !== i.property ? ` \xB7 ${i.room}` : ""} (scope)`, code: i.code.trim().toUpperCase(), description: i.description, unit: i.unit, rate: i.rate, qty: i.qty, at: i.createdAt });
+  }
+  for (const v of s.vos) {
+    const job = jobsById.get(v.jobId);
+    if (!job || v.rate == null || !v.code.trim() || v.status === "Rejected") continue;
+    used.push({ job, where: `${job.name} \xB7 ${voRef(v.number)}${v.room ? ` \xB7 ${v.room}` : ""}`, code: v.code.trim().toUpperCase(), description: v.description, unit: v.unit, rate: v.rate, qty: v.qty, at: v.dateRaised });
+  }
+  const texts = [...s.items.map((i) => `${i.short} ${i.long} ${i.subsection}`), ...used.map((u) => u.description)];
+  const df = /* @__PURE__ */ new Map();
+  const cache = /* @__PURE__ */ new Map();
+  const ws = (t) => {
+    let w = cache.get(t);
+    if (!w) {
+      w = words(t);
+      cache.set(t, w);
+    }
+    return w;
+  };
+  for (const t of texts) for (const w of ws(t)) df.set(w, (df.get(w) ?? 0) + 1);
+  const rarity = (w) => df.has(w) ? Math.log(1 + texts.length / (1 + df.get(w))) : null;
+  const want = q.what?.trim() ? words(q.what) : null;
+  const code = q.code?.trim().toUpperCase();
+  const unit = q.unit?.trim() ? UNIT(q.unit) : null;
+  const score = (text2, c) => (code ? c === code ? 1 : c.startsWith(code) ? 0.8 : 0 : 0) || (want ? fit(want, ws(text2), rarity) : 0);
+  const hits = /* @__PURE__ */ new Map();
+  const hit = (c) => {
+    let h = hits.get(c);
+    if (!h) {
+      h = { code: c, score: 0, used: [] };
+      hits.set(c, h);
+    }
+    return h;
+  };
+  const bookOrder = [...book ? [book] : [], ...s.books.filter((b) => b.id !== book?.id)];
+  const itemsByBook = new Map(bookOrder.map((b) => [b.id, s.items.filter((i) => i.bookId === b.id)]));
+  for (const b of bookOrder) for (const i of itemsByBook.get(b.id)) {
+    const sc = score(`${i.short} ${i.long} ${i.subsection}`, i.code.toUpperCase());
+    if (sc < 0.5) continue;
+    const h = hit(i.code.toUpperCase());
+    if (!h.item || b.id === book?.id && h.bookName !== book.name) {
+      h.item = i;
+      h.bookName = b.name;
+    }
+    h.score = Math.max(h.score, sc);
+  }
+  for (const u of used) {
+    const sc = score(u.description, u.code);
+    const h = hits.get(u.code);
+    if (sc >= 0.5 || h) {
+      const x = h ?? hit(u.code);
+      x.used.push(u);
+      x.score = Math.max(x.score, sc);
+    }
+  }
+  const unitOk = (h) => !unit || UNIT(h.item?.unit ?? h.used[0]?.unit ?? "") === unit;
+  const ranked = [...hits.values()].filter((h) => h.score >= 0.5 && unitOk(h)).map((h) => ({ h, rank: h.score + (h.used.some((u) => u.job.id === q.job.id) ? 0.15 : 0) + (h.used.some((u) => u.job.client && u.job.client === q.job.client) ? 0.1 : 0) + (h.item && h.bookName === book?.name ? 0.1 : 0) + Math.min(h.used.length, 5) * 0.02 })).sort((a, b) => b.rank - a.rank).slice(0, limit);
+  return {
+    book,
+    matches: ranked.map(({ h }) => {
+      const recent = [...h.used].sort((a, b) => (a.job.id === q.job.id ? -1 : 0) - (b.job.id === q.job.id ? -1 : 0) || b.at - a.at);
+      const rates = [...new Set(h.used.map((u) => u.rate))];
+      const sched = h.item?.rate;
+      return {
+        code: h.code,
+        description: h.item ? h.item.long && h.item.long !== h.item.short ? `${h.item.short} \u2014 ${h.item.long}` : h.item.short : recent[0].description,
+        unit: h.item?.unit ?? recent[0].unit,
+        schedule: h.item ? `${money(h.item.rate)} per ${h.item.unit} in ${h.bookName}${h.item.section ? ` (${h.item.section})` : ""}` : "not in any rate book loaded",
+        usedBefore: recent.length ? recent.slice(0, 3).map((u) => `${u.where}: ${u.description} \u2014 ${u.qty != null ? `${qtyText(u.qty)} ${u.unit} @ ` : ""}${money(u.rate)}`) : "not used on a job yet",
+        ...recent.length > 3 ? { usedTimes: recent.length } : {},
+        ...rates.length > 1 ? { rateCheck: `priced at ${rates.map(money).join(", ")} on different jobs` } : sched != null && rates.length === 1 && Math.abs(rates[0] - sched) > 5e-3 ? { rateCheck: `used at ${money(rates[0])}, the schedule says ${money(sched)}` } : {},
+        rateFrom: h.item ? h.bookName : `${recent[0].where.replace(/ \(scope\)$/, "")}`,
+        suggestedRate: sched ?? (rates.length === 1 ? rates[0] : recent[0].rate)
+      };
+    })
+  };
+}
+
 // api/read-site.js
 var CLAUDE_MODEL = process.env.ANTHROPIC_SITE_MODEL || "claude-opus-5-5";
 var GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
@@ -39717,15 +39838,16 @@ function registerWrites(server, ctx) {
       reason: external_exports.string().optional().describe("Why it\u2019s needed, e.g. what was found on site"),
       qty: external_exports.number().positive().optional().describe("Only if measured or stated, never estimated"),
       unit: external_exports.string().optional().describe("Unit for the quantity, e.g. LM, SM, NO, IT"),
-      rate: external_exports.number().min(0).optional().describe("\xA3 rate (office roles), only from a rate book, quote or the person"),
+      rate: external_exports.number().min(0).optional().describe("\xA3 rate (office roles), only from a rate book, quote, the person, or a find_rate match"),
       code: external_exports.string().optional().describe("SoR code the rate came from"),
+      rate_from: external_exports.string().optional().describe("Where the rate came from: the rateFrom of a find_rate match, e.g. the schedule\u2019s name or \u201CWindsor Road \xB7 VO II\u201D"),
       client_ref: external_exports.string().optional().describe("The client\u2019s VO reference, if they\u2019ve given one"),
       instructed: external_exports.boolean().optional().describe("The client has already instructed it (status Instructed)"),
       evidence_entry_id: external_exports.string().optional().describe("A site photo\u2019s entryId from get_site_diary")
     },
     annotations: WRITE
   }, async (a) => {
-    if (!ctx.money && (a.rate != null || a.code)) throw new Error(NO_MONEY + " Log it without a rate and the office will price it.");
+    if (!ctx.money && (a.rate != null || a.code || a.rate_from)) throw new Error(NO_MONEY + " Log it without a rate and the office will price it.");
     if (a.qty != null && !a.unit?.trim()) throw new Error("Give the unit for that quantity (e.g. LM, SM, NO).");
     const { job, d } = await load(a.job);
     const entry = a.evidence_entry_id ? d.diary.find((e) => e.id === a.evidence_entry_id) : void 0;
@@ -39743,6 +39865,7 @@ function registerWrites(server, ctx) {
       unit: a.unit?.trim() ?? "",
       rate: a.rate ?? null,
       code: a.code?.trim() ?? "",
+      ...a.rate_from?.trim() && a.rate != null ? { rateBook: a.rate_from.trim() } : {},
       reason: a.reason?.trim() ?? "",
       clientRef: a.client_ref?.trim() ?? "",
       status: a.instructed ? "Instructed" : "Identified",
@@ -39777,13 +39900,14 @@ function registerWrites(server, ctx) {
       unit: external_exports.string().optional(),
       rate: external_exports.number().min(0).nullable().optional().describe("\xA3 rate (office roles); null clears it (unpriced)"),
       code: external_exports.string().optional().describe("SoR code (office roles)"),
+      rate_from: external_exports.string().optional().describe("Where the rate came from (a find_rate match\u2019s rateFrom); shown beside the rate in the app"),
       client_ref: external_exports.string().optional().describe("The client\u2019s VO reference"),
       status: external_exports.enum(["Identified", "Instructed", "Complete", "Rejected"]).optional(),
       sent_to_client: external_exports.boolean().optional().describe("true: sent to the client today (from here it\u2019s in their court); false: not sent")
     },
     annotations: WRITE
   }, async (a) => {
-    if (!ctx.money && (a.rate !== void 0 || a.code !== void 0)) throw new Error(NO_MONEY);
+    if (!ctx.money && (a.rate !== void 0 || a.code !== void 0 || a.rate_from !== void 0)) throw new Error(NO_MONEY);
     const { job, d } = await load(a.job);
     const v = findVo(d.vos, a.vo);
     if (!v) throw new Error(`No ${a.vo} on ${job.name}. VOs: ${[...d.vos].sort((x, y) => x.number - y.number).map((x) => voRef(x.number)).join(", ") || "none yet"}.`);
@@ -39796,7 +39920,7 @@ function registerWrites(server, ctx) {
       ...a.reason !== void 0 ? { reason: a.reason.trim() } : {},
       ...a.qty !== void 0 ? { qty: a.qty } : {},
       ...a.unit !== void 0 ? { unit: a.unit.trim() } : {},
-      ...a.rate !== void 0 ? { rate: a.rate } : {},
+      ...a.rate !== void 0 ? { rate: a.rate, rateBook: a.rate_from?.trim() || void 0 } : a.rate_from !== void 0 ? { rateBook: a.rate_from.trim() || void 0 } : {},
       ...a.code !== void 0 ? { code: a.code.trim() } : {},
       ...a.client_ref !== void 0 ? { clientRef: a.client_ref.trim() } : {},
       ...a.status ? { status: a.status } : {},
@@ -40093,6 +40217,32 @@ function mastorServer(ctx) {
           attachments: v.attachments?.map((a) => a.name)
         };
       })
+    });
+  });
+  server.registerTool("find_rate", {
+    title: "Find a rate",
+    description: "Finds the SoR code and rate for a piece of work from what the company already has: the schedules of rates loaded in Mastor (the job\u2019s own schedule first) and the priced scope lines and VOs on all its jobs. Use it before pricing or logging a VO when the person hasn\u2019t given a rate: a wet room VO at No. 18 can take the code a wet room was priced with at No. 12. Search with the words a schedule would use (e.g. \u201Clintel\u201D, \u201Cwet room floor\u201D, \u201Crenew WC\u201D), and again with other wording if nothing fits; or look up a code. Each match says what the schedule prints and where it was used before. Rates are base rates, before the job\u2019s uplifts. Office roles only.",
+    inputSchema: {
+      job: external_exports.string().describe("The job being priced: id, or part of its name, contract ref or address"),
+      what: external_exports.string().optional().describe("The work, in a few words"),
+      code: external_exports.string().optional().describe("An SoR code to look up"),
+      unit: external_exports.string().optional().describe("Only codes priced in this unit (LM, SM, NO, IT)")
+    },
+    annotations: READ2
+  }, async (a) => {
+    if (!ctx.money) throw new Error(NO_MONEY);
+    if (!a.what?.trim() && !a.code?.trim()) throw new Error("Say what the work is, or give a code.");
+    const [jobs, scope, vos, st] = await Promise.all([records(ctx, "jobs"), records(ctx, "scope"), records(ctx, "variations"), settings(ctx)]);
+    const job = findJob(jobs, a.job);
+    const books = st?.rateBooks ?? [];
+    const items = (await Promise.all(books.map((b) => rateBookItems(ctx, b.id)))).flat();
+    const r = findRates({ job, what: a.what, code: a.code, unit: a.unit }, { jobs, books, items, scope, vos });
+    return text({
+      job: job.name,
+      schedule: r.book?.name ?? (books.length ? "none of the loaded rate books matches this job\u2019s codes" : "no rate books loaded (Settings \u2192 Rates in the app)"),
+      ...r.book?.notes.length ? { scheduleNotes: r.book.notes.slice(0, 4) } : {},
+      matches: r.matches.length ? r.matches : "nothing fits those words. Try the words a schedule would use, or fewer words.",
+      howToUse: "Only use a match that is clearly the same work in the same unit. Pass its code, suggestedRate and rateFrom to log_variation or update_variation, and tell the person where the rate came from. If several fit, or a rateCheck is shown, give them the choice instead of picking."
     });
   });
   server.registerTool("get_valuations", {

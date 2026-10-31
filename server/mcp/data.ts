@@ -3,7 +3,7 @@
  * signed in to Claude*. Their token goes on every request, so the database's own rules decide what comes
  * back (only their company's rows), and an operative's connector never carries money, as in the app.
  */
-import type { CompanySettings, Cost, DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
+import type { CompanySettings, Cost, DiaryEntry, Job, JobDocument, RateItem, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
 // @ts-expect-error plain JS module shared with the other /api functions
 import { SB_URL, SB_KEY } from '../../api/_guard.js'
 
@@ -130,4 +130,12 @@ export async function copyMedia(ctx: Ctx, mediaId: string): Promise<string | nul
     body: JSON.stringify({ bucketId: 'photos', sourceKey: `${ctx.companyId}/${mediaId}.jpg`, destinationKey: `${ctx.companyId}/${id}.jpg` }),
   }).catch(() => null)
   return r?.ok ? id : null
+}
+
+/** The lines of a rate book the app has synced (each phone uploads a book's lines once it's loaded). [] if not there yet. */
+export async function rateBookItems(ctx: Ctx, bookId: string): Promise<RateItem[]> {
+  const r = await fetch(`${SB_URL}/storage/v1/object/photos/${encodeURIComponent(ctx.companyId)}/rates/${encodeURIComponent(bookId)}.json`, { headers: headers(ctx.token) }).catch(() => null)
+  if (!r?.ok) return []
+  const items = await r.json().catch(() => []) as RateItem[]
+  return Array.isArray(items) ? items.map(i => ({ ...i, bookId })) : []
 }

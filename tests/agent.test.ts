@@ -107,7 +107,7 @@ ok(upserts.length === 0, 'nothing is saved before Do it')
 ok(hits.length === 1, 'the question counts once against the daily AI limit')
 const first = asked[0]
 ok(first.key === 'ak' && first.body.model === 'claude-opus-5-5' && first.body.fallbacks === 'default' && /server-side-fallback-2026-07-01/.test(first.beta ?? ''), 'Claude Opus 5.5, with refusal fallbacks')
-ok(first.body.tools.length === 14 && /You are Ask/.test(first.body.system) && /Do it and Cancel/.test(first.body.system), 'the connector’s fourteen tools, and told that changes wait for Do it')
+ok(first.body.tools.length === 15 && /You are Clerk/.test(first.body.system) && /Do it and Cancel/.test(first.body.system), 'the connector’s fifteen tools, and told that changes wait for Do it')
 ok(/<context>Today is .*"j1"/.test(first.body.messages[0].content[0].text) && first.body.messages[0].content[1].text === 'Tick No. 4 paint into the open val', 'the first question carries the date and the open job')
 let convo = r.done.messages
 ok(convo[1].content[0].name === 'get_scope' && convo[2].content[0].type === 'tool_result' && convo[3].content[0].type === 'thinking', 'the conversation comes back whole, thinking blocks untouched')

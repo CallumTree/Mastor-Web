@@ -45,6 +45,14 @@ const TABLES: Record<string, () => { id: string; jobId?: string; data?: unknown 
   costs: () => [], company_settings: () => [],
 }
 
+// a schedule of rates the app has synced: the same codes the scope uses, so it's this job's book
+const BOOK = [
+  { code: '4360BD', short: 'MASONRY PAINT: TWO COATS', long: '', unit: 'SM', rate: 5.62, section: 'PAINTING', subsection: 'External' },
+  { code: 'WR100', short: 'WET ROOM: FORM LEVEL ACCESS SHOWER', long: 'Tanking, floor former, linear drain and non-slip vinyl', unit: 'IT', rate: 1500, section: 'BATHROOMS', subsection: 'Wet rooms' },
+  { code: 'LIN12', short: 'LINTEL: RENEW CONCRETE, N.E. 1.2M', long: '', unit: 'NO', rate: 85.4, section: 'MASONRY', subsection: 'Lintels' },
+  { code: 'WC01', short: 'WC: RENEW CLOSE COUPLED SUITE', long: '', unit: 'NO', rate: 310, section: 'BATHROOMS', subsection: 'Sanitaryware' },
+]
+
 // ---------- fake Supabase + Gemini (everything else goes to the real network: the test's own server) ----------
 const realFetch = globalThis.fetch
 const hits: string[] = []
@@ -74,6 +82,7 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
     const rows = (TABLES[table]?.() ?? []).filter(r => !jobId || (r as any).jobId === decodeURIComponent(jobId))
     return new Response(JSON.stringify(rows.map(data => ({ data }))))
   }
+  if (url.startsWith(SB + '/storage/v1/object/photos/c1/rates/b1.json')) return new Response(JSON.stringify(BOOK))
   if (url.startsWith(SB + '/storage/v1/object/photos/c1/m-photo.jpg')) return new Response(new Uint8Array([0xff, 0xd8, 0xff, 1, 2, 3]), { headers: { 'content-type': 'image/jpeg' } })
   if (url.startsWith(SB + '/storage/v1/object/photos/c1/m-voice.jpg')) return new Response(new Uint8Array([82, 73, 70, 70]), { headers: { 'content-type': 'audio/wav' } })
   if (url.includes(':generateContent')) { hits.push('gemini'); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Number four masonry paint is finished.' }] } }] })) }
@@ -116,9 +125,9 @@ r = await rpc('office', 'initialize', { protocolVersion: '2025-06-18', capabilit
 ok(r.status === 200 && r.body.result.serverInfo.name === 'mastor' && /Tree & Sons/.test(r.body.result.instructions) && /never here/.test(r.body.result.instructions), 'initialize: Mastor, the company, and “issuing is never here”')
 r = await rpc('office', 'tools/list')
 const tools = r.body.result.tools as any[]
-const READS = ['mastor_overview', 'get_job', 'get_scope', 'get_variations', 'get_valuations', 'get_site_diary', 'view_site_media', 'invoice_figures']
+const READS = ['mastor_overview', 'get_job', 'get_scope', 'get_variations', 'get_valuations', 'get_site_diary', 'view_site_media', 'invoice_figures', 'find_rate']
 const WRITES = ['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day']
-ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'fourteen tools: eight that read, six that change')
+ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'fifteen tools: nine that read, six that change')
 ok(tools.every(t => t.annotations?.readOnlyHint === READS.includes(t.name)), 'only the read tools say they’re read-only, so Claude asks before every change')
 ok(!tools.some(t => /issue_|create_invoice|delete/.test(t.name)), 'no tool issues a valuation, creates an invoice or deletes anything')
 
@@ -229,6 +238,28 @@ const allRows = upserts.flatMap(u => u.rows.map(r => ({ table: u.table, ...r }))
 ok(allRows.filter(r => r.table === 'valuations').every(r => r.data.status === 'Open' && !r.data.issuedAt && !r.data.invoiceNumber) && vals.every(v => !v.invoiceNumber) && vals[1].status === 'Open',
   'after all that: nothing issued, no invoice created')
 ok(allRows.every(r => r.table === 'valuations' || r.data.byClaude || r.table === 'diary_entries'), 'every change Claude made carries the “by Claude” mark')
+
+// finding a rate: the schedule and past work, never a guess
+TABLES.company_settings = () => [{ id: 'company', rateBooks: [{ id: 'b1', name: 'Planned Maint v8', source: 'sor.docx', notes: [], lines: 4, importedAt: 1 }] } as any]
+vos.push({ id: 'vo-wr', jobId: 'j2', number: 1, description: 'Form wet room: tanking, former and drain', room: 'No. 12 bathroom', qty: 1, unit: 'IT', rate: 1450, code: 'WR100', reason: '', clientRef: '', status: 'Instructed', photoIds: [], dateRaised: 5, valuationId: null })
+const fr = json(await call('office', 'find_rate', { job: 'j1', what: 'wet room at No. 18' }))
+const top = fr.matches[0]
+ok(fr.schedule === 'Planned Maint v8' && top.code === 'WR100' && top.suggestedRate === 1500 && top.rateFrom === 'Planned Maint v8' && /£1,?500\.00 per IT in Planned Maint v8/.test(top.schedule),
+  'find_rate: a wet room finds the schedule’s wet room code, from the job’s own book')
+ok(/Windsor Court · VO I/.test(top.usedBefore[0]) && /£1,?450\.00/.test(top.usedBefore[0]) && /used at £1,?450\.00, the schedule says £1,?500\.00/.test(top.rateCheck), 'it shows where it was used before, and flags that it was priced differently there')
+ok(!fr.matches.some((x: any) => x.code === 'WC01'), 'a WC isn’t a wet room: no loose matches')
+const past = json(await call('office', 'find_rate', { job: 'j2', what: 'skirting' }))
+ok(past.matches[0].code === 'SK1' && /not in any rate book/.test(past.matches[0].schedule) && past.matches[0].rateFrom === 'Windsor Road WHQS · VO II · No. 3' && past.matches[0].suggestedRate === 10,
+  'work no schedule covers: the rate a VO was already priced at, and where')
+const byCode = json(await call('office', 'find_rate', { job: 'j1', code: 'lin12' }))
+ok(byCode.matches[0].code === 'LIN12' && byCode.matches[0].usedBefore === 'not used on a job yet', 'find_rate by code')
+const none = json(await call('office', 'find_rate', { job: 'j1', what: 'asbestos survey' }))
+ok(typeof none.matches === 'string' && /nothing fits/.test(none.matches), 'nothing fits: it says so rather than offering the nearest thing')
+ok(/operative/.test(err(await call('op', 'find_rate', { job: 'j1', what: 'wet room' }))), 'operative: no rates')
+w = json(await call('office', 'log_variation', { job: 'j1', description: 'Form wet room', where: 'No. 18 bathroom', qty: 1, unit: 'IT', rate: top.suggestedRate, code: top.code, rate_from: top.rateFrom }))
+const wet = vos.find(v => v.description === 'Form wet room' && v.jobId === 'j1')
+ok(wet?.code === 'WR100' && wet.rate === 1500 && wet.rateBook === 'Planned Maint v8' && /£1,?500\.00 base/.test(w.value), 'log_variation keeps where the rate came from, for the VO screen to show')
+ok(/operative/.test(err(await call('op', 'log_variation', { job: 'j1', description: 'Wet room', rate_from: 'Planned Maint v8' }))), 'operative: no rate source either')
 
 srv.close(); meta.close()
 

@@ -1,5 +1,5 @@
 /**
- * Ask, on the phone: the conversation with Mastor's assistant for one job, kept on the device and sent
+ * Clerk (the Ask tab's assistant), on the phone: the conversation with Mastor's assistant for one job, kept on the device and sent
  * whole to /api/agent each time (it's append-only: what the server sends back is stored exactly, so
  * Claude's thinking stays valid). The phone syncs before each question, so Ask reads what's on screen,
  * and after each answer, so a change made with Do it shows at once, marked "by Claude".
@@ -8,6 +8,7 @@ import type Anthropic from '@anthropic-ai/sdk'
 import { meta } from './db'
 import { authHeader } from './supabase'
 import { settle, syncNow } from './sync'
+import { money } from './format'
 
 export type Msg = Anthropic.Beta.BetaMessageParam
 export type Pending = { id: string; name: string; title: string; input: Record<string, unknown> }
@@ -30,10 +31,10 @@ export async function askMastor(jobId: string, c: Convo, step: { text: string } 
   try {
     r = await fetch('/api/agent', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) },
       body: JSON.stringify({ messages, jobId, ...('decision' in step ? { decision: step.decision } : {}) }) })
-  } catch { throw new Error('No connection. Ask needs signal: try again when you have some.') }
+  } catch { throw new Error('No connection. Clerk needs signal: try again when you have some.') }
   if (!r.ok || !r.body) {
     const e = await r.json().catch(() => ({})) as { error?: string }
-    throw new Error(e.error || `Ask couldn’t answer (${r.status}).`)
+    throw new Error(e.error || `Clerk couldn’t answer (${r.status}).`)
   }
   const reader = r.body.getReader(), dec = new TextDecoder()
   // `saved`: the change on the card ran (the server says so before Claude replies), so even if the reply
@@ -55,9 +56,9 @@ export async function askMastor(jobId: string, c: Convo, step: { text: string } 
       }
       if (done) break
     }
-  } catch { err = err ?? 'The connection dropped before Ask finished.' }
+  } catch { err = err ?? 'The connection dropped before Clerk finished.' }
   await settle().catch(() => {})    // bring any change Ask made onto this phone, waiting for a sync already running
-  if (!out && !err) err = 'Ask’s answer was cut off. Try again.'
+  if (!out && !err) err = 'Clerk’s answer was cut off. Try again.'
   if (err) {
     const keep = out ?? saved
     const done = 'decision' in step && step.decision === 'approve' && saved
@@ -78,7 +79,7 @@ const TITLES: Record<string, string> = {
   log_variation: 'Log a new VO', update_variation: 'Update a VO', add_note: 'Add a note or decision', update_site_day: 'Fill in a day on site',
 }
 const LABELS: Record<string, string> = {
-  vo: 'VO', description: 'What', where: 'Where', qty: 'Quantity', unit: 'Unit', rate: 'Rate', code: 'SoR code', reason: 'Why', client_ref: 'Client ref',
+  vo: 'VO', description: 'What', where: 'Where', qty: 'Quantity', unit: 'Unit', rate: 'Rate', code: 'SoR code', rate_from: 'Rate from', reason: 'Why', client_ref: 'Client ref',
   status: 'Status', instructed: 'Instructed', sent_to_client: 'Sent to client', text: 'Note', note: 'Note', category: 'Category', pinned: 'Pinned',
   date: 'Day', weather: 'Weather', labour: 'On site', valuation: 'Valuation', evidence_entry_id: 'Photo', replace_note: 'Replace note',
 }
@@ -90,7 +91,7 @@ export function changeDetail(input: Record<string, unknown>): string[] {
   if (vos?.length) out.push(`VOs: ${vos.join(', ')}`)
   for (const [k, v] of Object.entries(input)) {
     if (k === 'job' || k === 'scope_line_ids' || k === 'vos' || v == null || v === '') continue
-    const val = typeof v === 'boolean' ? (v ? 'yes' : 'no') : k === 'rate' && typeof v === 'number' ? `£${v.toFixed(2)}` : k === 'labour' ? `${v} people` : String(v)
+    const val = typeof v === 'boolean' ? (v ? 'yes' : 'no') : k === 'rate' && typeof v === 'number' ? money(v) : k === 'labour' ? `${v} people` : String(v)
     out.push(`${LABELS[k] ?? k}: ${val}`)
   }
   return out

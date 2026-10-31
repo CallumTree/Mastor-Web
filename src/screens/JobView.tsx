@@ -155,7 +155,7 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
   { tab: 'scope', label: 'Scope', Icon: IconScope },
   { tab: 'vos', label: 'VOs', Icon: IconMarkup },
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
-  { tab: 'ask', label: 'Ask', Icon: IconAsk },
+  { tab: 'ask', label: 'Clerk', Icon: IconAsk },
 ]
 
 export function JobView(p: {

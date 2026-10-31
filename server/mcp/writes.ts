@@ -142,15 +142,16 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
       reason: z.string().optional().describe('Why it’s needed, e.g. what was found on site'),
       qty: z.number().positive().optional().describe('Only if measured or stated, never estimated'),
       unit: z.string().optional().describe('Unit for the quantity, e.g. LM, SM, NO, IT'),
-      rate: z.number().min(0).optional().describe('£ rate (office roles), only from a rate book, quote or the person'),
+      rate: z.number().min(0).optional().describe('£ rate (office roles), only from a rate book, quote, the person, or a find_rate match'),
       code: z.string().optional().describe('SoR code the rate came from'),
+      rate_from: z.string().optional().describe('Where the rate came from: the rateFrom of a find_rate match, e.g. the schedule’s name or “Windsor Road · VO II”'),
       client_ref: z.string().optional().describe('The client’s VO reference, if they’ve given one'),
       instructed: z.boolean().optional().describe('The client has already instructed it (status Instructed)'),
       evidence_entry_id: z.string().optional().describe('A site photo’s entryId from get_site_diary'),
     },
     annotations: WRITE,
   }, async (a) => {
-    if (!ctx.money && (a.rate != null || a.code)) throw new Error(NO_MONEY + ' Log it without a rate and the office will price it.')
+    if (!ctx.money && (a.rate != null || a.code || a.rate_from)) throw new Error(NO_MONEY + ' Log it without a rate and the office will price it.')
     if (a.qty != null && !a.unit?.trim()) throw new Error('Give the unit for that quantity (e.g. LM, SM, NO).')
     const { job, d } = await load(a.job)
     const entry = a.evidence_entry_id ? d.diary.find(e => e.id === a.evidence_entry_id) : undefined
@@ -162,7 +163,7 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     const vo: Variation = {
       id: crypto.randomUUID(), jobId: job.id, number: d.vos.reduce((m, v) => Math.max(m, v.number), 0) + 1,
       description: a.description.trim(), room: (a.where ?? entry?.room ?? '').trim(), qty: a.qty ?? null, unit: a.unit?.trim() ?? '',
-      rate: a.rate ?? null, code: a.code?.trim() ?? '', reason: a.reason?.trim() ?? '', clientRef: a.client_ref?.trim() ?? '',
+      rate: a.rate ?? null, code: a.code?.trim() ?? '', ...(a.rate_from?.trim() && a.rate != null ? { rateBook: a.rate_from.trim() } : {}), reason: a.reason?.trim() ?? '', clientRef: a.client_ref?.trim() ?? '',
       status: a.instructed ? 'Instructed' : 'Identified', photoIds: photo ? [photo] : [], dateRaised: at, valuationId: null, byClaude: at,
     }
     await save(ctx, 'variations', [vo])
@@ -188,13 +189,14 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
       unit: z.string().optional(),
       rate: z.number().min(0).nullable().optional().describe('£ rate (office roles); null clears it (unpriced)'),
       code: z.string().optional().describe('SoR code (office roles)'),
+      rate_from: z.string().optional().describe('Where the rate came from (a find_rate match’s rateFrom); shown beside the rate in the app'),
       client_ref: z.string().optional().describe('The client’s VO reference'),
       status: z.enum(['Identified', 'Instructed', 'Complete', 'Rejected']).optional(),
       sent_to_client: z.boolean().optional().describe('true: sent to the client today (from here it’s in their court); false: not sent'),
     },
     annotations: WRITE,
   }, async (a) => {
-    if (!ctx.money && (a.rate !== undefined || a.code !== undefined)) throw new Error(NO_MONEY)
+    if (!ctx.money && (a.rate !== undefined || a.code !== undefined || a.rate_from !== undefined)) throw new Error(NO_MONEY)
     const { job, d } = await load(a.job)
     const v = findVo(d.vos, a.vo)
     if (!v) throw new Error(`No ${a.vo} on ${job.name}. VOs: ${[...d.vos].sort((x, y) => x.number - y.number).map(x => voRef(x.number)).join(', ') || 'none yet'}.`)
@@ -204,7 +206,7 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
       ...v,
       ...(a.description !== undefined ? { description: a.description.trim() } : {}), ...(a.where !== undefined ? { room: a.where.trim() } : {}),
       ...(a.reason !== undefined ? { reason: a.reason.trim() } : {}), ...(a.qty !== undefined ? { qty: a.qty } : {}),
-      ...(a.unit !== undefined ? { unit: a.unit.trim() } : {}), ...(a.rate !== undefined ? { rate: a.rate } : {}),
+      ...(a.unit !== undefined ? { unit: a.unit.trim() } : {}), ...(a.rate !== undefined ? { rate: a.rate, rateBook: a.rate_from?.trim() || undefined } : a.rate_from !== undefined ? { rateBook: a.rate_from.trim() || undefined } : {}),
       ...(a.code !== undefined ? { code: a.code.trim() } : {}), ...(a.client_ref !== undefined ? { clientRef: a.client_ref.trim() } : {}),
       ...(a.status ? { status: a.status } : {}), ...(a.sent_to_client !== undefined ? { submittedAt: a.sent_to_client ? (v.submittedAt ?? Date.now()) : null } : {}),
     }
