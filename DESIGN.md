@@ -682,7 +682,7 @@ Pills, 44px tall, 1.5px ink outline, 600 15px; selected fills ink with white tex
 
 ### Navigation
 - **Job header:** Shell Black, full bleed, 24px foot corners. A labelled "‹ Jobs" button (44px, Shell Raised with a Shell Rule edge that turns neon on hover, 15px 650) and the setup icon button flank the mono ref (Shell Muted), the job name in Display, and the setup line beneath; the neon progress rail runs along its foot.
-- **Dock:** a floating 64px Shell Black bar, 24px corners, 24px icons over 13px 600 labels in Shell Muted. The active tab turns white with an 18px by 3px neon bar above its icon. The capture key is a 52 by 48px neon key with an ink plus, 16px corners. On desktop it becomes the left rail with the active bar on the left edge.
+- **Dock:** a floating 64px Shell Black bar, 24px corners, 24px icons over 13px 600 labels in Shell Muted. The active tab turns white with an 18px by 3px neon bar above its icon. The capture key is a 52 by 48px neon key with an ink plus, 16px corners. On desktop it becomes the left rail with the active bar on the left edge. Under 360px the six tabs and the capture key share the width evenly, edge to edge, so every cell keeps 44px for a gloved thumb; the key becomes a 44px square and labels stay at 13px. Under 300px it folds into two rows of four.
 - **Cover head:** Shell Black with the white wordmark centred, a 125% tracked sub-line in Shell Muted, and the sync state.
 
 ### Ask (the assistant tab)

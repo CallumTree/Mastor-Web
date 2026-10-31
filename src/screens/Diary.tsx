@@ -172,16 +172,16 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         </div>
       )}
       {err && <div className="flag">{err}</div>}
-      <div className="row">
-        <label className="btn btn-secondary" style={{ flex: 1 }}>
+      <div className="cap-row">
+        <label className="btn btn-secondary">
           <IconCamera /> {busy ? 'Saving…' : 'Photo'}
           <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { add(e.target.files?.[0], 'photo'); e.target.value = '' }} />
         </label>
-        <label className="btn btn-secondary" style={{ flex: 1 }}>
+        <label className="btn btn-secondary">
           <IconVideo /> Video
           <input type="file" className="sr-only" accept="video/*" capture="environment" onChange={e => { add(e.target.files?.[0], 'video'); e.target.value = '' }} />
         </label>
-        <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setRecording(true)}><IconMic /> Voice</button>
+        <button className="btn btn-secondary" onClick={() => setRecording(true)}><IconMic /> Voice</button>
       </div>
       <div className="row">
         <label className="btn btn-ghost" style={{ flex: 1 }}>

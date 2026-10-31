@@ -112,7 +112,7 @@ label.btn { cursor: pointer; }
 .btn-danger { background: var(--red); color: #fff; border-color: var(--red); }
 .btn:disabled { background: var(--disabled); border-color: var(--disabled); color: var(--ink-2); cursor: not-allowed; }
 .linkish { background: none; border: none; padding: 0; color: var(--blue); font: inherit; font-weight: 600; letter-spacing: inherit; text-transform: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.linkish.tap { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin: -12px -6px; }
+.linkish.tap { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 6px; margin: -12px -6px; }
 .linkish.t-note { font-size: 14px; line-height: 1.4; }   /* after .linkish, whose font: inherit would otherwise reset them */
 .linkish.t-small { font-size: 13px; line-height: 1.35; }
 .btn-ghost.on-dark { color: var(--shell-muted); }
@@ -342,6 +342,10 @@ label.row { cursor: pointer; }
 .nav .nav-capture { flex: 0 0 68px; }
 .nav .nav-capture span { width: 52px; height: 48px; border-radius: var(--r-lg); display: grid; place-items: center; font-family: var(--sans); font-size: 32px; font-weight: 500; line-height: 1; color: var(--ink); background: var(--neon); }
 .nav .nav-capture:active span { transform: scale(.94); }
+/* Photo / Video / Voice: three equal cells that never push past the screen; under 360px the icon sits over its word */
+.cap-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cap-row .btn { min-width: 0; padding: 0 8px; }
+@media (max-width: 359px) { .cap-row .btn { flex-direction: column; gap: 2px; min-height: 64px; font-size: 15px; } }
 .banner { background: var(--shell); color: var(--shell-muted); font-size: 13px; text-align: center; padding: 7px 10px; }
 .banner .linkish { color: #fff; }
 
@@ -474,14 +478,21 @@ label.row { cursor: pointer; }
 }
 
 /* ---------- narrow screens and zoom (a phone at 200% is ~195px wide) ---------- */
-@media (max-width: 360px) { .sum-cell { padding: 9px 9px 10px; } .fig { padding: 10px 9px 11px; } .nav button { font-size: 12px; letter-spacing: 0; } }
+@media (max-width: 360px) { .sum-cell { padding: 9px 9px 10px; } .fig { padding: 10px 9px 11px; } }
+/* under 360px six tabs and the capture key share the width evenly, edge to edge, so every cell keeps 44px
+   for a gloved thumb (312px across on a 320px phone); the key shrinks to a 44px square, labels stay at 13px */
+@media (max-width: 359px) {
+  .nav { left: 4px; right: 4px; padding: 0; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .nav button { letter-spacing: 0; }
+  .nav .nav-capture span { width: 44px; height: 44px; font-size: 28px; }
+}
 @media (max-width: 300px) {
   .cover-head-in { flex-wrap: wrap; justify-content: space-between; }
   .cover-mark { order: -1; flex: 1 1 100%; }
   .wordmark { font-size: 22px; letter-spacing: .16em !important; margin-right: -.16em; }
   :root { --dock-h: 120px; }
   .nav { display: flex; flex-wrap: wrap; left: 6px; right: 6px; padding: 0; border-radius: var(--r-lg); overflow: hidden; }
-  .nav button, .nav .nav-capture { flex: 0 0 33.333%; height: 60px; }
+  .nav button, .nav .nav-capture { flex: 0 0 25%; height: 60px; }   /* two rows: three tabs and the key, then the rest */
   .sum, .sum-3, .figs { grid-template-columns: 1fr; } .fig + .fig { border-left: 0; border-top: var(--hair) solid var(--line); }
   .nav-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .vo-row { grid-template-columns: 52px 1fr; } .vo-row .vo-amt { grid-column: 2; }
@@ -491,7 +502,7 @@ label.row { cursor: pointer; }
   .job-row { grid-template-columns: 1fr; grid-template-areas: "job" "value" "client" "needs" "status"; } .jr-status { justify-self: start; }
   /* two-row nav: the active cell is raised, and row 2 carries its bar on its own bottom edge, never on the seam under row 1 */
   .nav button.on { background: var(--shell-2); }
-  .nav > button:nth-child(n+4).on::before { top: auto; bottom: 0; }
+  .nav > button:nth-child(n+5).on::before { top: auto; bottom: 0; }
   /* job bar: back and setup on one row, the name full width beneath at a size whole words fit */
   .jbar-in { flex-wrap: wrap; justify-content: space-between; }
   .jbar-title { order: 1; flex: 1 1 100%; }
