@@ -798,6 +798,8 @@ label.row { cursor: pointer; }
 /* ---------- Ask: the assistant tab. What you say sits right on a pale volt tint; Ask answers in plain text
    on white; a change waits as the one black slab, pulse round it, until Do it or Cancel. While Ask works,
    its status row carries the pulse instead. The bar to type or speak keeps above the dock. ---------- */
+.doc-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-bottom: 10px; padding: 12px 14px; border-radius: var(--r-md); background: var(--tint-volt); font-size: 15px; }
+.doc-ask .btn { width: auto; min-height: 44px; padding: 0 16px; }
 .ask-head { margin: 18px 0 4px; }
 .ask-new { width: auto; min-height: 44px; padding: 0 14px; font-size: 15px; }
 .ask-intro p { margin: 8px 0 14px; color: var(--ink-2); }

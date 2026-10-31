@@ -41,8 +41,9 @@ let diary: DiaryEntry[] = [
   E('d-note', 'note', { note: 'Dylan agreed the airing cupboard partition', category: 'Client', pinned: true }),
   E('d-money', 'note', { note: 'Agreed day rate £280', category: 'Commercial' }),
 ]
+const JOBS = [job, other]
 const TABLES: Record<string, () => { id: string; jobId?: string; data?: unknown }[]> = {
-  jobs: () => [job, other], scope_items: () => scope, valuations: () => vals, variations: () => vos, diary_entries: () => diary,
+  jobs: () => JOBS, scope_items: () => scope, valuations: () => vals, variations: () => vos, diary_entries: () => diary,
   work_orders: () => [], job_documents: () => DOCS,
   costs: () => [], company_settings: () => [],
 }
@@ -144,8 +145,8 @@ ok(r.status === 200 && r.body.result.serverInfo.name === 'mastor' && /Tree & Son
 r = await rpc('office', 'tools/list')
 const tools = r.body.result.tools as any[]
 const READS = ['mastor_overview', 'get_job', 'get_scope', 'get_variations', 'get_valuations', 'get_site_diary', 'view_site_media', 'invoice_figures', 'find_rate', 'read_document']
-const WRITES = ['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day']
-ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'sixteen tools: ten that read, six that change')
+const WRITES = ['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day', 'update_job']
+ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'seventeen tools: ten that read, seven that change')
 ok(tools.every(t => t.annotations?.readOnlyHint === READS.includes(t.name)), 'only the read tools say they’re read-only, so Claude asks before every change')
 ok(!tools.some(t => /issue_|create_invoice|delete/.test(t.name)), 'no tool issues a valuation, creates an invoice or deletes anything')
 
@@ -298,6 +299,18 @@ ok(/matches 0|No document matches/.test(err(await call('office', 'read_document'
 ok(/No document matches/.test(err(await call('op', 'read_document', { job: 'j1', document: 'purchase order' }))) && !json(await call('op', 'get_job', { job: 'j1' })).documents.some((x: any) => x.kind === 'Purchase order'),
   'operative: purchase orders are neither listed nor readable')
 ok(/Signed instruction/.test((await call('op', 'read_document', { job: 'j1', document: 'Signed instruction' })).content[0].text), 'operative: other documents read as normal')
+
+// the job's PO details, set from the order (office only), with the PO check after
+const jobsBefore = TABLES.jobs().length
+w = json(await call('office', 'update_job', { job: 'j1', po_number: 'PC10001', po_value: 370.92, uplift1: 10, uplift2: 0, source: 'Order PC10001, page 1' }))
+const j1 = (TABLES.jobs() as any[]).find(j => j.id === 'j1')
+ok(j1.poNumber === 'PC10001' && j1.contractValue === 370.92 && j1.byClaude && w.changed.some((c: string) => /poNumber: none|poNumber: not set/.test(c) || /poNumber/.test(c)) && w.from === 'Order PC10001, page 1', 'update_job: PO number and value set from the order, marked by Claude, source kept')
+ok(/^reconciles: the BoQ with 10% \+ 0% comes to the PO value, £370\.92$/.test(w.poCheck), 'then the app’s own PO check: the BoQ with the uplifts comes to the PO value')
+ok(TABLES.jobs().length === jobsBefore && upserts.some(u => u.table === 'jobs' && u.rows[0].job_id === 'j1'), 'saved over the job itself (its own job id), not as a new job')
+w = json(await call('office', 'update_job', { job: 'j1', po_value: 400 }))
+ok(/doesn’t reconcile: the BoQ with 10% \+ 0% comes to £370\.92; the PO value is £400\.00 \(under by £29\.08\)/.test(w.poCheck), 'a value that doesn’t reconcile: says by how much')
+ok(/nothing, as the job already says that/.test(json(await call('office', 'update_job', { job: 'j1', po_number: 'PC10001' })).changed), 'nothing to change: says so, saves nothing')
+ok(/operative/.test(err(await call('op', 'update_job', { job: 'j1', po_number: 'X1' }))), 'operative: can’t change PO details')
 
 srv.close(); meta.close()
 

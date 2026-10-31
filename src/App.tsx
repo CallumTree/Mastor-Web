@@ -289,7 +289,7 @@ export default function App() {
       })()}
       {jobForm && (
         <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} onClose={() => setJobForm(null)}
-          onSave={async j => { await db.putJob(j); setJobForm(null); await reload(); setOpenId(j.id) }}
+          onSave={async j => { await db.putJob({ ...j, byClaude: null }); setJobForm(null); await reload(); setOpenId(j.id) }}
           onDelete={jobForm === 'edit' && job ? async () => { await db.deleteJob(job.id); setJobForm(null); setOpenId(null); await reload() } : undefined} />
       )}
       {logging && job && (

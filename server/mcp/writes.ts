@@ -12,6 +12,7 @@ import { NOTE_CATEGORIES, type DiaryEntry, type Job, type ScopeItem, type Valuat
 import { money, qtyText, roman, voRef } from '../../src/lib/format'
 import { isPriced, issuePlan, lineValue, lockedIn, openValuation, pennies, valRef } from '../../src/lib/valuation'
 import { allocateInvoiceNo, invoiceAmounts, missingForInvoice } from '../../src/lib/invoice'
+import { jobAlerts } from '../../src/lib/alerts'
 import { copyMedia, findJob, jobData, records, save, settings, type Ctx, type JobData } from './data'
 import { day, JOB_DESC, NO_MONEY, text, ukToday } from './shared'
 
@@ -49,6 +50,15 @@ function openNow(job: Job, d: JobData) {
     cumulative: money(p.cumulative), ofContract: p.pct != null ? `${p.pct}%` : null,
     checksBeforeIssue: p.checks.map(c => `${c.kind === 'warn' ? 'CHECK' : 'OK'}: ${c.text}`),
   }
+}
+
+/** Whether the BoQ, with the job's uplifts, comes to the PO value: the app's own check, in its own words. */
+function poCheck(job: Job, d: JobData) {
+  if (!job.contractValue) return 'no PO value set, so nothing to check against'
+  if (!d.scope.length) return 'no BoQ yet, so nothing to check against'
+  const { gap, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders)
+  if (!gap) return `reconciles: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to the PO value, ${money(job.contractValue)}`
+  return `${poNote ?? 'doesn’t reconcile'}: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to ${money(gap.withUplifts)}; the PO value is ${money(job.contractValue)} (${gap.diff > 0 ? 'over' : 'under'} by ${money(Math.abs(gap.diff))})`
 }
 
 export function registerWrites(server: McpServer, ctx: Ctx) {
@@ -228,6 +238,35 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
       ...(ctx.money && isPriced(next) ? { value: `${money(lineValue(next.qty, next.rate))} base` } : {}),
       ...(inVal ? { inValuation: valRef(inVal.number) } : {}),
     })
+  })
+
+  server.registerTool('update_job', {
+    title: 'Update the job’s PO details',
+    description: 'Sets the job’s purchase order details: the PO number, the PO value (the order’s total net: every lot, all-in with its uplifts, excluding VAT) and the two uplifts in the order they compound (Uplift 1 first, e.g. an annual BCIS uplift; Uplift 2 second, e.g. the contractor uplift). Take every figure from the purchase order itself (read_document), never from memory or arithmetic. Afterwards it says whether the BoQ with these uplifts reconciles with the PO value. Office roles only. The job is marked “by Claude” in the app. Get the person’s yes first.',
+    inputSchema: {
+      job: z.string().describe(JOB_DESC),
+      po_number: z.string().min(1).optional().describe('The order number as printed, e.g. PC22358'),
+      po_value: z.number().positive().optional().describe('The order’s total net, excluding VAT, in £'),
+      uplift1: z.number().min(0).max(100).optional().describe('First uplift, %, e.g. 14.68'),
+      uplift2: z.number().min(0).max(200).optional().describe('Second uplift, %, e.g. 35'),
+      source: z.string().optional().describe('The document the figures came from, e.g. “Order PC22358, page 2”'),
+    },
+    annotations: WRITE,
+  }, async (a) => {
+    if (!ctx.money) throw new Error(NO_MONEY)
+    if (a.po_number === undefined && a.po_value === undefined && a.uplift1 === undefined && a.uplift2 === undefined) throw new Error('Say what to change: the PO number, the PO value or the uplifts.')
+    const { job, d } = await load(a.job)
+    const next: Job = {
+      ...job,
+      ...(a.po_number !== undefined ? { poNumber: a.po_number.trim() } : {}), ...(a.po_value !== undefined ? { contractValue: pennies(a.po_value) } : {}),
+      ...(a.uplift1 !== undefined ? { uplift1: a.uplift1 } : {}), ...(a.uplift2 !== undefined ? { uplift2: a.uplift2 } : {}),
+    }
+    const shown = (j: Job) => ({ poNumber: j.poNumber || 'not set', poValue: j.contractValue ? money(j.contractValue) : 'not set', uplifts: `${j.uplift1}% + ${j.uplift2}%` })
+    const before = shown(job), after = shown(next)
+    const changes = (Object.keys(after) as (keyof typeof after)[]).filter(k => before[k] !== after[k]).map(k => `${k}: ${before[k]} → ${after[k]}`)
+    if (!changes.length) return text({ job: job.name, changed: 'nothing, as the job already says that', poCheck: poCheck(next, d) })
+    await save(ctx, 'jobs', [{ ...next, byClaude: Date.now() }])
+    return text({ job: next.name, changed: changes, ...(a.source ? { from: a.source } : {}), poCheck: poCheck(next, d) })
   })
 
   server.registerTool('add_note', {

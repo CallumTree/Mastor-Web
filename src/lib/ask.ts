@@ -68,7 +68,7 @@ export async function askMastor(jobId: string, c: Convo, step: { text: string } 
 }
 
 // ---------- reading the conversation back for the screen ----------
-const WRITES = new Set(['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day'])
+const WRITES = new Set(['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day', 'update_job'])
 export type Line =
   | { kind: 'you'; text: string }
   | { kind: 'ask'; text: string }
@@ -76,10 +76,10 @@ export type Line =
 
 const TITLES: Record<string, string> = {
   add_to_valuation: 'Tick lines into the open valuation', remove_from_valuation: 'Take lines out of the open valuation',
-  log_variation: 'Log a new VO', update_variation: 'Update a VO', add_note: 'Add a note or decision', update_site_day: 'Fill in a day on site',
+  log_variation: 'Log a new VO', update_variation: 'Update a VO', update_job: 'Update the job’s PO details', add_note: 'Add a note or decision', update_site_day: 'Fill in a day on site',
 }
 const LABELS: Record<string, string> = {
-  vo: 'VO', description: 'What', where: 'Where', qty: 'Quantity', unit: 'Unit', rate: 'Rate', code: 'SoR code', rate_from: 'Rate from', reason: 'Why', client_ref: 'Client ref',
+  vo: 'VO', description: 'What', where: 'Where', qty: 'Quantity', unit: 'Unit', rate: 'Rate', code: 'SoR code', rate_from: 'Rate from', po_number: 'PO number', po_value: 'PO value (excl. VAT)', uplift1: 'Uplift 1', uplift2: 'Uplift 2', source: 'From', reason: 'Why', client_ref: 'Client ref',
   status: 'Status', instructed: 'Instructed', sent_to_client: 'Sent to client', text: 'Note', note: 'Note', category: 'Category', pinned: 'Pinned',
   date: 'Day', weather: 'Weather', labour: 'On site', valuation: 'Valuation', evidence_entry_id: 'Photo', replace_note: 'Replace note',
 }
@@ -91,7 +91,7 @@ export function changeDetail(input: Record<string, unknown>): string[] {
   if (vos?.length) out.push(`VOs: ${vos.join(', ')}`)
   for (const [k, v] of Object.entries(input)) {
     if (k === 'job' || k === 'scope_line_ids' || k === 'vos' || v == null || v === '') continue
-    const val = typeof v === 'boolean' ? (v ? 'yes' : 'no') : k === 'rate' && typeof v === 'number' ? money(v) : k === 'labour' ? `${v} people` : String(v)
+    const val = typeof v === 'boolean' ? (v ? 'yes' : 'no') : (k === 'rate' || k === 'po_value') && typeof v === 'number' ? money(v) : (k === 'uplift1' || k === 'uplift2') ? `${v}%` : k === 'labour' ? `${v} people` : String(v)
     out.push(`${LABELS[k] ?? k}: ${val}`)
   }
   return out

@@ -18,7 +18,7 @@ const EXAMPLES_SITE = ['What’s left to do at No. 4?', 'Log a VO: cracked linte
  * Clerk: Mastor's assistant for this job (named after a clerk of works). Type or speak; it reads the job with the app's own figures and
  * proposes changes as a card that runs only on Do it. Issuing and invoicing stay with a person.
  */
-export function AskTab({ job }: { job: Job }) {
+export function AskTab({ job, seed, onSeeded }: { job: Job; seed?: string | null; onSeeded?: () => void }) {
   const access = useAccess()
   const [convo, setConvo] = useState<Convo>(EMPTY)
   const [text, setText] = useState('')
@@ -33,6 +33,8 @@ export function AskTab({ job }: { job: Job }) {
   useEffect(() => { let live = true; loadConvo(job.id).then(c => live && setConvo(c)); return () => { live = false } }, [job.id])
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [convo, busy])
   useEffect(() => () => rec.current?.stop(), [])
+  // a question handed over from elsewhere in the app: in the box, ready to send or change
+  useEffect(() => { if (seed) { setText(seed); onSeeded?.(); box.current?.focus() } }, [seed, onSeeded])
   // the decision is the next thing to do, so it takes focus (keyboard and screen readers land on it)
   const deciding = convo.pending.length > 0 && !busy
   useEffect(() => { if (deciding) yes.current?.focus({ preventScroll: true }) }, [deciding])

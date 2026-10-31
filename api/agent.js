@@ -64145,7 +64145,8 @@ async function save(ctx, kind, rows) {
   const r = await fetch(`${SB_URL}/rest/v1/${TABLE[kind]}?on_conflict=id`, {
     method: "POST",
     headers: headers(ctx.token, { "content-type": "application/json", prefer: "resolution=merge-duplicates,return=minimal" }),
-    body: JSON.stringify(rows.map((data) => ({ id: data.id, company_id: ctx.companyId, job_id: data.jobId, data, deleted: false })))
+    body: JSON.stringify(rows.map((data) => ({ id: data.id, company_id: ctx.companyId, job_id: kind === "jobs" ? data.id : data.jobId, data, deleted: false })))
+    // a job is its own job
   });
   if (!r.ok) throw new Error(`Couldn\u2019t save to Mastor just now (${r.status}) \u2014 nothing was changed. Try again in a minute.`);
 }
@@ -66411,6 +66412,13 @@ function openNow(job, d) {
     checksBeforeIssue: p.checks.map((c) => `${c.kind === "warn" ? "CHECK" : "OK"}: ${c.text}`)
   };
 }
+function poCheck(job, d) {
+  if (!job.contractValue) return "no PO value set, so nothing to check against";
+  if (!d.scope.length) return "no BoQ yet, so nothing to check against";
+  const { gap, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders);
+  if (!gap) return `reconciles: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to the PO value, ${money(job.contractValue)}`;
+  return `${poNote ?? "doesn\u2019t reconcile"}: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to ${money(gap.withUplifts)}; the PO value is ${money(job.contractValue)} (${gap.diff > 0 ? "over" : "under"} by ${money(Math.abs(gap.diff))})`;
+}
 function registerWrites(server, ctx) {
   const load = async (q) => {
     const job = findJob(await records(ctx, "jobs"), q);
@@ -66627,6 +66635,36 @@ function registerWrites(server, ctx) {
       ...ctx.money && isPriced(next) ? { value: `${money(lineValue(next.qty, next.rate))} base` } : {},
       ...inVal ? { inValuation: valRef(inVal.number) } : {}
     });
+  });
+  server.registerTool("update_job", {
+    title: "Update the job\u2019s PO details",
+    description: "Sets the job\u2019s purchase order details: the PO number, the PO value (the order\u2019s total net: every lot, all-in with its uplifts, excluding VAT) and the two uplifts in the order they compound (Uplift 1 first, e.g. an annual BCIS uplift; Uplift 2 second, e.g. the contractor uplift). Take every figure from the purchase order itself (read_document), never from memory or arithmetic. Afterwards it says whether the BoQ with these uplifts reconciles with the PO value. Office roles only. The job is marked \u201Cby Claude\u201D in the app. Get the person\u2019s yes first.",
+    inputSchema: {
+      job: external_exports.string().describe(JOB_DESC),
+      po_number: external_exports.string().min(1).optional().describe("The order number as printed, e.g. PC22358"),
+      po_value: external_exports.number().positive().optional().describe("The order\u2019s total net, excluding VAT, in \xA3"),
+      uplift1: external_exports.number().min(0).max(100).optional().describe("First uplift, %, e.g. 14.68"),
+      uplift2: external_exports.number().min(0).max(200).optional().describe("Second uplift, %, e.g. 35"),
+      source: external_exports.string().optional().describe("The document the figures came from, e.g. \u201COrder PC22358, page 2\u201D")
+    },
+    annotations: WRITE
+  }, async (a) => {
+    if (!ctx.money) throw new Error(NO_MONEY);
+    if (a.po_number === void 0 && a.po_value === void 0 && a.uplift1 === void 0 && a.uplift2 === void 0) throw new Error("Say what to change: the PO number, the PO value or the uplifts.");
+    const { job, d } = await load(a.job);
+    const next = {
+      ...job,
+      ...a.po_number !== void 0 ? { poNumber: a.po_number.trim() } : {},
+      ...a.po_value !== void 0 ? { contractValue: pennies(a.po_value) } : {},
+      ...a.uplift1 !== void 0 ? { uplift1: a.uplift1 } : {},
+      ...a.uplift2 !== void 0 ? { uplift2: a.uplift2 } : {}
+    };
+    const shown = (j) => ({ poNumber: j.poNumber || "not set", poValue: j.contractValue ? money(j.contractValue) : "not set", uplifts: `${j.uplift1}% + ${j.uplift2}%` });
+    const before = shown(job), after = shown(next);
+    const changes = Object.keys(after).filter((k) => before[k] !== after[k]).map((k) => `${k}: ${before[k]} \u2192 ${after[k]}`);
+    if (!changes.length) return text({ job: job.name, changed: "nothing, as the job already says that", poCheck: poCheck(next, d) });
+    await save(ctx, "jobs", [{ ...next, byClaude: Date.now() }]);
+    return text({ job: next.name, changed: changes, ...a.source ? { from: a.source } : {}, poCheck: poCheck(next, d) });
   });
   server.registerTool("add_note", {
     title: "Add a note or decision",
@@ -67043,10 +67081,10 @@ var SYSTEM = (ctx) => `You are Clerk, the assistant inside Mastor (named after a
 How to work:
 - Use the tools to read before you answer. Every figure must come from a tool: quote Mastor's figures exactly and never do your own sums.
 - Refer to valuations and VOs by Roman numerals (VAL II, VO III), properties as "No. 6".
-- You can change things for them: tick scope lines and VOs into the open valuation or take them out, log a VO, price or update a VO, add a note or decision, fill in the site day. Call the tool when they ask for the change. Don't ask "shall I?" in chat: the app shows each change as a card with Do it and Cancel, and it runs only when they tap Do it. Just before the call, say in one or two short lines exactly what will change, with Mastor's figures (which lines, how many, the totals).
+- You can change things for them: tick scope lines and VOs into the open valuation or take them out, log a VO, price or update a VO, add a note or decision, fill in the site day, set the job's PO details. Call the tool when they ask for the change. Don't ask "shall I?" in chat: the app shows each change as a card with Do it and Cancel, and it runs only when they tap Do it. Just before the call, say in one or two short lines exactly what will change, with Mastor's figures (which lines, how many, the totals).
 - Never invent a quantity, rate, SoR code or reference. If they didn't say it and no tool shows it, leave it out or ask.${ctx.money ? `
 - Pricing: when they log or price a VO without giving a rate, look it up with find_rate first (the job's own schedule, and the same work priced on other properties and jobs; try a second wording if the first finds nothing). If one match is clearly the same work in the same unit, put its code and suggestedRate in the change with rate_from, and say in a line where it came from ("WR100 at \xA31,500.00, the wet room rate in Planned Maint v8, as used on No. 12"). If several fit, or a rateCheck shows different rates, list the two or three best and ask which. If nothing fits, log it unpriced and say so. Never adjust a rate or do sums on it.` : ""}
-- The job's documents are the source of truth: the purchase order, the client's pack and spec, the programme, RAMS, certificates, drawings (get_job lists them). When a question turns on what one says, read it with read_document and quote it by its name and page; never answer from memory. If Mastor's own figures differ from a document (the PO number or value, the uplifts, a date), say so plainly and change nothing unless they ask.
+- The job's documents are the source of truth: the purchase order, the client's pack and spec, the programme, RAMS, certificates, drawings (get_job lists them). When a question turns on what one says, read it with read_document and quote it by its name and page; never answer from memory. If Mastor's own figures differ from a document (the PO number or value, the uplifts, a date), say so plainly and change nothing unless they ask.${ctx.money ? ` To check a job against its purchase order: read the order, then compare the PO number, the PO value (the order's total net: every lot with its uplifts, excluding VAT) and the uplifts in the order they compound (Uplift 1 first, e.g. annual BCIS; Uplift 2 second, e.g. the contractor uplift) with get_job. List what matches and what differs, quoting the order's page. If something differs, offer update_job with the figures exactly as printed and the document as source; if lots carry different uplifts, say so rather than picking one.` : ""}
 - If a request is ambiguous (which job, which property, which lines), ask one short question instead of guessing.
 - Issuing a valuation or creating an invoice is never done here: a person does that in the app (Vals). Say so if asked.${ctx.money ? "" : "\n- They are an operative: Mastor gives them no money figures (rates, values, valuations, invoices), and money changes are refused. Help with the diary, notes, the site day and logging VOs without prices."}
 - If a tool says Cancel was tapped, accept it in a few words and don't try the change again unless asked.

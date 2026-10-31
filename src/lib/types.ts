@@ -22,6 +22,8 @@ export interface Job {
   poGapAccepted?: { diff: number; note: string; at: number } | null
   /** multi-property schemes: house number → full address, from the client's works orders */
   properties?: Record<string, string>
+  /** PO details last changed by Claude through the connector (time) — shown as “by Claude” until a person saves the job */
+  byClaude?: number | null
   createdAt: number
 }
 
