@@ -22,11 +22,16 @@ function colourOn(el: Element): string {
   return '#0040FF'
 }
 
-/** Where along the contour (0–100, clockwise from the top-left corner's end) a point lies. */
+/** The length of a rounded rectangle's contour, as SVG draws a <rect> with that rx. */
+export function perimeter(w: number, h: number, r: number) {
+  return 2 * (w + h) - (8 - 2 * Math.PI) * r
+}
+
+/** Where along the contour (0–1, clockwise from the top-left corner's end) a point lies. */
 function along(x: number, y: number, w: number, h: number, r: number) {
   const P = 2 * (w + h), d = [y, w - x, h - y, x], edge = d.indexOf(Math.min(...d))
   const s = edge === 0 ? x - r : edge === 1 ? w - r + y : edge === 2 ? 2 * w - r + h - x : 2 * w - r + 2 * h - y
-  return (((s / P) * 100) % 100 + 100) % 100
+  return ((s / P) % 1 + 1) % 1
 }
 
 export function startPressTrace() {
@@ -48,15 +53,16 @@ export function startPressTrace() {
     svg.setAttribute('class', 'press-trace')
     svg.setAttribute('aria-hidden', 'true')
     svg.style.stroke = colourOn(el)
-    svg.style.setProperty('--p', String(along(e.clientX - box.left, e.clientY - box.top, box.width, box.height, r)))
-    for (const cls of ['tl', 'tp fw', 'tp bw']) {
+    // dashes in real pixels, animated from script: Safari is unreliable with pathLength and calc() in keyframes
+    const P = perimeter(box.width - 1, box.height - 1, r), p = along(e.clientX - box.left, e.clientY - box.top, box.width, box.height, r) * P, D = .09 * P
+    const dashes = ['tl', 'tp fw', 'tp bw'].map(cls => {
       const rect = document.createElementNS(SVG, 'rect')
       rect.setAttribute('class', cls)
-      rect.setAttribute('pathLength', '100')
       rect.setAttribute('width', '100%'); rect.setAttribute('height', '100%')
       rect.setAttribute('rx', String(r)); rect.setAttribute('ry', String(r))
       svg.appendChild(rect)
-    }
+      return rect
+    })
     const place = () => {
       const b = el!.getBoundingClientRect()
       // the line sits half a pixel inside the edge so it isn't clipped by a rounded parent
@@ -64,6 +70,15 @@ export function startPressTrace() {
     }
     place()
     layer.appendChild(svg)
+    if (typeof svg.animate === 'function' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const run = (rect: SVGRectElement, from: number, to: number) => {
+        rect.style.strokeDasharray = `${D}px ${P - D}px`
+        rect.animate([{ strokeDashoffset: `${from}px`, opacity: 1 }, { strokeDashoffset: `${from + (to - from) * .7}px`, opacity: 1, offset: .7 }, { strokeDashoffset: `${to}px`, opacity: 0 }],
+          { duration: 620, easing: 'cubic-bezier(.33, .8, .45, 1)', fill: 'both' })
+      }
+      run(dashes[1], D - p, D - p - P / 2)   // clockwise
+      run(dashes[2], -p, P / 2 - p)         // anticlockwise
+    }
 
     let raf = 0
     const end = () => { cancelAnimationFrame(raf); svg.remove(); removeEventListener('pointercancel', end) }

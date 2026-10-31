@@ -624,7 +624,7 @@ The front page is flatter still: nothing on it casts a shadow. Its phone frames 
 
 **The No Glow Rule.** Neon is a flat fill or line. No glow, no blur, no glass. The pulse is a flat line too.
 
-**The Live Wire Rule.** Lines are one device pixel (`--hair`: 1px, 0.5px on a 2x screen). The one live thing on a screen (the black next-step row, a hot figure cell, the dashboard title block) carries a pulse: a three-dash comet that runs once round its contour in about 3.8s, 0.6s after the screen opens, then rests about 6s (`<Trace />`, a 10s cycle). Anything pressed (action rows, buttons, chips, list rows) sends two pulses from under the finger round its edge in opposite directions, meeting on the far side in 0.6s (`src/lib/trace.ts`): volt on white, neon on black. Under reduced motion the contour lights instead of running. Nothing else animates on its own.
+**The Live Wire Rule.** Lines are one device pixel (`--hair`: 1px, 0.5px on a 2x screen). The one live thing on a screen (the black next-step row, a hot figure cell, the dashboard title block) carries a pulse: a three-dash comet that runs once round its contour in about 3.8s, 0.6s after the screen opens, then rests about 3s (`<Trace />`, a 7s cycle). Its dashes are measured in real pixels and run from script (Web Animations), never from pathLength or calc() inside keyframes, which Safari handles unreliably. Anything pressed (action rows, buttons, chips, list rows) sends two pulses from under the finger round its edge in opposite directions, meeting on the far side in 0.6s (`src/lib/trace.ts`): volt on white, neon on black. Under reduced motion the contour lights and the pulse runs its first lap only; the press pulse is off. Nothing else animates on its own.
 
 ## Shapes
 
