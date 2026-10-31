@@ -690,7 +690,10 @@ Full-width tappable rows on job home under "Action needed": 64px minimum, 14px 1
 - **Internal Padding:** 16px; list panels drop padding and rule their rows.
 
 ### Figures and Summary Strips
-White ruled grids of 112% figures over 112% sentence-case labels. The cell carrying the figure that matters turns black with a neon figure (hot), and the pulse runs round its contour. Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work.
+White ruled grids of 112% figures over 112% sentence-case labels. The cell carrying the figure that matters turns black with a neon figure (hot), and the pulse runs round its contour. Honest unknowns stay visible: an em dash, "Unpriced", or a yellow note plate under the figure. A green 4px bar along the strip's foot measures claimed work. A strip shows only the boxes that hold something: the VO summary has a box for each stage that has VOs plus the total, and the empty stages become one line under it ("None ready to claim, instructed or rejected."). With an odd number of boxes on a phone, and with five at any width, the last box (the total) spans the row so the grid has no hole. Inside a card the strip drops its own frame: the card is the frame. The open valuation shows two figures (this valuation, cumulative) and one build-up line beneath in 14px Slate Ink with the base total in ink ("£6,846.30 scope at base rates, plus uplifts of 12.5% + 5%"), not a box per term.
+
+### VO and Valuation Lists
+A ruled list: a 96px reference column (the numeral never breaks: "VO III", "VAL VIII" stay on one line), the description and status, the value right. Under 560px each entry heads itself instead: the tick, the numeral and its code on one line with the value at the right, and the description, meta and status at full width beneath; the column header is dropped. Under 360px a pair of buttons stacks rather than wrap its labels.
 
 ### Inputs / Fields
 - **Style:** white, 1.5px Field Line edge, 12px corners, 50px tall, 12px 14px padding, 16px text; label above in 600 14px, hint below at 13px Muted Ink.

@@ -138,14 +138,18 @@ const statusClass: Record<VoStatus, string> = { Identified: 'b-amber', Instructe
 export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister, onDayworks }: { job: Job; vos: Variation[]; vals: Valuation[]; onDayworks?: () => void; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
   const sorted = [...vos].sort((a, b) => a.number - b.number)
   const sum = registerSummary(job, vos, vals)
+  const none = sum.rows.filter(r => !r.count)
   const { money: m } = useAccess()   // operatives: what and where, never what it's worth
   return (
     <div className="stack">
       <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[
         ...(onDayworks ? [{ label: 'Dayworks sheets', hint: 'Hours, materials and plant — signed, then claimed as a variation', onClick: onDayworks }] : []),
         ...(m ? [{ label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }] : [])]} />} />
-      {m && sorted.length > 0 && <SumStrip label="Variation summary" caption="Groups at base rates · total includes uplifts, excludes rejected" cells={[
-        ...sum.rows.map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced), nil: !r.count,
+      {m && sorted.length > 0 && <SumStrip label="Variation summary" caption={[
+          none.length ? `None ${none.map(r => VO_GROUP_SHORT[r.key].toLowerCase()).join(', ').replace(/, ([^,]*)$/, ' or $1')}.` : '',
+          'Groups at base rates; the total includes uplifts and excludes rejected.'].filter(Boolean).join(' ')} cells={[
+        // only the stages that hold VOs: an empty stage is a line in the caption, not a box
+        ...sum.rows.filter(r => r.count).map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced),
           note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
         { label: 'Total incl. uplifts', value: money(sum.gross), note: [`${money(sum.base)} base`, sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · '), hot: true },
       ]} />}

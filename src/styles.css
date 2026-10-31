@@ -248,6 +248,13 @@ label.btn { cursor: pointer; }
 .sum-bar { grid-column: 1 / -1; height: 4px; background: var(--row-open); }
 .sum-bar > div { height: 100%; background: var(--green); }
 .sum-caption { font-size: 13px; color: var(--ink-muted); margin-top: 6px; }
+/* an odd number of cells on a phone: the last (the total) spans the row, so the grid has no hole */
+.sum-2[data-n="5"] > .sum-cell:last-of-type { grid-column: 1 / -1; }
+@media (max-width: 559px) { .sum-2[data-n="3"] > .sum-cell:last-of-type { grid-column: 1 / -1; } }
+.card > .sum { border-color: transparent; border-radius: var(--r-md); }   /* figures inside a card: the card is the frame */
+.card > .sum > .sum-cell { border-bottom-color: transparent; }
+.val-build { margin: 10px 2px 18px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.val-build b { color: var(--ink); font-weight: 650; }
 
 @media (max-width: 480px) {
   .sum .sum-cell .label, .fig-l, .tb-label { font-stretch: 100%; letter-spacing: 0; }
@@ -257,14 +264,14 @@ label.btn { cursor: pointer; }
 
 /* ---------- registers (VOs, valuations) ---------- */
 .vo-list { padding: 0 !important; overflow: hidden; }
-.vo-head { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; padding: 10px 14px 8px; border-bottom: 1.5px solid var(--ink); font-family: var(--cond); font-stretch: 100%; font-weight: 600; font-size: 13px; letter-spacing: .01em; color: var(--ink-muted); }
+.vo-head { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; padding: 10px 14px 8px; border-bottom: 1.5px solid var(--ink); font-family: var(--cond); font-stretch: 100%; font-weight: 600; font-size: 13px; letter-spacing: .01em; color: var(--ink-muted); }
 .vo-head span:last-child { text-align: right; }
-.vo-row { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; padding: 14px 14px; }
+.vo-row { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; padding: 14px 14px; }
 .vo-row + .vo-row { border-top: var(--hair) solid var(--line); }
 .vo-row-wrap + .vo-row-wrap { border-top: var(--hair) solid var(--line); }
 .vo-row-wrap.open { background: var(--row-open); }
 .vo-ref { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-.vo-ref .ref-roman { font-size: 19px; color: var(--ink); line-height: 1; }
+.vo-ref .ref-roman { font-size: 19px; color: var(--ink); line-height: 1; white-space: nowrap; }
 .vo-ref small { font-size: 13px; color: var(--ink-muted); display: inline-flex; flex-wrap: wrap; align-items: center; gap: 3px; max-width: 100%; }
 .vo-ref small.mono { overflow-wrap: anywhere; }   /* a long code breaks inside the ref column instead of running into the description */
 .vo-main { min-width: 0; }
@@ -274,9 +281,18 @@ label.btn { cursor: pointer; }
 .vo-status { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
 .vo-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
 .vo-amt .mono { font-family: var(--cond); font-stretch: 112%; font-weight: 700; font-size: 18px; white-space: nowrap; }
-.vo-actions { padding: 0 14px 14px 88px; display: flex; flex-direction: column; gap: 8px; }
+.vo-actions { padding: 0 14px 14px 120px; display: flex; flex-direction: column; gap: 8px; }
 .vo-actions .btn { min-height: 48px; }
-@media (max-width: 420px) { .vo-actions { padding-left: 14px; } }
+/* phones: each entry heads itself (tick, ref, code ... value), and the description takes the full width beneath */
+@media (max-width: 559px) {
+  .vo-head { display: none; }
+  .vo-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "ref amt" "main main"; row-gap: 8px; }
+  .vo-ref { grid-area: ref; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 28px; }
+  .vo-ref .tick { order: -1; }
+  .vo-main { grid-area: main; }
+  .vo-amt { grid-area: amt; }
+  .vo-actions { padding-left: 14px; }
+}
 .vo-row.rejected .vo-desc { text-decoration: line-through; text-decoration-thickness: 1.5px; color: var(--ink-muted); }
 .vo-row.rejected .ref-roman, .vo-row.rejected .vo-amt .mono { color: var(--ink-muted); }
 
@@ -489,6 +505,7 @@ label.row { cursor: pointer; }
 @media (max-width: 360px) { .sum-cell { padding: 9px 9px 10px; } .fig { padding: 10px 9px 11px; } }
 /* under 360px six tabs and the capture key share the width evenly, edge to edge, so every cell keeps 44px
    for a gloved thumb (312px across on a 320px phone); the key shrinks to a 44px square, labels stay at 13px */
+@media (max-width: 359px) { .row:has(> .btn) { flex-wrap: wrap; } .row > .btn { flex: 1 1 100% !important; } }   /* a button pair stacks rather than wrap its labels */
 @media (max-width: 359px) {
   .nav { left: 4px; right: 4px; padding: 0; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
   .nav button { letter-spacing: 0; }
@@ -503,8 +520,6 @@ label.row { cursor: pointer; }
   .nav button, .nav .nav-capture { flex: 0 0 25%; height: 60px; }   /* two rows: three tabs and the key, then the rest */
   .sum, .sum-3, .figs { grid-template-columns: 1fr; } .fig + .fig { border-left: 0; border-top: var(--hair) solid var(--line); }
   .nav-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .vo-row { grid-template-columns: 52px 1fr; } .vo-row .vo-amt { grid-column: 2; }
-  .vo-head { display: none; }
   .val-line { flex-wrap: wrap; } .val-line > .grow { flex: 1 1 100%; }
   .row:has(> .btn) { flex-wrap: wrap; } .row > .btn { flex: 1 1 100% !important; }
   .job-row { grid-template-columns: 1fr; grid-template-areas: "job" "value" "client" "needs" "status"; } .jr-status { justify-self: start; }

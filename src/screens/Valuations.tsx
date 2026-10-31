@@ -97,11 +97,11 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           <SumStrip label={`${valRef(open.number)} figures`} cells={[
             { label: 'This valuation', value: money(current.gross), note: 'incl. uplifts, excl. VAT', hot: true },
             { label: 'Cumulative', value: money(certified + current.gross), note: `${money(certified)} previously certified` },
-            { label: 'Scope', value: money(current.scopeBase), note: 'base rates', nil: !current.scopeBase },
-            { label: 'Variations', value: money(current.voBase), note: 'base rates', nil: !current.voBase },
-            { label: 'Base total', value: money(current.base) },
-            { label: 'Uplifts', value: `${job.uplift1}%\u00a0+\u00a0${job.uplift2}%` },
           ]} />
+          {current.lines > 0 && <div className="val-build">
+            {current.voBase ? <>{money(current.scopeBase)} scope + {money(current.voBase)} VOs = <b>{money(current.base)}</b> at base rates</> : <><b>{money(current.base)}</b> scope at base rates</>}
+            {(job.uplift1 || job.uplift2) ? <>, plus uplifts of {job.uplift1}%{job.uplift2 ? <>&nbsp;+&nbsp;{job.uplift2}%</> : null}</> : null}
+          </div>}
           {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
           <div className="stack" style={{ marginTop: 14 }}>
