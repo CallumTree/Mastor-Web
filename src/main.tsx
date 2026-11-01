@@ -1,7 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource/cinzel/600.css'   // the wordmark only
-import '@fontsource-variable/archivo/wdth.css'   // one variable file: every weight, normal to expanded width
+import '@fontsource-variable/archivo/wdth.css'   // one variable file: every weight and width
+import '@fontsource-variable/jetbrains-mono'   // every figure, code, ref and quantity: tabular, variable weight
 import App from './App'
 import { Gate } from './screens/Gate'
 import { Splash, shouldPlaySplash } from './components/Splash'

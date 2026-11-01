@@ -1,10 +1,9 @@
 /**
  * Mastor icon set — "construction drawing" family.
  * Rules: 24-unit grid, 1.6 stroke, square caps, mitred joins, no rounded corners,
- * one solid accent dot per icon (neon on black, volt on white). Line colour follows currentColor.
+ * one solid dot per icon. Line and dot follow currentColor: colour is kept for signals, never ornament.
  */
-// the small accent dot each icon carries: neon on the black slabs, volt blue on white
-const COPPER = 'var(--icon-dot, #0040FF)'
+const COPPER = 'var(--icon-dot, currentColor)'
 type P = { size?: number }
 const S = ({ size = 24, children }: P & { children: React.ReactNode }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="square" strokeLinejoin="miter">{children}</svg>

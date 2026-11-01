@@ -1,1053 +1,453 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-26T12:00:00+00:00",
+  "generatedAt": "2026-11-01T22:41:51.519Z",
   "title": "Design System: Mastor",
   "extensions": {
     "colorMeta": {
-      "ink": {
+      "void": {
         "role": "neutral",
-        "displayName": "Ink",
-        "canonical": "#0A0A0B",
-        "oklch": "oklch(14.5% 0.002 286)",
+        "displayName": "Void",
+        "canonical": "#0B0C0E",
         "tonalRamp": [
-          "#0B0B0C",
-          "#252526",
-          "#424243",
-          "#616162",
-          "#828283",
-          "#A5A5A6",
-          "#C9C9CA",
-          "#EEEEF0"
-        ],
-        "cssVar": "--ink"
+          "#030304",
+          "#060607",
+          "#08090B",
+          "#0B0C0E",
+          "#676768",
+          "#A4A4A5",
+          "#CECECF",
+          "#EDEDED"
+        ]
+      },
+      "slate": {
+        "role": "neutral",
+        "displayName": "Slate",
+        "canonical": "#14171F",
+        "tonalRamp": [
+          "#050608",
+          "#0A0C10",
+          "#0F1117",
+          "#14171F",
+          "#6C6E73",
+          "#A7A8AB",
+          "#D0D1D2",
+          "#EDEEEE"
+        ]
+      },
+      "slate-2": {
+        "role": "neutral",
+        "displayName": "Slate Raised",
+        "canonical": "#1B1F29",
+        "tonalRamp": [
+          "#07080A",
+          "#0E1015",
+          "#14171F",
+          "#1B1F29",
+          "#717379",
+          "#AAABAF",
+          "#D1D2D4",
+          "#EEEEEF"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#262C38",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#13161C",
+          "#1D212A",
+          "#262C38",
+          "#777B83",
+          "#AEB0B4",
+          "#D4D5D7",
+          "#EFEFF0"
+        ]
+      },
+      "rule-ctl": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "#687488",
+        "tonalRamp": [
+          "#1A1D22",
+          "#343A44",
+          "#4E5766",
+          "#687488",
+          "#A1A8B5",
+          "#C6CBD2",
+          "#E1E3E7",
+          "#F4F5F6"
+        ]
+      },
+      "white": {
+        "role": "primary",
+        "displayName": "White",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#404040",
+          "#808080",
+          "#BFBFBF",
+          "#FFFFFF",
+          "#FFFFFF",
+          "#FFFFFF",
+          "#FFFFFF",
+          "#FFFFFF"
+        ]
       },
       "ink-2": {
         "role": "neutral",
-        "displayName": "Slate Ink",
-        "canonical": "#3F3F46",
-        "oklch": "oklch(37.0% 0.012 286)",
+        "displayName": "Ink 2",
+        "canonical": "#B4BDCA",
         "tonalRamp": [
-          "#0B0A10",
-          "#24242B",
-          "#414148",
-          "#606068",
-          "#818189",
-          "#A4A4AC",
-          "#C8C8D1",
-          "#EDEDF6"
-        ],
-        "cssVar": "--ink-2"
-      },
-      "ink-muted": {
-        "role": "neutral",
-        "displayName": "Muted Ink",
-        "canonical": "#5E5E66",
-        "oklch": "oklch(48.5% 0.013 286)",
-        "tonalRamp": [
-          "#0B0A10",
-          "#24242B",
-          "#414149",
-          "#606068",
-          "#81818A",
-          "#A4A4AD",
-          "#C8C8D1",
-          "#EDEDF7"
-        ],
-        "cssVar": "--ink-muted"
-      },
-      "ground": {
-        "role": "neutral",
-        "displayName": "White Ground",
-        "canonical": "#FFFFFF",
-        "oklch": "oklch(100.0% 0.000 90)",
-        "tonalRamp": [
-          "#0B0B0B",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#A5A5A5",
-          "#C9C9C9",
-          "#EEEEEE"
-        ],
-        "cssVar": "--ground"
-      },
-      "panel": {
-        "role": "neutral",
-        "displayName": "Panel White",
-        "canonical": "#FFFFFF",
-        "oklch": "oklch(100.0% 0.000 90)",
-        "tonalRamp": [
-          "#0B0B0B",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#A5A5A5",
-          "#C9C9C9",
-          "#EEEEEE"
-        ],
-        "cssVar": "--panel"
-      },
-      "line": {
-        "role": "neutral",
-        "displayName": "Hairline",
-        "canonical": "#E4E4E7",
-        "oklch": "oklch(92.0% 0.004 286)",
-        "tonalRamp": [
-          "#0B0B0D",
-          "#252527",
-          "#424244",
-          "#616163",
-          "#828285",
-          "#A5A5A7",
-          "#C9C9CC",
-          "#EEEEF1"
-        ],
-        "cssVar": "--line"
-      },
-      "field-line": {
-        "role": "neutral",
-        "displayName": "Field Line",
-        "canonical": "#8B8B93",
-        "oklch": "oklch(63.9% 0.012 286)",
-        "tonalRamp": [
-          "#0B0A10",
-          "#24242B",
-          "#414148",
-          "#606068",
-          "#818189",
-          "#A4A4AC",
-          "#C8C8D1",
-          "#EDEDF6"
-        ],
-        "cssVar": "--field-line"
-      },
-      "row-open": {
-        "role": "neutral",
-        "displayName": "Open Row",
-        "canonical": "#F4F4F5",
-        "oklch": "oklch(96.7% 0.001 286)",
-        "tonalRamp": [
-          "#0B0B0C",
-          "#252526",
-          "#424243",
-          "#616162",
-          "#828283",
-          "#A5A5A6",
-          "#C9C9CA",
-          "#EEEEEF"
-        ],
-        "cssVar": "--row-open"
-      },
-      "flag-row": {
-        "role": "secondary",
-        "displayName": "Flag Row Wash",
-        "canonical": "rgba(255, 205, 0, 0.18)",
-        "cssVar": "--flag-row"
-      },
-      "disabled": {
-        "role": "neutral",
-        "displayName": "Disabled Grey",
-        "canonical": "#E4E4E7",
-        "oklch": "oklch(92.0% 0.004 286)",
-        "tonalRamp": [
-          "#0B0B0D",
-          "#252527",
-          "#424244",
-          "#616163",
-          "#828285",
-          "#A5A5A7",
-          "#C9C9CC",
-          "#EEEEF1"
-        ],
-        "cssVar": "--disabled"
-      },
-      "shell": {
-        "role": "neutral",
-        "displayName": "Shell Black",
-        "canonical": "#0A0A0B",
-        "oklch": "oklch(14.5% 0.002 286)",
-        "tonalRamp": [
-          "#0B0B0C",
-          "#252526",
-          "#424243",
-          "#616162",
-          "#828283",
-          "#A5A5A6",
-          "#C9C9CA",
-          "#EEEEF0"
-        ],
-        "cssVar": "--shell"
-      },
-      "shell-2": {
-        "role": "neutral",
-        "displayName": "Shell Raised",
-        "canonical": "#18181B",
-        "oklch": "oklch(21.0% 0.006 286)",
-        "tonalRamp": [
-          "#0B0B0E",
-          "#252528",
-          "#424245",
-          "#616164",
-          "#828286",
-          "#A4A4A9",
-          "#C9C9CD",
-          "#EEEEF2"
-        ],
-        "cssVar": "--shell-2"
-      },
-      "shell-line": {
-        "role": "neutral",
-        "displayName": "Shell Rule",
-        "canonical": "#2E2E33",
-        "oklch": "oklch(30.3% 0.009 286)",
-        "tonalRamp": [
-          "#0B0B0F",
-          "#242429",
-          "#414147",
-          "#616166",
-          "#828288",
-          "#A4A4AA",
-          "#C8C8CF",
-          "#EEEEF4"
-        ],
-        "cssVar": "--shell-line"
-      },
-      "shell-text": {
-        "role": "neutral",
-        "displayName": "Shell White",
-        "canonical": "#FFFFFF",
-        "oklch": "oklch(100.0% 0.000 90)",
-        "tonalRamp": [
-          "#0B0B0B",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#A5A5A5",
-          "#C9C9C9",
-          "#EEEEEE"
-        ],
-        "cssVar": "--shell-text"
-      },
-      "shell-muted": {
-        "role": "neutral",
-        "displayName": "Shell Muted",
-        "canonical": "#A1A1AA",
-        "oklch": "oklch(71.2% 0.013 286)",
-        "tonalRamp": [
-          "#0B0A10",
-          "#24242B",
-          "#414149",
-          "#606068",
-          "#81818A",
-          "#A4A4AD",
-          "#C8C8D1",
-          "#EDEDF7"
-        ],
-        "cssVar": "--shell-muted"
-      },
-      "shell-shadow": {
-        "role": "neutral",
-        "displayName": "Media Shadow",
-        "canonical": "rgba(10, 10, 11, 0.6)",
-        "cssVar": "--shell-shadow"
-      },
-      "neon": {
-        "role": "primary",
-        "displayName": "Live Neon",
-        "canonical": "#00E5FF",
-        "oklch": "oklch(84.4% 0.146 209)",
-        "tonalRamp": [
-          "#00121E",
-          "#00303F",
-          "#005063",
-          "#007389",
-          "#0098B1",
-          "#00BAD1",
-          "#5EDEF1",
-          "#99FFFF"
-        ],
-        "cssVar": "--neon"
-      },
-      "neon-press": {
-        "role": "primary",
-        "displayName": "Neon Press",
-        "canonical": "#66F0FF",
-        "purpose": "Hover on a neon action (the mark-up save).",
-        "cssVar": "--neon-press"
-      },
-      "volt": {
-        "role": "primary",
-        "displayName": "Volt Blue",
-        "canonical": "#0040FF",
-        "oklch": "oklch(50.1% 0.280 264)",
-        "tonalRamp": [
-          "#070050",
-          "#000081",
-          "#0024B6",
-          "#0A46ED",
-          "#2269FF",
-          "#5097FF",
-          "#7DC1FF",
-          "#ABEAFF"
-        ],
-        "cssVar": "--volt"
-      },
-      "volt-press": {
-        "role": "primary",
-        "displayName": "Volt Press",
-        "canonical": "#0033CC",
-        "oklch": "oklch(42.6% 0.235 264)",
-        "tonalRamp": [
-          "#020045",
-          "#000E73",
-          "#0631A3",
-          "#1C51D7",
-          "#3473FF",
-          "#5E9CFF",
-          "#8AC5FF",
-          "#B6ECFF"
-        ],
-        "cssVar": "--volt-press"
-      },
-      "warn-yellow": {
-        "role": "secondary",
-        "displayName": "To-do Yellow",
-        "canonical": "#FFCD00",
-        "oklch": "oklch(86.7% 0.177 91)",
-        "tonalRamp": [
-          "#1B0400",
-          "#3B1E00",
-          "#5E3A00",
-          "#835900",
-          "#AA7A00",
-          "#CA9F00",
-          "#EBC550",
-          "#FFEC8B"
-        ],
-        "cssVar": "--yellow"
-      },
-      "warn-red": {
-        "role": "secondary",
-        "displayName": "Warning Red",
-        "canonical": "#C1121F",
-        "oklch": "oklch(51.6% 0.202 26)",
-        "tonalRamp": [
-          "#2D0000",
-          "#570000",
-          "#830008",
-          "#B21D22",
-          "#E13E3C",
-          "#FF7067",
-          "#FF9D92",
-          "#FFC9BE"
-        ],
-        "cssVar": "--red"
-      },
-      "red-on-dark": {
-        "role": "secondary",
-        "displayName": "Red on Dark",
-        "canonical": "#FF9B9B",
-        "oklch": "oklch(79.2% 0.120 20)",
-        "tonalRamp": [
-          "#210001",
-          "#450E13",
-          "#6C292C",
-          "#954547",
-          "#BF6264",
-          "#E08989",
-          "#FFB1B0",
-          "#FFD9D8"
-        ],
-        "cssVar": "--red-on-dark"
-      },
-      "done-green": {
-        "role": "secondary",
-        "displayName": "Done Green",
-        "canonical": "#0B7A3E",
-        "oklch": "oklch(50.9% 0.130 152)",
-        "tonalRamp": [
-          "#001300",
-          "#00300B",
-          "#005124",
-          "#1A743E",
-          "#39985A",
-          "#69BA81",
-          "#95DDA8",
-          "#C2FFD1"
-        ],
-        "cssVar": "--green"
-      },
-      "arch-copper": {
-        "role": "tertiary",
-        "displayName": "Arch Copper",
-        "canonical": "#C97B3F",
-        "oklch": "oklch(65.5% 0.123 56)",
-        "tonalRamp": [
-          "#200000",
-          "#421500",
-          "#683100",
-          "#904E14",
-          "#B96D30",
-          "#D9925F",
-          "#FAB98B",
-          "#FFE1B8"
+          "#2D2F33",
+          "#5A5F65",
+          "#878E98",
+          "#B4BDCA",
+          "#D0D6DE",
+          "#E3E6EB",
+          "#F0F2F4",
+          "#F9FAFB"
         ]
       },
-      "core-clay": {
-        "role": "categorical",
-        "displayName": "Clay Core",
-        "canonical": "#B55F40",
-        "oklch": "oklch(58.0% 0.120 40)",
+      "meta": {
+        "role": "neutral",
+        "displayName": "Precision Grey",
+        "canonical": "#7E8B9F",
         "tonalRamp": [
-          "#110906",
-          "#361C14",
-          "#5E3222",
-          "#8A4932",
-          "#B96649",
-          "#D4927B",
-          "#EDBFAF",
-          "#FFE8DF"
-        ],
-        "cssVar": "--core-clay",
-        "usage": "Trade core for kitchens: a 14×6px band beside the trade name only."
+          "#202328",
+          "#3F4650",
+          "#5F6877",
+          "#7E8B9F",
+          "#AEB7C3",
+          "#CFD4DB",
+          "#E5E8EC",
+          "#F5F6F8"
+        ]
       },
-      "core-bronze": {
-        "role": "categorical",
-        "displayName": "Bronze Core",
-        "canonical": "#9F702F",
-        "oklch": "oklch(58.0% 0.100 72)",
+      "red": {
+        "role": "signal",
+        "displayName": "Warning Red",
+        "canonical": "#FF5247",
         "tonalRamp": [
-          "#0F0A05",
-          "#2F210F",
-          "#533A1A",
-          "#795625",
-          "#A4763A",
-          "#C19E72",
-          "#DFC6A9",
-          "#FAECDC"
-        ],
-        "cssVar": "--core-bronze",
-        "usage": "Trade core for electrics: a 14×6px band beside the trade name only."
+          "#401512",
+          "#802924",
+          "#BF3E35",
+          "#FF5247",
+          "#FF938C",
+          "#FFBEBA",
+          "#FFDCDA",
+          "#FFF2F1"
+        ]
       },
-      "core-olive": {
-        "role": "categorical",
-        "displayName": "Olive Core",
-        "canonical": "#79813F",
-        "oklch": "oklch(58.0% 0.090 115)",
+      "amber": {
+        "role": "signal",
+        "displayName": "Sodium Amber",
+        "canonical": "#FFB703",
         "tonalRamp": [
-          "#0B0C06",
-          "#232613",
-          "#3F4322",
-          "#5C6231",
-          "#7E8648",
-          "#A3AA7B",
-          "#C9CEAF",
-          "#EEF1DF"
-        ],
-        "cssVar": "--core-olive",
-        "usage": "Trade core for decarbonisation, insulation, solar, ventilation: a 14×6px band beside the trade name only."
+          "#402E01",
+          "#805C02",
+          "#BF8902",
+          "#FFB703",
+          "#FFD262",
+          "#FFE4A1",
+          "#FFF1CD",
+          "#FFFAEC"
+        ]
       },
-      "core-teal": {
-        "role": "categorical",
-        "displayName": "Teal Core",
-        "canonical": "#238B8B",
-        "oklch": "oklch(58.0% 0.090 195)",
+      "cyan": {
+        "role": "signal",
+        "displayName": "Cyan Advisory",
+        "canonical": "#00F0FF",
         "tonalRamp": [
-          "#050D0D",
-          "#0E2929",
-          "#174848",
-          "#1D6A6A",
-          "#329090",
-          "#73B2B1",
-          "#ABD4D3",
-          "#DDF4F3"
-        ],
-        "cssVar": "--core-teal",
-        "usage": "Trade core for bathrooms, wet rooms, plumbing, heating: a 14×6px band beside the trade name only."
+          "#003C40",
+          "#007880",
+          "#00B4BF",
+          "#00F0FF",
+          "#60F6FF",
+          "#9FF9FF",
+          "#CCFCFF",
+          "#ECFEFF"
+        ]
       },
-      "core-slate": {
-        "role": "categorical",
-        "displayName": "Slate Core",
-        "canonical": "#617692",
-        "oklch": "oklch(56.0% 0.050 255)",
+      "emerald": {
+        "role": "signal",
+        "displayName": "Precision Emerald",
+        "canonical": "#10B981",
         "tonalRamp": [
-          "#090B0E",
-          "#1E252D",
-          "#35414F",
-          "#4F5F74",
-          "#6D829D",
-          "#96A6BB",
-          "#C0CCDA",
-          "#E9EFF7"
-        ],
-        "cssVar": "--core-slate",
-        "usage": "Trade core for roofing, gutters, chimneys: a 14×6px band beside the trade name only."
+          "#042E20",
+          "#085D41",
+          "#0C8B61",
+          "#10B981",
+          "#6AD3B0",
+          "#A5E5D0",
+          "#CFF1E6",
+          "#EDFAF6"
+        ]
       },
-      "core-violet": {
-        "role": "categorical",
-        "displayName": "Violet Core",
-        "canonical": "#8560AC",
-        "oklch": "oklch(56.0% 0.120 305)",
+      "on-signal": {
+        "role": "neutral",
+        "displayName": "On-Signal",
+        "canonical": "#0B0C0E",
         "tonalRamp": [
-          "#0D0911",
-          "#291E35",
-          "#48365D",
-          "#6A4E89",
-          "#906DB7",
-          "#B197D0",
-          "#D3C2E9",
-          "#F3EAFF"
-        ],
-        "cssVar": "--core-violet",
-        "usage": "Trade core for windows and doors: a 14×6px band beside the trade name only."
+          "#030304",
+          "#060607",
+          "#08090B",
+          "#0B0C0E",
+          "#676768",
+          "#A4A4A5",
+          "#CECECF",
+          "#EDEDED"
+        ]
       },
-      "core-rose": {
-        "role": "categorical",
-        "displayName": "Rose Core",
-        "canonical": "#BB5C84",
-        "oklch": "oklch(60.0% 0.130 355)",
+      "white-press": {
+        "role": "primary",
+        "displayName": "White Press",
+        "canonical": "#DCE1E8",
         "tonalRamp": [
-          "#11080B",
-          "#361A25",
-          "#5E2D42",
-          "#8A4261",
-          "#B95E84",
-          "#D48CA7",
-          "#EDBACC",
-          "#FFE6F0"
-        ],
-        "cssVar": "--core-rose",
-        "usage": "Trade core for painting, decorating, plastering, render: a 14×6px band beside the trade name only."
+          "#37383A",
+          "#6E7174",
+          "#A5A9AE",
+          "#DCE1E8",
+          "#E9ECF1",
+          "#F2F4F6",
+          "#F8F9FA",
+          "#FCFDFD"
+        ]
       },
-      "core-graphite": {
-        "role": "categorical",
-        "displayName": "Graphite Core",
-        "canonical": "#636363",
-        "oklch": "oklch(50.0% 0.000 0)",
+      "arch-copper": {
+        "role": "brand",
+        "displayName": "Arch Copper",
+        "canonical": "#C97B3F",
         "tonalRamp": [
-          "#0B0B0B",
-          "#242424",
-          "#404040",
-          "#5D5D5D",
-          "#808080",
-          "#A4A4A4",
-          "#CACACA",
-          "#EEEEEE"
-        ],
-        "cssVar": "--core-graphite",
-        "usage": "Trade core for scaffold, prelims, general: a 14×6px band beside the trade name only."
+          "#321F10",
+          "#653E20",
+          "#975C2F",
+          "#C97B3F",
+          "#DDAD87",
+          "#EBCEB7",
+          "#F4E5D9",
+          "#FBF5F1"
+        ]
       }
     },
     "typographyMeta": {
-      "display": {
-        "displayName": "Display",
-        "purpose": "Job name in the black header; 125% width.",
-        "fontStretch": "125%"
-      },
-      "headline": {
-        "displayName": "Headline",
-        "purpose": "Tab titles; 125% width, uppercase.",
-        "fontStretch": "125%"
-      },
-      "figure-xl": {
-        "displayName": "Figure Xl",
-        "purpose": "Title block headline figure, in neon; 112% width.",
-        "fontStretch": "112%"
+      "job-name": {
+        "displayName": "Job name",
+        "purpose": "The one heavy line in the job header."
       },
       "figure": {
         "displayName": "Figure",
-        "purpose": "Job-home figures; fits its cell via --len, floor 15px; 112% width.",
-        "fontStretch": "112%"
-      },
-      "figure-board": {
-        "displayName": "Figure Board",
-        "purpose": "Title-block cell figures; 112% width.",
-        "fontStretch": "112%"
-      },
-      "figure-sm": {
-        "displayName": "Figure Sm",
-        "purpose": "Summary-strip figures; fits its cell; 112% width.",
-        "fontStretch": "112%"
-      },
-      "amount": {
-        "displayName": "Amount",
-        "purpose": "Right-hand amounts in registers and rows; 112% width.",
-        "fontStretch": "112%"
-      },
-      "row-title": {
-        "displayName": "Row Title",
-        "purpose": "Property names; 17px between the 16px title and 18px amount steps; 112% width.",
-        "fontStretch": "112%"
-      },
-      "title": {
-        "displayName": "Title",
-        "purpose": "Action-plate headings and row titles; normal width."
-      },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Reading text; normal width."
-      },
-      "row-text": {
-        "displayName": "Row Text",
-        "purpose": "The title line of a list row, and short bold messages in bars and plates (15px, 600, normal width)."
-      },
-      "note": {
-        "displayName": "Note",
-        "purpose": "Notes beside a control."
-      },
-      "small": {
-        "displayName": "Small",
-        "purpose": "Small text; the 13px floor."
+        "purpose": "Figure grids and strips, fitted to the cell."
       },
       "section-head": {
-        "displayName": "Section Head",
-        "purpose": "Section headings inside a screen; 112% width, sentence case.",
-        "fontStretch": "112%"
+        "displayName": "Section head",
+        "purpose": "Uppercase, in [ brackets ]."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Figure labels, title-block labels, sheet titles, register heads; 112% width, sentence case; 100% in phone grids.",
-        "fontStretch": "112%"
-      },
-      "plate": {
-        "displayName": "Plate",
-        "purpose": "Status tags (plates and badges); normal width, sentence case.",
-        "fontStretch": "100%"
+        "purpose": "Uppercase markings over figures and fields."
       },
       "roman-ref": {
-        "displayName": "Roman Ref",
-        "purpose": "VO and VAL Roman numerals; 125% width.",
-        "fontStretch": "125%"
-      },
-      "code": {
-        "displayName": "Code",
-        "purpose": "Codes, refs and the rail percentage."
+        "displayName": "Roman ref",
+        "purpose": "VAL III, VO XII: markings, never mono."
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "MΛSTΘR wordmark only."
-      },
-      "page-display": {
-        "displayName": "Page Display",
-        "purpose": "Front-page headline only. Container-sized (9.3cqi) so the longest word holds one line; 24px floor, 60px cap."
-      },
-      "page-headline": {
-        "displayName": "Page Headline",
-        "purpose": "Front-page section heads, clamp 26-44px; ink on white, white on black."
-      },
-      "stage-numeral": {
-        "displayName": "Stage Numeral",
-        "purpose": "Front-page display size: the Roman numeral leading each stages-register row; 26px, 32px from 560px, 40px from 1024px."
-      },
-      "step-numeral": {
-        "displayName": "Step Numeral",
-        "purpose": "Front-page display size: the I-III numerals leading the main feature's steps on its black slab; 28px, 125% width, white."
-      },
-      "forecast-figure": {
-        "displayName": "Forecast Figure",
-        "purpose": "Front-page display size: the hours back on the forecast's black summary, neon, clamp 36-52px, 112% width, tabular."
-      },
-      "register-numeral": {
-        "displayName": "Register Numeral",
-        "purpose": "Founding Register tile numerals: 13px at 100% width under 560px; from 560px 112% width at min(16px, max(13px, 132cqi / --len))."
-      },
-      "lede": {
-        "displayName": "Lede",
-        "purpose": "Front-page headline lede and term values; Slate Ink, 34em measure."
-      },
-      "body-large": {
-        "displayName": "Body Large",
-        "purpose": "Front-page section copy; Slate Ink on white, Shell Muted with white bold words on black; 62ch."
+        "purpose": "MΛSTΘR only."
       }
     },
     "shadows": [
       {
-        "name": "dock-float",
-        "value": "0 16px 36px -14px rgba(10, 10, 11, .5)",
-        "purpose": "The floating dock on phones; removed on the desktop rail."
-      },
-      {
-        "name": "sheet-rise",
-        "value": "0 -18px 48px -20px rgba(10, 10, 11, .35)",
-        "purpose": "Bottom sheets on phones."
-      },
-      {
-        "name": "dialog",
-        "value": "0 32px 80px -24px rgba(10, 10, 11, .45)",
-        "purpose": "Sheets as centred dialogs at 1024px and up."
-      },
-      {
-        "name": "outline-plate",
-        "value": "inset 0 0 0 1.5px #0A0A0B",
-        "purpose": "Stroke for the wait plate and ink outline badge (not elevation)."
-      },
-      {
-        "name": "media-glyph",
-        "value": "text-shadow: 0 1px 6px rgba(10, 10, 11, .6)",
-        "purpose": "A white glyph over a photo or video frame."
-      },
-      {
-        "name": "scrim",
-        "value": "rgba(10, 10, 11, .55)",
-        "purpose": "Backdrop behind sheets and dialogs."
-      },
-      {
-        "name": "phone-ring",
-        "value": "0 0 0 1.5px #2E2E33",
-        "purpose": "A line, not elevation: the front-page phone frame's edge where it sits on a black slab. The frame itself never casts a shadow."
+        "name": "video-mark",
+        "value": "drop-shadow(0 1px 4px rgba(0,0,0,.7))",
+        "purpose": "The white play mark over a video frame; the only shadow."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-expo",
-        "value": "cubic-bezier(.16, 1, .3, 1)",
-        "purpose": "Rail growth (.9s), sheet rise (.26s)."
+        "name": "lock",
+        "value": "460ms cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "The reticle closing on the one live thing."
       },
       {
-        "name": "rail-in",
-        "value": "0.9s cubic-bezier(.16, 1, .3, 1) 0.1s",
-        "purpose": "The neon rail grows from the left; off under reduced motion."
-      },
-      {
-        "name": "sheet-in",
-        "value": "0.26s cubic-bezier(.16, 1, .3, 1)",
-        "purpose": "Sheets rise from the edge; a .15s fade under reduced motion; 16px rise and fade as a desktop dialog."
+        "name": "sheet",
+        "value": "260ms cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Sheets rise from the foot."
       },
       {
         "name": "state",
-        "value": "0.15s",
-        "purpose": "Button background and border transitions."
-      },
-      {
-        "name": "press",
-        "value": "translateY(1px), 0.08s",
-        "purpose": "Button press; off under reduced motion."
-      },
-      {
-        "name": "register-fill",
-        "value": "0.45s cubic-bezier(.16, 1, .3, 1), 14ms stagger per tile",
-        "purpose": "Taken register tiles fill in turn; off under reduced motion."
-      },
-      {
-        "name": "register-lit",
-        "value": "0.7s cubic-bezier(.16, 1, .3, 1) 0.35s, scaleX from left",
-        "purpose": "The next tile's neon wipes in; off under reduced motion."
-      },
-      {
-        "name": "register-yours",
-        "value": "0.6s cubic-bezier(.16, 1, .3, 1), ring offset 10px to 2px",
-        "purpose": "The claimed tile's neon ring closes in; off under reduced motion."
-      },
-      {
-        "name": "claimed-rise",
-        "value": "0.5s cubic-bezier(.16, 1, .3, 1), 8px rise and fade",
-        "purpose": "The claimed confirmation replacing the form; off under reduced motion."
-      },
-      {
-        "name": "recording-in-view",
-        "value": "IntersectionObserver, threshold 0.4",
-        "purpose": "The front-page screen recording plays in view and pauses out of view; under reduced motion it waits for its Play button."
+        "value": "150ms",
+        "purpose": "Hover and border state changes."
       }
     ],
     "breakpoints": [
       {
-        "name": "reflow-200-zoom",
-        "value": "max-width: 300px"
+        "name": "tiny",
+        "value": "300px"
       },
       {
         "name": "narrow",
-        "value": "max-width: 360px"
+        "value": "360px"
       },
       {
-        "name": "phone-grid-labels",
-        "value": "max-width: 480px"
+        "name": "phone",
+        "value": "480px"
       },
       {
-        "name": "strip-wide",
-        "value": "min-width: 560px"
+        "name": "register",
+        "value": "560px"
       },
       {
-        "name": "figs-four",
-        "value": "min-width: 640px"
+        "name": "grid-4",
+        "value": "640px"
       },
       {
-        "name": "desktop-rail",
-        "value": "min-width: 1024px"
-      },
-      {
-        "name": "register-four",
-        "value": "max-width: 389px"
-      },
-      {
-        "name": "page-wide",
-        "value": "min-width: 760px"
+        "name": "desktop",
+        "value": "1024px"
       }
-    ],
-    "fontStretch": {
-      "expanded": "125%",
-      "figures": "112%",
-      "reading": "100%",
-      "note": "Archivo Variable wdth axis via @fontsource-variable/archivo/wdth.css; figures at 112% measure ~0.596em per character."
-    }
+    ]
   },
   "components": [
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The main action in a view: an ink block, full width on a phone.",
-      "html": "<button class=\"ds-btn ds-btn-primary\">Save valuation</button>",
-      "css": ".ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:52px; padding:0 20px; border-radius:var(--r-md, 12px); border:1.5px solid transparent; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-weight:650; font-size:16px; cursor:pointer; transition:background .15s, border-color .15s, transform .08s; } .ds-btn:active { transform:translateY(1px); } .ds-btn:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; } .ds-btn-primary { background:#0A0A0B; color:#fff; } .ds-btn-primary:hover { background:#27272A; }"
+      "description": "The one thing to press on a screen: a white block.",
+      "html": "<button class=\"ds-btn-primary\">Send VAL III for review</button>",
+      "css": ".ds-btn-primary { font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 20px; background: #FFFFFF; color: #0B0C0E; border: 1px solid transparent; border-radius: 4px; font-size: 16px; font-weight: 650; cursor: pointer; transition: background .15s, transform .08s; } .ds-btn-primary:hover { background: #DCE1E8; } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 3px; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Everything that is not the main action: white with a 1px ink outline.",
-      "html": "<button class=\"ds-btn2\">Add a line</button>",
-      "css": ".ds-btn2 { display:inline-flex; align-items:center; justify-content:center; min-height:52px; padding:0 20px; border-radius:12px; border:1px solid #0A0A0B; background:#fff; color:#0A0A0B; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-weight:650; font-size:16px; cursor:pointer; transition:background .15s; } .ds-btn2:hover { background:#F4F4F5; } .ds-btn2:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; }"
+      "description": "Everything else you can press: outlined.",
+      "html": "<button class=\"ds-btn-secondary\">Certificate PDF</button>",
+      "css": ".ds-btn-secondary { font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 20px; background: transparent; color: #FFFFFF; border: 1px solid #687488; border-radius: 4px; font-size: 16px; font-weight: 650; cursor: pointer; transition: background .15s, border-color .15s; } .ds-btn-secondary:hover { background: #1B1F29; border-color: #FFFFFF; } .ds-btn-secondary:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }"
     },
     {
       "name": "Text Field",
       "kind": "input",
-      "refersTo": "field",
-      "description": "White field with a Field Line edge; focus turns the edge ink and adds the volt ring.",
-      "html": "<label class=\"ds-field\"><span>PO number</span><input placeholder=\"e.g. 4500123456\"></label>",
-      "css": ".ds-field { display:block; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-field span { display:block; font-size:14px; font-weight:600; color:#0A0A0B; margin-bottom:7px; } .ds-field input { width:100%; box-sizing:border-box; min-height:50px; padding:12px 14px; border:1.5px solid #8B8B93; border-radius:12px; background:#fff; color:#0A0A0B; font:inherit; font-size:16px; } .ds-field input:focus { outline:none; border-color:#0A0A0B; } .ds-field input:focus-visible { outline:2.5px solid #0040FF; outline-offset:1px; }"
+      "refersTo": "input",
+      "description": "Void field, control edge, uppercase label above.",
+      "html": "<label class=\"ds-field\"><span>PO value (£)</span><input value=\"44041.35\" inputmode=\"decimal\"></label>",
+      "css": ".ds-field { display: block; } .ds-field span { display: block; font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-size: 13px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: #B4BDCA; margin-bottom: 7px; } .ds-field input { width: 100%; min-height: 50px; padding: 12px 14px; background: #0B0C0E; color: #FFFFFF; border: 1px solid #687488; border-radius: 3px; font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 16px; caret-color: #FFB703; } .ds-field input:focus { outline: none; border-color: #FFFFFF; }"
     },
     {
-      "name": "Sign Plates",
+      "name": "Status Tags",
       "kind": "chip",
-      "refersTo": "plate-do",
-      "description": "Status plates: red stop, yellow warn, green ok by meaning; volt for the next step; ink outline for waiting.",
-      "html": "<div class=\"ds-plates\"><span class=\"ds-plate ds-do\">&#8594; Price it</span><span class=\"ds-plate ds-stop\">Overdue</span><span class=\"ds-plate ds-warn\">To do</span><span class=\"ds-plate ds-ok\">Done</span><span class=\"ds-plate ds-wait\">With client</span></div>",
-      "css": ".ds-plates { display:flex; flex-wrap:wrap; gap:6px; } .ds-plate { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:6px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-size:13px; font-weight:600; line-height:1.2; } .ds-do { background:#E8EEFF; color:#0040FF; } .ds-stop { background:#FBE7E8; color:#0A0A0B; } .ds-warn { background:#FFF5CC; color:#0A0A0B; } .ds-ok { background:#E2F1E8; color:#0A0A0B; } .ds-wait { background:#fff; color:#0A0A0B; box-shadow:inset 0 0 0 1px #0A0A0B; }"
+      "refersTo": "status-tag",
+      "description": "A 1px frame and capitals in the signal colour, on Void.",
+      "html": "<span class=\"ds-tag ds-red\">Overdue 3 days</span> <span class=\"ds-tag ds-amber\">Open</span> <span class=\"ds-tag ds-cyan\">by Claude</span> <span class=\"ds-tag ds-green\">Paid 17 Sept 2026</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; background: #0B0C0E; border: 1px solid currentColor; border-radius: 2px; font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; line-height: 1.2; } .ds-tag::before { content: \"\"; width: 6px; height: 6px; background: currentColor; } .ds-red { color: #FF5247; } .ds-amber { color: #FFB703; } .ds-cyan { color: #00F0FF; } .ds-green { color: #10B981; }"
     },
     {
       "name": "Chip",
       "kind": "chip",
       "refersTo": "chip",
-      "description": "Pill choice for modes and filters; selected fills ink.",
-      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-chip ds-on\">All</button><button class=\"ds-chip\">Open</button></div>",
-      "css": ".ds-chip { min-height:44px; padding:0 16px; border-radius:999px; border:1px solid #0A0A0B; background:#fff; color:#0A0A0B; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-weight:600; font-size:15px; cursor:pointer; } .ds-chip:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; } .ds-chip.ds-on { background:#0A0A0B; color:#fff; }"
+      "description": "A filter or choice; the chosen one is a white block.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip on\">All</button><button class=\"ds-chip\">Still to do</button><button class=\"ds-chip\">Claimed</button></div>",
+      "css": ".ds-chips { display: flex; gap: 8px; } .ds-chip { font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; min-height: 44px; padding: 0 14px; background: transparent; color: #FFFFFF; border: 1px solid #687488; border-radius: 2px; font-size: 15px; font-weight: 600; cursor: pointer; } .ds-chip:hover { border-color: #FFFFFF; } .ds-chip.on { background: #FFFFFF; color: #0B0C0E; border-color: #FFFFFF; }"
     },
     {
       "name": "Figure Grid",
       "kind": "card",
       "refersTo": "panel",
-      "description": "Hairline panel of 112% figures over 125% labels; the figure that matters is a black cell with a neon figure.",
-      "html": "<div class=\"ds-figs\"><div class=\"ds-fig ds-hot\"><div class=\"ds-n\">£11,879.22</div><div class=\"ds-l\">Certified</div></div><div class=\"ds-fig\"><div class=\"ds-n\">£2,410.00</div><div class=\"ds-l\">In valuation</div></div></div>",
-      "css": ".ds-figs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid #E4E4E7; border-radius:16px; overflow:hidden; background:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-fig { padding:14px 14px 15px; box-shadow:inset -1px -1px 0 #E4E4E7; } .ds-n { font-stretch:112%; font-weight:750; font-size:24px; line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:#0A0A0B; } .ds-l { font-stretch:112%; font-weight:600; font-size:13px; letter-spacing:.01em; color:#5E5E66; margin-top:6px; } .ds-hot { background:#0A0A0B; box-shadow:none; } .ds-hot .ds-n { color:#00E5FF; } .ds-hot .ds-l { color:#A1A1AA; }"
+      "description": "A ruled grid of mono figures over uppercase labels.",
+      "html": "<div class=\"ds-figs\"><div><b>£44,041</b><span>Contract</span></div><div><b>£22,651</b><span>Certified</span></div></div>",
+      "css": ".ds-figs { display: grid; grid-template-columns: 1fr 1fr; background: #14171F; border: 1px solid #262C38; border-radius: 4px; overflow: hidden; } .ds-figs > div { padding: 12px 14px 13px; box-shadow: inset -1px -1px 0 #262C38; } .ds-figs b { display: block; font-family: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 520; letter-spacing: -.03em; color: #FFFFFF; line-height: 1; } .ds-figs span { display: block; margin-top: 7px; font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-size: 13px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: #7E8B9F; }"
     },
     {
-      "name": "Job Header with Neon Progress Rail",
+      "name": "Next Step in the Reticle",
       "kind": "custom",
-      "refersTo": "job-bar",
-      "description": "Signature: black job header with ref in mono, name in expanded 800, and the neon rail along its foot (solid certified, dashed open valuation, tick at the certified point).",
-      "html": "<div class=\"ds-jbar\"><div class=\"ds-ref\">PCC/2025/0417</div><div class=\"ds-name\">Precelly Place</div><div class=\"ds-rail-in\"><div class=\"ds-rail\"><i class=\"ds-done\" style=\"width:58%\"></i><i class=\"ds-next\" style=\"width:14%\"></i><b class=\"ds-tick\" style=\"left:58%\"></b></div><span class=\"ds-rl\">58% certified</span></div></div>",
-      "css": ".ds-jbar { background:#0A0A0B; color:#fff; border-radius:0 0 24px 24px; padding:14px 16px 16px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-ref { font-family:'JetBrains Mono', ui-monospace, monospace; font-size:13px; color:#A1A1AA; } .ds-name { font-stretch:125%; font-weight:800; font-size:28px; line-height:1.08; letter-spacing:-.02em; margin:4px 0 16px; } .ds-rail-in { display:flex; align-items:center; gap:12px; } .ds-rail { position:relative; flex:1; display:flex; height:4px; border-radius:2px; background:#2E2E33; } .ds-rail i { display:block; height:100%; } .ds-done { background:#00E5FF; border-radius:2px 0 0 2px; transform-origin:left; animation:ds-rail .9s cubic-bezier(.16,1,.3,1) .1s both; } .ds-next { background:repeating-linear-gradient(90deg,#00E5FF 0 4px,transparent 4px 7px); opacity:.6; } .ds-tick { position:absolute; top:-4px; width:2px; height:12px; margin-left:-1px; border-radius:1px; background:#00E5FF; } .ds-rl { font-family:'JetBrains Mono', ui-monospace, monospace; font-size:13px; color:#A1A1AA; } @keyframes ds-rail { from { transform:scaleX(0); } to { transform:none; } } @media (prefers-reduced-motion: reduce) { .ds-done { animation:none; } }"
+      "refersTo": "action-row",
+      "description": "The one live thing on a screen, locked in four amber corner brackets.",
+      "html": "<button class=\"ds-act\"><span class=\"ds-act-t\">Valuation week · VAL III £8,087.19 ready to send</span><span class=\"ds-act-h\">4 lines · last one VAL II, sent 29 Sept</span></button>",
+      "css": ".ds-act { position: relative; display: block; width: 100%; min-height: 64px; padding: 13px 16px; text-align: left; background: #14171F; color: #FFFFFF; border: 1px solid #687488; border-radius: 4px; font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; cursor: pointer; } .ds-act:hover { background: #1B1F29; } .ds-act-t { display: block; font-size: 16px; font-weight: 700; letter-spacing: -.01em; } .ds-act-h { display: block; margin-top: 2px; font-size: 14px; color: #7E8B9F; } .ds-act::after { content: \"\"; position: absolute; inset: 3px; pointer-events: none; background: linear-gradient(#FFB703,#FFB703) left top / 12px 2px, linear-gradient(#FFB703,#FFB703) left top / 2px 12px, linear-gradient(#FFB703,#FFB703) right top / 12px 2px, linear-gradient(#FFB703,#FFB703) right top / 2px 12px, linear-gradient(#FFB703,#FFB703) left bottom / 12px 2px, linear-gradient(#FFB703,#FFB703) left bottom / 2px 12px, linear-gradient(#FFB703,#FFB703) right bottom / 12px 2px, linear-gradient(#FFB703,#FFB703) right bottom / 2px 12px; background-repeat: no-repeat; animation: ds-lock .46s cubic-bezier(.16,1,.3,1) both; } @keyframes ds-lock { from { inset: -10px; opacity: 0; } to { inset: 3px; opacity: 1; } }"
     },
     {
-      "name": "Floating Dock",
+      "name": "Dock",
       "kind": "nav",
       "refersTo": "dock",
-      "description": "Black floating dock; active tab white with a neon bar; neon capture key.",
-      "html": "<nav class=\"ds-dock\"><button class=\"ds-tab ds-on\">Home</button><button class=\"ds-tab\">Diary</button><button class=\"ds-cap\" aria-label=\"Capture\"><span><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\"><path d=\"M12 5v14M5 12h14\"/></svg></span></button><button class=\"ds-tab\">Scope</button><button class=\"ds-tab\">Vals</button></nav>",
-      "css": ".ds-dock { display:flex; height:64px; padding:0 4px; max-width:560px; background:#0A0A0B; border:1px solid #2E2E33; border-radius:24px; box-shadow:0 16px 36px -14px rgba(10,10,11,.5); font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-tab { position:relative; flex:1; background:none; border:none; color:#A1A1AA; font-size:13px; font-weight:600; letter-spacing:.02em; cursor:pointer; } .ds-tab.ds-on { color:#fff; } .ds-tab.ds-on::before { content:''; position:absolute; top:6px; left:50%; width:18px; height:3px; margin-left:-9px; border-radius:2px; background:#00E5FF; } .ds-tab:focus-visible, .ds-cap:focus-visible { outline:2.5px solid #00E5FF; outline-offset:2px; } .ds-cap { flex:0 0 68px; background:none; border:none; display:grid; place-items:center; cursor:pointer; } .ds-cap span { width:52px; height:48px; border-radius:16px; display:grid; place-items:center; background:#00E5FF; color:#0A0A0B; } .ds-cap:active span { transform:scale(.94); }"
-    },
-    {
-      "name": "Action Plate (next step)",
-      "kind": "button",
-      "refersTo": "action-plate-do",
-      "description": "Full-width tappable sign under Action needed; volt for the next step, red/yellow/green by meaning.",
-      "html": "<button class=\"ds-act\"><span class=\"ds-t\">Issue VAL III</span><span class=\"ds-h\">Ready since Tuesday</span></button>",
-      "css": ".ds-act { display:flex; flex-direction:column; align-items:flex-start; width:100%; min-height:64px; padding:14px 16px; border:none; border-radius:12px; background:#0040FF; color:#fff; text-align:left; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; cursor:pointer; } .ds-act:hover { filter:brightness(.95); } .ds-act:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; } .ds-t { font-weight:700; font-size:16px; line-height:1.25; } .ds-h { font-size:14px; font-weight:500; margin-top:2px; }"
-    },
-    {
-      "name": "Claim Button",
-      "kind": "button",
-      "refersTo": "button-claim",
-      "description": "The front page's primary: an ink block naming the next place, the numeral in neon at 125%.",
-      "html": "<button class=\"ds-claim\"><span>Claim place <b>XIV</b></span><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></button>",
-      "css": ".ds-claim { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; max-width:420px; min-height:60px; padding:0 20px; border:1.5px solid #0A0A0B; border-radius:12px; background:#0A0A0B; color:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-size:18px; font-weight:700; text-align:left; cursor:pointer; transition:background .15s, transform .08s; } .ds-claim b { color:#00E5FF; font-stretch:125%; font-weight:800; letter-spacing:.02em; margin-left:.2em; } .ds-claim:hover { background:#27272A; } .ds-claim:active { transform:translateY(1px); } .ds-claim:focus-visible { outline:2.5px solid #0040FF; outline-offset:2px; }"
-    },
-    {
-      "name": "Founding Register",
-      "kind": "custom",
-      "refersTo": "register-board",
-      "description": "Front-page signature: fifty Roman-numeral places on a black board; taken filled Shell Rule, free outlined, next neon, yours white with a neon ring.",
-      "html": "<section class=\"ds-board\"><div class=\"ds-board-head\"><span class=\"ds-board-title\">Founding register</span><span class=\"ds-board-count\">13 of 50 taken · 37 left</span></div><ol class=\"ds-tiles\"><li class=\"ds-tile taken\"><span>I</span></li><li class=\"ds-tile taken\"><span>II</span></li><li class=\"ds-tile taken\"><span>III</span></li><li class=\"ds-tile yours\"><span>IV</span></li><li class=\"ds-tile taken\"><span>V</span></li><li class=\"ds-tile taken\"><span>VI</span></li><li class=\"ds-tile taken\"><span>VII</span></li><li class=\"ds-tile taken\"><span>VIII</span></li><li class=\"ds-tile taken\"><span>IX</span></li><li class=\"ds-tile taken\"><span>X</span></li><li class=\"ds-tile taken\"><span>XI</span></li><li class=\"ds-tile taken\"><span>XII</span></li><li class=\"ds-tile taken\"><span>XIII</span></li><li class=\"ds-tile next\"><span>XIV</span></li><li class=\"ds-tile free\"><span>XV</span></li><li class=\"ds-tile free\"><span>XVI</span></li><li class=\"ds-tile free\"><span>XVII</span></li><li class=\"ds-tile free\"><span>XVIII</span></li><li class=\"ds-tile free\"><span>XIX</span></li><li class=\"ds-tile free\"><span>XX</span></li></ol><ul class=\"ds-key\"><li><i class=\"ds-k taken\"></i>Taken</li><li><i class=\"ds-k next\"></i>Next free</li><li><i class=\"ds-k free\"></i>Free</li></ul></section>",
-      "css": ".ds-board { background:#0A0A0B; color:#fff; border-radius:24px; padding:18px 12px 14px; max-width:460px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-board-head, .ds-key { padding:0 4px; } .ds-board-head { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; } .ds-board-title { font-stretch:125%; font-weight:750; font-size:14px; letter-spacing:.07em; text-transform:uppercase; } .ds-board-count { font-size:14px; font-weight:600; color:#A1A1AA; font-variant-numeric:tabular-nums; } .ds-tiles { list-style:none; margin:16px 0 0; padding:0; display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:5px; } .ds-tile { display:grid; place-items:center; min-height:44px; border-radius:6px; color:#A1A1AA; box-shadow:inset 0 0 0 1.5px #2E2E33; } .ds-tile > span { font-weight:750; font-size:13px; line-height:1; } .ds-tile.taken { background:#2E2E33; color:#fff; box-shadow:none; } .ds-tile.next { background:#00E5FF; color:#0A0A0B; box-shadow:none; } .ds-tile.yours { background:#fff; color:#0A0A0B; box-shadow:none; outline:2px solid #00E5FF; outline-offset:2px; } .ds-key { list-style:none; margin:14px 0 0; display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:#A1A1AA; } .ds-key li { display:inline-flex; align-items:center; gap:8px; } .ds-k { width:20px; height:16px; border-radius:6px; display:inline-block; } .ds-k.taken { background:#2E2E33; } .ds-k.next { background:#00E5FF; } .ds-k.free { box-shadow:inset 0 0 0 1.5px #2E2E33; }"
-    },
-    {
-      "name": "Next Place Strip",
-      "kind": "custom",
-      "refersTo": "next-strip",
-      "description": "A black strip between the offer and the form, at every width, naming the next place on a neon tile and linking to the founding places.",
-      "html": "<a href=\"#places\" class=\"ds-next\"><span class=\"ds-next-tile\">XIV</span><span>is the next founding place. <b>37 of 50</b> left.</span></a>",
-      "css": ".ds-next { display:flex; align-items:center; gap:12px; max-width:420px; padding:8px 14px 8px 8px; border-radius:12px; background:#0A0A0B; color:#A1A1AA; text-decoration:none; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; font-size:15px; font-weight:600; line-height:1.3; } .ds-next b { color:#fff; font-weight:650; } .ds-next:focus-visible { outline:2.5px solid #00E5FF; outline-offset:2px; } .ds-next-tile { flex:none; display:grid; place-items:center; min-width:56px; min-height:40px; padding:0 8px; border-radius:6px; background:#00E5FF; color:#0A0A0B; font-stretch:112%; font-weight:800; font-size:16px; letter-spacing:.02em; }"
-    },
-    {
-      "name": "Phone Frame",
-      "kind": "custom",
-      "refersTo": "phone-frame",
-      "description": "Front-page device frame for the real app: a flat black slab, 34px outer and 27px screen corners (outside the radius scale: it draws a phone's hardware). Ringed in Shell Rule on a black slab; never a shadow.",
-      "html": "<div class=\"ds-onblack\"><div class=\"ds-phone\"><div class=\"ds-screen\"></div></div></div>",
-      "css": ".ds-onblack { background:#0A0A0B; padding:24px; display:inline-block; border-radius:24px; } .ds-phone { width:180px; background:#0A0A0B; border-radius:34px; padding:8px; box-shadow:0 0 0 1.5px #2E2E33; } .ds-screen { aspect-ratio:780 / 1688; border-radius:27px; background:#18181B; }"
-    },
-    {
-      "name": "Forecast Summary",
-      "kind": "card",
-      "refersTo": "forecast-summary",
-      "description": "Black summary slab: the hours back each month in neon, labelled as estimated, two ruled companion figures, and the estimates note directly beneath.",
-      "html": "<div class=\"ds-fc\"><div class=\"ds-fc-sum\"><div class=\"ds-fc-head\"><span class=\"ds-fc-l\">Back each month · estimated</span><span class=\"ds-fc-big\">31.9 hours</span></div><div class=\"ds-fc-row\"><div><span class=\"ds-fc-l\">Each year</span><span class=\"ds-fc-v\">383 hours</span></div><div><span class=\"ds-fc-l\">Working days a year</span><span class=\"ds-fc-v\">48 days</span></div></div></div><p class=\"ds-fc-note\">These are our estimates, not measurements. Put in your own numbers.</p></div>",
-      "css": ".ds-fc { max-width:360px; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-fc-sum { background:#0A0A0B; color:#fff; border-radius:24px; overflow:hidden; } .ds-fc-head { padding:18px 20px 20px; } .ds-fc-l { display:block; font-stretch:125%; font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#A1A1AA; line-height:1.25; } .ds-fc-big { display:block; margin-top:6px; font-stretch:112%; font-weight:750; font-size:clamp(36px, 11vw, 52px); line-height:1.02; color:#00E5FF; font-variant-numeric:tabular-nums; } .ds-fc-row { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid #2E2E33; } .ds-fc-row > div { padding:14px 20px 16px; display:flex; flex-direction:column; justify-content:space-between; gap:6px; } .ds-fc-row > div + div { border-left:1px solid #2E2E33; } .ds-fc-v { font-stretch:112%; font-weight:750; font-size:24px; line-height:1.05; font-variant-numeric:tabular-nums; } .ds-fc-note { margin:14px 0 0; font-size:14px; line-height:1.4; color:#5E5E66; }"
-    },
-    {
-      "name": "Claimed Slab",
-      "kind": "custom",
-      "refersTo": "claimed-slab",
-      "description": "Replaces the form once a place is claimed: a black slab carrying the visitor's place as the register's white tile with the neon ring.",
-      "html": "<div class=\"ds-claimed\"><span class=\"ds-claimed-tile\">XIV</span><div><p class=\"ds-claimed-h\">Place XIV is yours.</p><p class=\"ds-claimed-t\">It's held for your firm. We'll email you to get your first job in.</p></div></div>",
-      "css": ".ds-claimed { display:flex; gap:16px; align-items:flex-start; max-width:480px; padding:20px; border-radius:16px; background:#0A0A0B; color:#fff; font-family:'Archivo Variable', Archivo, system-ui, sans-serif; } .ds-claimed p { margin:0; } .ds-claimed-tile { flex:none; display:grid; place-items:center; min-width:60px; min-height:48px; padding:0 8px; margin:2px; border-radius:6px; background:#fff; color:#0A0A0B; outline:2px solid #00E5FF; outline-offset:2px; font-stretch:112%; font-weight:800; font-size:18px; letter-spacing:.02em; } .ds-claimed-h { font-stretch:125%; font-weight:800; text-transform:uppercase; font-size:22px; line-height:1.08; } .ds-claimed-t { margin-top:8px !important; color:#A1A1AA; }"
+      "description": "The phone dock: grey markings, the current tab white, the white capture key.",
+      "html": "<nav class=\"ds-dock\"><button class=\"on\">Home</button><button>Diary</button><button class=\"ds-key\" aria-label=\"Capture\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\"><path d=\"M12 5v14M5 12h14\"/></svg></button><button>VOs</button><button>Vals</button></nav>",
+      "css": ".ds-dock { display: grid; grid-template-columns: repeat(5, 1fr); height: 64px; padding: 0 4px; background: #14171F; border: 1px solid #687488; border-radius: 4px; } .ds-dock button { position: relative; background: none; border: 0; color: #7E8B9F; font-family: 'Archivo Variable', Archivo, system-ui, sans-serif; font-stretch: 87.5%; font-size: 13px; font-weight: 650; letter-spacing: .03em; cursor: pointer; } .ds-dock button.on { color: #FFFFFF; } .ds-dock button.on::before { content: \"\"; position: absolute; top: 0; left: 50%; width: 22px; height: 2px; margin-left: -11px; background: #FFFFFF; } .ds-dock .ds-key { display: grid; place-items: center; } .ds-dock .ds-key svg { width: 52px; height: 46px; padding: 12px 15px; background: #FFFFFF; color: #0B0C0E; border-radius: 4px; }"
     }
   ],
   "narrative": {
-    "northStar": "The Live Wire on the Drawing Board",
-    "overview": "**Creative North Star: \"The Live Wire on the Drawing Board\"**\n\nMastor is a white drawing board with black slabs bolted to it. The ground is pure white; structure is carried by near-black ink and by solid black slabs for the things that frame a job: the job header, the floating dock, the dashboard title block and the one figure on a screen that matters most. On top of that structure exactly one thing is lit: where you are, what's next, how far the job has got. On black it is lit in neon cyan; on white its twin, volt blue, takes over. Red, yellow and green are not decoration; they are warnings, and appear only where something is overdue, needs doing or is done.\n\nThe type is one variable family, Archivo, used at three widths: expanded capitals (125%) for headings and labels, a narrower expanded cut (112%) for figures so long amounts fit a phone cell, and normal width for anything that is read as sentences. JetBrains Mono sets codes and references; Cinzel lives only in the MΛSTΘR wordmark. The density is a site phone's: large targets, 13px floor, figures that shrink to their box rather than overflow it.\n\nThis world refuses the category default of a grey dashboard with a brand-blue button, and it refuses the dark neon \"cyber\" console: neon here is a signal on black slabs inside a light page, never an atmosphere, never a glow.",
+    "northStar": "The Field Instrument",
+    "overview": "The app reads like an instrument a site manager carries on a walk round the job: a void-black ground, charcoal panels drawn with 1px rules, white type for every fact, and colour only where a light would be lit on a real panel. It is dense on purpose. Figures, refs and codes are set in a tabular mono so a column of money lines up to the penny; labels are short uppercase markings in a semi-condensed grotesque; corners are cut at 2–4px. Nothing glows, nothing floats on a shadow, nothing is tinted to look friendly.\n\nColour follows the avionics order and nothing else: red is a warning (stop, overdue, refused), amber is caution and the active state (to-do, the next step, recording, the one live thing), cyan is advisory (variations, discrepancies, a record Claude changed), emerald is normal (done, approved, matched to the contract). The primary action is a white block with black type, the brightest thing on any screen because it is the one you press; everything else you operate is outlined.\n\nThe user chose this world in November 2026 for one-handed use on site in direct sun, replacing the light white-and-neon look. The brand stays: the MΛSTΘR wordmark in Cinzel, the copper arch, Roman numerals for valuations and VOs.",
     "keyCharacteristics": [
-      "Pure white ground, hairline panels, no shadow at rest.",
-      "The live wire: one-device-pixel lines, a volt blueprint edge on white panels, a neon contour inside black slabs, and a pulse round the one live thing.",
-      "Black slabs for structure: job header, dock, title block, hot figures.",
-      "One lit thing per screen: neon on black, volt on white.",
-      "Warning colours carry meaning only, always paired with a sign shape and a word.",
-      "Archivo at 125% (headings, labels), 112% (figures), 100% (reading).",
-      "Signature: the neon progress rail along the foot of the job header.",
-      "The public front page lives in the same world: real site photographs and the real app in a flat black phone frame carry it, and each black slab lights one thing (the next free founding place; the forecast's hours back).",
-      "Light only, by decision."
+      "Void ground, charcoal panels, 1px rules; no shadows at rest",
+      "White for facts, precision grey for metadata, never grey text below 4.5:1",
+      "Four signal colours, one meaning each, always as a lit mark or a 1px frame",
+      "Tabular mono for every figure, code, ref, quantity and date number",
+      "Uppercase semi-condensed micro-headers; section heads in [ brackets ]",
+      "The reticle: four amber corner brackets lock onto the one live thing on a screen"
     ],
     "rules": [
       {
-        "name": "The One Live Thing Rule",
-        "body": "Neon (on black) or volt (on white) marks only where you are, what's next, or how far the job has got. If it isn't one of those, it is ink or white.",
+        "name": "The One Meaning Rule",
+        "body": "Red warns, amber cautions and marks what is active, cyan advises, emerald confirms. A colour is never used for anything outside its meaning, and nothing is coloured to decorate.",
         "section": "colors"
       },
       {
-        "name": "The Neon Lives on Black Rule",
-        "body": "Neon is never placed on a light ground. Where a white-ground element needs to light up, it becomes a black tile with a neon mark (a hot figure cell is a black cell with a neon figure).",
+        "name": "The Lit Signal Rule",
+        "body": "A status is a mark (red disc with a bar, amber triangle, amber disc with an arrow, emerald square with a tick) or a 1px frame in the signal colour with capitals in the same colour, on Void. Never a tinted chip, never a pastel ground.",
         "section": "colors"
       },
       {
-        "name": "The Warning Meaning Rule",
-        "body": "Red is overdue or missing, yellow is needs doing, green is done. Green means done only: an \"Active\" job status is an ink outline badge, not green.",
+        "name": "The White Block Rule",
+        "body": "The primary action on a screen is a white block with On-Signal type. Everything else you can press is outlined in Control Edge and lights to white on hover.",
         "section": "colors"
       },
       {
-        "name": "The Yellow Is a Plate Rule",
-        "body": "Yellow is a surface, never a text colour. \"Needs doing\" as text is ink beside a yellow sign.",
+        "name": "The Dark Instrument Rule",
+        "body": "The app is dark only (`color-scheme: only dark`): native controls, pickers and scrollbars follow. The client's PDFs stay print-white; the front page keeps its own register until it is redesigned (`.impeccable/surfaces/src-landing-landing-tsx.md`, `src/landing/landing.css`).",
         "section": "colors"
       },
       {
-        "name": "The Light Only Rule",
-        "body": "Mastor is light only, and that is a decision (`color-scheme: only light`). The black slabs are the only dark surfaces; there is no dark palette to keep in step.",
-        "section": "colors"
-      },
-      {
-        "name": "The Three Widths Rule",
-        "body": "125% for headings and labels, 112% for figures, 100% for reading. A figure at 112% runs about 0.6em a character, so a ten-character amount (£11,879.22) fits a three-across phone cell at the 15px floor; 125% does not.",
-        "section": "typography"
-      },
-      {
-        "name": "The Fit to the Box Rule",
-        "body": "Figures size themselves to their cell: the cell is a size container, `--len` carries the character count (a % counts as two), and the figure is `160cqi / --len`, capped at its step and floored at 15px. Never let a figure overflow or ellipsise.",
-        "section": "typography"
-      },
-      {
-        "name": "The Narrow Label Rule",
-        "body": "On phones (≤480px), labels in figure grids and the title block drop to 100% width at 0.05em and keep room for two lines (2.4em), so the figures across a row start level.",
+        "name": "The Mono Is Data Rule",
+        "body": "JetBrains Mono sets figures, amounts, codes, refs, quantities and date numbers, with tabular numerals so decimals align. Never words, never labels, never headings.",
         "section": "typography"
       },
       {
         "name": "The Roman Ref Rule",
-        "body": "VO and valuation references are Roman numerals in expanded Archivo 750, never in Mono and never in Cinzel.",
+        "body": "VAL III and VO XII are markings, not data: Archivo 87.5% at 720 with 0.04em tracking, never Mono.",
         "section": "typography"
       },
       {
         "name": "The 13px Floor Rule",
-        "body": "No text on screen is smaller than 13px; it is read outdoors, in glare. Small text uses the 13px small and hint styles and the 14px note style, not an inline size.",
+        "body": "Nothing on screen is smaller than 13px; it is read outdoors, in glare. Small text is 450 weight or heavier.",
         "section": "typography"
       },
       {
-        "name": "The Wordmark Rule",
-        "body": "Cinzel exists only in the MΛSTΘR wordmark and the opening titles.",
+        "name": "The Fit to the Box Rule",
+        "body": "A figure sizes itself to its cell: the cell is a size container, `--len` carries the character count, and a mono figure is 0.6em a character, down to a 15px floor, then it breaks.",
         "section": "typography"
-      },
-      {
-        "name": "The Page Display Rule",
-        "body": "Page Display, Page Headline and the front-page display sizes (Step Numeral 28px, Stage Numeral 26/32/40px, Forecast Figure 36–52px) belong to the front page. App screens keep Display, Headline and the figure steps; a marketing size never lands inside the app.",
-        "section": "typography"
-      },
-      {
-        "name": "The Register Numeral Rule",
-        "body": "Under 560px the register's numerals act as labels for places, so they follow the Narrow Label Rule: one size, 13px at 100% width, every numeral (the longest is XXXVIII) clear of its tile edge. From 560px they take the 112% cut and fit their tile.",
-        "section": "typography"
-      },
-      {
-        "name": "The Ruled Register Rule",
-        "body": "Front-page sections are registers, not cards: a 1.5px ink rule heads each list, 1px Hairline rules separate its rows, and no panel wraps the reading content. A panel or frame appears on the page only to show a piece of the product: the example variation register's white 16px panel on its black slab, the desk screenshot's hairline card, the phone frames.",
-        "section": "layout"
-      },
-      {
-        "name": "The Flat Board Rule",
-        "body": "Nothing at rest casts a shadow. To make something stand out, make it black or give it its warning plate; only floating layers (dock, sheet) cast shadow.",
-        "section": "elevation"
       },
       {
         "name": "The No Glow Rule",
-        "body": "Neon is a flat fill or line. No glow, no blur, no glass.",
+        "body": "Signals are flat fills and flat lines. No glow, no blur, no glass, no gradients except the dashed open-valuation segment of the rail.",
         "section": "elevation"
-      },
-      {
-        "name": "The Register Board Rule",
-        "body": "Taken is filled Shell Rule, never Shell Raised: Raised is about 1.1:1 on Shell and reads as empty. Filled against outlined, and a white numeral against a muted one, keep taken and free apart; neon marks only the next place.",
-        "section": "components"
-      },
-      {
-        "name": "The Black Plate Rule",
-        "body": "On the front page, type never sits on a photograph except on a solid Shell Black plate. Captions go beneath the picture. (The app's play glyph over a video frame is a control, not type, and keeps its media-glyph shadow.)",
-        "section": "components"
       }
     ],
     "dos": [
-      "Do keep each screen to one lit thing: neon on black, volt on white.",
-      "Do turn a white-ground element black before lighting it neon (a hot figure cell).",
-      "Don't repeat what a row already says: a property row is its name, never a number tile beside \"No. 4\".",
-      "Do use red, yellow and green only for overdue, needs doing and done, each with its sign shape and a spoken word.",
-      "Do put ink text on yellow and neon; white text on red, green, volt and black.",
-      "Do set headings and labels at 125% width, figures at 112%, and reading text at normal width.",
-      "Do let figures fit their box (`--len`, container units, 15px floor) rather than truncate.",
-      "Do keep panels flat with a one-device-pixel Blueprint Edge and 16px corners; stay on the 6 / 10 / 12 / 16 / 24px radius scale, with pills for chips and the close button.",
-      "Do keep tap targets at 44px minimum and primary controls at 48–64px.",
-      "Do show unknowns honestly: \"Unpriced\", \"not measured\", an em dash, never £0.",
-      "Do light one thing per black slab on the front page: the next free place (its register tile, the strip's tile and the claim button's numeral show the same place) and, on the forecast, the hours back.",
-      "Do keep type off photographs on the front page except on the solid black band plate, and credit every stock photograph in the footer.",
-      "Do show the real app in the flat black phone frame, ringed in Shell Rule when it sits on black.",
-      "Do fill taken register tiles with Shell Rule and outline free ones in Shell Rule."
+      "**Do** set every figure, amount, code, ref and quantity in JetBrains Mono with tabular numerals.",
+      "**Do** keep each signal colour to its one meaning: red warning, amber caution and active, cyan advisory, emerald normal.",
+      "**Do** draw a status as a sign mark or a 1px frame with capitals in its colour, on Void.",
+      "**Do** make the screen's primary action the white block, and outline everything else in Control Edge (#687488).",
+      "**Do** give the one live thing on a screen the amber reticle, and only that thing.",
+      "**Do** keep corners at 2–4px and every line at 1px.",
+      "**Do** keep metadata at Precision Grey (#7E8B9F) or brighter, 13px or larger."
     ],
     "donts": [
-      "Don't put neon on a white ground, or use it as text on white.",
-      "Don't use green for anything but done; an active or in-progress state is an ink outline.",
-      "Don't use yellow as a text colour.",
-      "Don't add glow, glass, gradients or texture, or shadows on anything at rest.",
-      "Don't build a grey dashboard with a brand-blue button, or a dark neon console.",
-      "Don't use Cinzel outside the wordmark and opening titles, Mono outside codes and references, or copper outside the opening-titles arch.",
-      "Don't set text below 13px, or size small text inline.",
-      "Don't draw an input's edge in Hairline; fields use Field Line.",
-      "Don't add a dark theme; light only is a decision.",
-      "Don't give the phone frame a shadow, tilt or glare, or use its 34px / 27px corners on anything else."
+      "**Don't** tint a surface with a signal colour or use a pastel status chip.",
+      "**Don't** add shadows, glows, blur or glass; depth is Void, Slate and Slate Raised.",
+      "**Don't** use Mono for words, labels, headings or Roman refs.",
+      "**Don't** use amber, cyan or emerald to decorate, or a signal colour for the current tab.",
+      "**Don't** round corners past 4px or draw pills.",
+      "**Don't** add a kicker or eyebrow label above a heading.",
+      "**Don't** put grey text on Slate Raised darker than Precision Grey."
     ]
   }
 }

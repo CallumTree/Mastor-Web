@@ -2,8 +2,8 @@
  * Press feedback for the live wire: when a plate, row or button is pressed, two pulses leave the finger
  * and run round its edge in opposite directions, meeting on the far side. Drawn in a layer of its own
  * over the page (React never sees it), kept on its element as the page scrolls, and dropped if the
- * press turns into a scroll or the element goes away. Colour follows the surface: volt on white, neon on
- * black and volt, white on red and green, ink on yellow.
+ * press turns into a scroll or the element goes away. Colour follows the surface: white on the dark
+ * ground and panels, near-black on a lit block (the white primary button, an amber, red or emerald plate).
  */
 const PRESSABLE = '.act:not(.act-clear), .btn:not(.btn-ghost), .chip, .job-row, .prop-row, .fig-btn, .icon-btn, .back-btn, .tabmenu-btn, .step-btn, .row-hit, .role, .d-thumb, .nav-capture'
 const SVG = 'http://www.w3.org/2000/svg'
@@ -13,13 +13,9 @@ function colourOn(el: Element): string {
     const m = getComputedStyle(n).backgroundColor.match(/[\d.]+/g)?.map(Number)
     if (!m || (m.length > 3 && m[3] < .5)) continue
     const [r, g, b] = m
-    if (r > 200 && g > 150 && b < 90) return 'var(--ink)'                  // yellow plate
-    if (r > 140 && g < 70 && b < 70) return 'var(--shell-text)'           // red plate
-    if (g > 90 && r < 40 && b < 100) return 'var(--shell-text)'           // green plate
-    if (r + g + b < 120 || (b > 200 && r < 60 && g < 110)) return 'var(--neon)' // black slab or volt plate
-    return 'var(--volt)'                                                  // white board
+    return .2126 * r + .7152 * g + .0722 * b > 110 ? 'var(--on-signal)' : 'var(--white)'   // a lit block, or the dark instrument
   }
-  return 'var(--volt)'
+  return 'var(--white)'
 }
 
 /** The length of a rounded rectangle's contour, as SVG draws a <rect> with that rx. */
