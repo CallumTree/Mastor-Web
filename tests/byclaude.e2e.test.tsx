@@ -21,15 +21,15 @@ describe('by Claude', () => {
     await local.put('diary', { id: 'nc', jobId: 'jc', date: '2026-10-20', type: 'note', note: 'Dylan agreed the skip position', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: at, category: 'Client', byClaude: at })
 
     render(<App />)
-    click(await screen.findByText('Claude Close'))
+    click(await screen.findByRole('button', { name: /Claude Close/ }))
     await screen.findByText('Dylan agreed the skip position')
     expect(screen.getAllByText('by Claude').length).toBe(1)          // the note, on Home
 
     nav('vals')
     await screen.findByText('Masonry paint')
     expect(screen.getAllByText('by Claude').length).toBe(1)          // the line in VAL I
-    click(screen.getByRole('button', { name: 'Issue VAL I' }))
-    await screen.findByText(/Claude added 1 line \(marked “by Claude”\) — check it before you issue/)
+    click(screen.getByRole('button', { name: 'Send VAL I for review' }))
+    await screen.findByText(/Claude added 1 line \(marked “by Claude”\) — check it before you send it/)
     fireEvent.click(document.querySelector('.sheet-bg')!)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
 

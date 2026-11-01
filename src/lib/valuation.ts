@@ -5,7 +5,8 @@ import { roman } from './format'
  *  - An item is LIVE when valuationId is null, CLAIMED when it points at a valuation.
  *  - Ticking a live item puts it in the job's one Open valuation (created if needed).
  *  - Unticking / removing from an Open valuation sends it straight back to live.
- *  - Issued valuations are locked: their items can't be unticked or edited.
+ *  - Issued valuations are locked: their items can't be unticked or edited — except while the client
+ *    has asked for changes, when the valuation is open to amend (and takes the ticks) until it's sent again.
  *  Because the link lives on the item itself, the work order and the valuation can
  *  never disagree — they're two views of the same field.
  */
@@ -19,10 +20,14 @@ export const lineValue = (qty: number | null, rate: number | null) => (qty != nu
 export const isPriced = (x: { qty: number | null; rate: number | null }) => x.qty != null && x.rate != null
 
 export function openValuation(vals: Valuation[]) { return vals.find(v => v.status === 'Open') ?? null }
+/** Sent, and the client asked for changes: open to amend until it's sent again. */
+export const amending = (v: Valuation) => v.status === 'Issued' && !!v.review?.changesAt && !v.review.agreedAt
+/** Where a tick goes: the valuation being amended, else the open one. */
+export const claimTarget = (vals: Valuation[]) => vals.find(amending) ?? openValuation(vals)
 
 export async function ensureOpenValuation(jobId: string): Promise<Valuation> {
   const vals = await db.valuations(jobId)
-  const open = openValuation(vals)
+  const open = claimTarget(vals)
   if (open) return open
   const v: Valuation = { id: uid(), jobId, number: vals.reduce((m, x) => Math.max(m, x.number), 0) + 1, status: 'Open', createdAt: Date.now(), issuedAt: null }
   await db.putValuation(v)
@@ -32,7 +37,7 @@ export async function ensureOpenValuation(jobId: string): Promise<Valuation> {
 export function lockedIn(item: { valuationId?: string | null }, vals: Valuation[]): Valuation | null {
   if (!item.valuationId) return null
   const v = vals.find(x => x.id === item.valuationId)
-  return v && v.status === 'Issued' ? v : null
+  return v && v.status === 'Issued' && !amending(v) ? v : null
 }
 
 export async function toggleScope(item: ScopeItem, vals: Valuation[]) {
@@ -64,11 +69,28 @@ export async function deleteOpenValuation(v: Valuation, scope: ScopeItem[], vos:
   await db.deleteValuation(v.id)
 }
 
-/** Locks the valuation. Returns the issued record, so the next step (the invoice) works from it, not the open copy. */
-export async function issueValuation(v: Valuation): Promise<Valuation> {
-  const issued: Valuation = { ...v, status: 'Issued', issuedAt: Date.now() }
+/**
+ * Sends the valuation to the client for review and locks it. Returns the sent record, so the next step
+ * works from it, not the open copy. Sent again after changes, it keeps its first send date (issuedAt).
+ */
+export async function issueValuation(v: Valuation, now = Date.now()): Promise<Valuation> {
+  const issued: Valuation = amending(v)
+    ? { ...v, review: { ...v.review!, sentAt: now, rounds: v.review!.rounds + 1, changesAt: null } }
+    : { ...v, status: 'Issued', issuedAt: now, review: { sentAt: now, rounds: 1 } }
   await db.putValuation(issued)
   return issued
+}
+
+/** The client's answer. Changes open it to amend; agreeing locks it for good and the invoice is next. */
+export const askChanges = (v: Valuation, changes: string, now = Date.now()): Valuation =>
+  ({ ...v, review: { sentAt: v.review?.sentAt ?? v.issuedAt ?? now, rounds: v.review?.rounds ?? 1, agreedAt: null, changesAt: now, changes: changes.trim() || undefined } })
+export const markAgreed = (v: Valuation, now = Date.now()): Valuation =>
+  v.review?.agreedAt ? v : ({ ...v, review: { sentAt: v.review?.sentAt ?? v.issuedAt ?? now, rounds: v.review?.rounds ?? 1, changes: v.review?.changes, changesAt: null, agreedAt: now } })
+/** Where the valuation is with the client. Valuations from before the review step count as agreed. */
+export function reviewStage(v: Valuation): 'open' | 'review' | 'changes' | 'agreed' {
+  if (v.status === 'Open') return 'open'
+  if (!v.review || v.review.agreedAt || v.invoiceNumber || v.paidAt) return 'agreed'
+  return v.review.changesAt ? 'changes' : 'review'
 }
 
 export interface IssueGroup { name: string; lines: number; base: number }
@@ -116,8 +138,8 @@ export function issuePlan(job: Job, val: Valuation, vals: Valuation[], scope: Sc
     }
   }
   const claude = mine.filter(i => i.byClaude).length + myVos.filter(v => v.byClaude).length
-  if (claude) checks.push({ kind: 'warn', text: `Claude added ${claude} line${claude === 1 ? '' : 's'} (marked “by Claude”) — check ${claude === 1 ? 'it' : 'them'} before you issue.` })
-  if (!checks.length) checks.push({ kind: 'ok', text: 'Nothing for the client to query — ready to issue.' })
+  if (claude) checks.push({ kind: 'warn', text: `Claude added ${claude} line${claude === 1 ? '' : 's'} (marked “by Claude”) — check ${claude === 1 ? 'it' : 'them'} before you send it.` })
+  if (!checks.length) checks.push({ kind: 'ok', text: 'Nothing for the client to query — ready to send.' })
   return { totals, u1, u2, previous, cumulative, target, pct: target > 0 ? Math.round((cumulative / target) * 1000) / 10 : null, groups: [...groups.values()].sort((a, b) => (a.name === 'Variations' ? 1 : b.name === 'Variations' ? -1 : a.name.localeCompare(b.name, 'en', { numeric: true }))), checks }
 }
 const gbp = (n: number) => '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

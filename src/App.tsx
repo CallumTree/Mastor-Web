@@ -13,8 +13,9 @@ import { buildDayworksPdf, dayworksVariation, dwRef } from './lib/dayworks'
 import { accountsCsv, invoiceRows, periods } from './lib/accounts'
 import { buildEvidence, evidenceFileName, orderEvidence, schemeEvidence } from './lib/evidence'
 import { AccessContext, accessFor } from './lib/access'
-import { claimMany, deleteOpenValuation, ensureOpenValuation, isPriced, issueValuation, lockedIn, toggleScope, toggleVariation } from './lib/valuation'
+import { claimMany, deleteOpenValuation, ensureOpenValuation, isPriced, issueValuation, lockedIn, markAgreed, toggleScope, toggleVariation, valRef } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
+import { newNote } from './screens/Notes'
 import { Dashboard } from './screens/Dashboard'
 import { currentCompany, fetchPhoto, onRemoteChange, settle } from './lib/sync'
 import { decide, readSite, unread, voFromSuggestion, MAX_ITEMS } from './lib/siteRead'
@@ -34,6 +35,28 @@ import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
 import { jobAlerts } from './lib/alerts'
+import { lastText, siteDaysSince, valRhythm } from './lib/rhythm'
+import type { WeekAlert } from './screens/Plan'
+import { addDays } from './lib/dates'
+
+/**
+ * Mastor's own deadlines for the week across all jobs: money overdue, a review or VO late with the client,
+ * the valuation week — and, a few days ahead, the valuation week coming on any job with work to claim.
+ */
+function weekAlerts(jobs: Job[], scope: ScopeItem[], vos: Variation[], vals: Valuation[], orders: WorkOrder[], diary: DiaryEntry[]): WeekAlert[] {
+  const today = dayKey()
+  return jobs.filter(j => j.status !== 'Complete').flatMap(j => {
+    const of = <T extends { jobId: string }>(xs: T[]) => xs.filter(x => x.jobId === j.id)
+    const jv = of(vals), jd = of(diary)
+    const own: WeekAlert[] = jobAlerts(j, of(scope), of(vos), jv, of(orders), Date.now(), jd).alerts.filter(a => a.deadline)
+      .map(a => ({ jobId: j.id, text: a.text, hint: a.hint, kind: a.kind }))
+    const r = valRhythm(j, jv, { diary: jd, today })
+    const work = r && (of(scope).some(i => jv.some(v => v.status === 'Open' && v.id === i.valuationId)) || of(vos).some(x => jv.some(v => v.status === 'Open' && v.id === x.valuationId)) || siteDaysSince(r, jd, j.id) > 0)
+    const coming = r && work && r.from > today && r.from <= addDays(today, 7)
+      ? [{ jobId: j.id, date: r.from, text: `${valRef(r.next)} · valuation week`, hint: lastText(r) }] : []
+    return [...own, ...coming]
+  })
+}
 import { Splash } from './components/Splash'
 
 export default function App() {
@@ -121,6 +144,7 @@ export default function App() {
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)} onCheckRates={books.length ? () => setChecking(true) : undefined}
           onEvidence={async () => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(schemeEvidence(job, jobScope, jobVals, jobDiary, company)), evidenceFileName(job, 'scheme')) }}
           onIssue={async v => { const issued = await issueValuation(v); await reload(); return issued }}
+          onReview={(v, note) => run(async () => { await db.putValuation({ ...v, byClaude: null }); if (note) await db.putDiary(newNote(job, note, 'Commercial')) })()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
           onImportVo={() => setVoImport(true)}
@@ -192,7 +216,7 @@ export default function App() {
           }} />
       ) : (
         <JobsList jobs={jobs} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
-          alerts={jobs.filter(j => j.status !== 'Complete').flatMap(j => jobAlerts(j, scope.filter(x => x.jobId === j.id), vos.filter(x => x.jobId === j.id), vals.filter(x => x.jobId === j.id), orders.filter(x => x.jobId === j.id)).alerts.filter(a => a.kind === 'stop' && (a.place === 'vals' || a.place === 'vos')).map(a => ({ jobId: j.id, text: a.text, hint: a.hint })))}   // deadlines only: overdue valuations, VOs late with the client
+          alerts={weekAlerts(jobs, scope, vos, vals, orders, diary)}
           onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
       )}
 
@@ -285,7 +309,8 @@ export default function App() {
             const fresh = await db.settings(); if (!fresh) return
             const all = (await Promise.all((await db.jobs()).map(j => db.valuations(j.id)))).flat()
             const { number, next } = allocateInvoiceNo(fresh, all)
-            await db.putValuation({ ...invoicing, invoiceNumber: number, invoiceDate: date, invoiceVatRate: rate })
+            // an invoice means the client agreed it
+            await db.putValuation({ ...(invoicing.review ? markAgreed(invoicing) : invoicing), invoiceNumber: number, invoiceDate: date, invoiceVatRate: rate })
             await db.putSettings({ ...fresh, nextInvoiceNumber: next, updatedAt: Date.now() })
             setInvoicing(null); await reload()
           }} />

@@ -255,6 +255,19 @@ label.btn { cursor: pointer; }
 .card > .sum > .sum-cell { border-bottom-color: transparent; }
 .val-build { margin: 10px 2px 18px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .val-build b { color: var(--ink); font-weight: 650; }
+/* the valuation week: when the last one went, when the next goes in. Quiet: the open valuation's figure is the live thing */
+.val-week { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 12px 14px; }
+.val-week-c { min-width: 0; }
+.val-week-n { margin-top: 2px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.val-week-c small { display: block; margin-top: 1px; font-size: 13px; color: var(--ink-muted); }
+.val-week.now .val-week-c + .val-week-c small { color: var(--ink); font-weight: 600; }
+.val-week-f { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; padding-top: 8px; border-top: var(--hair) solid var(--line); }
+.val-week-f .linkish { flex: none; }
+.val-rhythm { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 10px; padding: 10px 14px; text-align: left; font: inherit; font-size: 13px; line-height: 1.35; color: var(--ink-2); cursor: pointer; }
+.val-rhythm .label { flex: none; }
+.val-rhythm b { color: var(--ink); font-weight: 600; }
+.val-rhythm svg { flex: none; color: var(--ink-muted); }
+.val-asked { margin: 0 0 10px; padding: 8px 12px; border-left: 3px solid var(--yellow); background: var(--tint-yellow); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: 14px; color: var(--ink); }
 
 @media (max-width: 480px) {
   .sum .sum-cell .label, .fig-l, .tb-label { font-stretch: 100%; letter-spacing: 0; }

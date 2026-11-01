@@ -70,7 +70,7 @@ export function portfolio(jobs: Job[], scope: ScopeItem[], vos: Variation[], val
     if (v.paidAt && new Date(v.paidAt).getFullYear() === year) paidThisYear += v.paidAmount ?? 0
     const c = valCourt(v, job, scope, vos, now.getTime())
     owed += c.owed
-    if (c.tone === 'late') { overdue += c.owed; overdueCount++ }
+    if (c.tone === 'late' && !c.review) { overdue += c.owed; overdueCount++ }   // a review running long is chased, not money overdue
   }
 
   return {

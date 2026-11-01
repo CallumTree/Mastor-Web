@@ -8,13 +8,14 @@ import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
 import { Trace } from '../components/Trace'
 import { placeParam, setPlace } from '../lib/place'
-import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
+import { IconBack, IconCamera, IconChevron, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
-import { JobLine } from './Plan'
+import { JobLine, type LineMark } from './Plan'
 import { NoteEditor, NoteRow, NotesSheet, newNote, sortNotes } from './Notes'
 import { dayKey } from '../lib/dates'
+const shortDate = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 import { Sheet, TitleBlock } from '../components/Ui'
 import { ByClaude, SignMark, SIGN_WORD, type SignKind } from '../components/Sign'
 import { currentCompany } from '../lib/sync'
@@ -24,6 +25,7 @@ import { valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
 import { fitLen } from '../components/Register'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
+import { lastText, valRhythm, weekText } from '../lib/rhythm'
 
 /** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
 const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
@@ -76,7 +78,7 @@ function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: bool
 
 const FigN = ({ text, neg }: { text: string; neg?: boolean }) => <div className={'fig-n' + (neg ? ' neg' : '')} style={fitLen(text)}>{text}</div>
 
-function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, margin, onCosts, orders, documents }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode }) {
+function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, margin, onCosts, orders, documents, diary }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode; diary: DiaryEntry[] }) {
   const [notesOpen, setNotesOpen] = useState(false)
   const [noteEdit, setNoteEdit] = useState<DiaryEntry | null>(null)
   const open = vals.find(v => v.status === 'Open')
@@ -92,9 +94,11 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const { money: seesMoney } = useAccess()
   const [gapOpen, setGapOpen] = useState(false)
   // the same alerts Claude reads through the connector (lib/alerts); operatives see only the site ones
-  const { alerts, gap, poNote } = jobAlerts(job, scope, vos, vals, orders)
+  const { alerts, gap, poNote } = jobAlerts(job, scope, vos, vals, orders, Date.now(), diary)
   const placeAction = (p: AlertPlace) => (p === 'gap' ? () => setGapOpen(true) : p === 'setup' ? onSetup : () => go(p))
   const actions = alerts.filter(a => seesMoney || a.site).map(a => ({ ...a, onClick: placeAction(a.place) }))
+  const liveAt = actions.findIndex(a => a.kind === 'do')   // one live thing: the first next step
+  const rhythm = seesMoney ? valRhythm(job, vals, { diary }) : null
 
   return (
     <div>
@@ -116,8 +120,8 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         {actions.map((a, i) => {
           const kind: SignKind = a.kind
           return (
-            <button key={i} className={'act act-' + kind + (kind === 'do' ? ' live' : '')} onClick={a.onClick}>
-              {kind === 'do' && <Trace r={8} />}
+            <button key={i} className={'act act-' + kind + (i === liveAt ? ' live' : '')} onClick={a.onClick}>
+              {i === liveAt && <Trace r={8} />}
               <SignMark kind={kind} size={22} />
               <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{a.text}</span><span className="act-h">{a.hint}</span></span>
               <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
@@ -125,6 +129,11 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
           )
         })}
       </div>
+      {rhythm && <button className="panel t-small val-rhythm" onClick={() => go('vals')}>
+        <span className="label">Valuations</span>
+        <span className="grow">{rhythm.last ? <>Last sent <b>{valRef(rhythm.last.number)}</b> {shortDate(rhythm.last.issuedAt!)}</> : 'None sent yet'} · {rhythm.last ? 'next' : 'first'} {valRef(rhythm.next)} {rhythm.state === 'due' ? 'this week' : rhythm.state === 'late' ? <>was due {weekText(rhythm)}</> : weekText(rhythm)}</span>
+        <IconChevron size={14} />
+      </button>}
       {poNote && <div className="panel t-small" style={{ padding: '10px 14px', marginTop: 10 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish tap slate" onClick={() => setGapOpen(true)}>review</button></div>}
       {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => {
         setGapOpen(false); onUpdateJob(j)
@@ -149,6 +158,16 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   )
 }
 
+/** The valuation week on the job's line, for the office: on its first day, or at today once it's here. */
+function valMarks(job: Job, vals: Valuation[], diary: DiaryEntry[], onOpen: () => void): LineMark[] {
+  const r = valRhythm(job, vals, { diary }), today = dayKey()
+  if (!r) return []
+  const ref = valRef(r.next)
+  return [{ id: 'val-week', date: r.from > today ? r.from : today, onOpen,
+    text: r.state === 'late' ? `${ref} was due ${weekText(r)}` : `${ref} · valuation week, ${weekText(r)}`,
+    sub: r.last ? lastText(r) : undefined }]
+}
+
 /** Tabs that are all money: operatives don't get them. */
 const MONEY_TABS: Tab[] = ['vals']
 const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Element }[] = [
@@ -164,7 +183,7 @@ export function JobView(p: {
   job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
   onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onImportVo: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onClaimMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteScope: (items: ScopeItem[]) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void; onCheckRates?: () => void; onEvidence: () => Promise<void>
-  onIssue: (v: Valuation) => Promise<Valuation>; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
+  onIssue: (v: Valuation) => Promise<Valuation>; onReview: (v: Valuation, note?: string) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
   costs: Cost[]; dayRate?: number | null; onCosts: () => void
   onDayworks: (fresh: boolean) => void
   docs: JobDocument[]; onAddDoc: (file: File, kind: JobDocument['kind'], name: string) => Promise<void>; onOpenDoc: (d: JobDocument) => Promise<void>; onDeleteDoc: (d: JobDocument) => Promise<void>
@@ -204,19 +223,19 @@ export function JobView(p: {
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
           documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} onAsk={currentCompany() ? askClerk : undefined} />}
-          notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
+          notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} diary={p.diary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && diaryView === 'line' && !focusNote && <JobLine job={job} entries={p.diary}
           properties={[...new Set([...Object.keys(job.properties ?? {}), ...scope.map(s => s.property ?? '')].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}
           trades={[...new Set(scope.map(s => s.workstream ?? '').filter(Boolean))]}
-          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onOpenDay={openDay} />}
+          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onOpenDay={openDay} marks={access.money ? valMarks(job, vals, p.diary, () => setTab('vals')) : []} />}
         {tab === 'diary' && (diaryView === 'day' || focusNote) && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} onRead={p.onReadSite} />}
         {tab === 'scope' && job.kind === 'orders' && <OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
-          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} />}
+          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
       </main>
       {/* the capture key sits dead centre: half the tabs left (the odd one too), the rest right, each side the same width (left cells R fr, right cells L fr) */}

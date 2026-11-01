@@ -71,9 +71,9 @@ describe('College Park, end to end', () => {
 
     // --- issue VAL I → locked
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Issue VAL I' }))
-    click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findByText(lockedText('Issued'))
+    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
+    click(await screen.findByRole('button', { name: /^send val i for £/i }))
+    await screen.findByText(lockedText('Sent'))
     nav('scope')
     const locked = await screen.findByText(lockedText('VAL I'))
     expect(locked).toBeTruthy()

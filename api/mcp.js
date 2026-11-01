@@ -39162,10 +39162,17 @@ var isPriced = (x) => x.qty != null && x.rate != null;
 function openValuation(vals) {
   return vals.find((v) => v.status === "Open") ?? null;
 }
+var amending = (v) => v.status === "Issued" && !!v.review?.changesAt && !v.review.agreedAt;
+var claimTarget = (vals) => vals.find(amending) ?? openValuation(vals);
 function lockedIn(item, vals) {
   if (!item.valuationId) return null;
   const v = vals.find((x) => x.id === item.valuationId);
-  return v && v.status === "Issued" ? v : null;
+  return v && v.status === "Issued" && !amending(v) ? v : null;
+}
+function reviewStage(v) {
+  if (v.status === "Open") return "open";
+  if (!v.review || v.review.agreedAt || v.invoiceNumber || v.paidAt) return "agreed";
+  return v.review.changesAt ? "changes" : "review";
 }
 function issuePlan(job, val, vals, scope, vos) {
   const totals = valTotals(job, val.id, scope, vos);
@@ -39203,8 +39210,8 @@ function issuePlan(job, val, vals, scope, vos) {
     }
   }
   const claude = mine.filter((i) => i.byClaude).length + myVos.filter((v) => v.byClaude).length;
-  if (claude) checks.push({ kind: "warn", text: `Claude added ${claude} line${claude === 1 ? "" : "s"} (marked \u201Cby Claude\u201D) \u2014 check ${claude === 1 ? "it" : "them"} before you issue.` });
-  if (!checks.length) checks.push({ kind: "ok", text: "Nothing for the client to query \u2014 ready to issue." });
+  if (claude) checks.push({ kind: "warn", text: `Claude added ${claude} line${claude === 1 ? "" : "s"} (marked \u201Cby Claude\u201D) \u2014 check ${claude === 1 ? "it" : "them"} before you send it.` });
+  if (!checks.length) checks.push({ kind: "ok", text: "Nothing for the client to query \u2014 ready to send." });
   return { totals, u1, u2, previous, cumulative, target, pct: target > 0 ? Math.round(cumulative / target * 1e3) / 10 : null, groups: [...groups.values()].sort((a, b) => a.name === "Variations" ? 1 : b.name === "Variations" ? -1 : a.name.localeCompare(b.name, "en", { numeric: true })), checks };
 }
 var gbp2 = (n) => "\xA3" + n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -39224,6 +39231,56 @@ function valTotals(job, valId, scope, vos) {
   return { scopeBase, voBase, base, gross: u.gross, lines: s.length + o.length };
 }
 
+// src/lib/dates.ts
+var dayKey = (d = /* @__PURE__ */ new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+var fromKey = (k) => {
+  const [y, m, d] = k.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+var addDays = (k, n) => {
+  const d = fromKey(k);
+  d.setDate(d.getDate() + n);
+  return dayKey(d);
+};
+
+// src/lib/rhythm.ts
+var VAL_WEEK = 7;
+var VAL_MIN_DAYS = 14;
+var VAL_SOON = 3;
+var SITE = /* @__PURE__ */ new Set(["day", "photo", "video", "voice"]);
+function jobStart(job, diary = []) {
+  const days = diary.filter((e) => e.jobId === job.id && SITE.has(e.type) && e.date).map((e) => e.date).sort();
+  const added = dayKey(new Date(job.createdAt));
+  return days[0] && days[0] < added ? days[0] : added;
+}
+var firstOnOrAfter = (k) => {
+  if (k.endsWith("-01")) return k;
+  const [y, m] = k.split("-").map(Number);
+  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+};
+function valRhythm(job, vals, opts = {}) {
+  if (job.status === "Complete") return null;
+  const now = opts.now ?? Date.now(), today = opts.today ?? dayKey(new Date(now));
+  const last = vals.filter((v) => v.status === "Issued" && v.issuedAt).sort((a, b) => b.issuedAt - a.issuedAt)[0] ?? null;
+  const since = last ? dayKey(new Date(last.issuedAt)) : jobStart(job, opts.diary);
+  let from = firstOnOrAfter(addDays(since, VAL_MIN_DAYS)), waited = false;
+  const w = job.valWait;
+  if (w && w.at > (last?.issuedAt ?? 0) && w.until > from) {
+    from = w.until;
+    waited = true;
+  }
+  const until = addDays(from, VAL_WEEK - 1);
+  const state = today > until ? "late" : today >= from ? "due" : today >= addDays(from, -VAL_SOON) ? "soon" : "later";
+  const open2 = vals.find((v) => v.status === "Open");
+  return { last, next: open2?.number ?? vals.reduce((m, v) => Math.max(m, v.number), 0) + 1, from, until, state, waited, since };
+}
+var weekText = (r) => {
+  const d = fromKey(r.from);
+  return `1\u2013${VAL_WEEK} ${d.toLocaleDateString("en-GB", { month: "short" })}`;
+};
+var lastText = (r) => r.last ? `last one ${valRef(r.last.number)}, sent ${new Date(r.last.issuedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : "the first on this job";
+var siteDaysSince = (r, diary, jobId) => new Set(diary.filter((e) => e.jobId === jobId && SITE.has(e.type) && e.date > r.since).map((e) => e.date)).size;
+
 // src/components/Sign.tsx
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
 
@@ -39232,8 +39289,11 @@ var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 var DAY = 864e5;
 var VO_CHASE_AMBER = 7;
 var VO_CHASE_RED = 14;
+var REVIEW_CHASE_AMBER = 7;
+var REVIEW_CHASE_RED = 14;
 var termsOf = (job) => job.paymentTermsDays && job.paymentTermsDays > 0 ? job.paymentTermsDays : 30;
 var daysSince = (t, now) => Math.floor((now - t) / DAY);
+var ordinal = (n) => n === 2 ? "2nd" : n === 3 ? "3rd" : `${n}th`;
 function voCourt(v, vals, now = Date.now()) {
   if (v.status === "Rejected") return { who: "none", text: "Rejected", tone: "done" };
   if (v.valuationId) {
@@ -39250,20 +39310,34 @@ function voCourt(v, vals, now = Date.now()) {
   return { who: "us", text: "Complete \u2014 tick into a valuation", tone: "due" };
 }
 function dueAt(val, job) {
-  const from = val.invoiceDate ?? val.issuedAt;
+  const from = val.invoiceDate ?? (val.review ? null : val.issuedAt);
   return from ? from + termsOf(job) * DAY : null;
 }
 function valCourt(val, job, scope, vos, now = Date.now()) {
-  if (val.status === "Open") return { who: "us", text: "Open \u2014 review and issue", tone: "ok", owed: 0 };
+  if (val.status === "Open") return { who: "us", text: "Open \u2014 check it and send it for review", tone: "ok", owed: 0 };
   const net = valTotals(job, val.id, scope, vos).gross;
   const p = (x) => Math.round(x * 100 + 1e-7) / 100;
   const gross = val.invoiceNumber ? p(net + p(net * (val.invoiceVatRate ?? 20) / 100)) : net;
   const paid = val.paidAmount ?? 0;
   const owed = Math.max(0, Math.round((gross - paid) * 100) / 100);
   if (val.paidAt && owed < 0.01) return { who: "none", text: `Paid ${ukDate(val.paidAt)}`, tone: "done", owed: 0 };
-  const due = dueAt(val, job);
-  const left = Math.ceil((due - now) / DAY);
   const prefix = val.paidAt ? `Part paid \xB7 ${money(owed)} outstanding \xB7 ` : "";
+  const r = val.review;
+  if (r && !val.invoiceNumber && !val.paidAt && !r.agreedAt) {
+    if (r.changesAt) return { who: "us", text: "Changes asked \xB7 amend it and send it again", tone: "due", owed, review: true };
+    const d = daysSince(r.sentAt, now);
+    return {
+      who: "client",
+      text: `For review \xB7 ${d} day${d === 1 ? "" : "s"}${r.rounds > 1 ? ` \xB7 sent ${ordinal(r.rounds)} time` : ""}`,
+      days: d,
+      owed,
+      review: true,
+      tone: d >= REVIEW_CHASE_RED ? "late" : d >= REVIEW_CHASE_AMBER ? "due" : "ok"
+    };
+  }
+  const due = dueAt(val, job);
+  if (due == null) return { who: "us", text: `${prefix}${r?.agreedAt ? `Agreed ${ukDate(r.agreedAt)} \xB7 ` : ""}create the invoice`, tone: "due", owed };
+  const left = Math.ceil((due - now) / DAY);
   if (left < 0) return { who: "client", text: `${prefix}Overdue ${-left} day${left === -1 ? "" : "s"}`, tone: "late", days: -left, owed };
   if (left <= 7) return { who: "client", text: `${prefix}Due ${left === 0 ? "today" : `in ${left} day${left === 1 ? "" : "s"}`}`, tone: "due", days: left, owed };
   return { who: "client", text: `${prefix}Due ${ukDate(due)}`, tone: "ok", days: left, owed };
@@ -39349,7 +39423,7 @@ function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
     if (v.paidAt && new Date(v.paidAt).getFullYear() === year) paidThisYear += v.paidAmount ?? 0;
     const c = valCourt(v, job, scope, vos, now.getTime());
     owed += c.owed;
-    if (c.tone === "late") {
+    if (c.tone === "late" && !c.review) {
       overdue += c.owed;
       overdueCount++;
     }
@@ -39375,12 +39449,13 @@ function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
 
 // src/lib/alerts.ts
 var isOverdue = (o, now = Date.now()) => o.status === "open" && o.dueAt != null && o.dueAt < now;
-function jobAlerts(job, scope, vos, vals, orders, now = Date.now()) {
+function jobAlerts(job, scope, vos, vals, orders, now = Date.now(), diary) {
   const alerts = [];
   const live = vos.filter((v) => v.status !== "Rejected");
   const unpriced = live.filter((v) => v.rate == null).length;
   const unmeasured = live.filter((v) => v.qty == null).length;
   const open2 = vals.find((v) => v.status === "Open");
+  const fixing = vals.find(amending);
   const openTotals = open2 ? valTotals(job, open2.id, scope, vos) : null;
   const scopeBase = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0);
   let poNote = null;
@@ -39401,17 +39476,24 @@ function jobAlerts(job, scope, vos, vals, orders, now = Date.now()) {
     }
   }
   for (const v of vals.filter((x) => x.status === "Issued")) {
-    const c = valCourt(v, job, scope, vos, now);
-    if (c.tone === "late") alerts.push({ kind: "stop", place: "vals", text: `${valRef(v.number)} overdue \u2014 ${money(c.owed)}`, hint: c.text + " \xB7 chase the client" });
-    else if (c.tone === "due") alerts.push({ kind: "warn", place: "vals", text: `${valRef(v.number)} payment due soon`, hint: c.text });
+    const c = valCourt(v, job, scope, vos, now), ref = valRef(v.number), stage = reviewStage(v);
+    if (stage === "changes") alerts.push({ kind: "warn", place: "vals", text: `${ref}: the client asked for changes`, hint: v.review?.changes ? `\u201C${v.review.changes}\u201D \xB7 amend it and send it again` : "Amend it and send it again" });
+    else if (stage === "review") {
+      if (c.tone === "late") alerts.push({ kind: "stop", place: "vals", deadline: true, text: `${ref} with the client ${c.days} days`, hint: "Not agreed yet \xB7 chase for agreement" });
+      else if (c.tone === "due") alerts.push({ kind: "warn", place: "vals", text: `${ref} with the client ${c.days} days`, hint: "Chase for agreement" });
+    } else if (c.tone === "late") alerts.push({ kind: "stop", place: "vals", deadline: true, text: `${ref} overdue \u2014 ${money(c.owed)}`, hint: c.text + " \xB7 chase the client" });
+    else if (c.tone === "due" && c.who === "us") alerts.push({ kind: "do", place: "vals", text: `${ref} agreed \xB7 create the invoice`, hint: `${money(c.owed)} \xB7 send it to accounts` });
+    else if (c.tone === "due") alerts.push({ kind: "warn", place: "vals", text: `${ref} payment due soon`, hint: c.text });
   }
   const waiting = vos.filter((v) => {
     const c = voCourt(v, vals, now);
     return c.who === "client" && (c.days ?? 0) >= VO_CHASE_AMBER;
   });
+  const voLate = waiting.some((v) => voCourt(v, vals, now).tone === "late");
   if (waiting.length) alerts.push({
-    kind: waiting.some((v) => voCourt(v, vals, now).tone === "late") ? "stop" : "warn",
+    kind: voLate ? "stop" : "warn",
     place: "vos",
+    deadline: voLate || void 0,
     text: `${waiting.length} VO${waiting.length === 1 ? "" : "s"} waiting on the client ${VO_CHASE_AMBER}+ days`,
     hint: "Chase for an instruction"
   });
@@ -39420,7 +39502,31 @@ function jobAlerts(job, scope, vos, vals, orders, now = Date.now()) {
   if (!job.poNumber) alerts.push({ kind: "stop", place: "setup", text: "No PO number", hint: "Invoices will be rejected without it" });
   if (unpriced) alerts.push({ kind: "warn", place: "vos", text: `${unpriced} variation${unpriced === 1 ? "" : "s"} unpriced`, hint: "Add SoR code and rate so they can be claimed" });
   if (unmeasured) alerts.push({ kind: "warn", place: "vos", text: `${unmeasured} variation${unmeasured === 1 ? "" : "s"} not measured`, hint: "Measure on site", site: true });
-  if (open2 && openTotals && openTotals.lines > 0) alerts.push({ kind: "do", place: "vals", text: `${valRef(open2.number)}: ${money(openTotals.gross)} ready`, hint: `${openTotals.lines} line${openTotals.lines === 1 ? "" : "s"} \u2014 review and issue` });
+  const r = valRhythm(job, vals, { now, diary });
+  const lines = (n) => `${n} line${n === 1 ? "" : "s"}`;
+  if (fixing) {
+  } else if (!r) {
+    if (open2 && openTotals && openTotals.lines > 0) alerts.push({ kind: "do", place: "vals", text: `${valRef(open2.number)}: ${money(openTotals.gross)} ready`, hint: `${lines(openTotals.lines)} \u2014 check it and send it for review` });
+  } else if (r.state === "due" || r.state === "late") {
+    const due = r.state === "due", ref = valRef(r.next);
+    if (open2 && openTotals && openTotals.lines > 0) alerts.push({
+      kind: due ? "do" : "warn",
+      place: "vals",
+      deadline: true,
+      text: due ? `Valuation week \xB7 ${ref} ${money(openTotals.gross)} ready to send` : `${ref} was due ${weekText(r)}`,
+      hint: `${due ? lines(openTotals.lines) : `${money(openTotals.gross)} ready`} \xB7 ${lastText(r)}`
+    });
+    else if (diary) {
+      const n = siteDaysSince(r, diary, job.id);
+      if (n) alerts.push({
+        kind: due ? "do" : "warn",
+        place: "scope",
+        deadline: true,
+        text: due ? `Valuation week \xB7 tick in what\u2019s done for ${ref}` : `${ref} was due ${weekText(r)} \xB7 nothing ticked in`,
+        hint: `${n} site day${n === 1 ? "" : "s"} since ${r.last ? lastText(r).replace(/^last one /, "") : "the start"}`
+      });
+    }
+  }
   if (job.kind === "orders") {
     const late2 = orders.filter((o) => isOverdue(o, now));
     if (late2.length) alerts.push({ kind: "stop", place: "scope", site: true, text: `${late2.length} order${late2.length === 1 ? "" : "s"} overdue`, hint: late2.slice(0, 3).map((o) => `${o.ref} ${o.address}`).join(" \xB7 ") });
@@ -39587,12 +39693,6 @@ function findRates(q, s, limit = 6) {
     })
   };
 }
-
-// src/lib/dates.ts
-var fromKey = (k) => {
-  const [y, m, d] = k.split("-").map(Number);
-  return new Date(y, m - 1, d);
-};
 
 // src/lib/plan.ts
 var isPlan = (e) => e.type === "todo" || e.type === "event";
@@ -39854,7 +39954,7 @@ function invoiceAmounts(job, val, scope, vos, rate) {
 // server/mcp/writes.ts
 var WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
 var READ = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
-var NOT_ISSUED = "Nothing has been issued. A person checks Claude\u2019s lines and issues the valuation in the Mastor app.";
+var NOT_ISSUED = "Nothing has been sent. A person checks Claude\u2019s lines and sends the valuation to the client for review in the Mastor app.";
 var fromRoman = (s) => {
   if (!/^[IVXLCDM]+$/.test(s)) return 0;
   const v = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1e3 };
@@ -39873,11 +39973,11 @@ var lineLabel = (i) => `${i.property ? `No. ${i.property} \xB7 ` : ""}${i.code ?
 var lineWithValue = (i) => `${lineLabel(i)} \u2014 ${qtyText(i.qty)} ${i.unit} @ ${money(i.rate)} = ${money(lineValue(i.qty, i.rate))}`;
 var voWithValue = (v) => `${voRef(v.number)} ${v.description} \u2014 ${qtyText(v.qty)} ${v.unit} @ ${money(v.rate)} = ${money(lineValue(v.qty, v.rate))}`;
 function openNow(job, d) {
-  const open2 = openValuation(d.vals);
+  const open2 = claimTarget(d.vals);
   if (!open2) return "no valuation open";
   const p = issuePlan(job, open2, d.vals, d.scope, d.vos);
   return {
-    ref: valRef(open2.number),
+    ref: valRef(open2.number) + (amending(open2) ? " (sent, and open to amend: the client asked for changes)" : ""),
     lines: p.totals.lines,
     baseRates: money(p.totals.base),
     inclUplifts: money(p.totals.gross),
@@ -39931,7 +40031,7 @@ function registerWrites(server, ctx) {
     }
     if (!lines.length && !vos.length) return text({ job: job.name, added: "nothing", skipped });
     const at = Date.now();
-    let open2 = openValuation(d.vals), started = false;
+    let open2 = claimTarget(d.vals), started = false;
     if (!open2) {
       open2 = { id: crypto.randomUUID(), jobId: job.id, number: d.vals.reduce((m, v) => Math.max(m, v.number), 0) + 1, status: "Open", createdAt: at, issuedAt: null, byClaude: at };
       await save(ctx, "valuations", [open2]);
@@ -40310,6 +40410,12 @@ ${added}` } : {},
 }
 
 // server/mcp/tools.ts
+var rhythmFacts = (r) => ({
+  lastSent: r.last ? `${valRef(r.last.number)} on ${day(r.last.issuedAt)}` : "none yet",
+  next: `${valRef(r.next)} goes in ${weekText(r)}${r.state === "due" ? " \u2014 this week" : r.state === "late" ? " \u2014 late" : ""}${r.waited ? " (moved on a month by the office)" : ""}`,
+  rule: "Valuations go in during the first week of each month; less than two weeks\u2019 work since the last one waits for the next month.",
+  basis: lastText(r)
+});
 var READ2 = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
 var scopeTotals = (job, lines) => {
   const base = pennies(lines.reduce((t, i) => t + lineValue(i.qty, i.rate), 0));
@@ -40328,7 +40434,7 @@ var jobRef = (j) => ({ id: j.id, name: j.name, client: j.client || null, ref: j.
 function mastorServer(ctx) {
   const server = new McpServer(
     { name: "mastor", title: "Mastor", version: "1.0.0" },
-    { instructions: `Mastor is ${ctx.company || "the company"}\u2019s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor\u2019s own calculations \u2014 quote them, don\u2019t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here. You can also make changes for this person \u2014 tick lines into the open valuation, log and update VOs, add notes, fill in the site day, book key dates and to-dos on the job's line and tick them off, set the job's PO details. Before any change, say exactly what you will change and get their yes. Everything you change is marked \u201Cby Claude\u201D in the app for them to check.${ctx.money ? "" : " This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused."}` }
+    { instructions: `Mastor is ${ctx.company || "the company"}\u2019s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor\u2019s own calculations \u2014 quote them, don\u2019t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Sending valuations to the client and raising invoices is done in the Mastor app by a person, never here. Valuations go in during the first week of each month: sent for the client's review, then agreed (or changes asked, amended and sent again), then invoiced. You can also make changes for this person \u2014 tick lines into the open valuation, log and update VOs, add notes, fill in the site day, book key dates and to-dos on the job's line and tick them off, set the job's PO details. Before any change, say exactly what you will change and get their yes. Everything you change is marked \u201Cby Claude\u201D in the app for them to check.${ctx.money ? "" : " This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused."}` }
   );
   server.registerTool("mastor_overview", {
     title: "Overview of every job",
@@ -40370,7 +40476,8 @@ function mastorServer(ctx) {
   }, async ({ job: q }) => {
     const job = findJob(await records(ctx, "jobs"), q);
     const d = await jobData(ctx, job);
-    const { alerts, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders);
+    const { alerts, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders, Date.now(), d.diary);
+    const rhythm = ctx.money ? valRhythm(job, d.vals, { diary: d.diary, today: ukToday() }) : null;
     const notes = d.diary.filter((e) => e.type === "note" && (ctx.money || e.category !== "Commercial")).sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.createdAt - a.createdAt).slice(0, 40);
     const s = ctx.money ? await settings(ctx) : null;
     const certified = d.vals.filter((v) => v.status === "Issued").reduce((t, v) => t + valTotals(job, v.id, d.scope, d.vos).gross, 0);
@@ -40386,7 +40493,8 @@ function mastorServer(ctx) {
           certified: money(certified),
           margin: m && (m.costs || m.labourEstimate != null) ? `${money(m.margin)}${m.pct != null ? ` (${m.pct}%)` : ""}${m.provisional.length ? " \u2014 provisional" : ""}` : "no costs entered"
         },
-        poCheck: poNote ?? null
+        poCheck: poNote ?? null,
+        valuationWeek: rhythm ? rhythmFacts(rhythm) : "job complete: no monthly valuation"
       } : {},
       properties: job.properties ? Object.entries(job.properties).map(([no, addr]) => `No. ${no}: ${addr}`) : void 0,
       actionNeeded: alerts.filter((a) => ctx.money || a.site).map((a) => ({ level: a.kind === "stop" ? "urgent" : a.kind === "do" ? "next step" : "to do", what: a.text, detail: a.hint })),
@@ -40541,7 +40649,7 @@ function mastorServer(ctx) {
   });
   server.registerTool("get_valuations", {
     title: "Valuations and payments",
-    description: "The job\u2019s valuations: what each claims, issued / invoiced / paid, what is owed and when it is due; for the open valuation, what it would certify and the checks a client QS would query. (Issuing is done in the app, not here.)",
+    description: "The job\u2019s valuations: the valuation week (when the last one was sent and when the next goes in), what each claims, where it is with the client (for review, changes asked, agreed), invoiced / paid, what is owed and when it is due; for the open valuation, what it would certify and the checks a client QS would query. (Sending and invoicing are done in the app, not here.)",
     inputSchema: { job: external_exports.string().describe("Job id, or part of its name, contract ref or address") },
     annotations: READ2
   }, async ({ job: q }) => {
@@ -40549,8 +40657,10 @@ function mastorServer(ctx) {
     const job = findJob(await records(ctx, "jobs"), q);
     const d = await jobData(ctx, job);
     const vals = [...d.vals].sort((a, b) => a.number - b.number);
+    const rhythm = valRhythm(job, d.vals, { diary: d.diary, today: ukToday() });
     return text({
       job: job.name,
+      valuationWeek: rhythm ? rhythmFacts(rhythm) : "job complete: no monthly valuation",
       valuations: vals.map((v) => {
         const t = valTotals(job, v.id, d.scope, d.vos);
         const base = { id: v.id, ref: valRef(v.number), status: v.status, lines: t.lines, baseRates: money(t.base), inclUplifts: money(t.gross) };
@@ -40562,13 +40672,15 @@ function mastorServer(ctx) {
             wouldCertify: { thisValuation: money(plan.totals.gross), uplifts: `${money(plan.u1)} + ${money(plan.u2)}`, previouslyCertified: money(plan.previous), cumulative: money(plan.cumulative), ofContract: plan.pct != null ? `${plan.pct}%` : null },
             byGroup: plan.groups.map((g) => `${g.name}: ${g.lines} line${g.lines === 1 ? "" : "s"}, ${money(g.base)} base`),
             checksBeforeIssue: plan.checks.map((c2) => `${c2.kind === "warn" ? "CHECK" : "OK"}: ${c2.text}`),
-            note: "Issuing is done in the Mastor app by a person."
+            note: "Sending it to the client for review is done in the Mastor app by a person."
           };
         }
-        const c = valCourt(v, job, d.scope, d.vos);
+        const c = valCourt(v, job, d.scope, d.vos), stage = reviewStage(v), r = v.review;
+        const review = !r ? "from before the review step: counts as agreed when sent" : stage === "review" ? `with the client for review since ${day(r.sentAt)}${r.rounds > 1 ? ` (sent ${r.rounds} times)` : ""}` : stage === "changes" ? `the client asked for changes on ${day(r.changesAt)}${r.changes ? `: \u201C${r.changes}\u201D` : ""}; open to amend until it's sent again` : r.agreedAt ? `agreed ${day(r.agreedAt)}` : "agreed (invoiced)";
         return {
           ...base,
-          issued: day(v.issuedAt),
+          sent: day(v.issuedAt),
+          review,
           invoice: v.invoiceNumber ? `${v.invoiceNumber} (${day(v.invoiceDate)})` : "not invoiced yet",
           paid: v.paidAt ? `${money(v.paidAmount ?? 0)} on ${day(v.paidAt)}` : "not yet",
           owed: money(c.owed),

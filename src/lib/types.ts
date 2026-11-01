@@ -24,6 +24,8 @@ export interface Job {
   properties?: Record<string, string>
   /** PO details last changed by Claude through the connector (time) — shown as “by Claude” until a person saves the job */
   byClaude?: number | null
+  /** "Wait till next month": the next valuation moves to the week starting `until` (YYYY-MM-DD), until one is sent after `at` */
+  valWait?: { until: string; at: number } | null
   createdAt: number
 }
 
@@ -91,6 +93,19 @@ export interface Valuation {
   invoiceVatRate?: number | null
   /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
   byClaude?: number | null
+  /**
+   * The client's review: sent → changes asked → sent again → agreed, then the invoice. Valuations issued
+   * before the review step came in have none, and count as agreed when they were issued.
+   */
+  review?: ValReview | null
+}
+
+export interface ValReview {
+  sentAt: number              // last sent to the client (issuedAt keeps the first send)
+  rounds: number              // 1 = first send, 2 = sent again after changes …
+  changesAt?: number | null   // the client asked for changes: open to amend until it's sent again
+  changes?: string            // what they asked for, in your words
+  agreedAt?: number | null
 }
 
 /**

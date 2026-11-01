@@ -8,11 +8,15 @@ import { valTotals, valRef } from './valuation'
 import { money, ukDate } from './format'
 
 export type Tone = 'ok' | 'due' | 'late' | 'done'
-export interface Court { who: 'us' | 'client' | 'none'; text: string; tone: Tone; days?: number }
+/** `review` marks a valuation still with the client for review: late there means chase for agreement, not money overdue. */
+export interface Court { who: 'us' | 'client' | 'none'; text: string; tone: Tone; days?: number; review?: boolean }
 const DAY = 86_400_000
 export const VO_CHASE_AMBER = 7, VO_CHASE_RED = 14
+/** The client's review of a valuation usually takes about a week: chase at a week, late at two. */
+export const REVIEW_CHASE_AMBER = 7, REVIEW_CHASE_RED = 14
 export const termsOf = (job: Job) => (job.paymentTermsDays && job.paymentTermsDays > 0 ? job.paymentTermsDays : 30)
 const daysSince = (t: number, now: number) => Math.floor((now - t) / DAY)
+const ordinal = (n: number) => (n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`)
 
 export function voCourt(v: Variation, vals: Valuation[], now = Date.now()): Court {
   if (v.status === 'Rejected') return { who: 'none', text: 'Rejected', tone: 'done' }
@@ -30,11 +34,14 @@ export function voCourt(v: Variation, vals: Valuation[], now = Date.now()): Cour
   return { who: 'us', text: 'Complete — tick into a valuation', tone: 'due' }
 }
 
-/** Terms run from the invoice date once invoiced, otherwise from the valuation issue date. */
-export function dueAt(val: Valuation, job: Job) { const from = val.invoiceDate ?? val.issuedAt; return from ? from + termsOf(job) * DAY : null }
+/**
+ * Terms run from the invoice date. Valuations from before the review step (no `review`) run from the
+ * issue date until invoiced, as they always did; a reviewed one has no due date until it's invoiced.
+ */
+export function dueAt(val: Valuation, job: Job) { const from = val.invoiceDate ?? (val.review ? null : val.issuedAt); return from ? from + termsOf(job) * DAY : null }
 
 export function valCourt(val: Valuation, job: Job, scope: ScopeItem[], vos: Variation[], now = Date.now()): Court & { owed: number } {
-  if (val.status === 'Open') return { who: 'us', text: 'Open — review and issue', tone: 'ok', owed: 0 }
+  if (val.status === 'Open') return { who: 'us', text: 'Open — check it and send it for review', tone: 'ok', owed: 0 }
   const net = valTotals(job, val.id, scope, vos).gross
   // once a VAT invoice is raised, what's owed is the invoice total (net + VAT)
   const p = (x: number) => Math.round(x * 100 + 1e-7) / 100
@@ -42,9 +49,17 @@ export function valCourt(val: Valuation, job: Job, scope: ScopeItem[], vos: Vari
   const paid = val.paidAmount ?? 0
   const owed = Math.max(0, Math.round((gross - paid) * 100) / 100)
   if (val.paidAt && owed < 0.01) return { who: 'none', text: `Paid ${ukDate(val.paidAt)}`, tone: 'done', owed: 0 }
-  const due = dueAt(val, job)!
-  const left = Math.ceil((due - now) / DAY)
   const prefix = val.paidAt ? `Part paid · ${money(owed)} outstanding · ` : ''
+  const r = val.review
+  if (r && !val.invoiceNumber && !val.paidAt && !r.agreedAt) {
+    if (r.changesAt) return { who: 'us', text: 'Changes asked · amend it and send it again', tone: 'due', owed, review: true }
+    const d = daysSince(r.sentAt, now)
+    return { who: 'client', text: `For review · ${d} day${d === 1 ? '' : 's'}${r.rounds > 1 ? ` · sent ${ordinal(r.rounds)} time` : ''}`, days: d, owed, review: true,
+      tone: d >= REVIEW_CHASE_RED ? 'late' : d >= REVIEW_CHASE_AMBER ? 'due' : 'ok' }
+  }
+  const due = dueAt(val, job)
+  if (due == null) return { who: 'us', text: `${prefix}${r?.agreedAt ? `Agreed ${ukDate(r.agreedAt)} · ` : ''}create the invoice`, tone: 'due', owed }
+  const left = Math.ceil((due - now) / DAY)
   if (left < 0) return { who: 'client', text: `${prefix}Overdue ${-left} day${left === -1 ? '' : 's'}`, tone: 'late', days: -left, owed }
   if (left <= 7) return { who: 'client', text: `${prefix}Due ${left === 0 ? 'today' : `in ${left} day${left === 1 ? '' : 's'}`}`, tone: 'due', days: left, owed }
   return { who: 'client', text: `${prefix}Due ${ukDate(due)}`, tone: 'ok', days: left, owed }

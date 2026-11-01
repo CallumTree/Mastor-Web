@@ -64,9 +64,9 @@ describe('multi-property scheme', () => {
 
     // wrong spec: delete entire scope → certified lines survive, everything else goes
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Issue VAL I' }))
-    click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findAllByText(/^With client · Due /)
+    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
+    click(await screen.findByRole('button', { name: /^send val i for £/i }))
+    await screen.findAllByText(/^With client · For review · 0 days/)
     nav('scope')
     click(await screen.findByRole('button', { name: 'Add item' }))
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Wrong spec line' } })
