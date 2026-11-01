@@ -6,7 +6,7 @@
  *    which proves audio really goes through.
  * Nothing is checked for someone who isn't a signed-in member.
  */
-import { guard, anthropicKey, geminiKey } from './_guard.js'
+import { guard, anthropicKey, geminiKey, CLERK_MODEL, CLERK_DOC_MODEL } from './_guard.js'
 import { MODEL as PACK_MODEL } from './read-pack.js'
 import { CLAUDE_MODEL as SITE_MODEL, GEMINI_MODEL, transcribe } from './read-site.js'
 
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
   if (!key) checks.push({ name: 'Claude (reading documents and site captures)', ok: false, detail: 'ANTHROPIC_API_KEY isn’t set in Vercel. Add it, then redeploy.' })
   else {
     const uses = new Map()
-    for (const [m, what] of [[DOC_MODEL, 'BoQs and VOs'], [PACK_MODEL, 'PCI and surveys'], [SITE_MODEL, 'site captures']]) uses.set(m, [...(uses.get(m) ?? []), what])
+    for (const [m, what] of [[DOC_MODEL, 'BoQs and VOs'], [PACK_MODEL, 'PCI and surveys'], [SITE_MODEL, 'site captures'], [CLERK_MODEL, 'Clerk'], [CLERK_DOC_MODEL, 'Clerk reading documents']]) uses.set(m, [...(uses.get(m) ?? []), what])
     for (const [m, what] of uses) {
       const name = `Claude · ${what.join(', ')}`
       tasks.push(limit(name, async () => {

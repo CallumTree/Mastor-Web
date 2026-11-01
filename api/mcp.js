@@ -30984,6 +30984,8 @@ var SB_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https
 var SB_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_BrmA2y4zsAablFTqNCWvPA_thOHgiGf";
 var envKey = (name) => (process.env[name] || "").trim().replace(/^["']|["']$/g, "").trim();
 var geminiKey = () => envKey("GEMINI_API_KEY");
+var CLERK_MODEL = process.env.ANTHROPIC_AGENT_MODEL || "claude-haiku-5-5";
+var CLERK_DOC_MODEL = process.env.ANTHROPIC_AGENT_DOC_MODEL || "claude-opus-5-5";
 
 // server/mcp/data.ts
 var headers = (token, extra = {}) => ({ apikey: SB_KEY, authorization: `Bearer ${token}`, ...extra });
