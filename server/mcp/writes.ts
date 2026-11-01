@@ -12,6 +12,8 @@ import { NOTE_CATEGORIES, type DiaryEntry, type Job, type ScopeItem, type Valuat
 import { money, qtyText, roman, voRef } from '../../src/lib/format'
 import { isPriced, issuePlan, lineValue, lockedIn, openValuation, pennies, valRef } from '../../src/lib/valuation'
 import { allocateInvoiceNo, invoiceAmounts, missingForInvoice } from '../../src/lib/invoice'
+import { jobAlerts } from '../../src/lib/alerts'
+import { shortDay } from '../../src/lib/plan'
 import { copyMedia, findJob, jobData, records, save, settings, type Ctx, type JobData } from './data'
 import { day, JOB_DESC, NO_MONEY, text, ukToday } from './shared'
 
@@ -49,6 +51,15 @@ function openNow(job: Job, d: JobData) {
     cumulative: money(p.cumulative), ofContract: p.pct != null ? `${p.pct}%` : null,
     checksBeforeIssue: p.checks.map(c => `${c.kind === 'warn' ? 'CHECK' : 'OK'}: ${c.text}`),
   }
+}
+
+/** Whether the BoQ, with the job's uplifts, comes to the PO value: the app's own check, in its own words. */
+function poCheck(job: Job, d: JobData) {
+  if (!job.contractValue) return 'no PO value set, so nothing to check against'
+  if (!d.scope.length) return 'no BoQ yet, so nothing to check against'
+  const { gap, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders)
+  if (!gap) return `reconciles: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to the PO value, ${money(job.contractValue)}`
+  return `${poNote ?? 'doesn’t reconcile'}: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to ${money(gap.withUplifts)}; the PO value is ${money(job.contractValue)} (${gap.diff > 0 ? 'over' : 'under'} by ${money(Math.abs(gap.diff))})`
 }
 
 export function registerWrites(server: McpServer, ctx: Ctx) {
@@ -230,6 +241,35 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     })
   })
 
+  server.registerTool('update_job', {
+    title: 'Update the job’s PO details',
+    description: 'Sets the job’s purchase order details: the PO number, the PO value (the order’s total net: every lot, all-in with its uplifts, excluding VAT) and the two uplifts in the order they compound (Uplift 1 first, e.g. an annual BCIS uplift; Uplift 2 second, e.g. the contractor uplift). Take every figure from the purchase order itself (read_document), never from memory or arithmetic. Afterwards it says whether the BoQ with these uplifts reconciles with the PO value. Office roles only. The job is marked “by Claude” in the app. Get the person’s yes first.',
+    inputSchema: {
+      job: z.string().describe(JOB_DESC),
+      po_number: z.string().min(1).optional().describe('The order number as printed, e.g. PC22358'),
+      po_value: z.number().positive().optional().describe('The order’s total net, excluding VAT, in £'),
+      uplift1: z.number().min(0).max(100).optional().describe('First uplift, %, e.g. 14.68'),
+      uplift2: z.number().min(0).max(200).optional().describe('Second uplift, %, e.g. 35'),
+      source: z.string().optional().describe('The document the figures came from, e.g. “Order PC22358, page 2”'),
+    },
+    annotations: WRITE,
+  }, async (a) => {
+    if (!ctx.money) throw new Error(NO_MONEY)
+    if (a.po_number === undefined && a.po_value === undefined && a.uplift1 === undefined && a.uplift2 === undefined) throw new Error('Say what to change: the PO number, the PO value or the uplifts.')
+    const { job, d } = await load(a.job)
+    const next: Job = {
+      ...job,
+      ...(a.po_number !== undefined ? { poNumber: a.po_number.trim() } : {}), ...(a.po_value !== undefined ? { contractValue: pennies(a.po_value) } : {}),
+      ...(a.uplift1 !== undefined ? { uplift1: a.uplift1 } : {}), ...(a.uplift2 !== undefined ? { uplift2: a.uplift2 } : {}),
+    }
+    const shown = (j: Job) => ({ poNumber: j.poNumber || 'not set', poValue: j.contractValue ? money(j.contractValue) : 'not set', uplifts: `${j.uplift1}% + ${j.uplift2}%` })
+    const before = shown(job), after = shown(next)
+    const changes = (Object.keys(after) as (keyof typeof after)[]).filter(k => before[k] !== after[k]).map(k => `${k}: ${before[k]} → ${after[k]}`)
+    if (!changes.length) return text({ job: job.name, changed: 'nothing, as the job already says that', poCheck: poCheck(next, d) })
+    await save(ctx, 'jobs', [{ ...next, byClaude: Date.now() }])
+    return text({ job: next.name, changed: changes, ...(a.source ? { from: a.source } : {}), poCheck: poCheck(next, d) })
+  })
+
   server.registerTool('add_note', {
     title: 'Add a note or decision',
     description: 'Adds to the job’s notes & decisions, the record of agreements, client requests, chasers and H&S matters (not the daily site diary). Write it as the person would, with who said or agreed what. It is marked “by Claude” in the app. Get the person’s yes first.',
@@ -250,6 +290,55 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     }
     await save(ctx, 'diary', [note])
     return text({ job: job.name, added: { date: note.date, category, pinned, text: note.note } })
+  })
+
+  server.registerTool('add_to_plan', {
+    title: 'Add a to-do or key date',
+    description: 'Adds to the job’s line in the Diary: a key date (something booked for a day: a start, a delivery, a test, a visit) or a to-do (something to do, by a day or with no date). A to-do can lead up to a key date (leads_up_to: the key date’s id from get_job’s plan), so each shows the other. Give the property and trade when the person says them. Office-only items (money, chasing, valuations) are hidden from operatives. Dates are YYYY-MM-DD, worked out from what the person said and today’s date. It is marked “by Claude” in the app. Get the person’s yes first.',
+    inputSchema: {
+      job: z.string().describe(JOB_DESC),
+      kind: z.enum(['todo', 'key_date']),
+      what: z.string().min(2).describe('In the person’s words, e.g. “Speak to the tenant about the 2 Nov start” or “Kitchen refit starts”'),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD. Required for a key date; leave out for a to-do with no date'),
+      time: z.string().regex(/^\d{2}:\d{2}$/).optional().describe('HH:MM, if they said a time'),
+      property: z.string().optional().describe('House number, e.g. “6”'),
+      trade: z.string().optional().describe('Workstream as the scope names it, e.g. Kitchen'),
+      leads_up_to: z.string().optional().describe('A key date’s id (get_job → plan) this to-do is for'),
+      office_only: z.boolean().optional().describe('Hide it from operatives (money, chasing, valuations). Office roles only'),
+    },
+    annotations: WRITE,
+  }, async (a) => {
+    if (a.office_only && !ctx.money) throw new Error(NO_MONEY)
+    if (a.kind === 'key_date' && !a.date) throw new Error('A key date needs its day (YYYY-MM-DD).')
+    if (a.kind === 'key_date' && a.leads_up_to) throw new Error('Only a to-do leads up to a key date.')
+    const { job, d } = await load(a.job)
+    const link = a.leads_up_to ? d.diary.find(e => e.id === a.leads_up_to && e.type === 'event' && (ctx.money || !e.office)) : undefined
+    if (a.leads_up_to && !link) throw new Error(`No key date with id ${a.leads_up_to} on ${job.name}. Key dates are in get_job’s plan.`)
+    const at = Date.now()
+    const e: DiaryEntry = {
+      id: crypto.randomUUID(), jobId: job.id, date: a.date ?? '', type: a.kind === 'key_date' ? 'event' : 'todo', note: a.what.trim(), labour: null, weather: '', mediaId: null, originalMediaId: null,
+      room: '', voId: null, createdAt: at, byClaude: at,
+      ...(a.time ? { time: a.time } : {}), ...(a.property?.trim() ? { property: a.property.trim().replace(/^no\.?\s*/i, '') } : {}), ...(a.trade?.trim() ? { trade: a.trade.trim() } : {}),
+      ...(link ? { linkId: link.id } : {}), ...(a.office_only ? { office: true } : {}),
+    }
+    await save(ctx, 'diary', [e])
+    return text({ job: job.name, added: { kind: a.kind === 'key_date' ? 'key date' : 'to-do', what: e.note, day: e.date ? shortDay(e.date) : 'no date', time: e.time,
+      where: [e.property ? `No. ${e.property}` : '', e.trade ?? ''].filter(Boolean).join(' · ') || undefined, leadsUpTo: link ? `${shortDay(link.date)} · ${link.note}` : undefined, officeOnly: e.office || undefined }, id: e.id })
+  })
+
+  server.registerTool('tick_off', {
+    title: 'Tick off a to-do',
+    description: 'Marks a to-do on the job’s line done (or not done, with done: false). Use the to-do’s id from get_job’s plan. It is marked “by Claude” in the app. Get the person’s yes first.',
+    inputSchema: { job: z.string().describe(JOB_DESC), todo: z.string().describe('The to-do’s id from get_job → plan'), done: z.boolean().optional().describe('false to untick') },
+    annotations: WRITE,
+  }, async (a) => {
+    const { job, d } = await load(a.job)
+    const t = d.diary.find(e => e.id === a.todo && e.type === 'todo' && (ctx.money || !e.office))
+    if (!t) throw new Error(`No to-do with id ${a.todo} on ${job.name}. To-dos are in get_job’s plan.`)
+    const done = a.done ?? true
+    if (!!t.doneAt === done) return text({ job: job.name, todo: t.note, changed: `nothing, it’s already ${done ? 'done' : 'open'}` })
+    await save(ctx, 'diary', [{ ...t, doneAt: done ? Date.now() : null, byClaude: Date.now() }])
+    return text({ job: job.name, todo: t.note, now: done ? 'done' : 'open' })
   })
 
   server.registerTool('update_site_day', {

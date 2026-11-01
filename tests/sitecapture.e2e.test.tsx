@@ -8,6 +8,7 @@ import type { Job } from '../src/lib/types'
 vi.mock('../src/lib/sync', async orig => ({ ...(await orig<typeof import('../src/lib/sync')>()), currentCompany: () => 'c1', settle: async () => {} }))
 afterAll(async () => { cleanup(); vi.unstubAllGlobals(); await wipeLocal() })
 const click = (el: Element) => fireEvent.click(el)
+const openToday = async () => click(await screen.findByRole('button', { name: /today’s site (day|diary)/i }))   // the Diary tab opens on the job's line; today's site day is one tap
 const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.closest('nav') && b.textContent?.toLowerCase().includes(name))!)
 
 describe('site capture', () => {
@@ -32,6 +33,7 @@ describe('site capture', () => {
     render(<App />)
     click(await screen.findByRole('button', { name: /Windsor Road/ }))
     nav('diary')
+    await openToday()
     expect(await screen.findByRole('button', { name: 'Open voice note' })).toBeTruthy()
     click(screen.getByRole('button', { name: /Read today against the scope · 1 new/ }))
     expect(await screen.findByText('3 suggestions waiting in Vals for review.')).toBeTruthy()

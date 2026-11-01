@@ -71,8 +71,10 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
   )
 }
 
-export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onSave, onDelete, onAddMedia, onRaiseVo, onRead }: {
+export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onBack, onSave, onDelete, onAddMedia, onRaiseVo, onRead }: {
   job: Job; entries: DiaryEntry[]; rooms: string[]; vos: Variation[]; date: string; setDate: (d: string) => void; focusNote?: boolean
+  /** back to the job's line of days */
+  onBack?: () => void
   onSave: (e: DiaryEntry, markedUp?: Blob) => void; onDelete: (e: DiaryEntry) => void
   onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVo: (e: DiaryEntry) => void
   /** read this day's captures against the scope; resolves to a one-line result */
@@ -129,10 +131,11 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
     setErr(null); setBusy(true)
     try { await onAddMedia(f, kind, date) } catch (x) { setErr(`Couldn’t add that ${kind} — ${(x as Error).message || 'unknown problem'}. Try again, or pick a smaller file.`) } finally { setBusy(false) }
   }
-  const recent = [...new Set(entries.filter(e => e.type !== 'note').map(e => e.date))].filter(d => d !== date).sort().reverse().slice(0, 7)
+  const recent = [...new Set(entries.filter(e => e.type !== 'note' && e.type !== 'todo' && e.type !== 'event').map(e => e.date))].filter(d => d !== date).sort().reverse().slice(0, 7)
 
   return (
     <div className="stack">
+      {onBack && <button className="btn btn-ghost ln-back" onClick={onBack}><IconBack size={18} /> All days</button>}
       <div className="row diary-day">
         <button className="icon-btn" aria-label="Previous day" onClick={() => setDate(addDays(date, -1))}><IconBack size={18} /></button>
         <div className="grow" style={{ textAlign: 'center' }}>

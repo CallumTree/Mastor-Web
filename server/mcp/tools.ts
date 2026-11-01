@@ -16,6 +16,7 @@ import { jobAlerts } from '../../src/lib/alerts'
 import { jobMargin } from '../../src/lib/margin'
 import { findJob, jobData, rateBookItems, records, settings, type Ctx } from './data'
 import { findRates } from './rates'
+import { isOpen, isPlan, placeOf, shortDay, visible } from '../../src/lib/plan'
 import { findDoc, MONEY_DOCS, readDocument } from './docs'
 import { siteMedia } from './media'
 import { day, NO_MONEY, text, ukToday } from './shared'
@@ -37,7 +38,7 @@ const jobRef = (j: Job) => ({ id: j.id, name: j.name, client: j.client || null, 
 export function mastorServer(ctx: Ctx) {
   const server = new McpServer(
     { name: 'mastor', title: 'Mastor', version: '1.0.0' },
-    { instructions: `Mastor is ${ctx.company || 'the company'}’s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor’s own calculations — quote them, don’t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here. You can also make changes for this person — tick lines into the open valuation, log and update VOs, add notes, fill in the site day. Before any change, say exactly what you will change and get their yes. Everything you change is marked “by Claude” in the app for them to check.${ctx.money ? '' : ' This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused.'}` },
+    { instructions: `Mastor is ${ctx.company || 'the company'}’s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor’s own calculations — quote them, don’t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here. You can also make changes for this person — tick lines into the open valuation, log and update VOs, add notes, fill in the site day, book key dates and to-dos on the job's line and tick them off, set the job's PO details. Before any change, say exactly what you will change and get their yes. Everything you change is marked “by Claude” in the app for them to check.${ctx.money ? '' : ' This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused.'}` },
   )
 
   server.registerTool('mastor_overview', {
@@ -92,8 +93,17 @@ export function mastorServer(ctx: Ctx) {
       } : {}),
       properties: job.properties ? Object.entries(job.properties).map(([no, addr]) => `No. ${no}: ${addr}`) : undefined,
       actionNeeded: alerts.filter(a => ctx.money || a.site).map(a => ({ level: a.kind === 'stop' ? 'urgent' : a.kind === 'do' ? 'next step' : 'to do', what: a.text, detail: a.hint })),
-      counts: { scopeLines: d.scope.length, variations: d.vos.length, valuations: d.vals.length, diaryDays: new Set(d.diary.filter(e => e.type !== 'note').map(e => e.date)).size, siteCaptures: d.diary.filter(e => e.mediaId).length, workOrders: d.orders.length },
+      counts: { scopeLines: d.scope.length, variations: d.vos.length, valuations: d.vals.length, diaryDays: new Set(d.diary.filter(e => e.type !== 'note' && !isPlan(e)).map(e => e.date)).size, siteCaptures: d.diary.filter(e => e.mediaId).length, workOrders: d.orders.length },
       notesAndDecisions: notes.map(n => ({ date: n.date, category: n.category ?? 'Site', pinned: !!n.pinned, text: n.note })),
+      plan: (() => {   // the job's line: to-dos and key dates (office-only items hidden from operatives)
+        const today = ukToday(), plan = d.diary.filter(e => visible(e, ctx.money))
+        const item = (e: DiaryEntry) => ({ id: e.id, kind: e.type === 'event' ? 'key date' : 'to-do', what: e.note, day: e.date ? shortDay(e.date) : 'no date', date: e.date || undefined, time: e.time,
+          where: placeOf(e) || undefined, office: e.office || undefined, leadsUpTo: e.linkId ? plan.find(x => x.id === e.linkId)?.note : undefined, done: e.doneAt ? day(e.doneAt) : undefined, byClaude: e.byClaude ? true : undefined })
+        return { today: shortDay(today),
+          late: plan.filter(e => isOpen(e) && e.date && e.date < today).map(item),
+          todayAndAhead: plan.filter(e => e.date >= today && (e.type === 'event' || isOpen(e))).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 40).map(item),
+          noDate: plan.filter(e => isOpen(e) && !e.date).map(item) }
+      })(),
       documents: d.docs.filter(x => ctx.money || !MONEY_DOCS.includes(x.kind)).map(x => ({ id: x.id, name: x.name, kind: x.kind, added: day(x.addedAt) })),
     })
   })
@@ -252,7 +262,7 @@ export function mastorServer(ctx: Ctx) {
     const d = await jobData(ctx, job)
     const today = ukToday()
     const start = from ?? ukToday(new Date(Date.now() - 14 * 864e5)), end = to ?? today
-    const entries = d.diary.filter(e => e.type !== 'note' && e.date >= start && e.date <= end)
+    const entries = d.diary.filter(e => e.type !== 'note' && !isPlan(e) && e.date >= start && e.date <= end)   // the plan is in get_job
     const days = [...new Set(entries.map(e => e.date))].sort().reverse()
     const capture = (e: DiaryEntry) => ({
       entryId: e.id, type: e.type, caption: e.note || undefined, room: e.room || undefined, markedUp: !!e.originalMediaId || undefined,

@@ -15,6 +15,7 @@ import App from '../src/App'
 import { db } from '../src/lib/db'
 
 const click = (el: Element) => fireEvent.click(el)
+const openToday = async () => click(await screen.findByRole('button', { name: /today’s site (day|diary)/i }))   // the Diary tab opens on the job's line; today's site day is one tap
 const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.closest('nav') && b.textContent?.toLowerCase().includes(name))!)
 const pick = (input: Element, file: File) => fireEvent.change(input, { target: { files: [file] } })
 
@@ -31,7 +32,8 @@ describe('site diary', () => {
 
     // --- day note + labour
     nav('diary')
-    await screen.findByText(/^(Today|Yesterday) · /)   // the diary keeps the day you were on
+    await openToday()
+    await screen.findByText(/^(Today|Yesterday) · /)
     const note = screen.getByPlaceholderText(/what happened on site today/i)
     fireEvent.change(note, { target: { value: 'Stripped out kitchen, skip swapped' } }); fireEvent.blur(note)
     click(screen.getByRole('button', { name: /more operatives/i }))
@@ -79,12 +81,14 @@ describe('site diary', () => {
     expect(screen.queryByRole('button', { name: /diary note|job note/i })).toBeNull()
     click(screen.getByRole('button', { name: 'Close' }))
     nav('diary')
-    await screen.findByText(/^(Today|Yesterday) · /)   // the diary keeps the day you were on
+    await openToday()
+    await screen.findByText(/^(Today|Yesterday) · /)
 
     // --- survives a reload
     cleanup(); render(<App />)
     await screen.findByRole('heading', { name: 'Diary Close' })   // still in the job after the reload
     nav('diary')
+    await openToday()
     expect(((await screen.findByPlaceholderText(/what happened on site today/i)) as HTMLTextAreaElement).value).toBe('Stripped out kitchen, skip swapped')
     expect(screen.getByText('2')).toBeTruthy()
   })

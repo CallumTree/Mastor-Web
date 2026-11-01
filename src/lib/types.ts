@@ -22,6 +22,8 @@ export interface Job {
   poGapAccepted?: { diff: number; note: string; at: number } | null
   /** multi-property schemes: house number → full address, from the client's works orders */
   properties?: Record<string, string>
+  /** PO details last changed by Claude through the connector (time) — shown as “by Claude” until a person saves the job */
+  byClaude?: number | null
   createdAt: number
 }
 
@@ -99,8 +101,9 @@ export interface DiaryEntry {
   id: string
   jobId: string
   date: string                 // YYYY-MM-DD (UK local day)
-  type: 'day' | 'photo' | 'video' | 'voice' | 'note'
-  note: string                 // day note, or the photo/video caption
+  /** todo and event are the plan on the job's line: a to-do (dated or not) and a key date ("Kitchen refit starts") */
+  type: 'day' | 'photo' | 'video' | 'voice' | 'note' | 'todo' | 'event'
+  note: string                 // day note, or the photo/video caption; a to-do's or date's words
   labour: number | null        // day only — operatives on site
   weather: string              // day only
   mediaId: string | null       // photo (marked-up version if marked up) or video
@@ -111,6 +114,13 @@ export interface DiaryEntry {
   pinned?: boolean             // job notes only
   transcript?: string          // voice / video: what was said, transcribed when the day is read
   read?: SiteRead              // what reading it against the scope suggested
+  /** plan only: the day it's booked for, or a to-do's due day ('' = no date yet); HH:MM if it has a time */
+  time?: string
+  property?: string            // plan: the house number it's for (multi-property schemes), e.g. "6"
+  trade?: string               // plan: the workstream it's for (Kitchen, Roofing…), shown by its trade core
+  doneAt?: number | null       // to-do: when it was ticked off
+  linkId?: string | null       // to-do: the key date it leads up to (an event on the same job)
+  office?: boolean             // plan: office only, never shown to operatives (money, chasing, valuations)
   /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
   byClaude?: number | null
   createdAt: number

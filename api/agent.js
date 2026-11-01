@@ -64145,7 +64145,8 @@ async function save(ctx, kind, rows) {
   const r = await fetch(`${SB_URL}/rest/v1/${TABLE[kind]}?on_conflict=id`, {
     method: "POST",
     headers: headers(ctx.token, { "content-type": "application/json", prefer: "resolution=merge-duplicates,return=minimal" }),
-    body: JSON.stringify(rows.map((data) => ({ id: data.id, company_id: ctx.companyId, job_id: data.jobId, data, deleted: false })))
+    body: JSON.stringify(rows.map((data) => ({ id: data.id, company_id: ctx.companyId, job_id: kind === "jobs" ? data.id : data.jobId, data, deleted: false })))
+    // a job is its own job
   });
   if (!r.ok) throw new Error(`Couldn\u2019t save to Mastor just now (${r.status}) \u2014 nothing was changed. Try again in a minute.`);
 }
@@ -66129,6 +66130,22 @@ function findRates(q, s, limit2 = 6) {
   };
 }
 
+// src/lib/dates.ts
+var fromKey = (k) => {
+  const [y, m, d] = k.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+// src/lib/plan.ts
+var isPlan = (e) => e.type === "todo" || e.type === "event";
+var visible = (e, money2) => isPlan(e) && (money2 || !e.office);
+var isOpen = (e) => e.type === "todo" && !e.doneAt;
+var shortDay = (k) => {
+  const d = fromKey(k);
+  return `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${d.getDate()} ${d.toLocaleDateString("en-GB", { month: "short" })}`;
+};
+var placeOf = (e) => [e.property ? `No. ${e.property}` : "", e.trade ?? ""].filter(Boolean).join(" \xB7 ");
+
 // server/mcp/docs.ts
 var MONEY_DOCS = ["Purchase order"];
 var MAX_CHARS = 6e4;
@@ -66411,6 +66428,13 @@ function openNow(job, d) {
     checksBeforeIssue: p.checks.map((c) => `${c.kind === "warn" ? "CHECK" : "OK"}: ${c.text}`)
   };
 }
+function poCheck(job, d) {
+  if (!job.contractValue) return "no PO value set, so nothing to check against";
+  if (!d.scope.length) return "no BoQ yet, so nothing to check against";
+  const { gap, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders);
+  if (!gap) return `reconciles: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to the PO value, ${money(job.contractValue)}`;
+  return `${poNote ?? "doesn\u2019t reconcile"}: the BoQ with ${job.uplift1}% + ${job.uplift2}% comes to ${money(gap.withUplifts)}; the PO value is ${money(job.contractValue)} (${gap.diff > 0 ? "over" : "under"} by ${money(Math.abs(gap.diff))})`;
+}
 function registerWrites(server, ctx) {
   const load = async (q) => {
     const job = findJob(await records(ctx, "jobs"), q);
@@ -66628,6 +66652,36 @@ function registerWrites(server, ctx) {
       ...inVal ? { inValuation: valRef(inVal.number) } : {}
     });
   });
+  server.registerTool("update_job", {
+    title: "Update the job\u2019s PO details",
+    description: "Sets the job\u2019s purchase order details: the PO number, the PO value (the order\u2019s total net: every lot, all-in with its uplifts, excluding VAT) and the two uplifts in the order they compound (Uplift 1 first, e.g. an annual BCIS uplift; Uplift 2 second, e.g. the contractor uplift). Take every figure from the purchase order itself (read_document), never from memory or arithmetic. Afterwards it says whether the BoQ with these uplifts reconciles with the PO value. Office roles only. The job is marked \u201Cby Claude\u201D in the app. Get the person\u2019s yes first.",
+    inputSchema: {
+      job: external_exports.string().describe(JOB_DESC),
+      po_number: external_exports.string().min(1).optional().describe("The order number as printed, e.g. PC22358"),
+      po_value: external_exports.number().positive().optional().describe("The order\u2019s total net, excluding VAT, in \xA3"),
+      uplift1: external_exports.number().min(0).max(100).optional().describe("First uplift, %, e.g. 14.68"),
+      uplift2: external_exports.number().min(0).max(200).optional().describe("Second uplift, %, e.g. 35"),
+      source: external_exports.string().optional().describe("The document the figures came from, e.g. \u201COrder PC22358, page 2\u201D")
+    },
+    annotations: WRITE
+  }, async (a) => {
+    if (!ctx.money) throw new Error(NO_MONEY);
+    if (a.po_number === void 0 && a.po_value === void 0 && a.uplift1 === void 0 && a.uplift2 === void 0) throw new Error("Say what to change: the PO number, the PO value or the uplifts.");
+    const { job, d } = await load(a.job);
+    const next = {
+      ...job,
+      ...a.po_number !== void 0 ? { poNumber: a.po_number.trim() } : {},
+      ...a.po_value !== void 0 ? { contractValue: pennies(a.po_value) } : {},
+      ...a.uplift1 !== void 0 ? { uplift1: a.uplift1 } : {},
+      ...a.uplift2 !== void 0 ? { uplift2: a.uplift2 } : {}
+    };
+    const shown = (j) => ({ poNumber: j.poNumber || "not set", poValue: j.contractValue ? money(j.contractValue) : "not set", uplifts: `${j.uplift1}% + ${j.uplift2}%` });
+    const before = shown(job), after = shown(next);
+    const changes = Object.keys(after).filter((k) => before[k] !== after[k]).map((k) => `${k}: ${before[k]} \u2192 ${after[k]}`);
+    if (!changes.length) return text({ job: job.name, changed: "nothing, as the job already says that", poCheck: poCheck(next, d) });
+    await save(ctx, "jobs", [{ ...next, byClaude: Date.now() }]);
+    return text({ job: next.name, changed: changes, ...a.source ? { from: a.source } : {}, poCheck: poCheck(next, d) });
+  });
   server.registerTool("add_note", {
     title: "Add a note or decision",
     description: "Adds to the job\u2019s notes & decisions, the record of agreements, client requests, chasers and H&S matters (not the daily site diary). Write it as the person would, with who said or agreed what. It is marked \u201Cby Claude\u201D in the app. Get the person\u2019s yes first.",
@@ -66661,6 +66715,74 @@ function registerWrites(server, ctx) {
     };
     await save(ctx, "diary", [note]);
     return text({ job: job.name, added: { date: note.date, category, pinned, text: note.note } });
+  });
+  server.registerTool("add_to_plan", {
+    title: "Add a to-do or key date",
+    description: "Adds to the job\u2019s line in the Diary: a key date (something booked for a day: a start, a delivery, a test, a visit) or a to-do (something to do, by a day or with no date). A to-do can lead up to a key date (leads_up_to: the key date\u2019s id from get_job\u2019s plan), so each shows the other. Give the property and trade when the person says them. Office-only items (money, chasing, valuations) are hidden from operatives. Dates are YYYY-MM-DD, worked out from what the person said and today\u2019s date. It is marked \u201Cby Claude\u201D in the app. Get the person\u2019s yes first.",
+    inputSchema: {
+      job: external_exports.string().describe(JOB_DESC),
+      kind: external_exports.enum(["todo", "key_date"]),
+      what: external_exports.string().min(2).describe("In the person\u2019s words, e.g. \u201CSpeak to the tenant about the 2 Nov start\u201D or \u201CKitchen refit starts\u201D"),
+      date: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("YYYY-MM-DD. Required for a key date; leave out for a to-do with no date"),
+      time: external_exports.string().regex(/^\d{2}:\d{2}$/).optional().describe("HH:MM, if they said a time"),
+      property: external_exports.string().optional().describe("House number, e.g. \u201C6\u201D"),
+      trade: external_exports.string().optional().describe("Workstream as the scope names it, e.g. Kitchen"),
+      leads_up_to: external_exports.string().optional().describe("A key date\u2019s id (get_job \u2192 plan) this to-do is for"),
+      office_only: external_exports.boolean().optional().describe("Hide it from operatives (money, chasing, valuations). Office roles only")
+    },
+    annotations: WRITE
+  }, async (a) => {
+    if (a.office_only && !ctx.money) throw new Error(NO_MONEY);
+    if (a.kind === "key_date" && !a.date) throw new Error("A key date needs its day (YYYY-MM-DD).");
+    if (a.kind === "key_date" && a.leads_up_to) throw new Error("Only a to-do leads up to a key date.");
+    const { job, d } = await load(a.job);
+    const link = a.leads_up_to ? d.diary.find((e2) => e2.id === a.leads_up_to && e2.type === "event" && (ctx.money || !e2.office)) : void 0;
+    if (a.leads_up_to && !link) throw new Error(`No key date with id ${a.leads_up_to} on ${job.name}. Key dates are in get_job\u2019s plan.`);
+    const at = Date.now();
+    const e = {
+      id: crypto.randomUUID(),
+      jobId: job.id,
+      date: a.date ?? "",
+      type: a.kind === "key_date" ? "event" : "todo",
+      note: a.what.trim(),
+      labour: null,
+      weather: "",
+      mediaId: null,
+      originalMediaId: null,
+      room: "",
+      voId: null,
+      createdAt: at,
+      byClaude: at,
+      ...a.time ? { time: a.time } : {},
+      ...a.property?.trim() ? { property: a.property.trim().replace(/^no\.?\s*/i, "") } : {},
+      ...a.trade?.trim() ? { trade: a.trade.trim() } : {},
+      ...link ? { linkId: link.id } : {},
+      ...a.office_only ? { office: true } : {}
+    };
+    await save(ctx, "diary", [e]);
+    return text({ job: job.name, added: {
+      kind: a.kind === "key_date" ? "key date" : "to-do",
+      what: e.note,
+      day: e.date ? shortDay(e.date) : "no date",
+      time: e.time,
+      where: [e.property ? `No. ${e.property}` : "", e.trade ?? ""].filter(Boolean).join(" \xB7 ") || void 0,
+      leadsUpTo: link ? `${shortDay(link.date)} \xB7 ${link.note}` : void 0,
+      officeOnly: e.office || void 0
+    }, id: e.id });
+  });
+  server.registerTool("tick_off", {
+    title: "Tick off a to-do",
+    description: "Marks a to-do on the job\u2019s line done (or not done, with done: false). Use the to-do\u2019s id from get_job\u2019s plan. It is marked \u201Cby Claude\u201D in the app. Get the person\u2019s yes first.",
+    inputSchema: { job: external_exports.string().describe(JOB_DESC), todo: external_exports.string().describe("The to-do\u2019s id from get_job \u2192 plan"), done: external_exports.boolean().optional().describe("false to untick") },
+    annotations: WRITE
+  }, async (a) => {
+    const { job, d } = await load(a.job);
+    const t = d.diary.find((e) => e.id === a.todo && e.type === "todo" && (ctx.money || !e.office));
+    if (!t) throw new Error(`No to-do with id ${a.todo} on ${job.name}. To-dos are in get_job\u2019s plan.`);
+    const done = a.done ?? true;
+    if (!!t.doneAt === done) return text({ job: job.name, todo: t.note, changed: `nothing, it\u2019s already ${done ? "done" : "open"}` });
+    await save(ctx, "diary", [{ ...t, doneAt: done ? Date.now() : null, byClaude: Date.now() }]);
+    return text({ job: job.name, todo: t.note, now: done ? "done" : "open" });
   });
   server.registerTool("update_site_day", {
     title: "Fill in a day on site",
@@ -66748,7 +66870,7 @@ var jobRef = (j) => ({ id: j.id, name: j.name, client: j.client || null, ref: j.
 function mastorServer(ctx) {
   const server = new McpServer(
     { name: "mastor", title: "Mastor", version: "1.0.0" },
-    { instructions: `Mastor is ${ctx.company || "the company"}\u2019s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor\u2019s own calculations \u2014 quote them, don\u2019t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here. You can also make changes for this person \u2014 tick lines into the open valuation, log and update VOs, add notes, fill in the site day. Before any change, say exactly what you will change and get their yes. Everything you change is marked \u201Cby Claude\u201D in the app for them to check.${ctx.money ? "" : " This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused."}` }
+    { instructions: `Mastor is ${ctx.company || "the company"}\u2019s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor\u2019s own calculations \u2014 quote them, don\u2019t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here. You can also make changes for this person \u2014 tick lines into the open valuation, log and update VOs, add notes, fill in the site day, book key dates and to-dos on the job's line and tick them off, set the job's PO details. Before any change, say exactly what you will change and get their yes. Everything you change is marked \u201Cby Claude\u201D in the app for them to check.${ctx.money ? "" : " This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused."}` }
   );
   server.registerTool("mastor_overview", {
     title: "Overview of every job",
@@ -66810,8 +66932,30 @@ function mastorServer(ctx) {
       } : {},
       properties: job.properties ? Object.entries(job.properties).map(([no, addr]) => `No. ${no}: ${addr}`) : void 0,
       actionNeeded: alerts.filter((a) => ctx.money || a.site).map((a) => ({ level: a.kind === "stop" ? "urgent" : a.kind === "do" ? "next step" : "to do", what: a.text, detail: a.hint })),
-      counts: { scopeLines: d.scope.length, variations: d.vos.length, valuations: d.vals.length, diaryDays: new Set(d.diary.filter((e) => e.type !== "note").map((e) => e.date)).size, siteCaptures: d.diary.filter((e) => e.mediaId).length, workOrders: d.orders.length },
+      counts: { scopeLines: d.scope.length, variations: d.vos.length, valuations: d.vals.length, diaryDays: new Set(d.diary.filter((e) => e.type !== "note" && !isPlan(e)).map((e) => e.date)).size, siteCaptures: d.diary.filter((e) => e.mediaId).length, workOrders: d.orders.length },
       notesAndDecisions: notes.map((n) => ({ date: n.date, category: n.category ?? "Site", pinned: !!n.pinned, text: n.note })),
+      plan: (() => {
+        const today = ukToday(), plan = d.diary.filter((e) => visible(e, ctx.money));
+        const item = (e) => ({
+          id: e.id,
+          kind: e.type === "event" ? "key date" : "to-do",
+          what: e.note,
+          day: e.date ? shortDay(e.date) : "no date",
+          date: e.date || void 0,
+          time: e.time,
+          where: placeOf(e) || void 0,
+          office: e.office || void 0,
+          leadsUpTo: e.linkId ? plan.find((x) => x.id === e.linkId)?.note : void 0,
+          done: e.doneAt ? day(e.doneAt) : void 0,
+          byClaude: e.byClaude ? true : void 0
+        });
+        return {
+          today: shortDay(today),
+          late: plan.filter((e) => isOpen(e) && e.date && e.date < today).map(item),
+          todayAndAhead: plan.filter((e) => e.date >= today && (e.type === "event" || isOpen(e))).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 40).map(item),
+          noDate: plan.filter((e) => isOpen(e) && !e.date).map(item)
+        };
+      })(),
       documents: d.docs.filter((x) => ctx.money || !MONEY_DOCS.includes(x.kind)).map((x) => ({ id: x.id, name: x.name, kind: x.kind, added: day(x.addedAt) }))
     });
   });
@@ -66989,7 +67133,7 @@ function mastorServer(ctx) {
     const d = await jobData(ctx, job);
     const today = ukToday();
     const start = from ?? ukToday(new Date(Date.now() - 14 * 864e5)), end = to ?? today;
-    const entries = d.diary.filter((e) => e.type !== "note" && e.date >= start && e.date <= end);
+    const entries = d.diary.filter((e) => e.type !== "note" && !isPlan(e) && e.date >= start && e.date <= end);
     const days = [...new Set(entries.map((e) => e.date))].sort().reverse();
     const capture = (e) => ({
       entryId: e.id,
@@ -67043,10 +67187,10 @@ var SYSTEM = (ctx) => `You are Clerk, the assistant inside Mastor (named after a
 How to work:
 - Use the tools to read before you answer. Every figure must come from a tool: quote Mastor's figures exactly and never do your own sums.
 - Refer to valuations and VOs by Roman numerals (VAL II, VO III), properties as "No. 6".
-- You can change things for them: tick scope lines and VOs into the open valuation or take them out, log a VO, price or update a VO, add a note or decision, fill in the site day. Call the tool when they ask for the change. Don't ask "shall I?" in chat: the app shows each change as a card with Do it and Cancel, and it runs only when they tap Do it. Just before the call, say in one or two short lines exactly what will change, with Mastor's figures (which lines, how many, the totals).
+- You can change things for them: tick scope lines and VOs into the open valuation or take them out, log a VO, price or update a VO, add a note or decision, fill in the site day, set the job's PO details, add a to-do or key date to the job's line (and link a to-do to the date it leads up to), tick a to-do off. Call the tool when they ask for the change. Don't ask "shall I?" in chat: the app shows each change as a card with Do it and Cancel, and it runs only when they tap Do it. Just before the call, say in one or two short lines exactly what will change, with Mastor's figures (which lines, how many, the totals).
 - Never invent a quantity, rate, SoR code or reference. If they didn't say it and no tool shows it, leave it out or ask.${ctx.money ? `
 - Pricing: when they log or price a VO without giving a rate, look it up with find_rate first (the job's own schedule, and the same work priced on other properties and jobs; try a second wording if the first finds nothing). If one match is clearly the same work in the same unit, put its code and suggestedRate in the change with rate_from, and say in a line where it came from ("WR100 at \xA31,500.00, the wet room rate in Planned Maint v8, as used on No. 12"). If several fit, or a rateCheck shows different rates, list the two or three best and ask which. If nothing fits, log it unpriced and say so. Never adjust a rate or do sums on it.` : ""}
-- The job's documents are the source of truth: the purchase order, the client's pack and spec, the programme, RAMS, certificates, drawings (get_job lists them). When a question turns on what one says, read it with read_document and quote it by its name and page; never answer from memory. If Mastor's own figures differ from a document (the PO number or value, the uplifts, a date), say so plainly and change nothing unless they ask.
+- The job's documents are the source of truth: the purchase order, the client's pack and spec, the programme, RAMS, certificates, drawings (get_job lists them). When a question turns on what one says, read it with read_document and quote it by its name and page; never answer from memory. If Mastor's own figures differ from a document (the PO number or value, the uplifts, a date), say so plainly and change nothing unless they ask.${ctx.money ? ` To check a job against its purchase order: read the order, then compare the PO number, the PO value (the order's total net: every lot with its uplifts, excluding VAT) and the uplifts in the order they compound (Uplift 1 first, e.g. annual BCIS; Uplift 2 second, e.g. the contractor uplift) with get_job. List what matches and what differs, quoting the order's page. If something differs, offer update_job with the figures exactly as printed and the document as source; if lots carry different uplifts, say so rather than picking one.` : ""}
 - If a request is ambiguous (which job, which property, which lines), ask one short question instead of guessing.
 - Issuing a valuation or creating an invoice is never done here: a person does that in the app (Vals). Say so if asked.${ctx.money ? "" : "\n- They are an operative: Mastor gives them no money figures (rates, values, valuations, invoices), and money changes are refused. Help with the diary, notes, the site day and logging VOs without prices."}
 - If a tool says Cancel was tapped, accept it in a few words and don't try the change again unless asked.

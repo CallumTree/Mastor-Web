@@ -15,8 +15,10 @@ export const MAX_DOC_BYTES = 20 * 1024 * 1024
  * drawings, kept as filed so they're on the phone on site and Clerk reads them as the source of truth.
  * Mastor stores them; it doesn't write them (your RAMS and programme stay your own documents).
  */
-export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
+export function DocumentsPanel({ docs, onAdd, onOpen, onDelete, onAsk }: {
   docs: JobDocument[]; onAdd: (file: File, kind: JobDocument['kind'], name: string) => Promise<void>
+  /** hands Clerk a question about a document (signed in only) */
+  onAsk?: (question: string) => void
   onOpen: (d: JobDocument) => Promise<void>; onDelete: (d: JobDocument) => Promise<void>
 }) {
   const { money: office } = useAccess()
@@ -26,6 +28,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [manage, setManage] = useState<JobDocument | null>(null)
+  const [justAdded, setJustAdded] = useState<string | null>(null)   // a PO just filed: offer to check the job against it
   const kinds = office ? KINDS : KINDS.filter(k => !MONEY_KINDS.includes(k))
   const sorted = docs.filter(d => office || !MONEY_KINDS.includes(d.kind)).sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind) || b.addedAt - a.addedAt)
   const guess = (f: File): JobDocument['kind'] => (office && (/(^|[^a-z])(order|po)([^a-z]|$)|\bPC\d{4,}/i.test(f.name)) && !/works? order/i.test(f.name) ? 'Purchase order' : /pre-?construction|pci|spec|works? order|survey|hazard/i.test(f.name) ? 'Client pack' : /rams|method|risk/i.test(f.name) ? 'RAMS' : /programme|gantt/i.test(f.name) ? 'Programme' : /cert|eicr|gas|epc/i.test(f.name) ? 'Certificate' : /dwg|drawing|plan/i.test(f.name) ? 'Drawing' : 'Other')
@@ -43,6 +46,12 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
         </label>
       </div>
       {err && <div className="flag" role="alert">{err}</div>}
+      {justAdded && onAsk && office && (
+        <div className="doc-ask" role="status">
+          <span className="grow">Order filed. Clerk can check the job’s PO details against it.</span>
+          <button className="btn btn-secondary" onClick={() => { onAsk(`Check the job’s PO number, PO value and uplifts against “${justAdded}”, and tell me anything that differs.`); setJustAdded(null) }}>Check with Clerk</button>
+        </div>
+      )}
       <div className="panel chk">
         {sorted.length === 0 && <div className="muted" style={{ padding: '14px' }}>{office ? 'The purchase order, the client’s pack, programme, RAMS, certificates, drawings' : 'The client’s pack, programme, RAMS, certificates, drawings'} — keep them here so they’re on the phone on site. Clerk reads them too, so the paperwork is the source of truth.</div>}
         {sorted.map(d => (
@@ -60,7 +69,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete }: {
             <div className="muted t-note" style={{ overflowWrap: 'anywhere' }}>{picked.name} · {size(picked.size)}</div>
             <div className="chips" role="group" aria-label="Kind">{kinds.map(k => <button key={k} className={'chip' + (kind === k ? ' on' : '')} aria-pressed={kind === k} onClick={() => setKind(k)}>{k}</button>)}</div>
             <Field label="Name"><input value={name} onChange={e => setName(e.target.value)} /></Field>
-            <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={async () => { setBusy(true); try { await onAdd(picked, kind, name.trim()); setPicked(null) } finally { setBusy(false) } }}>Add to job</button>
+            <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={async () => { setBusy(true); try { await onAdd(picked, kind, name.trim()); setJustAdded(kind === 'Purchase order' ? name.trim() : null); setPicked(null) } finally { setBusy(false) } }}>Add to job</button>
           </div>
         </Sheet>
       )}

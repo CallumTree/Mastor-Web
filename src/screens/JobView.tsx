@@ -12,10 +12,12 @@ import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarku
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
+import { JobLine } from './Plan'
 import { NoteEditor, NoteRow, NotesSheet, newNote, sortNotes } from './Notes'
 import { dayKey } from '../lib/dates'
 import { Sheet, TitleBlock } from '../components/Ui'
-import { SignMark, SIGN_WORD, type SignKind } from '../components/Sign'
+import { ByClaude, SignMark, SIGN_WORD, type SignKind } from '../components/Sign'
+import { currentCompany } from '../lib/sync'
 import { ValuationsTab } from './Valuations'
 import { AskTab } from './Ask'
 import { valRef, valTotals } from '../lib/valuation'
@@ -141,7 +143,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       {notesOpen && <NotesSheet job={job} notes={notes} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} />}
       {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
       {seesMoney && <div className="hint" style={{ marginTop: 12 }}>
-        PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts
+        PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts <ByClaude at={job.byClaude} />
       </div>}
     </div>
   )
@@ -179,7 +181,11 @@ export function JobView(p: {
   // the tab is kept in the address with the job, so a reload comes back to it
   const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return nav.find(n => n.tab === t)?.tab ?? 'home' })
   const setTab = (t: Tab) => { setTabState(t); setPlace({ tab: t === 'home' ? null : t }) }
+  const [askSeed, setAskSeed] = useState<string | null>(null)   // a question handed to Clerk from elsewhere (e.g. a PO just added)
+  const askClerk = (q: string) => { setAskSeed(q); setTab('ask') }
   const [diaryDate, setDiaryDate] = useState(dayKey())
+  const [diaryView, setDiaryView] = useState<'line' | 'day'>('line')   // the job's line of days, or one day's diary
+  const openDay = (d: string) => { setDiaryDate(d); setDiaryView('day'); setTab('diary') }
   const [capture, setCapture] = useState(false)
   const [focusNote, setFocusNote] = useState(false)
   const [capErr, setCapErr] = useState<string | null>(null)
@@ -188,7 +194,7 @@ export function JobView(p: {
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setCapErr(null)
-    try { const d = dayKey(); await p.onAddMedia(f, kind, d); setDiaryDate(d); setCapture(false); setTab('diary') }
+    try { const d = dayKey(); await p.onAddMedia(f, kind, d); setCapture(false); openDay(d) }
     catch (x) { setCapErr((x as Error).message) }
   }
   return (
@@ -197,17 +203,21 @@ export function JobView(p: {
         <Hero job={job} compact={tab !== 'home'} rail={jobRail(job, scope, vals, vos, access.money)} onBack={onBack} onSetup={onSetup} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
-          documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} />}
+          documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} onAsk={currentCompany() ? askClerk : undefined} />}
           notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
-        {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
-          date={diaryDate} setDate={setDiaryDate} focusNote={focusNote}
+        {tab === 'diary' && diaryView === 'line' && !focusNote && <JobLine job={job} entries={p.diary}
+          properties={[...new Set([...Object.keys(job.properties ?? {}), ...scope.map(s => s.property ?? '')].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}
+          trades={[...new Set(scope.map(s => s.workstream ?? '').filter(Boolean))]}
+          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onOpenDay={openDay} />}
+        {tab === 'diary' && (diaryView === 'day' || focusNote) && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
+          date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} onRead={p.onReadSite} />}
         {tab === 'scope' && job.kind === 'orders' && <OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} />}
-        {tab === 'ask' && <AskTab job={job} />}
+        {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
       </main>
       {/* the capture key sits dead centre: half the tabs left (the odd one too), the rest right, each side the same width (left cells R fr, right cells L fr) */}
       <nav className="nav" style={{ '--dock-cols': `repeat(${left}, ${nav.length - left}fr) 68px repeat(${nav.length - left}, ${left}fr)` } as React.CSSProperties}>
@@ -215,11 +225,11 @@ export function JobView(p: {
           <Fragment key={t}>{i === left && (
             <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={26} /></span></button>
           )}
-          <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>
+          <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); if (t === 'diary') setDiaryView('line'); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>
         ) })}
       </nav>
       {quickNote && <NoteEditor job={job} onClose={() => setQuickNote(false)} onSave={n => { p.onSaveDiary(n); setQuickNote(false) }} />}
-      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); setDiaryDate(d); setTab('diary') }} />}
+      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); openDay(d) }} />}
       {capture && (
         <Sheet onClose={() => setCapture(false)}>
           <div className="stack">

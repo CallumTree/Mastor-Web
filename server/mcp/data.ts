@@ -113,11 +113,11 @@ export async function saveTranscript(ctx: Ctx, entry: DiaryEntry, transcript: st
  * stamps the time, so every phone pulls the change on its next sync; its own rules still decide what
  * this person may write. Throws a plain message when it can't.
  */
-export async function save<T extends { id: string; jobId: string }>(ctx: Ctx, kind: Exclude<Kind, 'settings'>, rows: T[]) {
+export async function save<T extends { id: string; jobId?: string }>(ctx: Ctx, kind: Exclude<Kind, 'settings'>, rows: T[]) {
   if (!rows.length) return
   const r = await fetch(`${SB_URL}/rest/v1/${TABLE[kind]}?on_conflict=id`, {
     method: 'POST', headers: headers(ctx.token, { 'content-type': 'application/json', prefer: 'resolution=merge-duplicates,return=minimal' }),
-    body: JSON.stringify(rows.map(data => ({ id: data.id, company_id: ctx.companyId, job_id: data.jobId, data, deleted: false }))),
+    body: JSON.stringify(rows.map(data => ({ id: data.id, company_id: ctx.companyId, job_id: kind === 'jobs' ? data.id : data.jobId, data, deleted: false }))),   // a job is its own job
   })
   if (!r.ok) throw new Error(`Couldn’t save to Mastor just now (${r.status}) — nothing was changed. Try again in a minute.`)
 }

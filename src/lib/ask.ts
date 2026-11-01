@@ -9,6 +9,7 @@ import { meta } from './db'
 import { authHeader } from './supabase'
 import { settle, syncNow } from './sync'
 import { money } from './format'
+import { shortDay } from './plan'
 
 export type Msg = Anthropic.Beta.BetaMessageParam
 export type Pending = { id: string; name: string; title: string; input: Record<string, unknown> }
@@ -68,7 +69,7 @@ export async function askMastor(jobId: string, c: Convo, step: { text: string } 
 }
 
 // ---------- reading the conversation back for the screen ----------
-const WRITES = new Set(['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day'])
+const WRITES = new Set(['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day', 'update_job', 'add_to_plan', 'tick_off'])
 export type Line =
   | { kind: 'you'; text: string }
   | { kind: 'ask'; text: string }
@@ -76,10 +77,10 @@ export type Line =
 
 const TITLES: Record<string, string> = {
   add_to_valuation: 'Tick lines into the open valuation', remove_from_valuation: 'Take lines out of the open valuation',
-  log_variation: 'Log a new VO', update_variation: 'Update a VO', add_note: 'Add a note or decision', update_site_day: 'Fill in a day on site',
+  log_variation: 'Log a new VO', update_variation: 'Update a VO', update_job: 'Update the job’s PO details', add_to_plan: 'Add to the job’s line', tick_off: 'Tick off a to-do', add_note: 'Add a note or decision', update_site_day: 'Fill in a day on site',
 }
 const LABELS: Record<string, string> = {
-  vo: 'VO', description: 'What', where: 'Where', qty: 'Quantity', unit: 'Unit', rate: 'Rate', code: 'SoR code', rate_from: 'Rate from', reason: 'Why', client_ref: 'Client ref',
+  vo: 'VO', description: 'What', where: 'Where', qty: 'Quantity', unit: 'Unit', rate: 'Rate', code: 'SoR code', rate_from: 'Rate from', po_number: 'PO number', po_value: 'PO value (excl. VAT)', uplift1: 'Uplift 1', uplift2: 'Uplift 2', source: 'From', kind: 'Kind', what: 'What', property: 'Property', trade: 'Trade', leads_up_to: 'Leads up to', office_only: 'Office only', todo: 'To-do', done: 'Done', time: 'Time', reason: 'Why', client_ref: 'Client ref',
   status: 'Status', instructed: 'Instructed', sent_to_client: 'Sent to client', text: 'Note', note: 'Note', category: 'Category', pinned: 'Pinned',
   date: 'Day', weather: 'Weather', labour: 'On site', valuation: 'Valuation', evidence_entry_id: 'Photo', replace_note: 'Replace note',
 }
@@ -91,7 +92,9 @@ export function changeDetail(input: Record<string, unknown>): string[] {
   if (vos?.length) out.push(`VOs: ${vos.join(', ')}`)
   for (const [k, v] of Object.entries(input)) {
     if (k === 'job' || k === 'scope_line_ids' || k === 'vos' || v == null || v === '') continue
-    const val = typeof v === 'boolean' ? (v ? 'yes' : 'no') : k === 'rate' && typeof v === 'number' ? money(v) : k === 'labour' ? `${v} people` : String(v)
+    if (k === 'todo') continue   // an id: Claude names the to-do in the line above the card
+    if (k === 'leads_up_to') { out.push('Linked to its key date'); continue }
+    const val = typeof v === 'boolean' ? (v ? 'yes' : 'no') : (k === 'rate' || k === 'po_value') && typeof v === 'number' ? money(v) : (k === 'uplift1' || k === 'uplift2') ? `${v}%` : k === 'labour' ? `${v} people` : k === 'kind' ? (v === 'key_date' ? 'key date' : 'to-do') : k === 'date' && typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? shortDay(v) : k === 'property' ? `No. ${String(v).replace(/^no\.?\s*/i, '')}` : String(v)
     out.push(`${LABELS[k] ?? k}: ${val}`)
   }
   return out
