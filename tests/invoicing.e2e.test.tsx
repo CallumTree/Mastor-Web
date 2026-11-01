@@ -15,12 +15,12 @@ async function issueOne(desc: string, rate: string, valNo: number) {
   await waitFor(() => expect(screen.getByText(desc)).toBeTruthy())
   click((await screen.findAllByRole('button', { name: /add to valuation/i }))[0])
   nav('vals')
-  click(await screen.findByRole('button', { name: `Issue VAL ${'I'.repeat(valNo)}` }))
-  click(await screen.findByRole('button', { name: new RegExp(`issue val ${'i'.repeat(valNo)} for`, 'i') }))
-  // issuing ends on the next step: the invoice, from the issued sheet
-  const done = await screen.findByRole('dialog', { name: new RegExp(`VAL ${'I'.repeat(valNo)} issued`) })
-  expect(within(done).getByText(/issued for .* — locked/)).toBeTruthy()
-  return () => click(within(done).getByRole('button', { name: 'Create invoice' }))
+  click(await screen.findByRole('button', { name: `Send VAL ${'I'.repeat(valNo)} for review` }))
+  click(await screen.findByRole('button', { name: new RegExp(`^send val ${'i'.repeat(valNo)} for £`, 'i') }))
+  // sent for review, locked; this client agreed it straight away, so the invoice is next from the sent sheet
+  const done = await screen.findByRole('dialog', { name: new RegExp(`VAL ${'I'.repeat(valNo)} sent`) })
+  expect(within(done).getByText(/sent for .* — locked/)).toBeTruthy()
+  return () => click(within(done).getByRole('button', { name: 'Already agreed — create invoice' }))
 }
 
 describe('VAT invoicing', () => {

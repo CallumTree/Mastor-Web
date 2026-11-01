@@ -5,7 +5,7 @@ import { dayParts, fullDay, isOpen, jobLine, lateBy, newPlan, placeOf, shortDay,
 import { useAccess } from '../lib/access'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { TradeMark } from '../components/Trade'
-import { ByClaude } from '../components/Sign'
+import { ByClaude, SignMark } from '../components/Sign'
 import { IconChevron, IconLinkFrom, IconLinkTo } from '../components/Icons'
 
 const Check = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path d="M5 12l5 5L19 7" /></svg>
@@ -63,9 +63,18 @@ const DayLabel = ({ date, today, prev }: { date: string; today: string; prev?: s
  * The job's line: a few site days behind, today lit (with anything late), and every booked day ahead.
  * Tapping a site day opens the diary editor for that day; a to-do's link jumps to its date and back.
  */
-export function JobLine({ job, entries, properties, trades, onSave, onDelete, onOpenDay }: {
+/** Mastor's own dates on the line (the valuation week): not booked, not editable; tapping goes where it's dealt with. */
+export interface LineMark { id: string; date: string; text: string; sub?: string; onOpen: () => void }
+const MarkRow = ({ m }: { m: LineMark }) => (
+  <div className="pl-item ev mk">
+    <button className="pl-open" onClick={m.onOpen}><span className="pl-t">{m.text}</span><span className="pl-m">{['From Mastor', m.sub].filter(Boolean).join(' · ')}</span></button>
+  </div>
+)
+
+export function JobLine({ job, entries, properties, trades, onSave, onDelete, onOpenDay, marks = [] }: {
   job: Job; entries: DiaryEntry[]; properties: string[]; trades: string[]
   onSave: (e: DiaryEntry) => void; onDelete: (e: DiaryEntry) => void; onOpenDay: (date: string) => void
+  marks?: LineMark[]
 }) {
   const { money } = useAccess()
   const today = dayKey()
@@ -76,6 +85,14 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
   const [flash, setFlash] = useState<string | null>(null)
   const line = useMemo(() => jobLine(entries, today, { money, behind, days }), [entries, today, money, behind, days])
   const hasEarlier = useMemo(() => new Set(entries.filter(e => e.date && e.date < today && e.type !== 'note').map(e => e.date)).size > line.before.length, [entries, today, line.before.length])
+  // booked days ahead, with Mastor's own dates folded in
+  const end = addDays(today, days)
+  const ahead = useMemo(() => {
+    const out = new Map(line.ahead.map(d => [d.date, d]))
+    for (const m of marks) if (m.date > today && m.date <= end && !out.has(m.date)) out.set(m.date, { date: m.date, site: null, captures: 0, items: [] })
+    return [...out.values()].sort((a, b) => a.date.localeCompare(b.date))
+  }, [line.ahead, marks, today, end])
+  const marksOn = (d: string) => marks.filter(m => m.date === d)
 
   const toggle = (e: DiaryEntry) => onSave({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null })
   const jump = (t: DiaryEntry) => {
@@ -128,18 +145,19 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
             <button className="ln-site" onClick={() => onOpenDay(today)}>
               <span className="grow"><b>{line.today.site || line.today.captures ? 'Today’s site day' : 'Start today’s site diary'}</b><small>{siteLine(line.today) || prettyDay(today)}</small></span><IconChevron size={16} />
             </button>
+            {marksOn(today).map(m => <MarkRow key={m.id} m={m} />)}
             {line.late.map(e => row(e, true))}
             {line.today.items.map(e => row(e))}
           </div>
         </div>
 
-        {line.ahead.map((d, i) => (
+        {ahead.map((d, i) => (
           <div key={d.date} className="ln-day ahead" role="listitem">
-            <DayLabel date={d.date} today={today} prev={i ? line.ahead[i - 1].date : today} />
-            <div className="ln-c">{d.items.map(e => row(e))}</div>
+            <DayLabel date={d.date} today={today} prev={i ? ahead[i - 1].date : today} />
+            <div className="ln-c">{marksOn(d.date).map(m => <MarkRow key={m.id} m={m} />)}{d.items.map(e => row(e))}</div>
           </div>
         ))}
-        {line.ahead.length === 0 && (
+        {ahead.length === 0 && (
           <div className="ln-day ahead empty" role="listitem">
             <div className="ln-l" aria-hidden="true" />
             <div className="ln-c"><div className="ln-empty">Nothing booked yet. Add the key dates (a start, a delivery, a test) and the to-dos that lead up to them.</div></div>
@@ -263,10 +281,13 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
 }
 
 /** Every job's week on the jobs screen: late and today first, then the days ahead. Tapping an item opens its job's line. */
+/** Mastor's own deadline on the week: red plate (stop), yellow (warn) or none; dated ones sit on their day, the rest at today. */
+export interface WeekAlert { jobId: string; text: string; hint: string; kind?: 'stop' | 'warn' | 'do'; date?: string }
+
 export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
   jobs: Job[]; entries: DiaryEntry[]; onOpen: (jobId: string) => void
-  /** Mastor's own urgent items (overdue valuations…), office only, shown at today as "From Mastor" */
-  alerts?: { jobId: string; text: string; hint: string }[]
+  /** Mastor's own items (overdue valuations, the valuation week…), office only, shown as "From Mastor" */
+  alerts?: WeekAlert[]
   /** tick a to-do off from here, without opening the job */
   onToggle?: (e: DiaryEntry) => void
 }) {
@@ -275,27 +296,36 @@ export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
   const w = useMemo(() => weekLine(jobs, entries, today, { money }), [jobs, entries, today, money])
   const fromMastor = money ? alerts : []
   if (!w.count && !fromMastor.length) return null
+  const atToday = fromMastor.filter(a => !a.date || a.date <= today)
+  const onDay = (d: string) => fromMastor.filter(a => a.date === d && d > today)
+  const days = [...new Map([...w.days.filter(d => d.date !== today).map(d => [d.date, d] as const),
+    ...fromMastor.filter(a => a.date && a.date > today && !w.days.some(d => d.date === a.date)).map(a => [a.date!, { date: a.date!, items: [] as DiaryEntry[] }] as const)]).values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
   const name = (id: string) => jobs.find(j => j.id === id)?.name ?? ''
   const stop = <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" /><rect x="3" y="5.2" width="6" height="1.6" /></svg>
   const item = (e: DiaryEntry, late?: boolean) => (
     <div key={e.id} className={'pl-item wk-item' + (e.type === 'event' ? ' ev' : '')}>
       {e.type === 'todo' && onToggle && <PlanTick e={e} onToggle={() => onToggle(e)} />}
-      <button className="pl-open grow" onClick={() => onOpen(e.jobId)}>
+      {/* named by what it is; the job and the rest are its description (so a job's name names one button: the job) */}
+      <button className="pl-open grow" onClick={() => onOpen(e.jobId)} aria-describedby={`wk-${e.id}`}>
         <span className="pl-t">{e.trade && <TradeMark name={e.trade} />}{e.note}</span>
-        <span className="pl-m"><span className="pl-job">{name(e.jobId)}</span>{[e.time, placeOf(e)].filter(Boolean).join(' · ')}
+        <span className="pl-m" id={`wk-${e.id}`} aria-hidden="true"><span className="pl-job">{name(e.jobId)}</span>{[e.time, placeOf(e)].filter(Boolean).join(' · ')}
           {e.office && <span className="badge b-slate pl-off">Office</span>}
           {late && e.date && <span className="plate plate-stop pl-late">{stop}{lateBy(e.date, today)}</span>}</span>
       </button>
     </div>
   )
-  // Mastor's own deadline: the red plate says what's wrong ("Overdue 2 days"); the grey line says where it's from
-  const mastor = (a: { jobId: string; text: string; hint: string }, i: number) => {
+  // Mastor's own deadline: the plate says what's wrong ("Overdue 2 days"); the grey line says where it's from
+  const mastor = (a: WeekAlert, i: number | string) => {
     const [fact, ...rest] = a.hint.split(' · ')
+    const plate = a.kind === 'stop' || a.kind === 'warn'
     return (
       <div key={`m${i}`} className="pl-item wk-item">
-        <button className="pl-open grow" onClick={() => onOpen(a.jobId)}>
+        <button className="pl-open grow" onClick={() => onOpen(a.jobId)} aria-describedby={`wk-m${i}`}>
           <span className="pl-t">{a.text.replace(/ — /g, ' · ')}</span>
-          <span className="pl-m"><span className="pl-job">{name(a.jobId)}</span><span className="plate plate-stop pl-late">{stop}{fact}</span>{['From Mastor', ...rest].join(' · ')}</span>
+          <span className="pl-m" id={`wk-m${i}`} aria-hidden="true"><span className="pl-job">{name(a.jobId)}</span>
+            {plate && <span className={'plate pl-late plate-' + a.kind}>{a.kind === 'stop' ? stop : <SignMark kind="warn" size={12} />}{fact}</span>}
+            {['From Mastor', ...(plate ? rest : [fact, ...rest])].filter(Boolean).join(' · ')}</span>
         </button>
       </div>
     )
@@ -305,16 +335,16 @@ export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
     <section className="wk" aria-label="The week across all jobs">
       <div className="row"><h2 className="sec-h grow" style={{ margin: 0 }}>The week · all jobs</h2><span className="hint">{shortDay(today)}</span></div>
       <div className="ln wk-ln" role="list">
-        {(w.late.length > 0 || todays || fromMastor.length > 0) && (
+        {(w.late.length > 0 || todays || atToday.length > 0) && (
           <div className="ln-day now" role="listitem" aria-current="date">
             <DayLabel date={today} today={today} />
-            <div className="ln-c">{fromMastor.map(mastor)}{w.late.map(e => item(e, true))}{todays?.items.map(e => item(e))}</div>
+            <div className="ln-c">{atToday.map(mastor)}{w.late.map(e => item(e, true))}{todays?.items.map(e => item(e))}</div>
           </div>
         )}
-        {w.days.filter(d => d.date !== today).map((d, i, all) => (
+        {days.map((d, i, all) => (
           <div key={d.date} className="ln-day ahead" role="listitem">
             <DayLabel date={d.date} today={today} prev={i ? all[i - 1].date : today} />
-            <div className="ln-c">{d.items.map(e => item(e))}</div>
+            <div className="ln-c">{onDay(d.date).map((a, j) => mastor(a, `${d.date}-${j}`))}{d.items.map(e => item(e))}</div>
           </div>
         ))}
       </div>

@@ -10,7 +10,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { NOTE_CATEGORIES, type DiaryEntry, type Job, type ScopeItem, type Valuation, type Variation } from '../../src/lib/types'
 import { money, qtyText, roman, voRef } from '../../src/lib/format'
-import { isPriced, issuePlan, lineValue, lockedIn, openValuation, pennies, valRef } from '../../src/lib/valuation'
+import { amending, claimTarget, isPriced, issuePlan, lineValue, lockedIn, pennies, valRef } from '../../src/lib/valuation'
 import { allocateInvoiceNo, invoiceAmounts, missingForInvoice } from '../../src/lib/invoice'
 import { jobAlerts } from '../../src/lib/alerts'
 import { shortDay } from '../../src/lib/plan'
@@ -19,7 +19,7 @@ import { day, JOB_DESC, NO_MONEY, text, ukToday } from './shared'
 
 const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false }
 const READ = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
-const NOT_ISSUED = 'Nothing has been issued. A person checks Claude’s lines and issues the valuation in the Mastor app.'
+const NOT_ISSUED = 'Nothing has been sent. A person checks Claude’s lines and sends the valuation to the client for review in the Mastor app.'
 
 const fromRoman = (s: string) => {
   if (!/^[IVXLCDM]+$/.test(s)) return 0
@@ -43,11 +43,11 @@ const voWithValue = (v: Variation) => `${voRef(v.number)} ${v.description} — $
 
 /** The open valuation after a change, in Mastor's own figures and with the checks a client QS would make. */
 function openNow(job: Job, d: JobData) {
-  const open = openValuation(d.vals)
+  const open = claimTarget(d.vals)   // the one being amended after the client's changes, else the open one
   if (!open) return 'no valuation open'
   const p = issuePlan(job, open, d.vals, d.scope, d.vos)
   return {
-    ref: valRef(open.number), lines: p.totals.lines, baseRates: money(p.totals.base), inclUplifts: money(p.totals.gross),
+    ref: valRef(open.number) + (amending(open) ? ' (sent, and open to amend: the client asked for changes)' : ''), lines: p.totals.lines, baseRates: money(p.totals.base), inclUplifts: money(p.totals.gross),
     cumulative: money(p.cumulative), ofContract: p.pct != null ? `${p.pct}%` : null,
     checksBeforeIssue: p.checks.map(c => `${c.kind === 'warn' ? 'CHECK' : 'OK'}: ${c.text}`),
   }
@@ -99,7 +99,7 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     if (!lines.length && !vos.length) return text({ job: job.name, added: 'nothing', skipped })
 
     const at = Date.now()
-    let open = openValuation(d.vals), started = false
+    let open = claimTarget(d.vals), started = false
     if (!open) {
       open = { id: crypto.randomUUID(), jobId: job.id, number: d.vals.reduce((m, v) => Math.max(m, v.number), 0) + 1, status: 'Open', createdAt: at, issuedAt: null, byClaude: at } satisfies Valuation
       await save(ctx, 'valuations', [open])

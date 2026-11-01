@@ -36,9 +36,13 @@ describe('payments and chasing', () => {
     // claim it, issue, it becomes due
     click(screen.getByRole('button', { name: /add to valuation/i }))
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Issue VAL I' }))
-    click(await screen.findByRole('button', { name: /issue val i for/i }))
-    await screen.findAllByText(/^With client · Due /)
+    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
+    click(await screen.findByRole('button', { name: /^send val i for £/i }))
+    click(await screen.findByRole('button', { name: 'Done' }))
+    await screen.findAllByText(/^With client · For review · 0 days/)
+    expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()   // nothing to pay until it's agreed
+    click(screen.getByRole('button', { name: 'Client agreed' }))
+    await screen.findByText(/^Agreed .* · create the invoice$/)
 
     // part payment → still owed; then paid in full
     click(screen.getByRole('button', { name: /mark as paid/i }))

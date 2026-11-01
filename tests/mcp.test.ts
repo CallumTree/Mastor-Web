@@ -156,7 +156,8 @@ const wr = ov.jobs.find((j: any) => j.id === 'j1')
 ok(ov.money.readyToClaim === money(valTotals(job, 'vb', scope, vos).gross), 'overview: ready to claim = the open valuation’s value')
 const alerts = jobAlerts(job, scope, vos, vals, []).alerts
 ok(wr.actionNeeded.length === alerts.length && alerts.every(a => wr.actionNeeded.some((x: string) => x.includes(a.text))), 'overview: the same “action needed” as the job’s home screen')
-ok(wr.actionNeeded.some((x: string) => /^NEXT: VAL II/.test(x)) && wr.actionNeeded.some((x: string) => /^URGENT: No PO number/.test(x)), 'next step and urgent items are labelled as such')
+// (the open valuation is only a next step in its valuation week, so which alerts there are depends on the date)
+ok(alerts.filter(a => a.kind === 'do').every(a => wr.actionNeeded.some((x: string) => x.startsWith(`NEXT: ${a.text}`))) && wr.actionNeeded.some((x: string) => /^URGENT: No PO number/.test(x)), 'next step and urgent items are labelled as such')
 
 const gj = json(await call('office', 'get_job', { job: 'MH21180' }))
 ok(gj.id === 'j1' && gj.notesAndDecisions[0].pinned === true && gj.notesAndDecisions.some((x: any) => x.category === 'Commercial'), 'get_job by contract ref: pinned note first, commercial notes for the office')
@@ -173,6 +174,8 @@ ok(no4.totalsOfTheseLines.lines === 2 && no4.totalsOfTheseLines.scope === money(
 ok(!('totalsOfTheseLines' in json(await call('office', 'get_scope', { job: 'j1' }))), 'unfiltered: just the job’s totals')
 const vs = json(await call('office', 'get_valuations', { job: 'j1' }))
 ok(vs.valuations[1].ref === 'VAL II' && vs.valuations[1].checksBeforeIssue.some((c: string) => /No PO number/.test(c)) && /person/.test(vs.valuations[1].note), 'get_valuations: open VAL II with the QS checks, issuing left to a person')
+ok(/^VAL I on /.test(vs.valuationWeek.lastSent) && /^VAL II goes in 1–7 /.test(vs.valuationWeek.next) && /first week of each month/.test(vs.valuationWeek.rule) && /before the review step/.test(vs.valuations[0].review),
+  'get_valuations: when the last one went, when the next goes in, and where each is with the client')
 ok(vs.valuations[0].ref === 'VAL I' && /overdue|late|days/i.test(vs.valuations[0].position), 'issued VAL I: where payment stands')
 
 // operatives: no money, anywhere
@@ -209,7 +212,7 @@ ok(w.notAdded.some((x: string) => /certified in VAL I, so it’s locked/.test(x)
   && w.notAdded.some((x: string) => /^VO I: not priced yet/.test(x)) && w.notAdded.some((x: string) => /^VO IX: no such VO/.test(x)), 'locked, already-claimed, unknown and unpriced lines are left, each with its reason')
 const s3 = saved('scope_items', 's3')
 ok(s3 && s3.company_id === 'c1' && s3.job_id === 'j1' && s3.deleted === false && s3.data.valuationId === 'vb' && typeof s3.data.byClaude === 'number', 'saved as the person, into VAL II, marked by Claude')
-ok(w.openValuationNow.ref === 'VAL II' && w.openValuationNow.checksBeforeIssue.some((c: string) => /Claude added 1 line/.test(c)) && /Nothing has been issued/.test(w.note), 'the open valuation now, with “check Claude’s lines” among the checks — and not issued')
+ok(w.openValuationNow.ref === 'VAL II' && w.openValuationNow.checksBeforeIssue.some((c: string) => /Claude added 1 line/.test(c)) && /Nothing has been sent/.test(w.note), 'the open valuation now, with “check Claude’s lines” among the checks — and not sent')
 ok(saved('scope_items', 's1') === undefined && saved('scope_items', 's2') === undefined, 'nothing else touched')
 
 w = json(await call('office', 'add_to_valuation', { job: 'j2', scope_line_ids: ['t1'] }))

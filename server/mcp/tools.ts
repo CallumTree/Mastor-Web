@@ -8,7 +8,16 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
 import { money, qtyText, voRef } from '../../src/lib/format'
-import { isPriced, issuePlan, lineValue, lockedIn, pennies, upliftAmounts, valRef, valTotals } from '../../src/lib/valuation'
+import { isPriced, issuePlan, lineValue, lockedIn, pennies, reviewStage, upliftAmounts, valRef, valTotals } from '../../src/lib/valuation'
+import { lastText, valRhythm, weekText, type Rhythm } from '../../src/lib/rhythm'
+
+/** The valuation week, in words Claude can quote. */
+const rhythmFacts = (r: Rhythm) => ({
+  lastSent: r.last ? `${valRef(r.last.number)} on ${day(r.last.issuedAt)}` : 'none yet',
+  next: `${valRef(r.next)} goes in ${weekText(r)}${r.state === 'due' ? ' — this week' : r.state === 'late' ? ' — late' : ''}${r.waited ? ' (moved on a month by the office)' : ''}`,
+  rule: 'Valuations go in during the first week of each month; less than two weeks’ work since the last one waits for the next month.',
+  basis: lastText(r),
+})
 import { valCourt, voCourt } from '../../src/lib/chase'
 import { registerSummary } from '../../src/lib/voRegister'
 import { portfolio } from '../../src/lib/portfolio'
@@ -38,7 +47,7 @@ const jobRef = (j: Job) => ({ id: j.id, name: j.name, client: j.client || null, 
 export function mastorServer(ctx: Ctx) {
   const server = new McpServer(
     { name: 'mastor', title: 'Mastor', version: '1.0.0' },
-    { instructions: `Mastor is ${ctx.company || 'the company'}’s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor’s own calculations — quote them, don’t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Issuing valuations and invoices is done in the Mastor app by a person, never here. You can also make changes for this person — tick lines into the open valuation, log and update VOs, add notes, fill in the site day, book key dates and to-dos on the job's line and tick them off, set the job's PO details. Before any change, say exactly what you will change and get their yes. Everything you change is marked “by Claude” in the app for them to check.${ctx.money ? '' : ' This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused.'}` },
+    { instructions: `Mastor is ${ctx.company || 'the company'}’s master schedule: jobs, scope (BoQ) lines, variations (VOs), valuations, site diary (notes, photos, videos, voice notes) and what is owed. You are signed in as ${ctx.email} (${ctx.role}). Figures come from Mastor’s own calculations — quote them, don’t recalculate. Valuations and VOs are referred to by Roman numerals (VAL II, VO III). Sending valuations to the client and raising invoices is done in the Mastor app by a person, never here. Valuations go in during the first week of each month: sent for the client's review, then agreed (or changes asked, amended and sent again), then invoiced. You can also make changes for this person — tick lines into the open valuation, log and update VOs, add notes, fill in the site day, book key dates and to-dos on the job's line and tick them off, set the job's PO details. Before any change, say exactly what you will change and get their yes. Everything you change is marked “by Claude” in the app for them to check.${ctx.money ? '' : ' This person is an operative: Mastor gives them no money figures, and money changes (valuations, rates) are refused.'}` },
   )
 
   server.registerTool('mastor_overview', {
@@ -77,7 +86,8 @@ export function mastorServer(ctx: Ctx) {
   }, async ({ job: q }) => {
     const job = findJob(await records<Job>(ctx, 'jobs'), q)
     const d = await jobData(ctx, job)
-    const { alerts, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders)
+    const { alerts, poNote } = jobAlerts(job, d.scope, d.vos, d.vals, d.orders, Date.now(), d.diary)
+    const rhythm = ctx.money ? valRhythm(job, d.vals, { diary: d.diary, today: ukToday() }) : null
     const notes = d.diary.filter(e => e.type === 'note' && (ctx.money || e.category !== 'Commercial'))
       .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.createdAt - a.createdAt).slice(0, 40)
     const s = ctx.money ? await settings(ctx) : null
@@ -90,6 +100,7 @@ export function mastorServer(ctx: Ctx) {
         figures: { contract: job.contractValue ? money(job.contractValue) : 'not set', certified: money(certified),
           margin: m && (m.costs || m.labourEstimate != null) ? `${money(m.margin)}${m.pct != null ? ` (${m.pct}%)` : ''}${m.provisional.length ? ' — provisional' : ''}` : 'no costs entered' },
         poCheck: poNote ?? null,
+        valuationWeek: rhythm ? rhythmFacts(rhythm) : 'job complete: no monthly valuation',
       } : {}),
       properties: job.properties ? Object.entries(job.properties).map(([no, addr]) => `No. ${no}: ${addr}`) : undefined,
       actionNeeded: alerts.filter(a => ctx.money || a.site).map(a => ({ level: a.kind === 'stop' ? 'urgent' : a.kind === 'do' ? 'next step' : 'to do', what: a.text, detail: a.hint })),
@@ -220,7 +231,7 @@ export function mastorServer(ctx: Ctx) {
 
   server.registerTool('get_valuations', {
     title: 'Valuations and payments',
-    description: 'The job’s valuations: what each claims, issued / invoiced / paid, what is owed and when it is due; for the open valuation, what it would certify and the checks a client QS would query. (Issuing is done in the app, not here.)',
+    description: 'The job’s valuations: the valuation week (when the last one was sent and when the next goes in), what each claims, where it is with the client (for review, changes asked, agreed), invoiced / paid, what is owed and when it is due; for the open valuation, what it would certify and the checks a client QS would query. (Sending and invoicing are done in the app, not here.)',
     inputSchema: { job: z.string().describe('Job id, or part of its name, contract ref or address') },
     annotations: READ,
   }, async ({ job: q }) => {
@@ -228,8 +239,10 @@ export function mastorServer(ctx: Ctx) {
     const job = findJob(await records<Job>(ctx, 'jobs'), q)
     const d = await jobData(ctx, job)
     const vals = [...d.vals].sort((a, b) => a.number - b.number)
+    const rhythm = valRhythm(job, d.vals, { diary: d.diary, today: ukToday() })
     return text({
       job: job.name,
+      valuationWeek: rhythm ? rhythmFacts(rhythm) : 'job complete: no monthly valuation',
       valuations: vals.map(v => {
         const t = valTotals(job, v.id, d.scope, d.vos)
         const base = { id: v.id, ref: valRef(v.number), status: v.status, lines: t.lines, baseRates: money(t.base), inclUplifts: money(t.gross) }
@@ -239,10 +252,14 @@ export function mastorServer(ctx: Ctx) {
             wouldCertify: { thisValuation: money(plan.totals.gross), uplifts: `${money(plan.u1)} + ${money(plan.u2)}`, previouslyCertified: money(plan.previous), cumulative: money(plan.cumulative), ofContract: plan.pct != null ? `${plan.pct}%` : null },
             byGroup: plan.groups.map(g => `${g.name}: ${g.lines} line${g.lines === 1 ? '' : 's'}, ${money(g.base)} base`),
             checksBeforeIssue: plan.checks.map(c => `${c.kind === 'warn' ? 'CHECK' : 'OK'}: ${c.text}`),
-            note: 'Issuing is done in the Mastor app by a person.' }
+            note: 'Sending it to the client for review is done in the Mastor app by a person.' }
         }
-        const c = valCourt(v, job, d.scope, d.vos)
-        return { ...base, issued: day(v.issuedAt), invoice: v.invoiceNumber ? `${v.invoiceNumber} (${day(v.invoiceDate)})` : 'not invoiced yet',
+        const c = valCourt(v, job, d.scope, d.vos), stage = reviewStage(v), r = v.review
+        const review = !r ? 'from before the review step: counts as agreed when sent'
+          : stage === 'review' ? `with the client for review since ${day(r.sentAt)}${r.rounds > 1 ? ` (sent ${r.rounds} times)` : ''}`
+          : stage === 'changes' ? `the client asked for changes on ${day(r.changesAt!)}${r.changes ? `: “${r.changes}”` : ''}; open to amend until it's sent again`
+          : r.agreedAt ? `agreed ${day(r.agreedAt)}` : 'agreed (invoiced)'
+        return { ...base, sent: day(v.issuedAt), review, invoice: v.invoiceNumber ? `${v.invoiceNumber} (${day(v.invoiceDate)})` : 'not invoiced yet',
           paid: v.paidAt ? `${money(v.paidAmount ?? 0)} on ${day(v.paidAt)}` : 'not yet', owed: money(c.owed), position: c.text }
       }),
     })
