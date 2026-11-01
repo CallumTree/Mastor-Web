@@ -145,8 +145,8 @@ ok(r.status === 200 && r.body.result.serverInfo.name === 'mastor' && /Tree & Son
 r = await rpc('office', 'tools/list')
 const tools = r.body.result.tools as any[]
 const READS = ['mastor_overview', 'get_job', 'get_scope', 'get_variations', 'get_valuations', 'get_site_diary', 'view_site_media', 'invoice_figures', 'find_rate', 'read_document']
-const WRITES = ['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day', 'update_job']
-ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'seventeen tools: ten that read, seven that change')
+const WRITES = ['add_to_valuation', 'remove_from_valuation', 'log_variation', 'update_variation', 'add_note', 'update_site_day', 'update_job', 'add_to_plan', 'tick_off']
+ok(tools.length === READS.length + WRITES.length && [...READS, ...WRITES].every(n => tools.some(t => t.name === n)), 'nineteen tools: ten that read, nine that change')
 ok(tools.every(t => t.annotations?.readOnlyHint === READS.includes(t.name)), 'only the read tools say they’re read-only, so Claude asks before every change')
 ok(!tools.some(t => /issue_|create_invoice|delete/.test(t.name)), 'no tool issues a valuation, creates an invoice or deletes anything')
 
@@ -311,6 +311,32 @@ w = json(await call('office', 'update_job', { job: 'j1', po_value: 400 }))
 ok(/doesn’t reconcile: the BoQ with 10% \+ 0% comes to £370\.92; the PO value is £400\.00 \(under by £29\.08\)/.test(w.poCheck), 'a value that doesn’t reconcile: says by how much')
 ok(/nothing, as the job already says that/.test(json(await call('office', 'update_job', { job: 'j1', po_number: 'PC10001' })).changed), 'nothing to change: says so, saves nothing')
 ok(/operative/.test(err(await call('op', 'update_job', { job: 'j1', po_number: 'X1' }))), 'operative: can’t change PO details')
+
+// the job's line: key dates and the to-dos that lead up to them
+const today0 = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date())
+const plus = (n: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date(Date.now() + n * 864e5))
+w = json(await call('office', 'add_to_plan', { job: 'j1', kind: 'key_date', what: 'Kitchen refit starts', date: plus(2), property: 'No. 6', trade: 'Kitchen', time: '08:00' }))
+const ev = diary.find(e => e.id === w.id)!
+ok(ev.type === 'event' && ev.date === plus(2) && ev.property === '6' && ev.trade === 'Kitchen' && ev.time === '08:00' && !!ev.byClaude && w.added.kind === 'key date', 'add_to_plan: a key date on its day, for No. 6 · Kitchen, marked by Claude')
+w = json(await call('office', 'add_to_plan', { job: 'j1', kind: 'todo', what: 'Speak to the tenant about the start', date: plus(-1), leads_up_to: ev.id }))
+const td = diary.find(e => e.id === w.id)!
+ok(td.type === 'todo' && td.linkId === ev.id && /Kitchen refit starts/.test(w.added.leadsUpTo), 'a to-do that leads up to the key date: linked, and says which')
+const money1 = json(await call('office', 'add_to_plan', { job: 'j1', kind: 'todo', what: 'Chase VO II reference', office_only: true }))
+let plan = json(await call('office', 'get_job', { job: 'j1' })).plan
+ok(plan.late.some((x: any) => x.id === td.id && x.leadsUpTo === 'Kitchen refit starts') && plan.todayAndAhead.some((x: any) => x.id === ev.id) && plan.noDate.some((x: any) => x.id === money1.id && x.office), 'get_job: the plan, late first, then today and ahead, then no date')
+ok(/key date needs its day/.test(err(await call('office', 'add_to_plan', { job: 'j1', kind: 'key_date', what: 'Skip swap' }))), 'a key date without a day: refused')
+ok(/operative/.test(err(await call('op', 'add_to_plan', { job: 'j1', kind: 'todo', what: 'Chase the money', office_only: true }))), 'operative: can’t add office-only items')
+const opPlan = json(await call('op', 'get_job', { job: 'j1' })).plan
+ok(!opPlan.noDate.some((x: any) => x.id === money1.id) && opPlan.late.some((x: any) => x.id === td.id), 'operative: office-only items hidden, the rest shown')
+ok(/No to-do with id/.test(err(await call('op', 'tick_off', { job: 'j1', todo: money1.id }))), 'operative: can’t tick off an office-only to-do')
+w = json(await call('op', 'tick_off', { job: 'j1', todo: td.id }))
+ok(w.now === 'done' && diary.find(e => e.id === td.id)!.doneAt, 'tick_off: an operative ticks a site to-do off')
+plan = json(await call('office', 'get_job', { job: 'j1' })).plan
+ok(!plan.late.some((x: any) => x.id === td.id), 'once done it is no longer late')
+ok(/already done/.test(json(await call('office', 'tick_off', { job: 'j1', todo: td.id })).changed), 'ticking it again changes nothing')
+const sd = json(await call('office', 'get_site_diary', { job: 'j1', from: plus(-3), to: plus(3) }))
+ok(!JSON.stringify(sd).includes('Kitchen refit starts') && !JSON.stringify(sd).includes('Speak to the tenant'), 'the site diary stays the site diary: the plan isn’t in it')
+void today0
 
 srv.close(); meta.close()
 

@@ -1,10 +1,11 @@
 import { Wordmark } from '../components/Wordmark'
-import type { Job, Variation, WorkOrder } from '../lib/types'
+import type { DiaryEntry, Job, Variation, WorkOrder } from '../lib/types'
 import { isOverdue } from './Orders'
 import { money } from '../lib/format'
 import { IconChart, IconCog, IconPlus, IconScope } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
 import { Plate } from '../components/Sign'
+import { WeekLine } from './Plan'
 import { useAccess } from '../lib/access'
 
 /**
@@ -12,8 +13,14 @@ import { useAccess } from '../lib/access'
  * signs (red = blocks invoicing, yellow = needs doing). Same list on a phone and a laptop: rows on a
  * phone, a ruled schedule with columns from 1024px.
  */
-export function JobsList({ jobs, vos, orders = [], onOpen, onNew, onDashboard, onSettings, onRates }: {
-  jobs: Job[]; vos: Variation[]; orders?: WorkOrder[]; onOpen: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void; onRates: () => void
+export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOpen, onOpenLine, onToggle, onNew, onDashboard, onSettings, onRates }: {
+  jobs: Job[]; vos: Variation[]; orders?: WorkOrder[]; diary?: DiaryEntry[]; onOpen: (j: Job) => void
+  /** Mastor's own urgent items per job, for the week (office only) */
+  alerts?: { jobId: string; text: string; hint: string }[]
+  /** tick a to-do off from the week */
+  onToggle?: (e: DiaryEntry) => void
+  /** open a job on its line of days (from the week across all jobs) */
+  onOpenLine?: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void; onRates: () => void
 }) {
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const active = sorted.filter(j => j.status === 'Active').length
@@ -35,6 +42,7 @@ export function JobsList({ jobs, vos, orders = [], onOpen, onNew, onDashboard, o
       </header>
 
       <div className="cover-body">
+        {sorted.length > 0 && <WeekLine jobs={jobs} entries={diary} alerts={alerts} onToggle={onToggle} onOpen={id => { const j = jobs.find(x => x.id === id); if (j) (onOpenLine ?? onOpen)(j) }} />}
         {sorted.length > 0 ? (
           <section className="jobs" aria-label="Jobs">
             <div className="jobs-head" aria-hidden="true"><span>Job</span><span>Client</span><span className="num">{m ? 'Contract' : ''}</span><span>Needs</span><span>Status</span></div>

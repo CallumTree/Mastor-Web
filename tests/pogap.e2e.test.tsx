@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import App from '../src/App'
 const click = (el: Element) => fireEvent.click(el)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
+const openToday = async () => click(await screen.findByRole('button', { name: /today’s site (day|diary)/i }))   // the Diary tab opens on the job's line; today's site day is one tap
 const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.closest('nav') && b.textContent?.toLowerCase().includes(name))!)
 beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 404 }))) })
 
@@ -40,6 +41,7 @@ describe('BoQ vs PO difference', () => {
     await waitFor(() => expect(screen.queryAllByText('Tenant asked for extra socket in bedroom 2').length).toBe(1))  // filtered to Commercial: only the Home copy remains
     fireEvent.click(document.querySelector('.sheet-bg')!)
     nav('diary')
+    await openToday()
     await screen.findByText(/photos, video & voice \(0\)/i)
     nav('home')
     // change the uplifts → the difference changes → flagged again

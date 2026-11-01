@@ -13,6 +13,7 @@ import { money, qtyText, roman, voRef } from '../../src/lib/format'
 import { isPriced, issuePlan, lineValue, lockedIn, openValuation, pennies, valRef } from '../../src/lib/valuation'
 import { allocateInvoiceNo, invoiceAmounts, missingForInvoice } from '../../src/lib/invoice'
 import { jobAlerts } from '../../src/lib/alerts'
+import { shortDay } from '../../src/lib/plan'
 import { copyMedia, findJob, jobData, records, save, settings, type Ctx, type JobData } from './data'
 import { day, JOB_DESC, NO_MONEY, text, ukToday } from './shared'
 
@@ -289,6 +290,55 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     }
     await save(ctx, 'diary', [note])
     return text({ job: job.name, added: { date: note.date, category, pinned, text: note.note } })
+  })
+
+  server.registerTool('add_to_plan', {
+    title: 'Add a to-do or key date',
+    description: 'Adds to the job’s line in the Diary: a key date (something booked for a day: a start, a delivery, a test, a visit) or a to-do (something to do, by a day or with no date). A to-do can lead up to a key date (leads_up_to: the key date’s id from get_job’s plan), so each shows the other. Give the property and trade when the person says them. Office-only items (money, chasing, valuations) are hidden from operatives. Dates are YYYY-MM-DD, worked out from what the person said and today’s date. It is marked “by Claude” in the app. Get the person’s yes first.',
+    inputSchema: {
+      job: z.string().describe(JOB_DESC),
+      kind: z.enum(['todo', 'key_date']),
+      what: z.string().min(2).describe('In the person’s words, e.g. “Speak to the tenant about the 2 Nov start” or “Kitchen refit starts”'),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD. Required for a key date; leave out for a to-do with no date'),
+      time: z.string().regex(/^\d{2}:\d{2}$/).optional().describe('HH:MM, if they said a time'),
+      property: z.string().optional().describe('House number, e.g. “6”'),
+      trade: z.string().optional().describe('Workstream as the scope names it, e.g. Kitchen'),
+      leads_up_to: z.string().optional().describe('A key date’s id (get_job → plan) this to-do is for'),
+      office_only: z.boolean().optional().describe('Hide it from operatives (money, chasing, valuations). Office roles only'),
+    },
+    annotations: WRITE,
+  }, async (a) => {
+    if (a.office_only && !ctx.money) throw new Error(NO_MONEY)
+    if (a.kind === 'key_date' && !a.date) throw new Error('A key date needs its day (YYYY-MM-DD).')
+    if (a.kind === 'key_date' && a.leads_up_to) throw new Error('Only a to-do leads up to a key date.')
+    const { job, d } = await load(a.job)
+    const link = a.leads_up_to ? d.diary.find(e => e.id === a.leads_up_to && e.type === 'event' && (ctx.money || !e.office)) : undefined
+    if (a.leads_up_to && !link) throw new Error(`No key date with id ${a.leads_up_to} on ${job.name}. Key dates are in get_job’s plan.`)
+    const at = Date.now()
+    const e: DiaryEntry = {
+      id: crypto.randomUUID(), jobId: job.id, date: a.date ?? '', type: a.kind === 'key_date' ? 'event' : 'todo', note: a.what.trim(), labour: null, weather: '', mediaId: null, originalMediaId: null,
+      room: '', voId: null, createdAt: at, byClaude: at,
+      ...(a.time ? { time: a.time } : {}), ...(a.property?.trim() ? { property: a.property.trim().replace(/^no\.?\s*/i, '') } : {}), ...(a.trade?.trim() ? { trade: a.trade.trim() } : {}),
+      ...(link ? { linkId: link.id } : {}), ...(a.office_only ? { office: true } : {}),
+    }
+    await save(ctx, 'diary', [e])
+    return text({ job: job.name, added: { kind: a.kind === 'key_date' ? 'key date' : 'to-do', what: e.note, day: e.date ? shortDay(e.date) : 'no date', time: e.time,
+      where: [e.property ? `No. ${e.property}` : '', e.trade ?? ''].filter(Boolean).join(' · ') || undefined, leadsUpTo: link ? `${shortDay(link.date)} · ${link.note}` : undefined, officeOnly: e.office || undefined }, id: e.id })
+  })
+
+  server.registerTool('tick_off', {
+    title: 'Tick off a to-do',
+    description: 'Marks a to-do on the job’s line done (or not done, with done: false). Use the to-do’s id from get_job’s plan. It is marked “by Claude” in the app. Get the person’s yes first.',
+    inputSchema: { job: z.string().describe(JOB_DESC), todo: z.string().describe('The to-do’s id from get_job → plan'), done: z.boolean().optional().describe('false to untick') },
+    annotations: WRITE,
+  }, async (a) => {
+    const { job, d } = await load(a.job)
+    const t = d.diary.find(e => e.id === a.todo && e.type === 'todo' && (ctx.money || !e.office))
+    if (!t) throw new Error(`No to-do with id ${a.todo} on ${job.name}. To-dos are in get_job’s plan.`)
+    const done = a.done ?? true
+    if (!!t.doneAt === done) return text({ job: job.name, todo: t.note, changed: `nothing, it’s already ${done ? 'done' : 'open'}` })
+    await save(ctx, 'diary', [{ ...t, doneAt: done ? Date.now() : null, byClaude: Date.now() }])
+    return text({ job: job.name, todo: t.note, now: done ? 'done' : 'open' })
   })
 
   server.registerTool('update_site_day', {

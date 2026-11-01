@@ -33,6 +33,7 @@ import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
+import { jobAlerts } from './lib/alerts'
 import { Splash } from './components/Splash'
 
 export default function App() {
@@ -59,7 +60,7 @@ export default function App() {
   const [voImport, setVoImport] = useState(false)
   // the open job is kept in the address, so a reload comes back to it (src/lib/place.ts)
   const [openId, setOpenIdState] = useState<string | null>(() => placeParam('job'))
-  const setOpenId = (id: string | null) => { setOpenIdState(id); setPlace({ job: id, tab: null }) }
+  const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab }) }
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
   const [logging, setLogging] = useState(false)
   const [editing, setEditing] = useState<Variation | null>(null)
@@ -190,7 +191,9 @@ export default function App() {
             return `${r.suggestions ? `${r.suggestions} suggestion${r.suggestions === 1 ? '' : 's'} waiting in Vals for review.` : 'Read — nothing to suggest.'}${r.error ? ` ${r.error}` : ''}${more}`
           }} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} orders={orders} onOpen={j => setOpenId(j.id)} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
+        <JobsList jobs={jobs} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
+          alerts={jobs.filter(j => j.status !== 'Complete').flatMap(j => jobAlerts(j, scope.filter(x => x.jobId === j.id), vos.filter(x => x.jobId === j.id), vals.filter(x => x.jobId === j.id), orders.filter(x => x.jobId === j.id)).alerts.filter(a => a.kind === 'stop' && (a.place === 'vals' || a.place === 'vos')).map(a => ({ jobId: j.id, text: a.text, hint: a.hint })))}   // deadlines only: overdue valuations, VOs late with the client
+          onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
       )}
 
       {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}

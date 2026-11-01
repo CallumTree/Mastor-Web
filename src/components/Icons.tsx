@@ -22,6 +22,9 @@ export const IconFlag = (p: P) => <S {...p}><path d="M12 3l9 9-9 9-9-9z" /><path
 export const IconCamera = (p: P) => <S {...p}><rect x="3" y="7" width="18" height="13" /><path d="M8 7l1.5-3h5L16 7" /><rect x="8.5" y="10" width="7" height="7" /><circle cx="5.5" cy="9.5" r="1" fill={COPPER} stroke="none" /></S>
 export const IconSettings = (p: P) => <S {...p}><path d="M13 15l-2-3.5h-4L5 15l2 3.5h4z" /><path d="M13 11L21 3" strokeWidth={2} /><circle cx="20" cy="4" r="1.1" fill={COPPER} stroke="none" /></S>
 export const IconBack = (p: P) => <S {...p}><path d="M15 5l-7 7 7 7" /></S>
+/** a to-do's link forward to the key date it leads up to, and a key date's link back to its to-dos */
+export const IconLinkTo = (p: P) => <S {...p}><path d="M5 4v9h13" /><path d="M14 9l4 4-4 4" /></S>
+export const IconLinkFrom = (p: P) => <S {...p}><path d="M19 20v-9H6" /><path d="M10 7l-4 4 4 4" /></S>
 export const IconPlus = (p: P) => <S {...p}><path d="M12 5v14M5 12h14" /></S>
 export const IconClose = (p: P) => <S {...p}><path d="M6 6l12 12M18 6 6 18" /></S>
 export const IconChevron = (p: P) => <S {...p}><path d="M9 5l7 7-7 7" /></S>

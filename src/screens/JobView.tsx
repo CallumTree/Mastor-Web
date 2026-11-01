@@ -12,6 +12,7 @@ import { IconBack, IconCamera, IconDiary, IconDoc, IconFlag, IconHome, IconMarku
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
+import { JobLine } from './Plan'
 import { NoteEditor, NoteRow, NotesSheet, newNote, sortNotes } from './Notes'
 import { dayKey } from '../lib/dates'
 import { Sheet, TitleBlock } from '../components/Ui'
@@ -183,6 +184,8 @@ export function JobView(p: {
   const [askSeed, setAskSeed] = useState<string | null>(null)   // a question handed to Clerk from elsewhere (e.g. a PO just added)
   const askClerk = (q: string) => { setAskSeed(q); setTab('ask') }
   const [diaryDate, setDiaryDate] = useState(dayKey())
+  const [diaryView, setDiaryView] = useState<'line' | 'day'>('line')   // the job's line of days, or one day's diary
+  const openDay = (d: string) => { setDiaryDate(d); setDiaryView('day'); setTab('diary') }
   const [capture, setCapture] = useState(false)
   const [focusNote, setFocusNote] = useState(false)
   const [capErr, setCapErr] = useState<string | null>(null)
@@ -191,7 +194,7 @@ export function JobView(p: {
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setCapErr(null)
-    try { const d = dayKey(); await p.onAddMedia(f, kind, d); setDiaryDate(d); setCapture(false); setTab('diary') }
+    try { const d = dayKey(); await p.onAddMedia(f, kind, d); setCapture(false); openDay(d) }
     catch (x) { setCapErr((x as Error).message) }
   }
   return (
@@ -203,8 +206,12 @@ export function JobView(p: {
           documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} onAsk={currentCompany() ? askClerk : undefined} />}
           notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
-        {tab === 'diary' && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
-          date={diaryDate} setDate={setDiaryDate} focusNote={focusNote}
+        {tab === 'diary' && diaryView === 'line' && !focusNote && <JobLine job={job} entries={p.diary}
+          properties={[...new Set([...Object.keys(job.properties ?? {}), ...scope.map(s => s.property ?? '')].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}
+          trades={[...new Set(scope.map(s => s.workstream ?? '').filter(Boolean))]}
+          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onOpenDay={openDay} />}
+        {tab === 'diary' && (diaryView === 'day' || focusNote) && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
+          date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} onRead={p.onReadSite} />}
         {tab === 'scope' && job.kind === 'orders' && <OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
@@ -218,11 +225,11 @@ export function JobView(p: {
           <Fragment key={t}>{i === left && (
             <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={26} /></span></button>
           )}
-          <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>
+          <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); if (t === 'diary') setDiaryView('line'); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>
         ) })}
       </nav>
       {quickNote && <NoteEditor job={job} onClose={() => setQuickNote(false)} onSave={n => { p.onSaveDiary(n); setQuickNote(false) }} />}
-      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); setDiaryDate(d); setTab('diary') }} />}
+      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); openDay(d) }} />}
       {capture && (
         <Sheet onClose={() => setCapture(false)}>
           <div className="stack">
