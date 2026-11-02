@@ -21,14 +21,23 @@ import { signIn, type Ctx } from '../mcp/data'
 import { mastorServer } from '../mcp/tools'
 import { ukToday } from '../mcp/shared'
 // @ts-expect-error plain JS module shared with the other /api functions
-import { guard, anthropicKey, MAX_BODY_CHARS } from '../../api/_guard.js'
+import { guard, anthropicKey, MAX_BODY_CHARS, CLERK_MODEL, CLERK_DOC_MODEL } from '../../api/_guard.js'
 
 type Req = IncomingMessage & { body?: unknown }
 type Res = ServerResponse & { status: (n: number) => Res; json: (b: unknown) => void }
 type Msg = Anthropic.Beta.BetaMessageParam
 type ToolUse = Anthropic.Beta.BetaToolUseBlock
 
-export const MODEL = process.env.ANTHROPIC_AGENT_MODEL || 'claude-opus-5-5'
+/**
+ * Which model answers. Everyday questions go to the fast, low-cost model: Mastor works out every figure
+ * and Clerk only reads and quotes them. Once the conversation has opened a document (a purchase order,
+ * the client's pack), the rest of it goes to the most capable model, which reads the low-cost model's
+ * reasoning so far. Anything the low-cost model declines is tried once on the capable one.
+ */
+export const modelFor = (messages: Msg[]): string =>
+  messages.some(m => m.role === 'assistant' && Array.isArray(m.content) && m.content.some(b => b.type === 'tool_use' && b.name === 'read_document'))
+    ? CLERK_DOC_MODEL as string : CLERK_MODEL as string
+const lowCost = (model: string) => /haiku/i.test(model)
 export const config = { maxDuration: 300 }
 const MAX_CALLS = 12                        // model calls in one request: plenty for read → read → propose
 
@@ -133,11 +142,30 @@ export default async function handler(req: Req, res: Res) {
   }
 
   const anthropic = new Anthropic({ apiKey: key })
+  // what the question used, by model, as one line in the function log: real costs, not estimates
+  const used: Record<string, { calls: number; input: number; cacheWrite: number; cacheRead: number; output: number }> = {}
+  const tally = (model: string, u?: Anthropic.Beta.BetaUsage) => {
+    const t = used[model] ??= { calls: 0, input: 0, cacheWrite: 0, cacheRead: 0, output: 0 }
+    t.calls++
+    t.input += u?.input_tokens ?? 0; t.cacheWrite += u?.cache_creation_input_tokens ?? 0
+    t.cacheRead += u?.cache_read_input_tokens ?? 0; t.output += u?.output_tokens ?? 0
+  }
   let mcp: Awaited<ReturnType<typeof connect>> | null = null
   try {
     mcp = await connect(ctx)
     const byName = new Map(mcp.tools.map(t => [t.name, t]))
     const tools: Anthropic.Beta.BetaTool[] = mcp.tools.map(t => ({ name: t.name, description: t.description ?? t.title ?? t.name, input_schema: t.inputSchema as Anthropic.Beta.BetaTool.InputSchema }))
+    // the tools are the same for every firm and come first, so one cached copy serves every question
+    if (tools.length) tools[tools.length - 1] = { ...tools[tools.length - 1], cache_control: { type: 'ephemeral' } }
+    const ask = (model: string) => anthropic.beta.messages.create({
+      model, max_tokens: 16000,
+      // the capable model has Anthropic's own fallback for a declined request; the low-cost one has none
+      ...(lowCost(model) ? {} : { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }),
+      // the low-cost model thinks harder for the same money: Clerk's rules (never invent a figure) come first
+      output_config: { effort: lowCost(model) ? 'high' : 'medium' },
+      cache_control: { type: 'ephemeral' },
+      system: SYSTEM(ctx), tools, messages,
+    })
     const run = async (u: ToolUse) => {
       send({ type: 'status', text: DOING[u.name] ?? (isWrite(byName.get(u.name) ?? {}) ? 'Saving the change' : 'Reading') })
       try { return asResult(u.id, await mcp!.client.callTool({ name: u.name, arguments: (u.input ?? {}) as Record<string, unknown> }) as { content?: unknown; isError?: unknown }) }
@@ -159,13 +187,10 @@ export default async function handler(req: Req, res: Res) {
 
     for (let call = 0; call < MAX_CALLS; call++) {
       send({ type: 'status', text: call ? 'Thinking' : body.decision ? 'Carrying on' : 'Reading your question' })
-      const r = await anthropic.beta.messages.create({
-        model: MODEL, max_tokens: 16000,
-        betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default',
-        output_config: { effort: 'medium' },
-        cache_control: { type: 'ephemeral' },
-        system: SYSTEM(ctx), tools, messages,
-      })
+      let model = modelFor(messages)
+      let r = await ask(model)
+      tally(model, r.usage)
+      if (r.stop_reason === 'refusal' && model !== CLERK_DOC_MODEL) { model = CLERK_DOC_MODEL as string; r = await ask(model); tally(model, r.usage) }
       if (r.stop_reason === 'refusal') return send({ type: 'error', error: 'Clerk couldn’t help with that one. Try putting it another way.', messages })
       if (r.stop_reason === 'max_tokens') return send({ type: 'error', error: 'That answer ran too long. Try asking about less at once.', messages })
       messages.push({ role: 'assistant', content: r.content })
@@ -185,6 +210,7 @@ export default async function handler(req: Req, res: Res) {
     // whatever ran before the failure (a saved change above all) stays in the phone's conversation
     send({ type: 'error', error: msg, ...(messages.length > body.messages.length || body.decision ? { messages } : {}) })
   } finally {
+    if (Object.keys(used).length) console.info(JSON.stringify({ clerk: used }))
     await mcp?.close().catch(() => {})
     res.end()
   }

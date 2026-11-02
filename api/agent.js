@@ -64012,6 +64012,8 @@ var SB_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_P
 var envKey = (name) => (process.env[name] || "").trim().replace(/^["']|["']$/g, "").trim();
 var anthropicKey = () => envKey("ANTHROPIC_API_KEY");
 var geminiKey = () => envKey("GEMINI_API_KEY");
+var CLERK_MODEL = process.env.ANTHROPIC_AGENT_MODEL || "claude-haiku-5-5";
+var CLERK_DOC_MODEL = process.env.ANTHROPIC_AGENT_DOC_MODEL || "claude-opus-5-5";
 var MAX_BODY_CHARS = 44e5;
 async function guard(req, res, kind) {
   const auth = String(req.headers?.authorization || "");
@@ -67291,7 +67293,8 @@ function mastorServer(ctx) {
 }
 
 // server/agent/handler.ts
-var MODEL = process.env.ANTHROPIC_AGENT_MODEL || "claude-opus-5-5";
+var modelFor = (messages) => messages.some((m) => m.role === "assistant" && Array.isArray(m.content) && m.content.some((b) => b.type === "tool_use" && b.name === "read_document")) ? CLERK_DOC_MODEL : CLERK_MODEL;
+var lowCost = (model) => /haiku/i.test(model);
 var config2 = { maxDuration: 300 };
 var MAX_CALLS = 12;
 var SYSTEM = (ctx) => `You are Clerk, the assistant inside Mastor (named after a clerk of works), the app ${ctx.company || "this company"} runs its building jobs on: scope (BoQ) lines by property, variations (VOs), valuations, the site diary and what is owed. You are talking to ${ctx.email} (${ctx.role}) on their phone, often on site.
@@ -67387,11 +67390,33 @@ async function handler(req, res) {
     messages[0] = { role: "user", content: [{ type: "text", text: ctxText }, ...typeof c === "string" ? [{ type: "text", text: c }] : c ?? []] };
   }
   const anthropic = new Anthropic({ apiKey: key });
+  const used = {};
+  const tally = (model, u) => {
+    const t = used[model] ??= { calls: 0, input: 0, cacheWrite: 0, cacheRead: 0, output: 0 };
+    t.calls++;
+    t.input += u?.input_tokens ?? 0;
+    t.cacheWrite += u?.cache_creation_input_tokens ?? 0;
+    t.cacheRead += u?.cache_read_input_tokens ?? 0;
+    t.output += u?.output_tokens ?? 0;
+  };
   let mcp = null;
   try {
     mcp = await connect(ctx);
     const byName = new Map(mcp.tools.map((t) => [t.name, t]));
     const tools = mcp.tools.map((t) => ({ name: t.name, description: t.description ?? t.title ?? t.name, input_schema: t.inputSchema }));
+    if (tools.length) tools[tools.length - 1] = { ...tools[tools.length - 1], cache_control: { type: "ephemeral" } };
+    const ask = (model) => anthropic.beta.messages.create({
+      model,
+      max_tokens: 16e3,
+      // the capable model has Anthropic's own fallback for a declined request; the low-cost one has none
+      ...lowCost(model) ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" },
+      // the low-cost model thinks harder for the same money: Clerk's rules (never invent a figure) come first
+      output_config: { effort: lowCost(model) ? "high" : "medium" },
+      cache_control: { type: "ephemeral" },
+      system: SYSTEM(ctx),
+      tools,
+      messages
+    });
     const run = async (u) => {
       send({ type: "status", text: DOING[u.name] ?? (isWrite(byName.get(u.name) ?? {}) ? "Saving the change" : "Reading") });
       try {
@@ -67412,17 +67437,14 @@ async function handler(req, res) {
     }
     for (let call = 0; call < MAX_CALLS; call++) {
       send({ type: "status", text: call ? "Thinking" : body.decision ? "Carrying on" : "Reading your question" });
-      const r = await anthropic.beta.messages.create({
-        model: MODEL,
-        max_tokens: 16e3,
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        output_config: { effort: "medium" },
-        cache_control: { type: "ephemeral" },
-        system: SYSTEM(ctx),
-        tools,
-        messages
-      });
+      let model = modelFor(messages);
+      let r = await ask(model);
+      tally(model, r.usage);
+      if (r.stop_reason === "refusal" && model !== CLERK_DOC_MODEL) {
+        model = CLERK_DOC_MODEL;
+        r = await ask(model);
+        tally(model, r.usage);
+      }
       if (r.stop_reason === "refusal") return send({ type: "error", error: "Clerk couldn\u2019t help with that one. Try putting it another way.", messages });
       if (r.stop_reason === "max_tokens") return send({ type: "error", error: "That answer ran too long. Try asking about less at once.", messages });
       messages.push({ role: "assistant", content: r.content });
@@ -67440,15 +67462,16 @@ async function handler(req, res) {
     const msg = e instanceof Anthropic.RateLimitError ? "Clerk is busy right now. Try again in a minute." : e instanceof Anthropic.AuthenticationError ? "Clerk isn\u2019t set up right: the Anthropic key in Vercel was refused." : e instanceof Anthropic.APIError ? `Clerk couldn\u2019t answer (${e.status ?? "no connection"}). Try again.` : "Clerk couldn\u2019t answer. Check signal and try again.";
     send({ type: "error", error: msg, ...messages.length > body.messages.length || body.decision ? { messages } : {} });
   } finally {
+    if (Object.keys(used).length) console.info(JSON.stringify({ clerk: used }));
     await mcp?.close().catch(() => {
     });
     res.end();
   }
 }
 export {
-  MODEL,
   asResult,
   checkBody,
   config2 as config,
-  handler as default
+  handler as default,
+  modelFor
 };

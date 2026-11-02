@@ -39,7 +39,7 @@ hits.length = 0
 r = await call()
 ok(r.json.checks.every((c: any) => c.ok), 'everything set up: all green')
 ok(typeof r.json.build === 'string' && r.json.build.length > 0, 'says which build answered')
-ok(hits.filter(h => h.startsWith('claude:')).sort().join() === 'claude:claude-opus-5-5,claude:claude-sonnet-5', 'each model in use looked up once (free, no tokens)')
+ok(hits.filter(h => h.startsWith('claude:')).sort().join() === 'claude:claude-haiku-5-5,claude:claude-opus-5-5,claude:claude-sonnet-5', 'each model in use, Clerk’s two included, looked up once (free, no tokens)')
 ok(hits.includes('gemini:gen') && /transcribed a test clip/.test(line(r, /^Gemini/).detail), 'Gemini proves audio with a real test clip')
 anthropic = 404
 r = await call()

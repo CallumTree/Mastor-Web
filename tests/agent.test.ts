@@ -32,6 +32,9 @@ function claude(body: any) {
   const said = (t: string) => typeof last.content === 'string' ? last.content.includes(t) : last.content.some((b: any) => b.type === 'text' && b.text.includes(t))
   const results = Array.isArray(last.content) ? last.content.filter((b: any) => b.type === 'tool_result') : []
   if (failReply && results.length) return null
+  if (results.some((r: any) => r.tool_use_id === 'd1')) return reply([{ type: 'text', text: 'The order is for £10,000.00.' }], 'end_turn')
+  if (said('Check the PO')) return reply([{ type: 'tool_use', id: 'd1', name: 'read_document', input: { job: 'j1', document: 'Purchase order' } }], 'tool_use')
+  if (said('something odd')) return /haiku/.test(body.model) ? reply([], 'refusal') : reply([{ type: 'text', text: 'Here is the answer.' }], 'end_turn')
   if (said('one more')) return reply([{ type: 'tool_use', id: 'w3', name: 'add_to_valuation', input: { job: 'j1', scope_line_ids: ['s4'] } }], 'tool_use')
   if (results.some((r: any) => r.content.some((c: any) => /Cancel/.test(c.text)))) return reply([{ type: 'text', text: 'Left it as it is.' }], 'end_turn')
   if (results.some((r: any) => r.tool_use_id === 'w1' || r.tool_use_id === 'w2')) return reply([{ type: 'text', text: 'Done: No. 4 paint is in VAL I.' }], 'end_turn')
@@ -71,6 +74,8 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   return realFetch(input, init)
 }) as typeof fetch
 
+const logged: string[] = []
+console.info = (s: string) => { logged.push(s) }
 const { default: handler, asResult } = await import('../server/agent/handler')
 const srv = http.createServer((req, res) => {
   let raw = ''; req.on('data', c => (raw += c)); req.on('end', async () => {
@@ -106,7 +111,9 @@ ok(r.done?.pending.length === 1 && r.done.pending[0].name === 'add_to_valuation'
 ok(upserts.length === 0, 'nothing is saved before Do it')
 ok(hits.length === 1, 'the question counts once against the daily AI limit')
 const first = asked[0]
-ok(first.key === 'ak' && first.body.model === 'claude-opus-5-5' && first.body.fallbacks === 'default' && /server-side-fallback-2026-07-01/.test(first.beta ?? ''), 'Claude Opus 5.5, with refusal fallbacks')
+ok(first.key === 'ak' && first.body.model === 'claude-haiku-5-5' && first.body.fallbacks === undefined && !/server-side-fallback/.test(first.beta ?? '') && first.body.output_config?.effort === 'high',
+  'everyday questions: Claude Haiku 5.5, thinking hard (it has no server-side fallback, so none is asked for)')
+ok(first.body.tools.at(-1).cache_control?.type === 'ephemeral' && first.body.tools.filter((t: any) => t.cache_control).length === 1, 'the tool list, the same for every firm, is cached once for all of them')
 ok(first.body.tools.length === 19 && /You are Clerk/.test(first.body.system) && /Do it and Cancel/.test(first.body.system), 'the connector’s nineteen tools, and told that changes wait for Do it')
 ok(/<context>Today is .*"j1"/.test(first.body.messages[0].content[0].text) && first.body.messages[0].content[1].text === 'Tick No. 4 paint into the open val', 'the first question carries the date and the open job')
 let convo = r.done.messages
@@ -137,6 +144,30 @@ const err = r.lines.find((l: any) => l.type === 'error'), cp = r.lines.find((l: 
 ok(upserts.some(u => u.rows[0]?.data?.id === 's4' && u.rows[0].data.valuationId === 'vb'), 'Do it saves even though the reply then fails')
 ok(cp && cp.messages.at(-1).content[0].tool_use_id === 'w3', 'a checkpoint with the saved change goes to the phone before Claude replies')
 ok(err && err.messages?.at(-1).content[0].tool_use_id === 'w3', 'the error carries the conversation with the change answered, so the card is gone')
+failReply = false
+
+// a document: once one is opened, the capable model reads it, with Anthropic's own fallback
+let n = asked.length
+r = await ask('office', { messages: [{ role: 'user', content: 'Check the PO against the job' }], jobId: 'j1' })
+const [docAsk, docRead] = asked.slice(n)
+ok(docAsk?.body.model === 'claude-haiku-5-5' && docRead?.body.model === 'claude-opus-5-5' && docRead.body.fallbacks === 'default' && /server-side-fallback-2026-07-01/.test(docRead.beta ?? '') && docRead.body.output_config?.effort === 'medium',
+  'a document is read by Claude Opus 5.5, with refusal fallbacks')
+ok(/£10,000\.00/.test(r.done?.messages.at(-1).content[0].text ?? ''), 'and answered from')
+n = asked.length
+r = await ask('office', { messages: [...r.done.messages, { role: 'user', content: 'And the uplifts?' }] })
+ok(asked[n]?.body.model === 'claude-opus-5-5', 'the rest of that conversation stays on Opus')
+
+// declined by the low-cost model: tried once on Opus
+n = asked.length
+r = await ask('office', { messages: [{ role: 'user', content: 'Ask something odd' }] })
+ok(asked[n]?.body.model === 'claude-haiku-5-5' && asked[n + 1]?.body.model === 'claude-opus-5-5' && /Here is the answer/.test(r.done?.messages.at(-1).content[0].text ?? ''),
+  'what Haiku declines is tried once on Opus')
+ok(r.done?.messages.length === 2, 'the declined attempt leaves nothing in the conversation')
+
+// what each question used, by model, in the log
+const lines = logged.map(l => JSON.parse(l).clerk).filter(Boolean)
+ok(lines.length > 0 && lines.at(-1)['claude-haiku-5-5']?.calls === 1 && lines.at(-1)['claude-opus-5-5']?.calls === 1 && 'cacheRead' in lines.at(-1)['claude-opus-5-5'],
+  'each question logs its calls and tokens by model')
 
 srv.close()
 

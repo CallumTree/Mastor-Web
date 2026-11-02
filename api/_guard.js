@@ -15,6 +15,11 @@ export const envKey = name => (process.env[name] || '').trim().replace(/^["']|["
 export const anthropicKey = () => envKey('ANTHROPIC_API_KEY')
 export const geminiKey = () => envKey('GEMINI_API_KEY')
 
+/** Clerk's models: everyday questions on the fast, low-cost one; once a conversation opens a document
+ *  (a PO, the client's pack), the rest of it on the most capable. Either can be changed in Vercel. */
+export const CLERK_MODEL = process.env.ANTHROPIC_AGENT_MODEL || 'claude-haiku-5-5'
+export const CLERK_DOC_MODEL = process.env.ANTHROPIC_AGENT_DOC_MODEL || 'claude-opus-5-5'
+
 export const MAX_BODY_CHARS = 4_400_000 // Vercel refuses request bodies over 4.5 MB anyway
 
 /** Returns true when the request may go ahead; otherwise it has already answered the request. */
