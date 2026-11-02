@@ -1,5 +1,5 @@
 import { Wordmark } from '../components/Wordmark'
-import type { DiaryEntry, Job, Variation, WorkOrder } from '../lib/types'
+import { WORK_LABEL, type DiaryEntry, type Job, type Variation, type WorkOrder } from '../lib/types'
 import { isOverdue } from './Orders'
 import { money } from '../lib/format'
 import { IconChart, IconCog, IconPlus, IconScope } from '../components/Icons'
@@ -50,7 +50,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
               const unpriced = vos.filter(v => v.jobId === j.id && v.rate === null && v.status !== 'Rejected').length
               return (
                 <button key={j.id} className="job-row" onClick={() => onOpen(j)}>
-                  <span className="jr-job"><b>{j.name}</b><small className="mono">{j.contractRef || j.workType}</small></span>
+                  <span className="jr-job"><b>{j.name}</b><small className="mono">{j.contractRef || WORK_LABEL[j.workType] || j.workType}</small></span>
                   <span className="jr-client">{j.client || '—'}</span>
                   <span className="jr-value num">{m ? (j.contractValue > 0 ? money(j.contractValue) : '—') : ''}</span>
                   <span className="jr-needs">

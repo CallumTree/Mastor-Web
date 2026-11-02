@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
-import type { Cost, DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder, SiteSuggestion } from '../lib/types'
+import { WORK_LABEL, type Cost, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder, type SiteSuggestion } from '../lib/types'
 import { OrdersTab } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { lineValue } from '../lib/valuation'
@@ -56,7 +56,7 @@ function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: bool
       <div className="jbar-in">
         <button className="back-btn" onClick={onBack}><IconBack size={18} /><span>Jobs</span></button>
         <div className="jbar-title">
-          <div className="jbar-ref mono">{job.contractRef || job.workType}{job.status !== 'Active' ? ` · ${job.status}` : ''}</div>
+          <div className="jbar-ref mono">{job.contractRef || WORK_LABEL[job.workType] || job.workType}{job.status !== 'Active' ? ` · ${job.status}` : ''}</div>
           <h1 className="jbar-name">{job.name}</h1>
           {!compact && (job.client || job.address) && <div className="jbar-sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
         </div>

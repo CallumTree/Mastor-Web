@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Job, WorkType } from '../lib/types'
+import { WORK_LABEL, type Job, type WorkType } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { uid } from '../lib/db'
 
@@ -31,8 +31,8 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
             </label>
           ))}
         </fieldset>
-        <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder={f.kind === 'orders' ? 'e.g. PCC Responsive 2026' : 'e.g. 32 College Park'} /></Field>
-        <Field label="Client"><input value={f.client} onChange={set('client')} placeholder="e.g. Pembrokeshire County Council" /></Field>
+        <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder={f.kind === 'orders' ? 'e.g. Council repairs 2026' : 'e.g. 32 College Park'} /></Field>
+        <Field label="Client"><input value={f.client} onChange={set('client')} placeholder="e.g. the council, housing association or trust" /></Field>
         <Field label="Site address"><input value={f.address} onChange={set('address')} /></Field>
         <div className="row">
           <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CAP00290" /></Field></div>
@@ -46,7 +46,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
         <Field label="Payment terms (days)" hint="Counted from the invoice date, or from the valuation's issue date if it isn't invoiced yet. Flags it when it's late."><input inputMode="numeric" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
         <div>
           <div className="field"><span>Type of work</span></div>
-          <div className="chips">{TYPES.map(t => <button key={t} className={'chip' + (f.workType === t ? ' on' : '')} onClick={() => setF({ ...f, workType: t })}>{t}</button>)}</div>
+          <div className="chips">{TYPES.map(t => <button key={t} className={'chip' + (f.workType === t ? ' on' : '')} onClick={() => setF({ ...f, workType: t })}>{WORK_LABEL[t]}</button>)}</div>
         </div>
         {job && (
           <div>

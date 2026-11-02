@@ -13,7 +13,7 @@ import { roman } from '../lib/format'
 import { SignMark } from '../components/Sign'
 
 const PLACES = 50
-const WORK = ['Planned (PPR, WHQS, Decent Homes)', 'Responsive and voids', 'Both planned and responsive', 'Other framework work'] as const
+const WORK = ['Planned programmes', 'Repairs and maintenance', 'Empty properties', 'A mix of these', 'Something else'] as const
 
 type Claimed = { place: number | null; already: boolean; listed?: boolean }
 
@@ -133,7 +133,7 @@ const SHOTS: [string, string, string][] = [
 ]
 
 const SHOT_ALT: Record<string, string> = {
-  'app-home': 'Mastor on a phone: the example job Hill Street WHQS, with its contract, certified and margin figures and the actions needed',
+  'app-home': 'Mastor on a phone: the example job Hill Street refurb, with its contract, certified and margin figures and the actions needed',
   'app-scope': 'Mastor on a phone: the scope grouped by house, 2, 4 and 6 Hill Street, with how much of each is claimed',
   'app-vos': 'Mastor on a phone: the variations register with totals for claimed, awaiting instruction and rejected VOs',
   'app-vals': 'Mastor on a phone: valuations, with certified, paid and owed, and the open VAL III',
@@ -193,7 +193,7 @@ export function Landing() {
   return (
     <>
       {/* a real street of terraced houses behind the header and headline, printed in blueprint blue under the drafting grid; decorative, credited in the footer */}
-      <div className="lead-bg" aria-hidden="true"><img src={sized(PHOTOS.terrace, 1400)} srcSet={srcSet(PHOTOS.terrace)} sizes="100vw" alt="" width={1400} height={933} decoding="async" fetchPriority="high" /></div>
+      <div className="lead-bg" aria-hidden="true"><img src={sized(PHOTOS.terrace, 1400)} srcSet={srcSet(PHOTOS.terrace)} sizes="100vw" alt="" width={1400} height={933} decoding="async" {...{ fetchpriority: "high" }} /></div>
       <header className="top">
         <div className="wrap top-in">
           <a href="/?site" className="top-mark" aria-label="Mastor, home"><Wordmark /></a>
@@ -208,7 +208,7 @@ export function Landing() {
         <section className="hero wrap">
           <div className="hero-head">
             <h1 className="h1">Run the job from site, not from a desk.</h1>
-            <p className="lede">Scope, site diary, variations, valuations and invoices for contractors on council and housing-association framework work, in the phone in your pocket. Say it or snap it on site, approve it, and it’s in the valuation.</p>
+            <p className="lede">Scope, site diary, variations, valuations and invoices for contractors working to a public-sector schedule of rates, in the phone in your pocket. Say it or snap it on site, approve it, and it’s in the valuation.</p>
             <p className="offer"><b>Fifty founding places.</b> Free through the pilot, then half price for as long as you stay.</p>
           </div>
           <figure className="hero-art">
@@ -232,9 +232,9 @@ export function Landing() {
             <Pic p={PHOTOS.street} ratio={4 / 3} sizes="(min-width: 1024px) 560px, 100vw" className="who-photo" />
             <div>
               <h2 className="h2">For firms that are out on the job.</h2>
-              <p className="body-l">Small contractors, two to thirty people, working to a council’s or housing association’s schedule of rates. No commercial department, and the director prices the work, runs the site and chases the money.</p>
+              <p className="body-l">Small contractors, two to thirty people, working to a client’s schedule of rates: councils, housing associations, NHS trusts, police and fire services, schools and colleges. No commercial department, and the director prices the work, runs the site and chases the money.</p>
               <dl className="facts">
-                <div><dt>The work</dt><dd>Planned programmes (PPR, WHQS, Decent Homes), responsive repairs and voids.</dd></div>
+                <div><dt>The work</dt><dd>Planned programmes, repairs and maintenance, and empty properties, priced from the client’s schedule of rates.</dd></div>
                 <div><dt>The director</dt><dd>Valuations, the VO register, invoices and what’s owed, from the van or the kitchen table.</dd></div>
                 <div><dt>Site managers</dt><dd>The diary, photos, voice notes and VOs as they’re found, with gloves on and no signal.</dd></div>
                 <div><dt>Operatives</dt><dd>Log work, photos and voice notes without ever seeing a rate, a value or a margin.</dd></div>
@@ -242,9 +242,9 @@ export function Landing() {
             </div>
           </div>
           <ul className="wrap work" aria-label="The work Mastor is built for" tabIndex={0}>
-            {([[PHOTOS.planned, 'Planned programmes', 'PPR, WHQS and Decent Homes: a scheme of houses, one BoQ, valuations as it goes.'],
-              [PHOTOS.repairs, 'Responsive repairs', 'A stream of small works orders, each one priced from the schedule and signed off.'],
-              [PHOTOS.voids, 'Voids', 'Empty homes turned round fast, with the evidence the client asks for.']] as const).map(([p, t, d]) => (
+            {([[PHOTOS.planned, 'Planned programmes', 'A scheme of homes or buildings: one BoQ, valuations as it goes.'],
+              [PHOTOS.repairs, 'Repairs and maintenance', 'A stream of small works orders, each one priced from the schedule and signed off.'],
+              [PHOTOS.voids, 'Empty properties', 'Empty homes and buildings turned round fast, with the evidence the client asks for.']] as const).map(([p, t, d]) => (
               <li key={t}><Pic p={p} ratio={4 / 5} sizes="(min-width: 1024px) 360px, (min-width: 760px) 33vw, 80vw" className="work-photo" /><h3 className="h3">{t}</h3><p>{d}</p></li>
             ))}
           </ul>
@@ -343,7 +343,7 @@ export function Landing() {
                 <div><dt>The pilot</dt><dd>Free for the whole pilot. No card needed.</dd></div>
                 <div><dt>After the pilot</dt><dd>Half the standard price, for as long as your firm stays with Mastor.</dd></div>
                 <div><dt>The price</dt><dd>Not set yet. You’ll see it before you pay anything, and you can leave whenever you like.</dd></div>
-                <div><dt>For</dt><dd>UK contractors on council and housing-association schedule-of-rates work: planned, WHQS and Decent Homes, responsive and voids.</dd></div>
+                <div><dt>For</dt><dd>UK contractors on public-sector schedule-of-rates work for councils, housing associations, NHS trusts, police and fire services, schools and colleges: planned programmes, repairs and empty properties.</dd></div>
               </dl>
               {cta && <button className="claim on-white" onClick={toForm}><span>{cta}</span><IconArrow size={22} /></button>}
             </div>

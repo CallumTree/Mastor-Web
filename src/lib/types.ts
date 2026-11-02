@@ -1,4 +1,6 @@
 export type WorkType = 'PPR' | 'Commercial' | 'Roofing' | 'Internal' | 'External'
+/** What each work type is called on screen (the stored value 'PPR' stays, for the jobs already saved). */
+export const WORK_LABEL: Record<WorkType, string> = { PPR: 'Planned', Commercial: 'Commercial', Roofing: 'Roofing', Internal: 'Internal', External: 'External' }
 export type JobStatus = 'Active' | 'Complete'
 export type VoStatus = 'Identified' | 'Instructed' | 'Complete' | 'Rejected'
 
