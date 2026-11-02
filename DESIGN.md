@@ -357,6 +357,9 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 ### Photo Mark-up
 - An Ink Navy toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
 
+### The Street Print (front page)
+- Behind the header and headline, a real photograph of a terraced street printed like a cyanotype: its light in Prussian blue (#1B4A80, luminosity blend), under an ink scrim and the drafting grid, fading into the sheet above the form. Decorative and credited; white text over it measures at least 6:1 against a bright sky.
+
 ### Founding Register (front page)
 - Fifty Roman-numeral places on a steel board inside its bounding box: free places outlined in Slate Edge, taken places filled #273449, the next place lit cyan with an ink numeral, the visitor's own place white with a cyan ring. The claim button is the white block naming the next numeral; the place count is mono.
 

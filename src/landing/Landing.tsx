@@ -192,6 +192,8 @@ export function Landing() {
 
   return (
     <>
+      {/* a real street of terraced houses behind the header and headline, printed in blueprint blue under the drafting grid; decorative, credited in the footer */}
+      <div className="lead-bg" aria-hidden="true"><img src={sized(PHOTOS.terrace, 1400)} srcSet={srcSet(PHOTOS.terrace)} sizes="100vw" alt="" width={1400} height={933} decoding="async" fetchPriority="high" /></div>
       <header className="top">
         <div className="wrap top-in">
           <a href="/?site" className="top-mark" aria-label="Mastor, home"><Wordmark /></a>
@@ -203,11 +205,18 @@ export function Landing() {
       </header>
 
       <main>
-        <section className="hero wrap" id="claim">
-          <div className="hero-copy">
+        <section className="hero wrap">
+          <div className="hero-head">
             <h1 className="h1">Run the job from site, not from a desk.</h1>
             <p className="lede">Scope, site diary, variations, valuations and invoices for contractors on council and housing-association framework work, in the phone in your pocket. Say it or snap it on site, approve it, and it’s in the valuation.</p>
             <p className="offer"><b>Fifty founding places.</b> Free through the pilot, then half price for as long as you stay.</p>
+          </div>
+          <figure className="hero-art">
+            <Pic p={PHOTOS.phone} ratio={4 / 5} sizes="(min-width: 1024px) 480px, 100vw" className="hero-photo" eager />
+            <Phone name="app-home" alt={SHOT_ALT['app-home']} eager />
+            <figcaption>The app is shown with an example job.</figcaption>
+          </figure>
+          <div className="hero-form" id="claim">
             {next && taken != null && !claimed && (
               <a href="#places" className="next-strip">
                 <span className="next-tile">{roman(next)}</span>
@@ -216,11 +225,6 @@ export function Landing() {
             )}
             <SignUp taken={taken} claimed={claimed} nameRef={nameRef} onClaimed={(c, t) => { setClaimed(c); if (t != null) setTaken(t) }} />
           </div>
-          <figure className="hero-art">
-            <Pic p={PHOTOS.phone} ratio={4 / 5} sizes="(min-width: 1024px) 480px, 100vw" className="hero-photo" eager />
-            <Phone name="app-home" alt={SHOT_ALT['app-home']} eager />
-            <figcaption>The app is shown with an example job.</figcaption>
-          </figure>
         </section>
 
         <section className="who">
