@@ -41,7 +41,7 @@ export function BoqImport({ job, existing, books = [], onImport, onClose }: {
           <>
             {stage.s === 'error' && <div className="card t-note" style={{ borderColor: 'var(--red)', color: 'var(--red)' }}>{stage.msg}</div>}
             <div className="muted t-note">
-              Pick everything the client sent: spec list, BoQ, works orders, PCI, surveys. Schedules and works orders are read exactly and checked against each other; everything else is kept with the job’s documents. Nothing is added until you confirm.
+              Pick everything the client sent: schedule of works, BoQ or scope, works orders, PCI, surveys, in Excel, CSV, PDF or Word, laid out however the client lays them out. Schedules and works orders are read exactly and checked against each other; everything else is kept with the job’s documents. Nothing is added until you confirm.
             </div>
             <label className="btn btn-primary">
               <IconScope /> Choose files

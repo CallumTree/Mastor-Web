@@ -141,7 +141,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
 
       {scope.length === 0 && (
         <>
-          <div className="card empty">No scope yet. Import the BoQ / works order and every line is read for you to check.</div>
+          <div className="card empty">No scope yet. Import the schedule, BoQ, scope of works or works order and every line is read for you to check.</div>
           <button className="btn btn-primary" onClick={onImport}><IconScope /> Import BoQ</button>
           <button className="btn btn-secondary" onClick={onAdd}><IconPlus /> Add item</button>
         </>
