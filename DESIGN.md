@@ -1,20 +1,19 @@
 ---
 name: Mastor
-description: Job money for small UK builders, read like a field instrument. A void-black ground, charcoal panels and 1px rules carry the structure, white type carries the facts, and colour is only ever a lit signal with one meaning.
+description: Job money for small UK builders, drawn like a technical drawing. Deep ink navy with a faint drafting grid, milled-steel panels and hairlines carry the structure, drafting white carries the facts, and two signals do all the work: blueprint cyan for what is selected, surveyor gold for what needs you.
 colors:
-  void: "#0B0C0E"
-  slate: "#14171F"
-  slate-2: "#1B1F29"
-  rule: "#262C38"
-  rule-ctl: "#687488"
-  white: "#FFFFFF"
-  ink-2: "#B4BDCA"
-  meta: "#7E8B9F"
-  red: "#FF5247"
-  amber: "#FFB703"
-  cyan: "#00F0FF"
-  emerald: "#10B981"
-  on-signal: "#0B0C0E"
+  void: "#0A0F1D"
+  slate: "#101827"
+  slate-2: "#16213A"
+  rule: "#1E293B"
+  rule-ctl: "#64748B"
+  white: "#F8FAFC"
+  ink-2: "#CBD5E1"
+  meta: "#8291A7"
+  grid: "rgba(56, 189, 248, 0.055)"
+  cyan: "#38BDF8"
+  gold: "#F59E0B"
+  on-signal: "#0A0F1D"
   white-press: "#DCE1E8"
   arch-copper: "#C97B3F"
   core-clay: "#C46A49"
@@ -56,16 +55,16 @@ typography:
     lineHeight: 1.35
   section-head:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
-    fontSize: "14px"
+    fontSize: "13px"
     fontWeight: 700
-    letterSpacing: "0.08em"
+    letterSpacing: "0.1em"
     fontVariation: "'wdth' 87.5"
   label:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "13px"
     fontWeight: 650
     lineHeight: 1.2
-    letterSpacing: "0.06em"
+    letterSpacing: "0.08em"
     fontVariation: "'wdth' 87.5"
   status:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
@@ -111,9 +110,9 @@ typography:
     fontWeight: 600
     letterSpacing: "0.28em"
 rounded:
-  sm: "2px"
-  r: "3px"
-  md: "4px"
+  sm: "0px"
+  r: "1px"
+  md: "2px"
 spacing:
   hair: "1px"
   xs: "6px"
@@ -141,7 +140,7 @@ components:
     padding: "0 20px"
     height: "52px"
   button-danger:
-    backgroundColor: "{colors.red}"
+    backgroundColor: "{colors.gold}"
     textColor: "{colors.on-signal}"
     rounded: "{rounded.md}"
     height: "52px"
@@ -204,57 +203,56 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Field Instrument"**
+**Creative North Star: "The Drawing Office"**
 
-The app reads like an instrument a site manager carries on a walk round the job: a void-black ground, charcoal panels drawn with 1px rules, white type for every fact, and colour only where a light would be lit on a real panel. It is dense on purpose. Figures, refs and codes are set in a tabular mono so a column of money lines up to the penny; labels are short uppercase markings in a semi-condensed grotesque; corners are cut at 2–4px. Nothing glows, nothing floats on a shadow, nothing is tinted to look friendly.
+The app is drawn like a technical drawing. The ground is deep ink navy with a faint 24px alignment grid under everything, panels are milled steel, and every line is a drafting hairline. Each data block is drawn twice, its own edge and a bounding box 3px outside it, the way a title block sits on a sheet. Facts are in drafting white; dimensions and notes are in slate. Figures, refs and codes are set in a tabular mono so a column of money lines up to the penny, and labels are short uppercase markings tracked wide.
 
-Colour follows the avionics order and nothing else: red is a warning (stop, overdue, refused), amber is caution and the active state (to-do, the next step, recording, the one live thing), cyan is advisory (variations, discrepancies, a record Claude changed), emerald is normal (done, approved, matched to the contract). The primary action is a white block with black type, the brightest thing on any screen because it is the one you press; everything else you operate is outlined.
+Two signals do all the work, the drafting office's own: blueprint cyan is the selection (the next step and the one live thing, variations, a record Claude changed, progress, ticks into the valuation) and surveyor gold is the mark that needs you (overdue, to-do, caution, recording). Overdue and to-do share gold, so the sign's shape tells them apart: a disc with a bar for overdue, a triangle for to-do. Done is drafting white. The primary action is a white block; everything else is outlined in slate.
 
-The user chose this world in November 2026 for one-handed use on site in direct sun, replacing the light white-and-neon look. The brand stays: the MΛSTΘR wordmark in Cinzel, the copper arch, Roman numerals for valuations and VOs.
+The user chose this world in November 2026 from three dark directions, after the field-instrument look. The brand stays: the MΛSTΘR wordmark in Cinzel, the copper arch, Roman numerals for valuations and VOs.
 
 **Key Characteristics:**
-- Void ground, charcoal panels, 1px rules; no shadows at rest
-- White for facts, precision grey for metadata, never grey text below 4.5:1
-- Four signal colours, one meaning each, always as a lit mark or a 1px frame
+- Ink navy ground with a faint drafting grid; milled-steel panels; 1px hairlines; no shadows
+- Every data block drawn twice: its edge and a bounding box 3px outside
+- Two signals: cyan for the selection, gold for what needs you; done is white
 - Tabular mono for every figure, code, ref, quantity and date number
-- Uppercase semi-condensed micro-headers; section heads in [ brackets ]
-- The reticle: four amber corner brackets lock onto the one live thing on a screen
+- Uppercase micro-labels tracked at 0.08em; section heads are cyan title lines over a hairline
+- The one live thing on a screen is marked at its corners in cyan, like a selection in a drawing program
 
 ## Colors
 
-A near-black instrument with four lit signals; every neutral is cool and every signal is fully saturated.
+A drafting sheet with two signals; every neutral leans blue.
 
 ### Primary
-- **White** (#FFFFFF): every fact (names, figures, descriptions), the primary button's block, the focus ring, the nav's current tab, today on the job's line. 17.9:1 on a panel.
+- **Drafting White** (#F8FAFC): every fact, the primary button's block, done marks, the certified part of the job's rail, the focus ring. 17:1 on a panel.
 
 ### Signals
-- **Warning Red** (#FF5247): overdue money, a late to-do, refused or rejected, destructive actions. 5.6:1 on a panel; type on it is On-Signal black.
-- **Sodium Amber** (#FFB703): to-do and caution marks, the next step, the open valuation, the mic while recording, the reticle, the caret and text selection. 10.3:1 on a panel.
-- **Cyan Advisory** (#00F0FF): changed by Claude, discrepancies against the framework (rate check). 12.7:1 on a panel.
-- **Precision Emerald** (#10B981): done, claimed, paid, the certified part of the job's rail, ticks in the valuation. 7.1:1 on a panel.
+- **Blueprint Cyan** (#38BDF8): the selection. The next step and its corner marks, the open valuation, variations and "by Claude", progress bars, ticks into the valuation, today on the job's line, the current tab, section heads, the caret and text selection. 8.3:1 on a panel.
+- **Surveyor Gold** (#F59E0B): what needs you. Overdue money, late to-dos, things to do, caution notes, destructive actions, the mic while recording. 8.3:1 on a panel; type on it is On-Signal ink.
 
 ### Trade Cores (categorical)
 - Clay #C46A49, Bronze #B07D36, Olive #8A9348, Teal #2A9C9C, Slate #7187A6, Violet #9670BF, Rose #CC6994, Graphite #80858D: one per trade, only ever a 14×5px band beside the trade's name (`src/lib/trade.ts`). They identify, they never signal.
 
 ### Neutral
-- **Void** (#0B0C0E): the ground, inputs, the inside of a status tag, the job header.
-- **Slate** (#14171F): panels, the dock and rail, sheets.
-- **Slate Raised** (#1B1F29): an open, hovered or hot row; Clerk's "you said" block.
-- **Rule** (#262C38): structure only: dividers, panel edges, the spine behind today.
-- **Control Edge** (#687488): the edge of anything you operate (inputs, outlined buttons, chips, ticks). 3.8:1 on a panel, for WCAG 1.4.11.
-- **Ink 2** (#B4BDCA): quieter reading text and field labels. 9.5:1.
-- **Precision Grey** (#7E8B9F): metadata and labels. 5.2:1 on a panel, 4.8:1 on a raised row; never used below that.
-- **On-Signal** (#0B0C0E): type and marks laid on a lit block (the white button, a red or amber plate, an emerald tick).
+- **Ink Navy** (#0A0F1D): the ground, inputs, the inside of a status tag.
+- **Drafting Grid** (rgba(56, 189, 248, 0.055)): the 24px alignment grid drawn on the ground, fixed behind the page.
+- **Milled Steel** (#101827): panels, the dock and rail, sheets.
+- **Steel Raised** (#16213A): an open, hovered or hot row; Clerk's "you said" block.
+- **Hairline** (#1E293B): dividers, panel edges and the bounding boxes.
+- **Slate Edge** (#64748B): the edge of anything you operate (inputs, outlined buttons, chips, ticks). 3.7:1 on a panel, for WCAG 1.4.11.
+- **Ink 2** (#CBD5E1): quieter reading text and field labels. 11:1.
+- **Slate Note** (#8291A7): dimensions, notes and labels. 5.6:1 on a panel, 5.1:1 on a raised row. The brief's #64748B is kept for control edges only: at 3.7:1 it is too faint for small text outdoors.
+- **On-Signal** (#0A0F1D): type and marks laid on a lit block.
 - **Arch Copper** (#C97B3F): the app icon's arch and the opening titles only.
 
 ### Named Rules
-**The One Meaning Rule.** Red warns, amber cautions and marks what is active, cyan advises, emerald confirms. A colour is never used for anything outside its meaning, and nothing is coloured to decorate.
+**The Two Signals Rule.** Cyan is the selection, gold is what needs you. Nothing else is coloured, and neither is used to decorate.
 
-**The Lit Signal Rule.** A status is a mark (red disc with a bar, amber triangle, amber disc with an arrow, emerald square with a tick) or a 1px frame in the signal colour with capitals in the same colour, on Void. Never a tinted chip, never a pastel ground.
+**The Shape Carries It Rule.** Overdue and to-do are both gold, so they are never told apart by colour: overdue is a disc with a bar, to-do a triangle, the next step a cyan disc with an arrow, done a white square with a tick. Every sign also has its word for screen readers.
 
-**The White Block Rule.** The primary action on a screen is a white block with On-Signal type. Everything else you can press is outlined in Control Edge and lights to white on hover.
+**The Drawn Twice Rule.** A data block (figure grid, summary strip, panel, action row, job list, title block) carries a 1px Hairline bounding box 3px outside its own edge. A block inside a sheet or inside another block is drawn once.
 
-**The Dark Instrument Rule.** The app is dark only (`color-scheme: only dark`): native controls, pickers and scrollbars follow. The client's PDFs stay print-white; the front page keeps its own register until it is redesigned (`.impeccable/surfaces/src-landing-landing-tsx.md`, `src/landing/landing.css`).
+**The Drafting Sheet Rule.** The app is dark only (`color-scheme: only dark`) and drawn on the grid. The client's PDFs stay print-white; the front page keeps its own register until it is redesigned (`.impeccable/surfaces/src-landing-landing-tsx.md`, `src/landing/landing.css`).
 
 ## Typography
 
@@ -270,8 +268,8 @@ A near-black instrument with four lit signals; every neutral is cool and every s
 - **Figure** (Mono 520, clamp(22px, 6.4vw, 28px), -0.03em): figure grids and summary strips, fitted to their cell.
 - **Title** (Archivo 700, 16px, 1.25, -0.01em): an action row's title, a sheet's question, a property.
 - **Body** (Archivo 450, 16px, 1.45): reading text; Clerk's answers to 62ch.
-- **Section head** (Archivo 87.5% 700, 14px, 0.08em, uppercase, in [ brackets ]): ACTION NEEDED, NOTES & DECISIONS.
-- **Label** (Archivo 87.5% 650, 13px, 0.06em, uppercase, Precision Grey): figure labels, register heads, field labels (in Ink 2).
+- **Section head** (Archivo 87.5% 700, 13px, 0.1em, uppercase, cyan, over a 1px Hairline): ACTION NEEDED, NOTES & DECISIONS.
+- **Label** (Archivo 87.5% 650, 13px, 0.08em, uppercase, Slate Note): figure labels, register heads, field labels (in Ink 2).
 - **Status** (Archivo 87.5% 700, 13px, 0.05em, uppercase): tags and plates.
 - **Amount / Code** (Mono 520 / 450, 13–17px): amounts in rows, SoR codes, contract refs, dates on the line.
 
@@ -286,98 +284,98 @@ A near-black instrument with four lit signals; every neutral is cool and every s
 
 ## Layout
 
-One column on a phone (16px gutters, 720px max), a 104px rail and a 960px column from 1024px. Panels are ruled registers: rows divided by 1px Rule, never cards inside cards. Rhythm: 6px inside groups, 12px between rows of controls, 28px above a section head and 10px below it. Touch targets are 44px or more everywhere (52px for buttons) for gloves. Under 360px button pairs stack and the dock shares its width evenly; under 300px the dock goes to two rows.
+One column on a phone (16px gutters, 720px max), a 104px rail and a 960px column from 1024px. Panels are ruled registers: rows divided by 1px Hairline, never cards inside cards, each panel inside its bounding box. Rhythm: 6px inside groups, 12px between rows of controls, 28px above a section head and 10px below it. Touch targets are 44px or more everywhere (52px for buttons) for gloves. Under 360px button pairs stack and the dock shares its width evenly; under 300px the dock goes to two rows.
 
 ## Elevation & Depth
 
-Flat. Depth is told by value: Void ground, Slate panels, Slate Raised for what is open, hovered or hot, and a dimmed backdrop (black at 72%) under sheets. The only shadow in the app is a drop shadow under the white play mark laid over a video frame.
+Flat. Depth is told by value and by drawing: Ink Navy ground, Milled Steel panels, Steel Raised for what is open, hovered or hot, the bounding box around each data block, and a dimmed backdrop (black at 72%) under sheets. The only shadow in the app is a drop shadow under the white play mark laid over a video frame.
 
 ### Named Rules
-**The No Glow Rule.** Signals are flat fills and flat lines. No glow, no blur, no glass, no gradients except the dashed open-valuation segment of the rail.
+**The No Glow Rule.** Signals are flat fills and flat lines. No glow, no blur, no glass, no gradients except the dashed open-valuation segment of the rail and the drafting grid itself.
 
 ## Shapes
 
-Razor corners: 2px for tags, chips, ticks and thumbnails, 3px for inputs, 4px for panels, buttons, rows, sheets and the dock. Squares replace circles everywhere except the sign marks (the stop and next discs are sign shapes, kept for colour-blind reading): the job line's day nodes, status dots and the "cancelled" mark are squares. Every line is 1px.
+Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for panels, buttons, rows, sheets and the dock. Squares replace circles everywhere except the sign marks (the overdue and next-step discs are sign shapes, kept so meaning never rests on colour alone): the job line's day nodes, status dots and the "cancelled" mark are squares. Every line is 1px.
 
 ## Components
 
 ### Buttons
-- **Shape:** 4px corners, 52px tall, full width on a phone.
-- **Primary:** White block, On-Signal 650 type; hover #DCE1E8; press moves down 1px.
-- **Secondary:** transparent, white type, Control Edge border; hover lifts to Slate Raised with a white border.
-- **Ghost:** Ink 2 text with a Control Edge underline that turns white on hover.
-- **Danger:** Warning Red block with On-Signal type.
+- **Shape:** 2px corners, 52px tall, full width on a phone.
+- **Primary:** Drafting White block, On-Signal 650 type; hover #DCE1E8; press moves down 1px.
+- **Secondary:** transparent, white type, Slate Edge border; hover lifts to Steel Raised with a white border.
+- **Ghost:** Ink 2 text with a Slate Edge underline that turns white on hover.
+- **Danger:** a Surveyor Gold block with On-Signal type.
 - **Focus:** a 2px white ring at 2px offset (3px on the white block).
 
 ### Status Tags (badges and plates)
-- **Style:** Void inside, 1px frame and capitals in the signal colour; a plate leads with its sign mark, a badge with a 6px square.
-- **Variants:** emerald (done, claimed, paid), red (overdue, late), amber (to-do, the open valuation), cyan (by Claude), Ink 2 on Control Edge (neutral states), Precision Grey on Rule (waiting on someone else).
+- **Style:** Ink Navy inside, 1px frame and capitals in the signal colour; a plate leads with its sign mark, a badge with a 6px square.
+- **Variants:** gold (overdue, late, to-do), cyan (the open valuation, the next step, by Claude), white (done, claimed, paid), Ink 2 on Slate Edge (neutral states), Slate Note on Hairline (waiting on someone else).
 
 ### Action Rows
-- Slate rows, 64px tall, led by their sign mark, title in white, hint in Precision Grey, chevron right. A stop row's frame is red; a next-step row's frame is amber; the live next step drops its frame for the reticle.
+- Milled Steel rows, 64px tall, inside their bounding box, led by their sign mark, title in white, hint in Slate Note, chevron right. An overdue row's frame is gold; a next-step row's frame is cyan; the live next step is marked at its corners instead.
 
 ### Cards / Containers
-- **Corner Style:** 4px.
-- **Background:** Slate on Void.
+- **Corner Style:** 2px.
+- **Background:** Milled Steel on Ink Navy.
 - **Shadow Strategy:** none.
-- **Border:** 1px Rule.
+- **Border:** 1px Hairline, plus the bounding box 3px outside.
 - **Internal Padding:** 14px; registers carry their own 12–14px row padding.
 
 ### Figures and Summary Strips
-- Ruled grids of mono figures over uppercase labels; the hot cell sits on Slate Raised inside the reticle. The bar under a strip is 3px: emerald on Rule.
+- Ruled grids of mono figures over uppercase labels; the hot cell sits on Steel Raised, marked at its corners. The bar under a strip is 3px: cyan on Hairline.
 
 ### Inputs / Fields
-- **Style:** Void field, 1px Control Edge, 3px corners, 50px tall; numbers and dates in Mono. Labels above in uppercase Ink 2.
-- **Focus:** the border turns white; the caret is amber.
-- **Warn / Disabled:** an amber border with an amber hint led by the triangle; disabled is dashed on Slate.
+- **Style:** Ink Navy field, 1px Slate Edge, 1px corners, 50px tall; numbers and dates in Mono. Labels above in uppercase Ink 2.
+- **Focus:** the border turns white; the caret is cyan.
+- **Warn / Disabled:** a gold border with a gold hint led by the triangle; disabled is dashed on Milled Steel.
 
 ### Chips and Switches
-- 2px corners, Control Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Control Edge rule.
+- 0px corners, Slate Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Slate Edge rule.
 
 ### Navigation
-- **Phone:** a Slate dock with a Control Edge border, 4px corners, at the foot of the page. Tabs are Precision Grey markings; the current one is white with a 22×2px white bar at its top edge. The capture key is a white block with a drawn plus.
-- **Desktop:** the same as a 104px Slate rail with a Rule edge; the current tab carries a 2px white bar on its left.
+- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Tabs are Slate Note markings; the current one is white with a 22×2px cyan bar at its top edge. The capture key is a white block with a drawn plus.
+- **Desktop:** the same as a 104px Milled Steel rail with a Hairline edge; the current tab carries a 2px cyan bar on its left.
 
 ### The Job Header and Certified Rail (signature)
-- Void, ruled underneath. The contract ref sits above the name as a mono telemetry line; the rail runs along the foot: certified in emerald, the open valuation dashed in amber, a 1px white tick at each valuation, the figure beside it in mono.
+- Ink navy at 92%, so the grid shows faintly through, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
 
-### The Reticle (signature)
-- The one live thing on a screen (the next step on the job home, the hot figure in a strip, the change waiting for Do it in Clerk) is framed by four 12×2px amber corner brackets, 3px inside its edge. They close in from outside once (460ms, ease-out) like a camera's focus lock, and hold. While Clerk works, its status row carries the reticle and it breathes. Under reduced motion it is simply there.
+### The Selection (signature)
+- The one live thing on a screen (the next step on the job home, the hot figure in a strip, the change waiting for Do it in Clerk) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
 
 ### The Job Line (Diary) and the Week Line
-- One spine of days: a Rule line behind today, a white line from today, a Control Edge line ahead. Each day is a 48px mono date column, a 9px square node (today a filled white 11px square), then the day's site record, to-dos (with ticks) and key dates (led by their trade core). The week across all jobs on the jobs screen is the same line with each item's job named.
+- One spine of days: a Hairline behind today, a cyan line from today, a Slate Edge line ahead. Each day is a 48px mono date column, a 9px square node (today a filled cyan 11px square), then the day's site record, to-dos (with ticks) and key dates (led by their trade core). The week across all jobs on the jobs screen is the same line with each item's job named.
 
 ### The Valuation Week
-- Two figures in a panel (last sent, next due) in mono, the "this week" line in amber, and "Wait till next month" as a ghost link. Quiet: the open valuation's figure is the live thing.
+- Two figures in a panel (last sent, next due) in mono, the "this week" line in gold, and "Wait till next month" as a ghost link. Quiet: the open valuation's figure is the live thing.
 
 ### Clerk (the assistant tab)
-- What you said sits in a Slate Raised block; Clerk answers in plain text on the ground; a change waits as a Slate Raised panel locked in the reticle with a white Do it and an outlined Cancel. The mic lights amber while recording.
+- What you said sits in a Steel Raised block; Clerk answers in plain text on the sheet; a change waits as a Steel Raised panel marked at its corners, with a white Do it and an outlined Cancel. The mic lights gold while recording.
 
 ### Sheets
-- Slate, 4px top corners, a Control Edge edge, a 36×3px handle; the title is a bracketed section head. The sticky "unsaved" bar is an amber block with On-Signal type.
+- Milled Steel, 2px top corners, a Slate Edge edge, a 36×3px handle; the title is a cyan title line over a hairline. The sticky "unsaved" bar is a gold block with On-Signal type.
 
 ### Photo Mark-up
-- A Void toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
+- An Ink Navy toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
 
 ### Opening Titles
-- On Void: the copper arch draws itself, the keystone drops, MΛSTΘR rises letter by letter, a 1px white dimension line grows beneath it. Played once on first open.
+- On Ink Navy: the copper arch draws itself, the keystone drops, MΛSTΘR rises letter by letter, a 1px white dimension line grows beneath it. Played once on first open.
 
 ## Do's and Don'ts
 
 ### Do:
 - **Do** set every figure, amount, code, ref and quantity in JetBrains Mono with tabular numerals.
-- **Do** keep each signal colour to its one meaning: red warning, amber caution and active, cyan advisory, emerald normal.
-- **Do** draw a status as a sign mark or a 1px frame with capitals in its colour, on Void.
-- **Do** make the screen's primary action the white block, and outline everything else in Control Edge (#687488).
-- **Do** give the one live thing on a screen the amber reticle, and only that thing.
-- **Do** keep corners at 2–4px and every line at 1px.
-- **Do** keep metadata at Precision Grey (#7E8B9F) or brighter, 13px or larger.
+- **Do** keep to two signals: cyan for the selection, gold for what needs you; done is white.
+- **Do** let the sign's shape carry the difference between overdue and to-do.
+- **Do** draw each data block twice: its edge and a Hairline bounding box 3px outside.
+- **Do** make the screen's primary action the white block, and outline everything else in Slate Edge (#64748B).
+- **Do** mark the one live thing on a screen at its corners in cyan, and only that thing.
+- **Do** keep small text at Slate Note (#8291A7) or brighter, 13px or larger.
 
 ### Don't:
-- **Don't** tint a surface with a signal colour or use a pastel status chip.
-- **Don't** add shadows, glows, blur or glass; depth is Void, Slate and Slate Raised.
+- **Don't** add a third signal colour, or colour anything to decorate.
+- **Don't** use #64748B for text: it is an edge colour.
+- **Don't** add shadows, glows, blur or glass; depth is value and drawing.
 - **Don't** use Mono for words, labels, headings or Roman refs.
-- **Don't** use amber, cyan or emerald to decorate, or a signal colour for the current tab.
-- **Don't** round corners past 4px or draw pills.
+- **Don't** round corners past 2px or draw pills.
 - **Don't** add a kicker or eyebrow label above a heading.
-- **Don't** put grey text on Slate Raised darker than Precision Grey.
+- **Don't** draw a bounding box around a block that sits inside another block or a sheet.

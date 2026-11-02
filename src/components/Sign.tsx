@@ -1,7 +1,7 @@
 /**
  * Site-sign marks. Status is told by shape as well as colour, the way safety signs do it:
- * stop = red circle with a bar · warn = amber triangle · do = amber circle with an arrow · ok = emerald square with a tick.
- * Each is a lit signal on the dark instrument, its inner mark cut in near-black.
+ * stop = gold circle with a bar · warn = gold triangle · do = cyan circle with an arrow · ok = white square with a tick.
+ * Overdue and to-do share the surveyor's gold, so the shape carries the difference; each inner mark is cut in ink.
  */
 import type { ReactNode } from 'react'
 import { ukDate } from '../lib/format'
@@ -12,7 +12,7 @@ export function SignMark({ kind, size = 18 }: { kind: SignKind; size?: number })
   const s = { width: size, height: size, flex: 'none' as const, display: 'block' }
   if (kind === 'stop') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="var(--red)" /><rect x="4.5" y="8.4" width="11" height="3.2" fill="var(--on-signal)" /></svg>
   if (kind === 'warn') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><path d="M10 1.2 19.2 18H.8z" fill="var(--amber)" /><rect x="9.1" y="6.6" width="1.8" height="6" fill="var(--on-signal)" /><rect x="9.1" y="14" width="1.8" height="1.8" fill="var(--on-signal)" /></svg>
-  if (kind === 'do') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="var(--amber)" /><path d="M5 10h8.2M10 6.2 13.8 10 10 13.8" fill="none" stroke="var(--on-signal)" strokeWidth="2.2" strokeLinecap="square" /></svg>
+  if (kind === 'do') return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="var(--cyan)" /><path d="M5 10h8.2M10 6.2 13.8 10 10 13.8" fill="none" stroke="var(--on-signal)" strokeWidth="2.2" strokeLinecap="square" /></svg>
   return <svg viewBox="0 0 20 20" style={s} aria-hidden="true"><rect x=".5" y=".5" width="19" height="19" rx="1.5" fill="var(--emerald)" /><path d="M5.2 10.2 8.4 13.4 14.8 6.8" fill="none" stroke="var(--on-signal)" strokeWidth="2.2" strokeLinecap="square" /></svg>
 }
 
