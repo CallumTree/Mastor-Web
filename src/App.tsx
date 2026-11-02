@@ -113,6 +113,8 @@ export default function App() {
     setAccess(a => (a.role === (co?.role ?? null) ? a : accessFor(co?.role))); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
+  // a job opens at its top, however far down the jobs screen it was tapped
+  useEffect(() => { const el = document.scrollingElement; if (el) el.scrollTop = 0 }, [openId])
   // changes made on another device arrive → refresh what's on screen
   useEffect(() => onRemoteChange(() => { void reload() }), [reload])
 

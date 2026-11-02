@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
 import type { Cost, DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder, SiteSuggestion } from '../lib/types'
@@ -204,6 +204,8 @@ export function JobView(p: {
   const askClerk = (q: string) => { setAskSeed(q); setTab('ask') }
   const [diaryDate, setDiaryDate] = useState(dayKey())
   const [diaryView, setDiaryView] = useState<'line' | 'day'>('line')   // the job's line of days, or one day's diary
+  // each tab, and a day opened from the line, starts at its top rather than where the last one was scrolled to
+  useEffect(() => { const el = document.scrollingElement; if (el) el.scrollTop = 0 }, [tab, diaryView])
   const openDay = (d: string) => { setDiaryDate(d); setDiaryView('day'); setTab('diary') }
   const [capture, setCapture] = useState(false)
   const [focusNote, setFocusNote] = useState(false)

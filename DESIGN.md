@@ -252,7 +252,7 @@ A drafting sheet with two signals; every neutral leans blue.
 
 **The Drawn Twice Rule.** A data block (figure grid, summary strip, panel, action row, job list, title block) carries a 1px Hairline bounding box 3px outside its own edge. A block inside a sheet or inside another block is drawn once.
 
-**The Drafting Sheet Rule.** The app is dark only (`color-scheme: only dark`) and drawn on the grid. The client's PDFs stay print-white; the front page keeps its own register until it is redesigned (`.impeccable/surfaces/src-landing-landing-tsx.md`, `src/landing/landing.css`).
+**The Drafting Sheet Rule.** The app and the front page are dark only (`color-scheme: only dark`) and drawn on the grid; the front page carries the same tokens in `src/landing/landing.css` (its brief: `.impeccable/surfaces/src-landing-landing-tsx.md`). The client's PDFs stay print-white.
 
 ## Typography
 
@@ -356,6 +356,9 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 
 ### Photo Mark-up
 - An Ink Navy toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
+
+### Founding Register (front page)
+- Fifty Roman-numeral places on a steel board inside its bounding box: free places outlined in Slate Edge, taken places filled #273449, the next place lit cyan with an ink numeral, the visitor's own place white with a cyan ring. The claim button is the white block naming the next numeral; the place count is mono.
 
 ### Opening Titles
 - On Ink Navy: the copper arch draws itself, the keystone drops, MΛSTΘR rises letter by letter, a 1px white dimension line grows beneath it. Played once on first open.
