@@ -10,7 +10,7 @@ Installable PWA (portrait, standalone). Mobile web on site and desktop browser i
 
 ## Users
 
-Mastor is for **small UK contractors doing social-housing maintenance under schedule-of-rates frameworks**: council and housing-association PPR, WHQS (Wales) / Decent Homes (England) programmes, responsive repairs and voids. Typically 2–30 people, no commercial department, currently running the money side in Excel (master schedule, subbie comparison, valuation tabs). Tree & Sons Ltd (Pembrokeshire County Council framework) is the first user and its work shapes the product.
+Mastor is for **UK contractors and their teams on schedule-of-rates work who don't have a back office behind them**: planned programmes, repairs and maintenance, and empty properties for councils, housing associations, NHS trusts, police and fire services, schools, colleges and private clients. Anyone from one person doing the lot to a team across several jobs, usually running the money side in Excel today (master schedule, subbie comparison, valuation tabs). The front page talks to the business and everyone in it, not to one job title, and names no client's own frameworks or programmes. Tree & Sons Ltd (Pembrokeshire County Council framework) is the first user and its work shapes the product.
 
 People who use it every day:
 

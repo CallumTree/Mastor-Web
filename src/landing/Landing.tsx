@@ -117,7 +117,7 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
 }
 
 const STAGES: [string, string][] = [
-  ['Works order in', 'Import the BoQ from the client’s Excel or PDF. Every rate is checked against your framework schedule of rates, and a line paid under the schedule is flagged before you start.'],
+  ['Works order in', 'Import the client’s schedule, BoQ or scope of works from Excel, PDF or Word, however it’s laid out. Every rate is checked against the schedule of rates, and a line paid under the schedule is flagged before you start.'],
   ['On site', 'Photos, video and voice notes go into the site diary from a phone, signal or not. Weather fills itself in. Operatives log what they did without seeing a single rate.'],
   ['Variations', 'Every VO numbered and never reused, priced from your schedule, carrying the client’s own reference and showing whose court it’s in. The Variation Register goes to the client as a PDF.'],
   ['Valuation', 'Tick what’s done. Uplifts, previously certified and the cumulative total are worked out, and the questions a client QS would ask are checked before you issue the certificate.'],
@@ -208,7 +208,7 @@ export function Landing() {
         <section className="hero wrap">
           <div className="hero-head">
             <h1 className="h1">Run the job from site, not from a desk.</h1>
-            <p className="lede">Scope, site diary, variations, valuations and invoices for contractors working to a public-sector schedule of rates, in the phone in your pocket. Say it or snap it on site, approve it, and it’s in the valuation.</p>
+            <p className="lede">Scope, site diary, variations, valuations and invoices for contractors working to a client’s schedule of rates, in the phone in your pocket. Say it or snap it on site, approve it, and it’s in the valuation.</p>
             <p className="offer"><b>Fifty founding places.</b> Free through the pilot, then half price for as long as you stay.</p>
           </div>
           <figure className="hero-art">
@@ -231,13 +231,13 @@ export function Landing() {
           <div className="wrap who-in">
             <Pic p={PHOTOS.street} ratio={4 / 3} sizes="(min-width: 1024px) 560px, 100vw" className="who-photo" />
             <div>
-              <h2 className="h2">For firms that are out on the job.</h2>
-              <p className="body-l">Small contractors, two to thirty people, working to a client’s schedule of rates: councils, housing associations, NHS trusts, police and fire services, schools and colleges. No commercial department, and the director prices the work, runs the site and chases the money.</p>
+              <h2 className="h2">For firms without a back office.</h2>
+              <p className="body-l">Contractors and their teams working to a client’s schedule of rates, for councils, housing associations, NHS trusts, police and fire services, schools, colleges and private clients. No room full of office staff behind you: the pricing, the paperwork and the chasing go wherever you are, in your pocket. One person doing the lot, or a team on several jobs.</p>
               <dl className="facts">
                 <div><dt>The work</dt><dd>Planned programmes, repairs and maintenance, and empty properties, priced from the client’s schedule of rates.</dd></div>
-                <div><dt>The director</dt><dd>Valuations, the VO register, invoices and what’s owed, from the van or the kitchen table.</dd></div>
-                <div><dt>Site managers</dt><dd>The diary, photos, voice notes and VOs as they’re found, with gloves on and no signal.</dd></div>
-                <div><dt>Operatives</dt><dd>Log work, photos and voice notes without ever seeing a rate, a value or a margin.</dd></div>
+                <div><dt>Running the money</dt><dd>Valuations, the VO register, invoices and what’s owed, from the van, the site cabin or the kitchen table.</dd></div>
+                <div><dt>Running the site</dt><dd>The diary, photos, voice notes and VOs as they’re found, with gloves on and no signal.</dd></div>
+                <div><dt>On the tools</dt><dd>Log work, photos and voice notes without ever seeing a rate, a value or a margin.</dd></div>
               </dl>
             </div>
           </div>
@@ -278,7 +278,7 @@ export function Landing() {
           </ul>
           <figure className="desk">
             <div className="desk-pan" tabIndex={0} aria-label="The dashboard screenshot; scroll sideways on a phone">
-              <img src="/landing/app-dashboard.webp" alt="Mastor on a desktop: the director’s dashboard showing £12,473.66 owed, £8,087.19 ready to claim, payments to chase and every job’s margin" width={1540} height={930} loading="lazy" decoding="async" />
+              <img src="/landing/app-dashboard.webp" alt="Mastor on a desktop: the dashboard showing £12,473.66 owed, £8,087.19 ready to claim, payments to chase and every job’s margin" width={1540} height={930} loading="lazy" decoding="async" />
             </div>
             <figcaption><b>Back at the desk:</b> what you’re owed, what’s ready to claim and what to chase, across every job. <span className="desk-swipe">Swipe the picture to see all of it.</span></figcaption>
           </figure>
@@ -343,7 +343,7 @@ export function Landing() {
                 <div><dt>The pilot</dt><dd>Free for the whole pilot. No card needed.</dd></div>
                 <div><dt>After the pilot</dt><dd>Half the standard price, for as long as your firm stays with Mastor.</dd></div>
                 <div><dt>The price</dt><dd>Not set yet. You’ll see it before you pay anything, and you can leave whenever you like.</dd></div>
-                <div><dt>For</dt><dd>UK contractors on public-sector schedule-of-rates work for councils, housing associations, NHS trusts, police and fire services, schools and colleges: planned programmes, repairs and empty properties.</dd></div>
+                <div><dt>For</dt><dd>UK contractors and their teams on schedule-of-rates work, from one person to a full team, for councils, housing associations, NHS trusts, police and fire services, schools, colleges and private clients: planned programmes, repairs and empty properties.</dd></div>
               </dl>
               {cta && <button className="claim on-white" onClick={toForm}><span>{cta}</span><IconArrow size={22} /></button>}
             </div>

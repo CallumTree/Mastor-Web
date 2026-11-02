@@ -9,7 +9,7 @@ related_targets: ["index.html","src/landing/landing.css"]
 
 Scope: the public front page at `/` (index.html → src/landing/). Mode: **Persuade**. The app moves to /app; signed-in people and the installed app skip this page.
 
-Audience: directors of small UK contractors on council / housing-association schedule-of-rates frameworks (PPR, WHQS / Decent Homes, responsive, voids), 2–30 people, money run in Excel. Arrive on a phone as often as a desktop.
+Audience: UK contractors and their teams on schedule-of-rates work without a back office (councils, housing associations, NHS, police and fire, schools, private clients), from one person to a team on several jobs, money run in Excel. Copy speaks to the business, not to one job title, and names no client framework. Arrive on a phone as often as a desktop.
 Action: claim one of 50 founding places (name, firm, email, optional phone, the work they do). Offer: free through the pilot, then half price for as long as they stay. No price shown; pricing not set.
 Proof on hand: the product itself (what it really does), the founding story (built inside a working contractor's office). No testimonials, users, metrics or press exist; none are invented.
 Constraints: the app's world (DESIGN.md, the drawing office). Count of places is live from the database, never faked.
