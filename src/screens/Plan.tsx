@@ -8,13 +8,13 @@ import { TradeMark } from '../components/Trade'
 import { ByClaude, SignMark } from '../components/Sign'
 import { IconChevron, IconLinkFrom, IconLinkTo } from '../components/Icons'
 
-const Check = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path d="M5 12l5 5L19 7" /></svg>
+const Check = () => <svg className="tick-mark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path pathLength={1} d="M5 12l5 5L19 7" /></svg>   // drawn in when ticked (CSS)
 
 /** A to-do's tick: the app's own tick, green once done. */
 function PlanTick({ e, onToggle }: { e: DiaryEntry; onToggle: () => void }) {
   return (
     <button className="tick" aria-pressed={!!e.doneAt} aria-label={e.doneAt ? `Not done: ${e.note}` : `Done: ${e.note}`} onClick={ev => { ev.stopPropagation(); onToggle() }}>
-      <span className={'tick-box' + (e.doneAt ? ' on' : '')}>{e.doneAt ? <Check /> : null}</span>
+      <span className={'tick-box' + (e.doneAt ? ' on' : '')}><Check /></span>
     </button>
   )
 }
@@ -84,7 +84,7 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
   const [showUndated, setShowUndated] = useState(false)
   const [flash, setFlash] = useState<string | null>(null)
   const line = useMemo(() => jobLine(entries, today, { money, behind, days }), [entries, today, money, behind, days])
-  const hasEarlier = useMemo(() => new Set(entries.filter(e => e.date && e.date < today && e.type !== 'note').map(e => e.date)).size > line.before.length, [entries, today, line.before.length])
+  const hasEarlier = useMemo(() => new Set(entries.filter(e => e.date && e.date < today && (e.type !== 'note' || money || e.category !== 'Commercial')).map(e => e.date)).size > line.before.length, [entries, today, money, line.before.length])
   // booked days ahead, with Mastor's own dates folded in
   const end = addDays(today, days)
   const ahead = useMemo(() => {
@@ -105,7 +105,8 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
   const row = (e: DiaryEntry, late?: boolean) => <PlanRow key={e.id} e={e} entries={entries} today={today} late={late} flash={flash === e.id} onToggle={toggle} onOpen={setEditing} onJump={jump} />
   const siteLine = (d: LineDay) => {
     const s = d.site
-    const bits = [s?.weather, s?.labour != null ? `${s.labour} on site` : '', d.captures ? `${d.captures} photo${d.captures === 1 ? '' : 's'}, video or voice` : '', s?.note ? 'note' : ''].filter(Boolean)
+    const notes = (s?.note.trim() ? 1 : 0) + (d.notes ?? 0)
+    const bits = [s?.weather, s?.labour != null ? `${s.labour} on site` : '', d.captures ? `${d.captures} photo${d.captures === 1 ? '' : 's'}, video or voice` : '', notes ? `${notes} note${notes === 1 ? '' : 's'}` : ''].filter(Boolean)
     return bits.join(' · ')
   }
 
@@ -133,7 +134,7 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
           <div key={d.date} className="ln-day past" role="listitem">
             <DayLabel date={d.date} today={today} prev={i ? line.before[i - 1].date : '0000-00'} />
             <div className="ln-c">
-              {(d.site || d.captures > 0) && <button className="ln-past" onClick={() => onOpenDay(d.date)}><span className="grow"><b>Site day</b> · {siteLine(d) || 'open the day'}</span><IconChevron size={14} /></button>}
+              {(d.site || d.captures > 0 || (d.notes ?? 0) > 0) && <button className="ln-past" onClick={() => onOpenDay(d.date)}><span className="grow"><b>Site day</b> · {siteLine(d) || 'open the day'}</span><IconChevron size={14} /></button>}
               {d.items.map(e => row(e))}
             </div>
           </div>
@@ -143,7 +144,7 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
           <DayLabel date={today} today={today} />
           <div className="ln-c">
             <button className="ln-site" onClick={() => onOpenDay(today)}>
-              <span className="grow"><b>{line.today.site || line.today.captures ? 'Today’s site day' : 'Start today’s site diary'}</b><small>{siteLine(line.today) || prettyDay(today)}</small></span><IconChevron size={16} />
+              <span className="grow"><b>{line.today.site || line.today.captures || line.today.notes ? 'Today’s site day' : 'Start today’s site diary'}</b><small>{siteLine(line.today) || prettyDay(today)}</small></span><IconChevron size={16} />
             </button>
             {marksOn(today).map(m => <MarkRow key={m.id} m={m} />)}
             {line.late.map(e => row(e, true))}
@@ -253,7 +254,7 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
             <div className="field"><span>To-dos for this date</span></div>
             {todos.length > 0 && <div className="panel" style={{ padding: '2px 0' }}>{todos.map(t => (
               <div key={t.id} className="pl-item">
-                <span className={'tick-box sm' + (t.doneAt ? ' on' : '')} aria-hidden="true">{t.doneAt ? <Check /> : null}</span>
+                <span className={'tick-box sm' + (t.doneAt ? ' on' : '')} aria-hidden="true"><Check /></span>
                 <span className="grow pl-t">{t.note}<small className="pl-m">{t.doneAt ? 'done' : t.date ? (t.date < today ? lateBy(t.date, today) : `by ${shortDay(t.date)}`) : 'no date'}</small></span>
               </div>
             ))}</div>}

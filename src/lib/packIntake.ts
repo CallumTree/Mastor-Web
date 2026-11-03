@@ -1,12 +1,14 @@
 /**
  * Reading the client's whole pack at once: spec list, works orders, PCI, surveys. Each file is
- * sorted by what it actually is (not its name): schedules and works orders are read exactly; the
+ * sorted by what it actually is (not its name): schedules, BoQs and works orders — in Excel, CSV, PDF or Word, in
+ * whatever layout the client uses — are read exactly; the
  * rest are kept with the job’s documents and read by the AI for site facts and missing work
  * (see packFacts.ts). Only when nothing in the pack can be read exactly does
  * the AI reader take a schedule — and then its lines are flagged for checking as before.
  */
 import { parseBoqRemote, readBoqFile, type ParsedBoq } from './boq'
 import { docxEvents, docxXml, readWorksOrder, type WorksOrder } from './worksOrder'
+import { readDocxTables } from './scopeTable'
 import { readPack, type PackRead } from './pack'
 import { docText, readPackFacts, scopeSummary, type PackDoc, type PackFacts } from './packFacts'
 
@@ -30,10 +32,16 @@ export async function readPackFiles(files: File[], onProgress?: (name: string) =
     let as: FileRole = { role: 'document', detail: 'Kept with the job’s documents' }
     try {
       if (name.endsWith('.docx')) {
-        const wo = readWorksOrder(docxEvents(await docxXml(await readAsBuffer(file))), file.name)
+        const ev = docxEvents(await docxXml(await readAsBuffer(file)))
+        const wo = readWorksOrder(ev, file.name)
         if (wo) { orders.push(wo); as = { role: 'order', detail: `Works order ${wo.contract || ''}${wo.title ? ` · ${wo.title}` : ''} · ${plural(wo.lines.length, 'line')} · ${plural(wo.properties.length, 'property').replace('propertys', 'properties')}` } }
+        else {
+          // a schedule or BoQ laid out in Word tables (a survey or register in a table is left with the documents)
+          const table = readDocxTables(ev, { strict: true })
+          if (table) { specs.push({ ...table, method: 'table' }); as = { role: 'spec', detail: `Spec list · ${plural(table.lines.length, 'line')}` } }
+        }
       } else if (/\.(pdf|xlsx|xlsm|xls|csv)$/.test(name)) {
-        const read = await readBoqFile(file)
+        const read = await readBoqFile(file, true, true)
         if (read.kind === 'parsed') {
           specs.push(read.boq)
           const cols = read.boq.columnCheck ?? []
@@ -55,7 +63,7 @@ export async function readPackFiles(files: File[], onProgress?: (name: string) =
       if (!/\.(pdf|xlsx|xlsm|xls|csv|docx|txt)$/i.test(f.file.name)) continue
       onProgress?.(f.file.name)
       try {
-        const boq = await parseBoqRemote(f.file)
+        const boq = await parseBoqRemote(f.file, true)
         specs.push(boq)
         f.as = { role: 'ai', detail: `Read by AI · ${plural(boq.lines.length, 'line')} — check the flagged ones` }
         break

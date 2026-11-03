@@ -10,7 +10,7 @@ import { Plate } from '../components/Sign'
 import { isOverdue } from './Orders'
 
 /**
- * Director dashboard: what needs doing across every job, in the order it costs you money —
+ * Money across all jobs: what needs doing across every job, in the order it costs you money —
  * who owes you and how late, what's ready to claim, what can't be claimed until it's priced,
  * and what each job is making. No charts: every row leads to an action.
  */

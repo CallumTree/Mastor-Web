@@ -39283,6 +39283,9 @@ var weekText = (r) => {
 var lastText = (r) => r.last ? `last one ${valRef(r.last.number)}, sent ${new Date(r.last.issuedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : "the first on this job";
 var siteDaysSince = (r, diary, jobId) => new Set(diary.filter((e) => e.jobId === jobId && SITE.has(e.type) && e.date > r.since).map((e) => e.date)).size;
 
+// src/lib/chase.tsx
+var import_react = __toESM(require_react(), 1);
+
 // src/components/Sign.tsx
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
 

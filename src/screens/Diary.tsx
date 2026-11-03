@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { DiaryEntry, Job, Variation } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { Markup } from '../components/Markup'
-import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
 import { usePhotoThumb, usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
@@ -10,18 +9,41 @@ import { weatherFor } from '../lib/weather'
 import { voRef } from '../lib/format'
 import { IconBack, IconCamera, IconFlag, IconMarkup, IconMic, IconPlay, IconVideo } from '../components/Icons'
 import { MAX_VOICE_SECONDS, startRecording, type Recorder } from '../lib/voice'
-import { unread } from '../lib/siteRead'
+import { AUTO_DAYS, unread } from '../lib/siteRead'
+import { useAccess } from '../lib/access'
+import { onMediaWaiting, onSyncStatus } from '../lib/sync'
+import { NoteEditor, NoteRow, newNote, sortNotes } from './Notes'
+import type { NoteCategory } from '../lib/types'
 
 export const dayId = (jobId: string, date: string) => `day:${jobId}:${date}`
 export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayId(jobId, date), jobId, date, type: 'day', note: '', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
 
-function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
+/**
+ * A capture's tile. One just taken comes in like a print developing; while it uploads a thin cyan line runs round
+ * its edge (still, in dashes, while there's no signal), and once it's up the line closes and fades. Mastor only
+ * reads a capture after it has uploaded, so the tile shows why one hasn't been read yet.
+ */
+function Thumb({ e, onOpen, uploading, stalled }: { e: DiaryEntry; onOpen: () => void; uploading: boolean; stalled: boolean }) {
   const tile = useRef<HTMLButtonElement>(null)
   const thumb = usePhotoThumb(e.type === 'photo' ? e.mediaId : null, tile)   // a small copy, made when the tile nears the screen
   const video = usePhotoUrl(e.type === 'video' ? e.mediaId : null)
   const url = e.type === 'video' ? video : thumb
+  const [fresh] = useState(() => Date.now() - e.createdAt < 15_000)
+  const was = useRef(uploading)
+  const [landed, setLanded] = useState(false)
+  useEffect(() => {
+    const before = was.current; was.current = uploading
+    if (!before || uploading) return
+    setLanded(true)
+    const t = setTimeout(() => setLanded(false), 1300)
+    return () => clearTimeout(t)
+  }, [uploading])
+  const what = e.type === 'video' ? 'video' : e.type === 'voice' ? 'voice note' : 'photo'
   return (
-    <button ref={tile} className="d-thumb" onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : e.type === 'voice' ? 'Open voice note' : 'Open photo'}>
+    <button ref={tile} className={'d-thumb' + (fresh ? ' fresh' : '')} onClick={onOpen} aria-label={`Open ${what}${uploading ? ', still uploading' : ''}`}>
+      {(uploading || landed) && <svg className={'d-trace' + (landed ? ' up' : stalled ? ' stalled' : '')} aria-hidden="true">
+        <rect className="run" x="0" y="0" width="100%" height="100%" pathLength={100} /><rect className="solid" x="0" y="0" width="100%" height="100%" pathLength={100} />
+      </svg>}
       {e.type === 'voice' ? <span className="t-small" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 4, color: 'var(--ink)', fontWeight: 600 }}><IconMic size={30} />Voice note</span>
         : url && (e.type === 'video'
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -71,21 +93,22 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
   )
 }
 
-export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onBack, onSave, onDelete, onAddMedia, onRaiseVo, onRead }: {
+export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onBack, onSave, onDelete, onAddMedia, onRaiseVo }: {
   job: Job; entries: DiaryEntry[]; rooms: string[]; vos: Variation[]; date: string; setDate: (d: string) => void; focusNote?: boolean
   /** back to the job's line of days */
   onBack?: () => void
   onSave: (e: DiaryEntry, markedUp?: Blob) => void; onDelete: (e: DiaryEntry) => void
   onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVo: (e: DiaryEntry) => void
-  /** read this day's captures against the scope; resolves to a one-line result */
-  onRead?: (date: string) => Promise<string>
 }) {
   const today = dayKey()
   const day = entries.find(e => e.id === dayId(job.id, date)) ?? null
   const media = entries.filter(e => e.date === date && (e.type === 'photo' || e.type === 'video' || e.type === 'voice')).sort((a, b) => a.createdAt - b.createdAt)
+  // which captures are still uploading, and whether uploads can run at all right now (no signal: they wait)
+  const [mediaWaiting, setMediaWaiting] = useState<ReadonlySet<string>>(() => new Set())
+  const [stalled, setStalled] = useState(false)
+  useEffect(() => onMediaWaiting(setMediaWaiting), [])
+  useEffect(() => onSyncStatus(s => setStalled(s.state === 'offline' || s.state === 'error')), [])
   const [recording, setRecording] = useState(false)
-  const [reading, setReading] = useState(false)
-  const [readMsg, setReadMsg] = useState<string | null>(null)
   const toRead = unread(entries, date).length
   const [note, setNote] = useState(day?.note ?? '')
   const [weather, setWeather] = useState(day?.weather ?? '')
@@ -94,6 +117,11 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const noteRef = useRef<HTMLTextAreaElement>(null)
+  const { money } = useAccess()
+  // the day's own note, and the notes filed from it (client, commercial, H&S): one place for every note, on the day
+  const dayNotes = entries.filter(e => e.type === 'note' && e.date === date && (money || e.category !== 'Commercial')).sort(sortNotes)
+  const [noteOpen, setNoteOpen] = useState<DiaryEntry | null>(null)
+  const FILE_AS: NoteCategory[] = money ? ['Client', 'Commercial', 'H&S'] : ['Client', 'H&S']
 
   // Refresh from storage (or another device) — but never overwrite the note while it's being typed
   const shownDate = useRef(date)
@@ -126,12 +154,18 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
     document.addEventListener('visibilitychange', hide); window.addEventListener('pagehide', flushNote)
     return () => { document.removeEventListener('visibilitychange', hide); window.removeEventListener('pagehide', flushNote); flushNote() }
   }, [])
+  /** What's in the box becomes a note of its own with that tag (H&S stays pinned to the job), and the box is clear for the next. */
+  const fileAs = (c: NoteCategory) => {
+    const text = note.trim(); if (!text) return
+    if (pending.current) { clearTimeout(pending.current.timer); pending.current = null }
+    onSave(newNote(job, text, c, c === 'H&S', date))
+    setNote(''); saveDay({ note: '' })
+  }
   const add = async (f: File | Blob | undefined, kind: 'photo' | 'video' | 'voice') => {
     if (!f) return
     setErr(null); setBusy(true)
     try { await onAddMedia(f, kind, date) } catch (x) { setErr(`Couldn’t add that ${kind} — ${(x as Error).message || 'unknown problem'}. Try again, or pick a smaller file.`) } finally { setBusy(false) }
   }
-  const recent = [...new Set(entries.filter(e => e.type !== 'note' && e.type !== 'todo' && e.type !== 'event').map(e => e.date))].filter(d => d !== date).sort().reverse().slice(0, 7)
 
   return (
     <div className="stack">
@@ -142,10 +176,6 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <h2 className="diary-date">{date === today ? 'Today · ' : date === addDays(today, -1) ? 'Yesterday · ' : ''}{prettyDay(date)}</h2>
         </div>
         <button className="icon-btn" aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
-        <TabMenu title="Diary" actions={[
-          { label: 'Go to today', disabled: date === today, onClick: () => setDate(today) },
-          { label: 'Write a note for this day', onClick: () => noteRef.current?.focus() },
-        ]} />
       </div>
 
       <div className="panel" style={{ padding: 14 }}>
@@ -159,11 +189,18 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <button aria-label="More operatives" onClick={() => { const n = (labour ?? 0) + 1; setLabour(n); saveDay({ labour: n }) }} className="step-btn">+</button>
         </div>
         <div style={{ marginTop: 12 }}>
-          <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate">
+          <Field label="Note" hint={note.trim() ? undefined : 'What happened, what was agreed, anything to watch. Tip: tap the mic on your keyboard to dictate'}>
             <textarea ref={noteRef} rows={4} value={note} onChange={e => typeNote(e.target.value)} onBlur={flushNote} placeholder="What happened on site today?" />
           </Field>
+          {note.trim().length > 0 && <div className="row file-as" role="group" aria-label="File this note as">
+            <span className="hint">File as</span>
+            {FILE_AS.map(c => <button key={c} className="chip" onClick={() => fileAs(c)}>{c}</button>)}
+          </div>}
           <ByClaude at={day?.byClaude} />
         </div>
+        {dayNotes.length > 0 && <div className="day-notes">
+          {dayNotes.map(n => <NoteRow key={n.id} n={n} onDay onOpen={() => setNoteOpen(n)} />)}
+        </div>}
       </div>
 
       <div className="row">
@@ -171,7 +208,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
       </div>
       {media.length > 0 && (
         <div className="diary-thumbs">
-          {media.map(e => <Thumb key={e.id} e={e} onOpen={() => setOpen(e)} />)}
+          {media.map(e => <Thumb key={e.id} e={e} onOpen={() => setOpen(e)} uploading={!!e.mediaId && mediaWaiting.has(e.mediaId)} stalled={stalled} />)}
         </div>
       )}
       {err && <div className="flag">{err}</div>}
@@ -193,35 +230,12 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         </label>
       </div>
 
-      {onRead && (toRead > 0 || readMsg) && (
-        <div className="panel stack" style={{ gap: 8 }}>
-          {toRead > 0 && <button className="btn btn-primary" disabled={reading} onClick={async () => { setReading(true); setReadMsg(null); try { setReadMsg(await onRead(date)) } finally { setReading(false) } }}>
-            {reading ? 'Reading against the scope…' : `Read ${date === today ? 'today' : 'this day'} against the scope · ${toRead} new`}
-          </button>}
-          {readMsg && <div role="status" className="t-note">{readMsg}</div>}
-          {!readMsg && <div className="hint">Photos, voice notes, videos and the note are checked against the scope. What’s done, extra work and site events come back as suggestions in Vals — nothing is claimed until someone approves it.</div>}
-        </div>
-      )}
+      {toRead > 0 && date >= addDays(today, -AUTO_DAYS) && <div className="hint">{money
+        ? 'Mastor reads these against the scope once they’ve uploaded and the day goes quiet. What’s done or extra waits in Vals for you to approve.'
+        : 'Mastor reads these against the scope once they’ve uploaded. What’s done or extra goes to the office to approve.'}</div>}
       {recording && <VoiceSheet onClose={() => setRecording(false)} onSave={async b => { await add(b, 'voice'); setRecording(false) }} />}
 
-      {recent.length > 0 && (
-        <div>
-          <h2 className="label" style={{ margin: '10px 0 6px' }}>Recent days</h2>
-          <div className="panel" style={{ padding: '2px 14px' }}>
-            {recent.map((d, i) => {
-              const n = entries.filter(e => e.date === d && (e.type === 'photo' || e.type === 'video')).length
-              const dd = entries.find(e => e.id === dayId(job.id, d))
-              return (
-                <button key={d} onClick={() => setDate(d)} className="row" style={{ width: '100%', background: 'none', border: 'none', borderTop: i ? '1px solid var(--line)' : 'none', padding: '10px 0', minHeight: 48, textAlign: 'left', color: 'var(--ink)' }}>
-                  <span className="grow"><b className="t-strong">{prettyDay(d)}</b><div className="hint">{[dd?.weather, dd?.labour != null ? `${dd.labour} on site` : '', n ? `${n} photo${n === 1 ? '' : 's'}/video` : ''].filter(Boolean).join(' · ') || 'Note only'}</div></span>
-                  <span className="muted">›</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
+      {noteOpen && <NoteEditor job={job} note={noteOpen} onClose={() => setNoteOpen(null)} onSave={n => { onSave(n); setNoteOpen(null) }} onDelete={() => { onDelete(noteOpen); setNoteOpen(null) }} />}
       {open && <MediaSheet e={open} rooms={rooms} vos={vos} onClose={() => setOpen(null)}
         onSave={(e, b) => { onSave(e, b); setOpen(o => (o ? { ...o, ...e } : o)) }}
         onDelete={() => { onDelete(open); setOpen(null) }}

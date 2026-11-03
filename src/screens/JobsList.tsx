@@ -1,8 +1,8 @@
 import { Wordmark } from '../components/Wordmark'
-import type { DiaryEntry, Job, Variation, WorkOrder } from '../lib/types'
+import { WORK_LABEL, type DiaryEntry, type Job, type Variation, type WorkOrder } from '../lib/types'
 import { isOverdue } from './Orders'
 import { money } from '../lib/format'
-import { IconChart, IconCog, IconPlus, IconScope } from '../components/Icons'
+import { IconChart, IconCog, IconPlus } from '../components/Icons'
 import { SyncBadge } from '../components/SyncBadge'
 import { Plate } from '../components/Sign'
 import { WeekLine } from './Plan'
@@ -13,14 +13,14 @@ import { useAccess } from '../lib/access'
  * signs (red = blocks invoicing, yellow = needs doing). Same list on a phone and a laptop: rows on a
  * phone, a ruled schedule with columns from 1024px.
  */
-export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOpen, onOpenLine, onToggle, onNew, onDashboard, onSettings, onRates }: {
+export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOpen, onOpenLine, onToggle, onNew, onDashboard, onSettings }: {
   jobs: Job[]; vos: Variation[]; orders?: WorkOrder[]; diary?: DiaryEntry[]; onOpen: (j: Job) => void
   /** Mastor's own urgent items per job, for the week (office only) */
   alerts?: { jobId: string; text: string; hint: string }[]
   /** tick a to-do off from the week */
   onToggle?: (e: DiaryEntry) => void
   /** open a job on its line of days (from the week across all jobs) */
-  onOpenLine?: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void; onRates: () => void
+  onOpenLine?: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
 }) {
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const active = sorted.filter(j => j.status === 'Active').length
@@ -36,7 +36,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
             <Wordmark />
             <div className="cover-sub">{sorted.length ? `${active} active job${active === 1 ? '' : 's'}` : 'Site · Variations · Valuations'}</div>
           </div>
-          {m && sorted.length > 0 ? <button onClick={onDashboard} aria-label="Director dashboard" className="icon-btn on-dark"><IconChart size={22} /></button> : <span className="icon-gap" />}
+          {m && sorted.length > 0 ? <button onClick={onDashboard} aria-label="Money across all jobs" className="icon-btn on-dark"><IconChart size={22} /></button> : <span className="icon-gap" />}
         </div>
         <div className="cover-sync"><SyncBadge /></div>
       </header>
@@ -50,7 +50,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
               const unpriced = vos.filter(v => v.jobId === j.id && v.rate === null && v.status !== 'Rejected').length
               return (
                 <button key={j.id} className="job-row" onClick={() => onOpen(j)}>
-                  <span className="jr-job"><b>{j.name}</b><small className="mono">{j.contractRef || j.workType}</small></span>
+                  <span className="jr-job"><b>{j.name}</b><small className="mono">{j.contractRef || WORK_LABEL[j.workType] || j.workType}</small></span>
                   <span className="jr-client">{j.client || '—'}</span>
                   <span className="jr-value num">{m ? (j.contractValue > 0 ? money(j.contractValue) : '—') : ''}</span>
                   <span className="jr-needs">
@@ -68,7 +68,6 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
           <div className="cover-empty">No jobs yet. Add your first job to get started.</div>
         )}
         <div className="cover-actions">
-          {m && <button className="btn btn-secondary" onClick={onRates}><IconScope /> Schedule of rates</button>}
           <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
         </div>
       </div>

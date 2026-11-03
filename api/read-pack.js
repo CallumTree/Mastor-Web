@@ -2,7 +2,7 @@
  * POST /api/read-pack — reads the non-schedule documents in a client's pack (PCI, risk register,
  * surveys) for the facts a contractor needs and for work they call for that isn't in the scope.
  * Body: { docs: [{ name, text }], scope: "<one line per scope item>" }
- * Returns: { facts: [...], extras: [...], cut: [names of documents that were too long to send whole] }
+ * Returns: { facts: [...], extras: [...], client: { text, document, page, quote }, cut: [names of documents that were too long to send whole] }
  * Every item carries a verbatim quote; the device checks each quote against the document before
  * anything is offered for saving.
  *
@@ -31,6 +31,10 @@ extras — work a document asks the contractor to do that is NOT in the scope li
 something, a precaution needs equipment or an attendance, a removal is required first. Only include it if you cannot
 find a scope line that covers it. Describe the work plainly; never give a price or quantity unless the document states one.
 
+client — the client organisation the work is for (the council, housing association or trust that issued the documents),
+named exactly as the documents name it, with a quote that names it. Never the contractor, a designer or a consultant.
+If no document names the client, give text "" and quote "".
+
 Rules:
 - Use only what the documents say. Never infer, generalise or add advice of your own.
 - text: one plain sentence in UK English, written for the contractor.
@@ -46,8 +50,10 @@ const SOURCE = {
   properties: { type: 'array', items: { type: 'string' } },
 }
 const SCHEMA = {
-  type: 'object', additionalProperties: false, required: ['facts', 'extras'],
+  type: 'object', additionalProperties: false, required: ['facts', 'extras', 'client'],
   properties: {
+    client: { type: 'object', additionalProperties: false, required: ['text', 'document', 'page', 'quote'],
+      properties: { text: { type: 'string' }, document: { type: 'string' }, page: { anyOf: [{ type: 'integer' }, { type: 'null' }] }, quote: { type: 'string' } } },
     facts: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['category', 'text', 'document', 'page', 'quote', 'properties'],
       properties: { category: { type: 'string', enum: ['Client', 'Site', 'H&S', 'Commercial'] }, text: { type: 'string' }, ...SOURCE } } },
     extras: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['text', 'why', 'document', 'page', 'quote', 'properties'],
@@ -94,7 +100,7 @@ export default async function handler(req, res) {
     const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('')
     let out
     try { out = JSON.parse(text) } catch { return res.status(502).json({ error: 'The reader’s answer couldn’t be read. Try again.' }) }
-    return res.status(200).json({ facts: out.facts || [], extras: out.extras || [], cut })
+    return res.status(200).json({ facts: out.facts || [], extras: out.extras || [], client: out.client || null, cut })
   } catch {
     return res.status(502).json({ error: 'Could not reach the AI service. Check signal and try again.' })
   }

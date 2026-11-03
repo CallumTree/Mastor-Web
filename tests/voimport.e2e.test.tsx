@@ -14,6 +14,7 @@ beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async (u: string) => String(u).in
 
 async function newJob(name: string, po: string) {
   click(await screen.findByRole('button', { name: /new job/i }))
+  click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
   type('Job name *', name); type(/PO number/i, po)
   click(screen.getByRole('button', { name: 'Create job' }))
   await screen.findByText(name)
@@ -48,7 +49,7 @@ describe('council VO instructions', () => {
 
   it('handwritten site instruction 11284: matches PO, attaches line 1 to the VO already raised, adds line 2', async () => {
     render(<App />)
-    click(await screen.findByRole('button', { name: /all jobs/i }).catch(() => screen.findByRole('button', { name: /new job/i })))
+    await screen.findByRole('button', { name: /new job/i })   // the jobs screen
     await newJob('57 Coombs Drive', 'PC21812')
     nav('vos')
     click(await screen.findByRole('button', { name: /log variation/i }))

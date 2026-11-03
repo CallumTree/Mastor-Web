@@ -7,7 +7,7 @@ import { Trace } from './Trace'
  * Esc or ✕ asks before throwing the work away. `keepsWork` = the sheet saves itself on close, so no ask.
  * `locked` = can't be dismissed right now (e.g. while a file is being read).
  */
-export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose: () => void; children: ReactNode; label?: string; keepsWork?: boolean; locked?: boolean }) {
+export function Sheet({ onClose, children, label, keepsWork, locked, className }: { onClose: () => void; children: ReactNode; label?: string; keepsWork?: boolean; locked?: boolean; className?: string }) {
   const [dirty, setDirty] = useState(false)
   const [asking, setAsking] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -45,7 +45,7 @@ export function Sheet({ onClose, children, label, keepsWork, locked }: { onClose
   })
 
   return (
-    <div className="sheet-bg" onClick={ask}>
+    <div className={'sheet-bg' + (className ? ' ' + className : '')} onClick={ask}>
       <div ref={box} className="sheet" role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}
         onClick={e => e.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty}>
         <div className="sheet-top">

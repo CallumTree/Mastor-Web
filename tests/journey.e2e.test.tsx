@@ -30,6 +30,7 @@ describe('College Park, end to end', () => {
 
     // --- new job
     click(screen.getByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', '32 College Park')
     type('Client', 'Pembrokeshire County Council')
     type(/PO number/i, 'PC26061')
@@ -108,11 +109,11 @@ describe('College Park, end to end', () => {
     expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)
     expect(screen.getAllByText('VAL II').length).toBe(1)
 
-    // --- director dashboard reflects it
+    // --- the money across all jobs reflects it
     cleanup()
     render(<App />)
     click(await screen.findByRole('button', { name: 'Jobs' }))   // the reload kept the job open; back to the list
-    click(await screen.findByRole('button', { name: /director dashboard/i }))
+    click(await screen.findByRole('button', { name: /money across all jobs/i }))
     await screen.findByText('Needs action')
     expect(screen.getByText('Certified this year · excl. VAT')).toBeTruthy()
     // in Chase payment (VAL I is owed) and in the jobs list

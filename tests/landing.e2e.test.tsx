@@ -21,12 +21,11 @@ describe('front page', () => {
     expect(container.querySelectorAll('.tile.taken').length).toBe(13)
     const claim = screen.getAllByRole('button', { name: /Claim place XIV/ })[0]
 
-    // the forecast: per-job counts times the jobs on the go, never a month of more days than it has
-    expect(screen.getByText('20.9 hours')).toBeTruthy()
-    fireEvent.change(screen.getByLabelText(/Jobs on the go/), { target: { value: '1' } })
-    expect(screen.getByText('12.1 hours')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Back to our estimates' }))
-    expect(screen.getByText('20.9 hours')).toBeTruthy()
+    // the time back is one valuation, step by step: its totals add up from the steps shown
+    const table = screen.getByRole('table', { name: /A monthly valuation/ })
+    const foot = table.querySelector('tfoot tr')!
+    expect([...foot.querySelectorAll('td')].map(td => td.textContent)).toEqual(['3 hrs', '27 min'])
+    expect(table.querySelectorAll('tbody tr').length).toBe(6)
 
     fireEvent.click(claim)
     expect((await screen.findByRole('alert')).textContent).toMatch(/Add your name and your firm and an email address that works/)
@@ -35,10 +34,10 @@ describe('front page', () => {
     fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Dai Jones' } })
     fireEvent.change(screen.getByLabelText('Firm'), { target: { value: 'Jones Building' } })
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'dai@jones.co.uk' } })
-    fireEvent.change(screen.getByLabelText(/Your work/), { target: { value: 'Responsive and voids' } })
+    fireEvent.change(screen.getByLabelText(/Your work/), { target: { value: 'Repairs and maintenance' } })
     fireEvent.click(claim)
     await screen.findByText('Place XIV is yours.')
-    expect(sent[0]).toMatchObject({ name: 'Dai Jones', firm: 'Jones Building', email: 'dai@jones.co.uk', work: 'Responsive and voids', website: '' })
+    expect(sent[0]).toMatchObject({ name: 'Dai Jones', firm: 'Jones Building', email: 'dai@jones.co.uk', work: 'Repairs and maintenance', website: '' })
     await waitFor(() => expect(container.querySelector('.tile.yours')?.textContent).toBe('XIV'))
     expect(container.querySelector('.tile.next')?.textContent).toBe('XV')
     expect(screen.getByText('14 of 50 taken · 36 left')).toBeTruthy()

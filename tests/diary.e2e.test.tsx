@@ -26,6 +26,7 @@ describe('site diary', () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     fireEvent.change(screen.getByLabelText('Job name *'), { target: { value: 'Diary Close' } })
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Diary Close')
@@ -69,10 +70,10 @@ describe('site diary', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: /open photo/i })).toBeNull())
     expect(await db.photo(vo.photoIds[0])).toBeTruthy()
 
-    // --- day pager + recent days
+    // --- day pager (the other days are on the job's line, not listed again under the day)
     click(screen.getByRole('button', { name: /previous day/i }))
     await screen.findByText(/^Yesterday · /)
-    expect(screen.getByText(/recent days/i)).toBeTruthy()
+    expect(screen.queryByText(/recent days/i)).toBeNull()
 
     // --- one kind of note: ⊕ capture offers "Note" (on record); today's site log is the Diary tab
     nav('scope')

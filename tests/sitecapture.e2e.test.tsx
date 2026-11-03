@@ -30,16 +30,16 @@ describe('site capture', () => {
     const today = new Date(); const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     await db.putDiary({ id: 'voice1', jobId: 'js', date, type: 'voice', note: '', labour: null, weather: '', mediaId: 'wav1', originalMediaId: null, room: '', voId: null, createdAt: 5 })
 
+    // no button: the day has gone quiet (the voice note is long since uploaded), so the office's Mastor reads it on its own
     render(<App />)
     click(await screen.findByRole('button', { name: /Windsor Road/ }))
-    nav('diary')
-    await openToday()
-    expect(await screen.findByRole('button', { name: 'Open voice note' })).toBeTruthy()
-    click(screen.getByRole('button', { name: /Read today against the scope · 1 new/ }))
-    expect(await screen.findByText('3 suggestions waiting in Vals for review.')).toBeTruthy()
+    await waitFor(() => expect(sent).toBeTruthy())
     expect(sent.companyId).toBe('c1')
     expect(sent.items[0]).toMatchObject({ key: 'M1', kind: 'voice', mediaId: 'wav1' })
-    expect(screen.getByText('3 to review')).toBeTruthy()   // on the voice note's tile
+    nav('diary')
+    await openToday()
+    expect(await screen.findByText('3 to review')).toBeTruthy()   // on the voice note's tile
+    expect(screen.queryByRole('button', { name: /read today/i })).toBeNull()
 
     nav('vals')
     expect(await screen.findByText('From site · 3 to review')).toBeTruthy()

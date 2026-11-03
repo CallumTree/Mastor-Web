@@ -1,4 +1,4 @@
-import { voCourt, valCourt } from '../src/lib/chase'
+import { voCourt, valCourt, voStage, voStatusAfter } from '../src/lib/chase'
 import type { Job, ScopeItem, Valuation, Variation } from '../src/lib/types'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
@@ -20,4 +20,16 @@ ok(valCourt(val({ issuedAt: now - 35 * DAY }), { ...job, paymentTermsDays: 45 },
 ok(valCourt(val({ paidAt: now, paidAmount: 1000 }), job, scope, [], now).tone === 'done', 'paid in full → done')
 const part = valCourt(val({ issuedAt: now - 35 * DAY, paidAt: now, paidAmount: 600 }), job, scope, [], now)
 ok(part.owed === 400 && part.tone === 'late' && part.text.includes('Part paid'), 'part paid → £400 outstanding, still overdue')
+// the VO's stage follows its facts; nobody sets it
+ok(voStage(vo({ rate: null })) === 'Logged', 'no price → logged')
+ok(voStage(vo({})) === 'Priced', 'priced, not sent → priced')
+ok(voStage(vo({ submittedAt: now })) === 'With client', 'sent for instruction → with client')
+ok(voStage(vo({ submittedAt: now, clientRef: 'VO 12' })) === 'Instructed', 'a client ref → instructed')
+ok(voStage(vo({ status: 'Instructed', clientRef: '' })) === 'Instructed', 'a signed dayworks sheet (instructed, no ref) stays instructed')
+ok(voStage(vo({ clientRef: 'VO 12', valuationId: 'x' })) === 'Claimed', 'in a valuation → claimed')
+ok(voStage(vo({ status: 'Rejected', clientRef: 'VO 12' })) === 'Rejected', 'rejected beats everything')
+ok(voStatusAfter(vo({}), vo({ clientRef: 'VO 3' })) === 'Instructed', 'typing a client ref instructs it')
+ok(voStatusAfter(vo({ clientRef: 'VO 3', status: 'Instructed' }), vo({ clientRef: '', status: 'Instructed' })) === 'Identified', 'taking the ref away undoes it')
+ok(voStatusAfter(vo({ status: 'Instructed' }), vo({ status: 'Instructed', description: 'x' })) === 'Instructed', 'an instruction without a ref is left alone')
+ok(voStatusAfter(vo({ clientRef: 'VO 3', status: 'Instructed' }), vo({ clientRef: 'VO 3', status: 'Rejected' })) === 'Rejected', 'client rejected it')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

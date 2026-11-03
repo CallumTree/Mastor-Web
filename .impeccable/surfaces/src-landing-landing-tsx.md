@@ -9,7 +9,7 @@ related_targets: ["index.html","src/landing/landing.css"]
 
 Scope: the public front page at `/` (index.html → src/landing/). Mode: **Persuade**. The app moves to /app; signed-in people and the installed app skip this page.
 
-Audience: directors of small UK contractors on council / housing-association schedule-of-rates frameworks (PPR, WHQS / Decent Homes, responsive, voids), 2–30 people, money run in Excel. Arrive on a phone as often as a desktop.
+Audience: UK contractors and their teams on schedule-of-rates work without a back office (councils, housing associations, NHS, police and fire, schools, private clients), from one person to a team on several jobs, money run in Excel. Copy speaks to the business, not to one job title, and names no client framework. Arrive on a phone as often as a desktop.
 Action: claim one of 50 founding places (name, firm, email, optional phone, the work they do). Offer: free through the pilot, then half price for as long as they stay. No price shown; pricing not set.
 Proof on hand: the product itself (what it really does), the founding story (built inside a working contractor's office). No testimonials, users, metrics or press exist; none are invented.
 Constraints: the app's world (DESIGN.md, the drawing office). Count of places is live from the database, never faked.
@@ -43,3 +43,14 @@ OWN-WORLD (revised): the app's tokens: ink-navy ground #0A0F1D with the 24px dra
 The register (revised): free places outlined in #64748B, taken places filled #273449 (a step lighter than the board, so they read as taken), the next place lit cyan with an ink numeral, the visitor's own place white with a cyan ring. The claim button is the white block, naming the next numeral in ink.
 Assets (revised): public/landing/app-*.webp and site-to-valuation.* recaptured in the Blueprint app on 2 Nov 2026 (same example job; the recording now opens today's site day from the job's line); each raster carries an origin sidecar.
 Fixed on the way: the sign-up's "Your work" field shared the class `.work` with the photo strip and took its grid; the strip's rules are now scoped to `ul.work`.
+
+## Revision (2 Nov 2026): a real street behind the headline
+Requested by the owner, so the first screen feels less like a template. A photograph of a row of brick terraced houses (Unsplash, T, credited in the footer) sits behind the header and headline as a cyanotype: the photo's light in Prussian blue (luminosity over #1B4A80), under an ink scrim (50% at the top to 90%) and the drafting grid, fading into the page below the offer (540px tall on desktop, so the form's labels sit on the plain sheet). Measured against a worst-case bright sky: white text at least 6:1 behind the header and headline, the lede 9:1. The header links are white over it.
+On phones the first screen now runs headline, offer, then the site photo with the app in a phone, then the form (grid areas head / art / form); on desktop the photo and app stay beside the headline and form. `#claim` moved to the form, so "Claim place" buttons lower down scroll to the form itself.
+
+## Revision (3 Nov 2026): distilled
+Requested by the owner: "simplify the whole page"; the time calculator felt arbitrary ("if it saves time just say it does… base it on a valuation workflow"); the hero photo of a worker sitting on a bucket by a barrier was disliked.
+STORY (revised): what it is and who it's for (firms without a back office) → the site diary runs the valuation (the recording) → the time back on one valuation → it never makes a number up → fifty founding places. Nothing else.
+Cut: the section links in the header, "who it's for" with its photos and facts, the strip of three work photos, the four phone screenshots and the desktop dashboard, the roof photo band, the six-stage job list and the Claude line, and the editable forecast (`Forecast.tsx`, deleted). The "For" term on the register repeated the hero and went too.
+Time back (revised): one monthly valuation, six steps, by hand against in Mastor, in a ruled register drawn twice: 3 hrs against 27 min, so "Two and a half hours back on every valuation", and with three jobs a working day a month. Stated as our estimate, not a measurement; the totals are summed from the steps shown, never typed.
+Hero art (revised): the kitchen mid-refit (Brett Jordan, already credited) replaces the worker photo; it is the work the example job's voice note is about. The app screen in the phone and the recording were recaptured on 3 Nov 2026 with the new dock (the raised capture disc, Clerk in the header) and the reading that now runs on its own.

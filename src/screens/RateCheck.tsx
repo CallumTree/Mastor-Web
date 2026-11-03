@@ -53,7 +53,7 @@ export function RateCheckSheet({ lines, books, onClose }: { lines: CheckLine[]; 
     <Sheet onClose={onClose} label="Check rates">
       <div className="stack">
         <h2 className="label bracket">Check rates against your SoR</h2>
-        {!books.length && <div className="empty">Import your schedule of rates first (jobs board → Schedule of rates).</div>}
+        {!books.length && <div className="empty">Import your schedule of rates first (Settings → Schedule of rates).</div>}
         {loading && <div className="loading-bar" role="status" aria-label="Loading rates" />}
         {books.length > 1 && (
           <div className="chips" role="group" aria-label="Rate book">

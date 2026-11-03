@@ -33,7 +33,9 @@ export const placeOf = (e: DiaryEntry) => [e.property ? `No. ${e.property}` : ''
 const byTime = (a: DiaryEntry, b: DiaryEntry) =>
   (a.type === b.type ? 0 : a.type === 'event' ? -1 : 1) || (a.time ?? '99').localeCompare(b.time ?? '99') || a.createdAt - b.createdAt
 
-export interface LineDay { date: string; site: DiaryEntry | null; captures: number; items: DiaryEntry[] }
+export interface LineDay { date: string; site: DiaryEntry | null; captures: number; items: DiaryEntry[]; notes?: number }
+/** notes a person may see: operatives never see commercial ones */
+const noteFor = (e: DiaryEntry, money: boolean) => e.type === 'note' && (money || e.category !== 'Commercial')
 export interface Line { undated: DiaryEntry[]; late: DiaryEntry[]; before: LineDay[]; today: LineDay; ahead: LineDay[]; later: number }
 
 /**
@@ -48,8 +50,10 @@ export function jobLine(entries: DiaryEntry[], today: string, opts: { money: boo
     date: d, site: entries.find(e => e.type === 'day' && e.date === d) ?? null,
     captures: entries.filter(e => e.date === d && (e.type === 'photo' || e.type === 'video' || e.type === 'voice')).length,
     items: plan.filter(e => e.date === d && pick(e)).sort(byTime),
+    notes: entries.filter(e => e.date === d && noteFor(e, opts.money)).length,
   })
-  const siteDays = [...new Set(entries.filter(e => e.date && e.date < today && !isPlan(e) && e.type !== 'note').map(e => e.date))]
+  // a day with anything written or captured on it is a site day (notes live on their day now)
+  const siteDays = [...new Set(entries.filter(e => e.date && e.date < today && !isPlan(e) && (e.type !== 'note' || noteFor(e, opts.money))).map(e => e.date))]
   const planDaysBefore = [...new Set(plan.filter(e => e.date && e.date < today && !isOpen(e)).map(e => e.date))]
   const before = [...new Set([...siteDays, ...planDaysBefore])].sort().reverse().slice(0, opts.behind ?? 2).reverse()
     .map(d => at(d, e => !isOpen(e)))   // what happened then; anything still open is late, at today

@@ -37,8 +37,10 @@ describe('schedule of rates', () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
 
-    // --- import from the jobs board
-    click(screen.getByRole('button', { name: /schedule of rates/i }))
+    // --- import from settings (one place for it, not a second button on the jobs board)
+    expect(screen.queryByRole('button', { name: /schedule of rates/i })).toBeNull()
+    click(screen.getByRole('button', { name: 'Settings' }))
+    click(await screen.findByRole('button', { name: /open schedule of rates/i }))
     await screen.findByText(/no rate books yet/i)
     pick([sorDocx('CURRENT_Planned_v8.docx', ROWS)])
     await screen.findByText('2 rates')
@@ -62,6 +64,7 @@ describe('schedule of rates', () => {
 
     // --- a job with a variation, priced from the book
     click(screen.getByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', '4 Rates Road')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('4 Rates Road')

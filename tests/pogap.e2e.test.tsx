@@ -1,5 +1,6 @@
-import { describe, it, vi, beforeAll } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, vi, beforeAll, expect } from 'vitest'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import { db } from '../src/lib/db'
 import App from '../src/App'
 const click = (el: Element) => fireEvent.click(el)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
@@ -12,6 +13,7 @@ describe('BoQ vs PO difference', () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Gap Road'); type(/PO number/i, 'PC1'); type(/PO value/i, '1000'); type('Uplift 1 (%)', '20.28'); type('Uplift 2 (%)', '5')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Gap Road')
@@ -26,18 +28,24 @@ describe('BoQ vs PO difference', () => {
     click(screen.getByRole('button', { name: /accept £136\.65 difference/i }))
     await screen.findByText(/accepted .* — Added after PO — Dylan aware/i)
     await waitFor(() => expect(screen.queryByText(/doesn't reconcile/i)).toBeNull())
-    await screen.findByText(/PO difference of £136\.65 accepted \(BoQ over PO\): Added after PO — Dylan aware/)   // on record in Notes
+    await waitFor(async () => expect((await db.diary((await db.jobs())[0].id)).some(d => d.type === 'note' && /PO difference of £136\.65 accepted \(BoQ over PO\): Added after PO — Dylan aware/.test(d.note))).toBe(true))   // on record in the notes
 
-    // a note from ⊕ lands on Home, pinned first, and stays out of the diary's photo grid
+    // a note from ⊕ is written on today's diary day; filed as Client it becomes a note of its own, and pinned it shows on Home
     click(screen.getByRole('button', { name: 'Capture' }))
     click(await screen.findByRole('button', { name: /^Note$/ }))
-    click(screen.getByRole('button', { name: 'Client' }))
-    type(/^note/i, 'Tenant asked for extra socket in bedroom 2')
+    const box = await screen.findByPlaceholderText(/what happened on site today/i) as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'Tenant asked for extra socket in bedroom 2' } })
+    click(within(screen.getByRole('group', { name: /file this note as/i })).getByRole('button', { name: 'Client' }))
+    click(await screen.findByText('Tenant asked for extra socket in bedroom 2'))
+    expect(box.value).toBe('')
     click(screen.getByLabelText(/pin to the top/i))
-    click(screen.getByRole('button', { name: 'Add note' }))
-    await screen.findByText('Tenant asked for extra socket in bedroom 2')
-    click(screen.getByRole('button', { name: /all 2/i }))
-    click(screen.getAllByRole('button', { name: 'Commercial' })[0])
+    click(screen.getByRole('button', { name: 'Save' }))
+    nav('home')
+    await screen.findByText('Tenant asked for extra socket in bedroom 2')   // pinned, so it's on the job's home
+    expect(screen.queryByText(/PO difference of £136\.65 accepted \(BoQ/)).toBeNull()      // not pinned: in the notes, not on Home
+    click(screen.getByRole('button', { name: 'All notes' }))
+    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: 'Commercial' }))
+    await screen.findByText(/PO difference of £136\.65 accepted \(BoQ/)
     await waitFor(() => expect(screen.queryAllByText('Tenant asked for extra socket in bedroom 2').length).toBe(1))  // filtered to Commercial: only the Home copy remains
     fireEvent.click(document.querySelector('.sheet-bg')!)
     nav('diary')

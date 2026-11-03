@@ -1,4 +1,3 @@
-import { readSchedule } from './sheet'
 import { authHeader } from './supabase'
 /** Turning an uploaded BoQ into reviewable lines. Nothing here saves anything. */
 export interface ParsedLine {
@@ -109,8 +108,11 @@ export function parseBoqTsv(text: string, truncated = false): ParsedBoq {
 const readAsText = (f: Blob) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsText(f) })
 const readAsBuffer = (f: Blob) => new Promise<ArrayBuffer>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as ArrayBuffer); r.onerror = () => rej(r.error); r.readAsArrayBuffer(f) })
 
-/** Reads the picked file into what the server function expects. */
-export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'pdf'; data: string } | { kind: 'text'; text: string } | { kind: 'parsed'; boq: ParsedBoq }> {
+/** Reads the picked file into what the server function expects — or, when the document is a table that can be read
+ *  exactly, the lines themselves. The client's own exact layouts are tried first, then the general layout reader
+ *  (scopeTable.ts), which works out an unfamiliar schedule, BoQ or scope of works from what its columns mean.
+ *  `strict` (sorting a whole pack): only tables whose lines carry quantities or money, or read as work to do, count. */
+export async function readBoqFile(file: File, direct = true, strict = false): Promise<{ kind: 'pdf'; data: string } | { kind: 'text'; text: string } | { kind: 'parsed'; boq: ParsedBoq }> {
   const name = file.name.toLowerCase()
   if (name.endsWith('.pdf') || file.type === 'application/pdf') {
     // 1) read the table directly — exact, no AI. Falls through to the AI if it isn't a table we recognise.
@@ -120,8 +122,12 @@ export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'p
         const worker = await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url')
         pdfjs.GlobalWorkerOptions.workerSrc = worker.default
         const { pdfPages, readPdfSchedule } = await import('./pdfTable')
-        const read = readPdfSchedule(await pdfPages(new Uint8Array(await readAsBuffer(file)), pdfjs as never))
+        const pages = await pdfPages(new Uint8Array(await readAsBuffer(file)), pdfjs as never)
+        const read = readPdfSchedule(pages)
         if (read) return { kind: 'parsed', boq: { ...read, method: 'table' } }
+        const { readPdfTable } = await import('./scopeTable')
+        const table = readPdfTable(pages)
+        if (table) return { kind: 'parsed', boq: { ...table, method: 'table' } }
       } catch (e) { console.warn('PDF table reader failed — using the AI', e); lastTableError = (e as Error)?.message ?? String(e) }
     }
     if (file.size > 3_200_000) throw new Error('That PDF is over 3MB — try exporting it smaller, or upload the Excel version.')
@@ -132,11 +138,10 @@ export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'p
   if (/\.(xlsx|xlsm|xls|csv)$/.test(name) && direct) {
     const XLSX = await import('xlsx')
     const wb = name.endsWith('.csv') ? XLSX.read(await readAsText(file), { type: 'string' }) : XLSX.read(await readAsBuffer(file), { type: 'array' })
-    for (const n of wb.SheetNames) {
-      const rows = XLSX.utils.sheet_to_json<(string | number | null)[]>(wb.Sheets[n], { header: 1, blankrows: false, defval: null })
-      const parsed = readSchedule(rows)
-      if (parsed) return { kind: 'parsed', boq: { ...parsed, method: 'spreadsheet' } }
-    }
+    const { readWorkbook } = await import('./scopeTable')
+    // blank rows kept: a gap between a heading and the lines under it means something
+    const parsed = readWorkbook(wb.SheetNames.map(n => ({ name: n, rows: XLSX.utils.sheet_to_json<(string | number | null)[]>(wb.Sheets[n], { header: 1, blankrows: true, defval: null }) })), { strict })
+    if (parsed) return { kind: 'parsed', boq: { ...parsed, method: 'spreadsheet' } }
   }
   if (/\.(xlsx|xlsm|xls)$/.test(name)) {
     const XLSX = await import('xlsx')
@@ -145,15 +150,23 @@ export async function readBoqFile(file: File, direct = true): Promise<{ kind: 'p
     return { kind: 'text', text }
   }
   if (name.endsWith('.docx')) {
+    const buf = await readAsBuffer(file)
+    if (direct) {
+      try {
+        const [{ docxEvents, docxXml }, { readDocxTables }] = await Promise.all([import('./worksOrder'), import('./scopeTable')])
+        const table = readDocxTables(docxEvents(await docxXml(buf)), { strict })
+        if (table) return { kind: 'parsed', boq: { ...table, method: 'table' } }
+      } catch (e) { console.warn('Word table reader failed — using the AI', e) }
+    }
     const mammoth = await import('mammoth')
-    const { value } = await mammoth.extractRawText({ arrayBuffer: await readAsBuffer(file) })
+    const { value } = await mammoth.extractRawText({ arrayBuffer: buf })
     return { kind: 'text', text: value }
   }
   return { kind: 'text', text: await readAsText(file) }
 }
 
-export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
-  const payload = await readBoqFile(file)
+export async function parseBoqRemote(file: File, strict = false): Promise<ParsedBoq> {
+  const payload = await readBoqFile(file, true, strict)
   if (payload.kind === 'parsed') return payload.boq   // spreadsheet read exactly — no AI needed
   const r = await fetch('/api/parse-boq', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) }, body: JSON.stringify(payload) })
   let data: { text?: string; truncated?: boolean; error?: string } = {}
@@ -163,6 +176,6 @@ export async function parseBoqRemote(file: File): Promise<ParsedBoq> {
   if (r.ok && !data.text) throw new Error('The reader came back empty. Try again — if it keeps happening, send the file over so it can be looked at.')
   if (!r.ok || !data.text) throw new Error(data.error || (r.status === 404 ? 'The reader isn’t deployed yet.' : `Couldn’t read the document (${r.status}).`))
   const parsed = parseBoqTsv(data.text, !!data.truncated)
-  if (parsed.lines.length === 0) throw new Error('The document was read, but no priced line items were found in it. Is this the BoQ / works order? If it is, send it over and it can be looked at.')
+  if (parsed.lines.length === 0) throw new Error('The document was read, but no items of work were found in it. Is this the schedule, BoQ, scope of works or works order? If it is, send it over and it can be looked at.')
   return { ...parsed, method: 'ai' }
 }

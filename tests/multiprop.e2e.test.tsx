@@ -15,6 +15,7 @@ describe('multi-property scheme', () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Prescelly Road')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Prescelly Road')

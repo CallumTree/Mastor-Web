@@ -8,7 +8,7 @@
 import type { ParsedBoq, ParsedLine } from './boq'
 import { tidyLocation } from './boq'
 
-export interface Tok { x: number; y: number; s: string }
+export interface Tok { x: number; y: number; s: string; w?: number }
 export interface PdfPage { items: Tok[] }
 
 /** Pull positioned text out of a PDF with pdf.js (module passed in so browser + tests share this). */
@@ -19,7 +19,7 @@ export async function pdfPages(data: Uint8Array, pdfjs: { getDocument: (o: objec
     const p = await doc.getPage(n)
     const h = p.getViewport({ scale: 1 }).height
     const tc = await p.getTextContent()
-    pages.push({ items: (tc.items as { str: string; transform: number[] }[]).filter(i => i.str && i.str.trim()).map(i => ({ x: i.transform[4], y: h - i.transform[5], s: i.str.trim() })) })
+    pages.push({ items: (tc.items as { str: string; transform: number[]; width?: number }[]).filter(i => i.str && i.str.trim()).map(i => ({ x: i.transform[4], y: h - i.transform[5], s: i.str.trim(), w: i.width })) })
   }
   return pages
 }
