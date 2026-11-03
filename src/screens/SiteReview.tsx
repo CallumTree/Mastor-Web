@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { DiaryEntry, ScopeItem, SiteSuggestion } from '../lib/types'
 import { openSuggestions, unread } from '../lib/siteRead'
 
@@ -8,6 +8,9 @@ import { money } from '../lib/format'
 import { lineValue } from '../lib/valuation'
 import { Plate } from '../components/Sign'
 import { prettyDay } from '../lib/dates'
+import { Roll } from '../components/Roll'
+import { reducedMotion, wait } from '../lib/motion'
+import { IconCheck } from '../components/Icons'
 
 const KIND: Record<SiteSuggestion['kind'], { badge: string; cls: string }> = {
   complete: { badge: 'Done', cls: 'b-green' },
@@ -31,19 +34,49 @@ export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
   const [busy, setBusy] = useState<string | null>(null)
   const list = openSuggestions(diary)
   const waiting = unreadCount(diary)
+  // a decided row confirms, folds shut, then goes; the count ticks down as it folds
+  const [leaving, setLeaving] = useState<Record<string, 'approved' | 'rejected'>>({})
+  // suggestions that arrive while you're looking (the automatic read just finished) come in one after another,
+  // and the corner marks close in on them; the ones already here when the screen opens just sit there
+  const seen = useRef<Set<string> | null>(null)
+  const [arrived, setArrived] = useState<{ ids: Set<string>; k: number } | null>(null)
+  const ids = list.map(x => x.s.id).join()
+  useLayoutEffect(() => {
+    const now = list.map(x => x.s.id)
+    if (!seen.current) { seen.current = new Set(now); return }
+    const fresh = now.filter(id => !seen.current!.has(id))
+    now.forEach(id => seen.current!.add(id))
+    if (!fresh.length || reducedMotion()) return
+    setArrived(a => ({ ids: new Set(fresh), k: (a?.k ?? 0) + 1 }))
+    const t = setTimeout(() => setArrived(null), 2600)
+    return () => clearTimeout(t)
+  }, [ids])   // eslint-disable-line react-hooks/exhaustive-deps
   if (!list.length) return note && waiting ? <div className="hint site-note">Site captures aren’t being read just now: {note}</div> : null
-  const act = async (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => { setBusy(s.id); try { await onDecide(e, s, state) } finally { setBusy(null) } }
+  const act = async (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => {
+    setBusy(s.id); setLeaving(l => ({ ...l, [s.id]: state }))
+    try {
+      await wait(reducedMotion() ? 150 : state === 'approved' ? 440 : 320)
+      await onDecide(e, s, state)
+    } catch (x) {
+      setLeaving(l => { const { [s.id]: _, ...rest } = l; return rest })   // it didn't save: the row comes back
+      throw x
+    } finally { setBusy(null) }
+  }
+  const left = list.filter(x => !leaving[x.s.id]).length
   return (
     <div className="stack site-review" style={{ gap: 8 }}>
-      <Plate kind="do">From site · {list.length} to review</Plate>
+      <Plate kind="do">From site · <Roll text={String(left)} /> to review</Plate>
       <div className="hint">Read from the site’s photos, video and voice notes. Check each one: nothing is claimed or raised until you approve it.</div>
       {note && waiting > 0 && <div className="hint">{waiting} more capture{waiting === 1 ? '' : 's'} not read yet: {note}</div>}
-      <div className="panel flush clip">
+      <div className="site-wrap">{arrived && <span key={arrived.k} className="site-marks" aria-hidden="true" />}<div className="panel flush clip">
         {list.map(({ entry: e, s }, n) => {
           const lines = scope.filter(i => s.lineIds.includes(i.id))
           const gone = s.kind === 'complete' && lines.every(i => i.valuationId)
+          const going = leaving[s.id]
+          const order = arrived ? [...arrived.ids].indexOf(s.id) : -1
           return (
-            <div key={s.id} className="site-sug" style={{ padding: 12, borderTop: n ? '1px solid var(--line)' : 'none' }}>
+            <div key={s.id} className={'sug-fold' + (going ? ' going ' + going : '') + (order >= 0 ? ' arrive' : '')} style={order >= 0 ? { animationDelay: `${order * 70}ms` } : undefined}><div className="sug-fold-in">
+            <div className="site-sug" style={{ padding: 12, borderTop: n ? '1px solid var(--line)' : 'none' }}>
               <div className="row" style={{ alignItems: 'flex-start', gap: 10 }}>
                 <Capture e={e} />
                 <div className="grow">
@@ -59,14 +92,16 @@ export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
               </div>
               <div className="row" style={{ marginTop: 10 }}>
                 <button className="btn btn-secondary" style={{ flex: 1 }} disabled={busy === s.id} onClick={() => act(e, s, 'rejected')}>Reject</button>
-                <button className="btn btn-primary" style={{ flex: 2 }} disabled={busy === s.id || gone} onClick={() => act(e, s, 'approved')}>
-                  {s.kind === 'complete' ? (gone ? 'Already claimed' : `Add ${lines.filter(i => !i.valuationId).length === 1 ? 'it' : `${lines.filter(i => !i.valuationId).length} lines`} to ${valLabel}`) : s.kind === 'vo' ? 'Raise as a VO' : 'Save to notes'}
+                <button className={'btn btn-primary' + (going === 'approved' ? ' confirmed' : '')} style={{ flex: 2 }} disabled={(busy === s.id && going !== 'approved') || gone} onClick={() => { if (!going) void act(e, s, 'approved') }}>
+                  {going === 'approved' ? <><IconCheck size={20} />{s.kind === 'complete' ? `Added to ${valLabel}` : s.kind === 'vo' ? 'Raised' : 'Saved'}</>
+                    : s.kind === 'complete' ? (gone ? 'Already claimed' : `Add ${lines.filter(i => !i.valuationId).length === 1 ? 'it' : `${lines.filter(i => !i.valuationId).length} lines`} to ${valLabel}`) : s.kind === 'vo' ? 'Raise as a VO' : 'Save to notes'}
                 </button>
               </div>
             </div>
+            </div></div>
           )
         })}
-      </div>
+      </div></div>
     </div>
   )
 }

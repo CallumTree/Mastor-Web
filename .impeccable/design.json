@@ -242,7 +242,27 @@
       {
         "name": "sheet",
         "value": "260ms cubic-bezier(.16, 1, .3, 1)",
-        "purpose": "Sheets rise from the foot."
+        "purpose": "Sheets rise from the foot; the capture menu drops back in 200ms cubic-bezier(.4, 0, 1, 1)."
+      },
+      {
+        "name": "tick",
+        "value": "150ms ease-out",
+        "purpose": "A tick draws itself like a pen stroke when a line goes in."
+      },
+      {
+        "name": "roll",
+        "value": "380ms cubic-bezier(.16, 1, .3, 1), 28ms per character",
+        "purpose": "A changed money total rolls only the characters that changed, rightmost first."
+      },
+      {
+        "name": "slide",
+        "value": "240ms cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "The dock's tab marker slides to the tab tapped."
+      },
+      {
+        "name": "fold",
+        "value": "300ms cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "A decided site suggestion folds shut."
       },
       {
         "name": "state",

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
 import { WORK_LABEL, type Cost, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder, type SiteSuggestion } from '../lib/types'
@@ -23,6 +23,8 @@ import { AskTab } from './Ask'
 import { valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
 import { fitLen } from '../components/Register'
+import { Roll } from '../components/Roll'
+import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
 
@@ -48,6 +50,29 @@ function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation
   return { done: n / scope.length, next: 0, label: `${n} of ${scope.length} lines done`, short: `${n}/${scope.length}` }
 }
 
+/** The open valuation's dashed piece of the job's line. It spans everything not yet certified and is clipped to
+ *  the valuation's share, so a tick grows it without stretching the dashes; the piece just added shows solid
+ *  cyan while it grows, then settles into the dashes. Nothing moves when the job first opens. */
+function RailNext({ done, next }: { done: number; next: number }) {
+  const d = Math.max(0, Math.min(1, done)), room = 1 - d
+  const n = Math.max(0, Math.min(room, next))
+  const prev = useRef(n)
+  const [grew, setGrew] = useState<{ from: number; to: number; k: number } | null>(null)
+  useLayoutEffect(() => {
+    const from = prev.current; prev.current = n
+    if (n <= from + 0.0005 || reducedMotion()) return
+    setGrew(g => ({ from, to: n, k: (g?.k ?? 0) + 1 }))
+    const t = setTimeout(() => setGrew(null), 1200)
+    return () => clearTimeout(t)
+  }, [n])
+  if (room <= 0) return null
+  return (
+    <i className="jrail-next" style={{ left: d > 0 ? `max(6px, ${d * 100}%)` : 0, clipPath: `inset(0 ${(1 - n / room) * 100}% 0 0)` }}>
+      {grew && <i key={grew.k} className="jrail-new" style={{ left: `${grew.from / room * 100}%`, width: `${(grew.to - grew.from) / room * 100}%` }} />}
+    </i>
+  )
+}
+
 /** The job's black header: where you are, the way back, and the neon rail of how far the job has got. */
 function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: Job; compact: boolean; rail: Rail | null; onBack: () => void; onSetup: () => void; onClerk: () => void; inClerk: boolean }) {
   const { money: seesMoney } = useAccess()
@@ -70,7 +95,7 @@ function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: 
         <div className="jrail-in">
           <div className="jrail" role="img" aria-label={rail.label}>
             <i className="jrail-done" style={{ width: `${Math.min(100, rail.done * 100)}%`, minWidth: rail.done > 0 ? 6 : 0 }} />
-            <i className="jrail-next" style={{ width: `${Math.max(0, Math.min(100 - rail.done * 100, rail.next * 100))}%` }} />
+            <RailNext done={rail.done} next={rail.next} />
             <b className="jrail-tick" style={{ left: `max(6px, ${Math.min(100, rail.done * 100)}%)` }} />
           </div>
           <span className="jrail-label" aria-hidden="true">{compact ? rail.short : rail.label}</span>
@@ -80,7 +105,7 @@ function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: 
   )
 }
 
-const FigN = ({ text, neg }: { text: string; neg?: boolean }) => <div className={'fig-n' + (neg ? ' neg' : '')} style={fitLen(text)}>{text}</div>
+const FigN = ({ text, neg }: { text: string; neg?: boolean }) => <div className={'fig-n' + (neg ? ' neg' : '')} style={fitLen(text)}><Roll text={text} /></div>
 
 function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, onOpenDay, margin, onCosts, orders, documents, diary }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; onOpenDay: (date: string) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode; diary: DiaryEntry[] }) {
   const [notesOpen, setNotesOpen] = useState(false)
@@ -210,13 +235,16 @@ export function JobView(p: {
   useEffect(() => { const el = document.scrollingElement; if (el) el.scrollTop = 0 }, [tab, diaryView])
   const openDay = (d: string) => { setDiaryDate(d); setDiaryView('day'); setTab('diary') }
   const [capture, setCapture] = useState(false)
+  const [capLeaving, setCapLeaving] = useState(false)
+  // the menu drops back behind the +, a little quicker than it rose (reduced motion: a short fade)
+  const closeCapture = () => { setCapLeaving(true); setTimeout(() => { setCapture(false); setCapLeaving(false) }, reducedMotion() ? 150 : 200) }
   const [focusNote, setFocusNote] = useState(false)
   const [capErr, setCapErr] = useState<string | null>(null)
   const [quickVoice, setQuickVoice] = useState(false)
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setCapErr(null)
-    try { const d = dayKey(); await p.onAddMedia(f, kind, d); setCapture(false); openDay(d) }
+    try { const d = dayKey(); await p.onAddMedia(f, kind, d); closeCapture(); openDay(d) }
     catch (x) { setCapErr((x as Error).message) }
   }
   return (
@@ -242,15 +270,19 @@ export function JobView(p: {
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
       </main>
       {/* the tabs share the dock evenly; the capture key is raised above its centre, in front of the page (on the rail it heads the column) */}
-      <nav className="nav" style={{ '--dock-cols': `repeat(${nav.length}, minmax(0, 1fr))` } as React.CSSProperties}>
+      <nav className="nav" style={{ '--dock-cols': `repeat(${nav.length}, minmax(0, 1fr))`, '--n': nav.length } as React.CSSProperties}>
         {tab !== 'ask' && <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={28} /></span></button>}
         {nav.map(({ tab: t, label: navLabel, Icon }) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
           <button key={t} className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); if (t === 'diary') setDiaryView('line'); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button>
         ) })}
+        {/* the tab marker: one bar that slides to the tab you tap, on the dock's bottom edge where the + never covers it */}
+        {nav.some(n => n.tab === tab) && <span className="nav-mark" aria-hidden="true" style={{ '--i': nav.findIndex(n => n.tab === tab) } as React.CSSProperties} />}
       </nav>
+      {/* over the open capture menu the + turns into its close button, where the thumb already is (phones; the menu keeps its own × for screen readers and the desktop) */}
+      {capture && <button className={'cap-close' + (capLeaving ? ' leaving' : '')} aria-hidden="true" tabIndex={-1} onClick={closeCapture}><span><IconPlus size={28} /></span></button>}
       {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); openDay(d) }} />}
       {capture && (
-        <Sheet onClose={() => setCapture(false)}>
+        <Sheet className={'capture-sheet' + (capLeaving ? ' leaving' : '')} onClose={closeCapture}>
           <div className="stack">
             <h2 className="label bracket">Capture · {job.name}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>

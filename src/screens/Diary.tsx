@@ -11,19 +11,39 @@ import { IconBack, IconCamera, IconFlag, IconMarkup, IconMic, IconPlay, IconVide
 import { MAX_VOICE_SECONDS, startRecording, type Recorder } from '../lib/voice'
 import { AUTO_DAYS, unread } from '../lib/siteRead'
 import { useAccess } from '../lib/access'
+import { onMediaWaiting, onSyncStatus } from '../lib/sync'
 import { NoteEditor, NoteRow, newNote, sortNotes } from './Notes'
 import type { NoteCategory } from '../lib/types'
 
 export const dayId = (jobId: string, date: string) => `day:${jobId}:${date}`
 export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayId(jobId, date), jobId, date, type: 'day', note: '', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
 
-function Thumb({ e, onOpen }: { e: DiaryEntry; onOpen: () => void }) {
+/**
+ * A capture's tile. One just taken comes in like a print developing; while it uploads a thin cyan line runs round
+ * its edge (still, in dashes, while there's no signal), and once it's up the line closes and fades. Mastor only
+ * reads a capture after it has uploaded, so the tile shows why one hasn't been read yet.
+ */
+function Thumb({ e, onOpen, uploading, stalled }: { e: DiaryEntry; onOpen: () => void; uploading: boolean; stalled: boolean }) {
   const tile = useRef<HTMLButtonElement>(null)
   const thumb = usePhotoThumb(e.type === 'photo' ? e.mediaId : null, tile)   // a small copy, made when the tile nears the screen
   const video = usePhotoUrl(e.type === 'video' ? e.mediaId : null)
   const url = e.type === 'video' ? video : thumb
+  const [fresh] = useState(() => Date.now() - e.createdAt < 15_000)
+  const was = useRef(uploading)
+  const [landed, setLanded] = useState(false)
+  useEffect(() => {
+    const before = was.current; was.current = uploading
+    if (!before || uploading) return
+    setLanded(true)
+    const t = setTimeout(() => setLanded(false), 1300)
+    return () => clearTimeout(t)
+  }, [uploading])
+  const what = e.type === 'video' ? 'video' : e.type === 'voice' ? 'voice note' : 'photo'
   return (
-    <button ref={tile} className="d-thumb" onClick={onOpen} aria-label={e.type === 'video' ? 'Open video' : e.type === 'voice' ? 'Open voice note' : 'Open photo'}>
+    <button ref={tile} className={'d-thumb' + (fresh ? ' fresh' : '')} onClick={onOpen} aria-label={`Open ${what}${uploading ? ', still uploading' : ''}`}>
+      {(uploading || landed) && <svg className={'d-trace' + (landed ? ' up' : stalled ? ' stalled' : '')} aria-hidden="true">
+        <rect className="run" x="0" y="0" width="100%" height="100%" pathLength={100} /><rect className="solid" x="0" y="0" width="100%" height="100%" pathLength={100} />
+      </svg>}
       {e.type === 'voice' ? <span className="t-small" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 4, color: 'var(--ink)', fontWeight: 600 }}><IconMic size={30} />Voice note</span>
         : url && (e.type === 'video'
         ? <video src={url} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -83,6 +103,11 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   const today = dayKey()
   const day = entries.find(e => e.id === dayId(job.id, date)) ?? null
   const media = entries.filter(e => e.date === date && (e.type === 'photo' || e.type === 'video' || e.type === 'voice')).sort((a, b) => a.createdAt - b.createdAt)
+  // which captures are still uploading, and whether uploads can run at all right now (no signal: they wait)
+  const [mediaWaiting, setMediaWaiting] = useState<ReadonlySet<string>>(() => new Set())
+  const [stalled, setStalled] = useState(false)
+  useEffect(() => onMediaWaiting(setMediaWaiting), [])
+  useEffect(() => onSyncStatus(s => setStalled(s.state === 'offline' || s.state === 'error')), [])
   const [recording, setRecording] = useState(false)
   const toRead = unread(entries, date).length
   const [note, setNote] = useState(day?.note ?? '')
@@ -183,7 +208,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
       </div>
       {media.length > 0 && (
         <div className="diary-thumbs">
-          {media.map(e => <Thumb key={e.id} e={e} onOpen={() => setOpen(e)} />)}
+          {media.map(e => <Thumb key={e.id} e={e} onOpen={() => setOpen(e)} uploading={!!e.mediaId && mediaWaiting.has(e.mediaId)} stalled={stalled} />)}
         </div>
       )}
       {err && <div className="flag">{err}</div>}

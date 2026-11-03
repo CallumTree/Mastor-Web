@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Plate } from '../components/Sign'
 /**
  * Ball in court: who each VO and valuation is waiting on, for how long, and whether it's late.
@@ -93,7 +94,12 @@ export const toneColour: Record<Tone, string> = { ok: 'var(--ink-muted)', due: '
 export function CourtLine({ c }: { c: Court }) {
   const kind = c.tone === 'late' ? 'stop' : c.tone === 'done' ? 'ok' : c.who === 'us' ? 'do' : c.tone === 'due' ? 'warn' : 'wait'
   const text = c.who === 'us' ? c.text.replace(/^(Complete|Instructed) — /, '') : c.text
-  const plate = <Plate kind={kind}>{c.who === 'client' ? `With client · ${text}` : text}</Plate>
+  // paid while you watch: the white tick square stamps in and the row settles (CSS); a screen opening on it plays nothing
+  const done = c.tone === 'done'
+  const was = useRef(done)
+  const [stamp, setStamp] = useState(0)
+  useLayoutEffect(() => { const before = was.current; was.current = done; if (done && !before) setStamp(n => n + 1) }, [done])
+  const plate = <Plate key={stamp} kind={kind} stamp={done && stamp > 0}>{c.who === 'client' ? `With client · ${text}` : text}</Plate>
   // overdue with the client: the next step is ours — chase it
   return c.tone === 'late' && c.who === 'client' ? <>{plate}<Plate kind="do">Chase the client</Plate></> : plate
 }

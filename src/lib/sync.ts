@@ -22,7 +22,20 @@ const statusListeners = new Set<(s: SyncStatus) => void>()
 const changeListeners = new Set<() => void>()
 export const onSyncStatus = (f: (s: SyncStatus) => void) => { statusListeners.add(f); f(status); return () => { statusListeners.delete(f) } }
 export const onRemoteChange = (f: () => void) => { changeListeners.add(f); return () => { changeListeners.delete(f) } }
-const setStatus = (s: Partial<SyncStatus>) => { status = { ...status, ...s }; statusListeners.forEach(f => f(status)) }
+const setStatus = (s: Partial<SyncStatus>) => { status = { ...status, ...s }; statusListeners.forEach(f => f(status)); void refreshMedia() }
+
+/* Each capture's upload: the photos, video and voice notes still waiting in the outbox, so a diary tile can show
+   its own upload (Mastor only reads a capture once it's up). */
+let mediaWaiting = new Set<string>()
+const mediaListeners = new Set<(ids: ReadonlySet<string>) => void>()
+async function refreshMedia() {
+  if (!mediaListeners.size) return
+  const ids = new Set((await outbox.all()).filter(o => o.kind === 'photo').map(o => o.id))
+  if (ids.size === mediaWaiting.size && [...ids].every(i => mediaWaiting.has(i))) return
+  mediaWaiting = ids
+  mediaListeners.forEach(f => f(ids))
+}
+export const onMediaWaiting = (f: (ids: ReadonlySet<string>) => void) => { mediaListeners.add(f); f(mediaWaiting); void refreshMedia(); return () => { mediaListeners.delete(f) } }
 
 let companyId: string | null = null
 let missingDiaryTable = false
@@ -32,7 +45,7 @@ let timer: ReturnType<typeof setTimeout> | null = null
 
 export async function startSync(cid: string) {
   companyId = cid
-  setQueueing(true, () => schedule())
+  setQueueing(true, () => { schedule(); void refreshMedia() })
   // First time on this company: send everything already on the phone (existing jobs come with you)
   if (!(await meta.get(`uploaded:${cid}`))) { await queueEverything(); await meta.set(`uploaded:${cid}`, true) }
   window.addEventListener('online', () => schedule())
@@ -119,6 +132,7 @@ async function push() {
       }
     }
     await outbox.remove(op.seq!)
+    if (op.kind === 'photo') void refreshMedia()   // this capture is up: its tile can say so now, not after the whole sync
   }
 }
 

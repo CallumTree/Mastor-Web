@@ -333,14 +333,22 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - 0px corners, Slate Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Slate Edge rule.
 
 ### Navigation
-- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Its five tabs (four for operatives) share it evenly; they are Slate Note markings and the current one is white with a 22×2px cyan bar at its top edge. The capture key is not a tab: it is a 60px Blueprint Cyan disc with an ink plus, standing on the dock's top edge over its centre, cut out of the page by a 4px Ink Navy ring and lifted by a soft shadow (0 8px 18px). It is the one round control, by the user's choice, so capture reads as the single thing you can always do. Clerk sits in the job's header beside Job setup, not in the dock.
-- **Desktop:** the same as a 104px Milled Steel rail with a Hairline edge; the current tab carries a 2px cyan bar on its left. The capture disc heads the rail.
+- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Its five tabs (four for operatives) share it evenly; they are Slate Note markings and the current one is white with a 22×2px cyan bar on the dock's bottom edge (the top edge of the middle tab is under the capture disc). The bar is one marker that slides to the tab you tap (240ms). The capture key is not a tab: it is a 60px Blueprint Cyan disc with an ink plus, standing on the dock's top edge over its centre, cut out of the page by a 4px Ink Navy ring and lifted by a soft shadow (0 8px 18px). It is the one round control, by the user's choice, so capture reads as the single thing you can always do. When it opens the capture menu, the menu rises behind it and the plus turns a quarter and a half into an × (300ms) that closes the menu where the thumb already is; the ring turns Milled Steel against the sheet. Clerk sits in the job's header beside Job setup, not in the dock.
+- **Desktop:** the same as a 104px Milled Steel rail with a Hairline edge; the current tab carries a 2px cyan bar on its left, which slides down the rail. The capture disc heads the rail; its menu keeps its own ×.
 
 ### The Job Header and Certified Rail (signature)
 - Ink navy at 92%, so the grid shows faintly through, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
 
 ### The Selection (signature)
 - The one live thing on a screen (the next step on the job home, the hot figure in a strip, the change waiting for Do it in Clerk) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
+
+### Motion: what just happened
+Motion explains a change you made or that arrived; nothing plays when a screen first opens, and nothing loops except an upload in progress. In: exponential ease-out (cubic-bezier(.16, 1, .3, 1)); out: a quicker ease-in. Transform, clip, stroke and opacity only, so an old phone outdoors keeps up. Under reduced motion the movement goes and the colour change that confirms it stays. (src/lib/motion.ts, styles.css "MOTION")
+- **A tick moves the money:** the tick draws itself like a pen stroke (150ms); the job's dashed cyan valuation piece grows by the line's share (400ms, clipped so the dashes never stretch), the part just added lit solid cyan as it grows; Claimed and Still to do roll.
+- **Figures roll:** a money total that changes rolls only the characters that changed, the rightmost first (380ms each, 28ms apart); a rise rolls up, a fall rolls down. Reduced motion: the new figure lit cyan for a moment.
+- **From site:** a decided suggestion's button confirms in cyan, then the row folds shut (300ms) as the count rolls down; suggestions that arrive while you look come in 70ms apart under the corner marks, which close in, hold and fade.
+- **A capture's upload:** a new photo develops in like a print (750ms); a 1.5px cyan line runs round its tile while it uploads (dashed and still with no signal), then closes solid and fades once it's up.
+- **Paid:** the white tick square stamps in (180ms), its tick draws (200ms) and the row settles from Raised Steel.
 
 ### The Job Line (Diary) and the Week Line
 - One spine of days: a Hairline behind today, a cyan line from today, a Slate Edge line ahead. Each day is a 48px mono date column, a 9px square node (today a filled cyan 11px square), then the day's site record, to-dos (with ticks) and key dates (led by their trade core). The week across all jobs on the jobs screen is the same line with each item's job named.

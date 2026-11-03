@@ -8,13 +8,13 @@ import { TradeMark } from '../components/Trade'
 import { ByClaude, SignMark } from '../components/Sign'
 import { IconChevron, IconLinkFrom, IconLinkTo } from '../components/Icons'
 
-const Check = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path d="M5 12l5 5L19 7" /></svg>
+const Check = () => <svg className="tick-mark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path pathLength={1} d="M5 12l5 5L19 7" /></svg>   // drawn in when ticked (CSS)
 
 /** A to-do's tick: the app's own tick, green once done. */
 function PlanTick({ e, onToggle }: { e: DiaryEntry; onToggle: () => void }) {
   return (
     <button className="tick" aria-pressed={!!e.doneAt} aria-label={e.doneAt ? `Not done: ${e.note}` : `Done: ${e.note}`} onClick={ev => { ev.stopPropagation(); onToggle() }}>
-      <span className={'tick-box' + (e.doneAt ? ' on' : '')}>{e.doneAt ? <Check /> : null}</span>
+      <span className={'tick-box' + (e.doneAt ? ' on' : '')}><Check /></span>
     </button>
   )
 }
@@ -254,7 +254,7 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
             <div className="field"><span>To-dos for this date</span></div>
             {todos.length > 0 && <div className="panel" style={{ padding: '2px 0' }}>{todos.map(t => (
               <div key={t.id} className="pl-item">
-                <span className={'tick-box sm' + (t.doneAt ? ' on' : '')} aria-hidden="true">{t.doneAt ? <Check /> : null}</span>
+                <span className={'tick-box sm' + (t.doneAt ? ' on' : '')} aria-hidden="true"><Check /></span>
                 <span className="grow pl-t">{t.note}<small className="pl-m">{t.doneAt ? 'done' : t.date ? (t.date < today ? lateBy(t.date, today) : `by ${shortDay(t.date)}`) : 'no date'}</small></span>
               </div>
             ))}</div>}

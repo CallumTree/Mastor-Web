@@ -18,7 +18,8 @@ export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; o
   return (
     <button className="tick" onClick={e => { e.stopPropagation(); onClick() }} disabled={locked} aria-pressed={on} aria-label={on ? (locked ? 'In an issued valuation (locked)' : 'Remove from valuation') : 'Add to valuation'}>
       <span className={'tick-box' + (on ? ' on' : '') + (locked ? ' locked' : '')}>
-        {on && (locked ? <IconLock size={16} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M5 12l5 5L19 7" /></svg>)}
+        {/* the tick draws itself like a pen stroke when it goes in (CSS); a locked line shows its lock */}
+        {locked ? on && <IconLock size={16} /> : <svg className="tick-mark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path pathLength={1} d="M5 12l5 5L19 7" /></svg>}
       </span>
     </button>
   )
