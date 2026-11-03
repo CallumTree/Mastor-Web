@@ -11,7 +11,7 @@ import { dayKey } from '../lib/dates'
 import { ByClaude, Plate } from '../components/Sign'
 import { TradeMark } from '../components/Trade'
 import { CourtLine, valCourt } from '../lib/chase'
-import { Field, Sheet, ConfirmDelete } from '../components/Ui'
+import { Field, Sheet } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
 import { invoiceAmounts } from '../lib/invoice'
 
@@ -97,8 +97,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
 
       {rhythm && <ValWeek rhythm={rhythm} onWait={() => onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />}
 
-      {fixing && <Working job={job} val={fixing} scope={scope} vos={vos} certified={certified - valTotals(job, fixing.id, scope, vos).gross} making={making} hot
-        onCert={() => cert(fixing)} onSend={() => setIssuing(fixing)} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />}
+      {fixing && <Working job={job} val={fixing} scope={scope} vos={vos} certified={certified - valTotals(job, fixing.id, scope, vos).gross} hot
+        onSend={() => setIssuing(fixing)} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />}
 
       {onDecideSite && <SiteReview diary={diary} scope={scope} valLabel={valRef(open?.number ?? nextNo)} onDecide={onDecideSite} />}
 
@@ -121,9 +121,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
           <div className="stack" style={{ marginTop: 14 }}>
             {!job.poNumber && <div className="flag">No PO number on this job — add it in job setup before sending.</div>}
-            {current.lines > 0 && <button className="btn btn-secondary" disabled={making === open.id} onClick={() => cert(open)}>{making === open.id ? 'Preparing…' : 'Preview certificate (draft)'}</button>}
             <button className="btn btn-primary" disabled={current.lines === 0} onClick={() => setIssuing(open)}>Send {valRef(open.number)} for review</button>
-            <ConfirmDelete label="Delete this valuation…" confirmLabel={<>Delete {valRef(open.number)}</>} note={`Every line in ${valRef(open.number)} goes back to live. Nothing else is lost.`} onConfirm={() => onDeleteOpen(open)} />
           </div>
         </div>
       ) : fixing ? null : (
@@ -154,24 +152,23 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                   </div>
                   <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" aria-hidden="true" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}><IconChevron size={16} /></span></div>
                 </div>
+                {(() => {
+                  // the one next step, without opening the row: agreed → invoice → paid
+                  const owedHere = (courts.get(v.id)?.owed ?? 0) > 0.005
+                  if (stage === 'review') return <div className="vo-next"><button className="btn btn-primary" onClick={() => { const a = markAgreed(v); onReview(a); onCreateInvoice(a) }}>Agreed — create invoice</button></div>
+                  if (!v.invoiceNumber && !v.paidAt) return <div className="vo-next"><button className="btn btn-primary" onClick={() => onCreateInvoice(v)}>Create invoice</button></div>
+                  if (!v.paidAt && owedHere) return <div className="vo-next"><button className="btn btn-primary" onClick={() => setPaying(v)}>Mark as paid</button></div>
+                  return null
+                })()}
                 {isOpen && (
                   <div className="vo-actions" onClick={e => e.stopPropagation()}>
-                    {stage === 'review' ? <>
-                      <button className="btn btn-primary" onClick={() => onReview(markAgreed(v))}>Client agreed</button>
-                      <div className="row">
-                        <button className="btn btn-secondary" style={{ flex: 1 }} aria-label="Client wants changes" onClick={() => setChanging(v)}>Wants changes</button>
-                        <button className="btn btn-secondary" style={{ flex: 1 }} disabled={making === v.id} onClick={() => cert(v)}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>
-                      </div>
-                    </> : <>
-                      {v.invoiceNumber
-                        ? <button className="btn btn-secondary" disabled={making === 'inv' + v.id} onClick={async () => { setMaking('inv' + v.id); try { await onInvoicePdf(v) } finally { setMaking(null) } }}>{making === 'inv' + v.id ? 'Preparing…' : 'Invoice PDF'}</button>
-                        : <button className="btn btn-primary" onClick={() => onCreateInvoice(v)}>Create invoice</button>}
-                      <div className="row">
-                        <button className="btn btn-secondary" style={{ flex: 1 }} disabled={making === v.id} onClick={() => cert(v)}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>
-                        <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setPaying(v)}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>
-                      </div>
-                      {v.review && !v.invoiceNumber && !v.paidAt && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setChanging(v)}>Client wants changes after all</button>}
-                    </>}
+                    <div className="row">
+                      {stage === 'review' && <button className="btn btn-secondary" style={{ flex: 1 }} aria-label="Client wants changes" onClick={() => setChanging(v)}>Wants changes</button>}
+                      {v.invoiceNumber && <button className="btn btn-secondary" style={{ flex: 1 }} disabled={making === 'inv' + v.id} onClick={async () => { setMaking('inv' + v.id); try { await onInvoicePdf(v) } finally { setMaking(null) } }}>{making === 'inv' + v.id ? 'Preparing…' : 'Invoice PDF'}</button>}
+                      <button className="btn btn-secondary" style={{ flex: 1 }} disabled={making === v.id} onClick={() => cert(v)}>{making === v.id ? 'Preparing…' : 'Certificate PDF'}</button>
+                    </div>
+                    {stage !== 'review' && (v.paidAt || !v.invoiceNumber) && <button className="btn btn-secondary" onClick={() => setPaying(v)}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>}
+                    {v.review && stage !== 'review' && !v.invoiceNumber && !v.paidAt && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setChanging(v)}>Client wants changes after all</button>}
                     <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setShowLines(showLines === v.id ? null : v.id)}>{showLines === v.id ? 'Hide lines' : `Show ${t.lines} line${t.lines === 1 ? '' : 's'}`}</button>
                     {showLines === v.id && <Lines val={v} scope={scope} vos={vos} />}
                   </div>
@@ -181,8 +178,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           })}
         </div>
       )}
-      {issuing && <IssueSheet job={job} val={issuing} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate}
-        onAgreed={v => { setIssuing(null); const a = markAgreed(v); onReview(a); onCreateInvoice(a) }} onClose={() => setIssuing(null)} />}
+      {issuing && <IssueSheet job={job} val={issuing} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onClose={() => setIssuing(null)} />}
       {changing && <ChangesSheet val={changing} onClose={() => setChanging(null)} onSave={text => {
         setChanging(null)
         onReview(askChanges(changing, text), `${valRef(changing.number)}: the client asked for changes${text.trim() ? ` — ${text.trim()}` : ''}`)
@@ -203,12 +199,12 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
     <Sheet onClose={onClose}>
       <div className="stack">
         <h2 className="label bracket">Payment · {valRef(v.number)}</h2>
-        <div className="hint">{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Enter what actually landed — a part payment leaves the rest showing as owed.</div>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
+        <div className="hint">{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Less than that landed? Enter what did — the rest stays owed.</div>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
-        {amount !== full && <div className="chips"><button className="chip" onClick={() => setAmount(full)}>Paid in full · {money(gross)}</button></div>}
+        {!v.paidAt && <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(gross * 100) / 100 }) }}>Paid in full · {money(gross)}</button>}
         {isFinite(n) && n < gross - 0.005 && <div className="flag">{money(gross - n)} will still show as owed</div>}
-        <button className="btn btn-primary" disabled={!date || !isFinite(n) || n <= 0} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(n * 100) / 100 }) }}>Save payment</button>
+        <button className={'btn ' + (v.paidAt ? 'btn-primary' : 'btn-secondary')} disabled={!date || !isFinite(n) || n <= 0} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(n * 100) / 100 }) }}>Save payment</button>
         {v.paidAt && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...v, paidAt: null, paidAmount: null })}>Remove payment (not paid)</button>}
       </div>
     </Sheet>
@@ -220,28 +216,24 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
  * total), what their QS would query, a draft certificate to look at. Sent, it's locked while they review it;
  * the certificate goes to them, and once they agree the invoice is next. Sent again after changes, the same.
  */
-function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onAgreed, onClose }: {
+function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onClose }: {
   job: Job; val: Valuation; vals: Valuation[]; scope: ScopeItem[]; vos: Variation[]
-  onIssue: (v: Valuation) => Promise<Valuation>; onCertificate: (v: Valuation) => Promise<void>; onAgreed: (v: Valuation) => void; onClose: () => void
+  onIssue: (v: Valuation) => Promise<Valuation>; onCertificate: (v: Valuation) => Promise<void>; onClose: () => void
 }) {
-  const [done, setDone] = useState<Valuation | null>(null)
   const [busy, setBusy] = useState<'issue' | 'cert' | null>(null)
   const p = issuePlan(job, val, vals, scope, vos)
   const ref = valRef(val.number)
   const again = amending(val)
   const cert = async (v: Valuation) => { setBusy('cert'); try { await onCertificate(v) } finally { setBusy(null) } }
-  if (done) return (
-    <Sheet onClose={onClose} label={`${ref} sent`}>
-      <div className="stack">
-        <h2 className="label bracket">{ref} · sent for review</h2>
-        <Plate kind="ok">{ref} sent{again ? ' again' : ''} for {money(p.totals.gross)} — locked</Plate>
-        <div className="muted t-note">{p.totals.lines} line{p.totals.lines === 1 ? '' : 's'}. {money(p.cumulative)} claimed to date{p.pct != null ? ` (${p.pct}% of contract and VOs)` : ''}. Send the certificate to the client. When they agree, mark it agreed; if they ask for changes, you can open it again.{again ? '' : ` Next ticks start ${valRef(val.number + 1)}.`}</div>
-        <button className="btn btn-primary" disabled={busy === 'cert'} onClick={() => cert(done)}>{busy === 'cert' ? 'Preparing…' : 'Certificate PDF'}</button>
-        <button className="btn btn-secondary" onClick={() => onAgreed(done)}>Already agreed — create invoice</button>
-        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onClose}>Done</button>
-      </div>
-    </Sheet>
-  )
+  // sending it and handing over the certificate are one step: it's what goes to the client
+  const send = async () => {
+    setBusy('issue')
+    try {
+      const issued = await onIssue(val)
+      try { await onCertificate(issued) } catch (e) { console.warn('certificate after sending', e) }   // it's on the row as well
+      onClose()
+    } finally { setBusy(null) }
+  }
   return (
     <Sheet onClose={onClose} locked={busy === 'issue'} label={again ? `Send ${ref} again` : `Send ${ref} for review`}>
       <div className="stack">
@@ -264,9 +256,8 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onAgre
         </div>
         {p.checks.map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
         <button className="btn btn-secondary" disabled={busy !== null} onClick={() => cert(val)}>{busy === 'cert' ? 'Preparing…' : 'Preview certificate (draft)'}</button>
-        <div className="hint">Sending locks every line in {ref} while the client reviews it. If they ask for changes, you can open it again to amend.</div>
-        <button className="btn btn-primary" disabled={busy !== null} onClick={async () => { setBusy('issue'); try { setDone(await onIssue(val)) } finally { setBusy(null) } }}>Send {ref} for {money(p.totals.gross)}</button>
-        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onClose}>Not yet</button>
+        <div className="hint">Sending locks {ref} while the client reviews it and gives you the certificate to send them. If they ask for changes, you can open it again.{again ? '' : ` Next ticks start ${valRef(val.number + 1)}.`}</div>
+        <button className="btn btn-primary" disabled={busy !== null} onClick={send}>{busy === 'issue' ? 'Sending…' : `Send ${ref} for ${money(p.totals.gross)}`}</button>
       </div>
     </Sheet>
   )
@@ -279,7 +270,7 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onAgre
 function ValWeek({ rhythm: r, onWait, onUndo }: { rhythm: NonNullable<ReturnType<typeof valRhythm>>; onWait: () => void; onUndo: () => void }) {
   const day = (t: number) => shortDay(dayKey(new Date(t)))
   const ago = r.last ? Math.floor((Date.now() - r.last.issuedAt!) / 864e5) : 0
-  const when = r.state === 'due' ? 'This week' : r.state === 'late' ? `Late · was due ${weekText(r)}` : r.state === 'soon' ? 'Starts in a few days' : r.waited ? 'Moved on a month' : 'First week of the month'
+  const when = r.state === 'due' ? 'This week' : r.state === 'late' ? `Late · was due ${weekText(r)}` : r.state === 'soon' ? 'Starts in a few days' : r.waited ? 'Moved on a month' : `First week of the month · under ${VAL_MIN_DAYS === 14 ? 'two' : VAL_MIN_DAYS / 7} weeks’ work waits`
   return (
     <div className={'panel val-week' + (r.state === 'due' || r.state === 'late' ? ' now' : '')} aria-label="Valuation week">
       <div className="val-week-c">
@@ -292,19 +283,19 @@ function ValWeek({ rhythm: r, onWait, onUndo }: { rhythm: NonNullable<ReturnType
         <div className="val-week-n">{valRef(r.next)} · {weekText(r)}</div>
         <small>{when}</small>
       </div>
-      <div className="val-week-f">
-        <span className="hint grow">First week of each month. Under {VAL_MIN_DAYS === 14 ? 'two' : VAL_MIN_DAYS / 7} weeks’ work since the last one waits for the next.</span>
+      {(r.state === 'due' || r.state === 'late' || r.waited) && <div className="val-week-f">
+        <span className="grow" />
         {(r.state === 'due' || r.state === 'late') && <button className="linkish tap t-small" onClick={onWait}>Wait till next month</button>}
         {r.waited && r.state !== 'due' && r.state !== 'late' && <button className="linkish tap t-small" onClick={onUndo}>Undo the wait</button>}
-      </div>
+      </div>}
     </div>
   )
 }
 
 /** A sent valuation the client asked to change: open to amend, with what they asked for, until it's sent again. */
-function Working({ job, val, scope, vos, certified, making, hot, onCert, onSend, onRemoveScope, onRemoveVo }: {
-  job: Job; val: Valuation; scope: ScopeItem[]; vos: Variation[]; certified: number; making: string | null; hot?: boolean
-  onCert: () => void; onSend: () => void; onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
+function Working({ job, val, scope, vos, certified, hot, onSend, onRemoveScope, onRemoveVo }: {
+  job: Job; val: Valuation; scope: ScopeItem[]; vos: Variation[]; certified: number; hot?: boolean
+  onSend: () => void; onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
 }) {
   const t = valTotals(job, val.id, scope, vos)
   const ref = valRef(val.number)
@@ -323,7 +314,6 @@ function Working({ job, val, scope, vos, certified, making, hot, onCert, onSend,
       <div className="hint" style={{ margin: '10px 2px' }}>Take out what they won’t agree (it goes back to live), fix quantities in Scope or VOs. Ticks go into {ref} until you send it again.</div>
       <Lines val={val} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
       <div className="stack" style={{ marginTop: 14 }}>
-        <button className="btn btn-secondary" disabled={making === val.id || !t.lines} onClick={onCert}>{making === val.id ? 'Preparing…' : 'Preview certificate (draft)'}</button>
         <button className="btn btn-primary" disabled={!t.lines} onClick={onSend}>Send {ref} again</button>
       </div>
     </div>

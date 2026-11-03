@@ -38,10 +38,12 @@ describe('payments and chasing', () => {
     nav('vals')
     click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
     click(await screen.findByRole('button', { name: /^send val i for £/i }))
-    click(await screen.findByRole('button', { name: 'Done' }))
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · 0 days/)
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()   // nothing to pay until it's agreed
-    click(screen.getByRole('button', { name: 'Client agreed' }))
+    click(screen.getByRole('button', { name: 'Agreed — create invoice' }))
+    fireEvent.click(document.querySelector('.sheet-bg')!)                     // not invoicing it here
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findByText(/^Agreed .* · create the invoice$/)
 
     // part payment → still owed; then paid in full

@@ -30,7 +30,8 @@ describe('the client’s review', () => {
     // send it: locked while the client reviews it
     click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
     click(await screen.findByRole('button', { name: /^send val i for £7,000\.00/i }))
-    click(await screen.findByRole('button', { name: 'Done' }))
+    // sending hands over the certificate and closes: no second sheet to dismiss
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · 0 days/)
     expect(within(screen.getByLabelText('Valuation week')).getByText(/^VAL I · /)).toBeTruthy()   // when the last one went
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()
@@ -52,12 +53,14 @@ describe('the client’s review', () => {
     // sent again for the new figure
     click(screen.getByRole('button', { name: 'Send VAL I again' }))
     click(await screen.findByRole('button', { name: /^send val i for £4,000\.00/i }))
-    await screen.findByText(/VAL I sent again for £4,000\.00 — locked/)
-    click(screen.getByRole('button', { name: 'Done' }))
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · 0 days · sent 2nd time/)
 
-    // agreed: the invoice is next
-    click(screen.getByRole('button', { name: 'Client agreed' }))
+    // agreed: one tap on the row marks it agreed and starts the invoice
+    click(screen.getByRole('button', { name: 'Agreed — create invoice' }))
+    await screen.findByText(/before your first invoice/i)
+    fireEvent.click(document.querySelector('.sheet-bg')!)
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findByText(/^Agreed .* · create the invoice$/)
     expect(screen.getByRole('button', { name: 'Create invoice' })).toBeTruthy()
     const [v] = await db.valuations('jr')

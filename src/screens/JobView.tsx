@@ -8,14 +8,13 @@ import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
 import { Trace } from '../components/Trace'
 import { placeParam, setPlace } from '../lib/place'
-import { IconBack, IconCamera, IconChevron, IconDiary, IconDoc, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
+import { IconBack, IconCamera, IconChevron, IconDiary, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
 import { VariationsTab } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
 import { JobLine, type LineMark } from './Plan'
 import { NoteEditor, NoteRow, NotesSheet, newNote, sortNotes } from './Notes'
 import { dayKey } from '../lib/dates'
-const shortDate = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 import { Sheet, TitleBlock } from '../components/Ui'
 import { ByClaude, SignMark, SIGN_WORD, type SignKind } from '../components/Sign'
 import { currentCompany } from '../lib/sync'
@@ -98,7 +97,6 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const placeAction = (p: AlertPlace) => (p === 'gap' ? () => setGapOpen(true) : p === 'setup' ? onSetup : () => go(p))
   const actions = alerts.filter(a => seesMoney || a.site).map(a => ({ ...a, onClick: placeAction(a.place) }))
   const liveAt = actions.findIndex(a => a.kind === 'do')   // one live thing: the first next step
-  const rhythm = seesMoney ? valRhythm(job, vals, { diary }) : null
 
   return (
     <div>
@@ -129,11 +127,6 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
           )
         })}
       </div>
-      {rhythm && <button className="panel t-small val-rhythm" onClick={() => go('vals')}>
-        <span className="label">Valuations</span>
-        <span className="grow">{rhythm.last ? <>Last sent <b>{valRef(rhythm.last.number)}</b> {shortDate(rhythm.last.issuedAt!)}</> : 'None sent yet'} · {rhythm.last ? 'next' : 'first'} {valRef(rhythm.next)} {rhythm.state === 'due' ? 'this week' : rhythm.state === 'late' ? <>was due {weekText(rhythm)}</> : weekText(rhythm)}</span>
-        <IconChevron size={14} />
-      </button>}
       {poNote && <div className="panel t-small" style={{ padding: '10px 14px', marginTop: 10 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish tap slate" onClick={() => setGapOpen(true)}>review</button></div>}
       {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => {
         setGapOpen(false); onUpdateJob(j)
@@ -263,11 +256,10 @@ export function JobView(p: {
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickVoice(true) }}><IconMic /> Voice note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onDayworks(true) }}><IconClock /> Dayworks</button>
-              {access.money && <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onImportVo() }}><IconDoc /> Council VO</button>}
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
-            <div className="hint">Photos, video and voice notes go into today’s diary. Today’s site log (weather, labour, what happened) is on the Diary tab.</div>
+            <div className="hint">Photos, video and voice notes go into today’s diary.</div>
           </div>
         </Sheet>
       )}

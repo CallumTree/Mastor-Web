@@ -84,7 +84,7 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
   )
 }
 
-const STATUSES: VoStatus[] = ['Identified', 'Instructed', 'Complete', 'Rejected']
+const STATUSES: VoStatus[] = ['Identified', 'Instructed', 'Rejected']
 
 export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClose }: { vo: Variation; locked: boolean; books?: RateBook[]; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
   const [v, setV] = useState(vo)
@@ -118,10 +118,10 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
             ? <div className="row"><span className="grow flag">Sent to client {ukd(v.submittedAt)} — waiting on their instruction</span><button className="chip" onClick={() => setV({ ...v, submittedAt: null })}>Undo</button></div>
             : <button className="btn btn-secondary" onClick={() => setV({ ...v, submittedAt: Date.now() })}>Mark as sent to client for instruction</button>
         )}
-        {m && <Field label="Client VO reference" hint="Once the client issues one"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value })} /></Field>}
+        {m && <Field label="Client VO reference" hint="Once the client issues one, it’s instructed"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value, status: e.target.value.trim() && v.status === 'Identified' ? 'Instructed' : v.status })} /></Field>}
         <div>
           <div className="field"><span>Status</span></div>
-          <div className="chips">{STATUSES.map(s => <button key={s} className={'chip' + (v.status === s ? ' on' : '')} onClick={() => setV({ ...v, status: s })}>{s}</button>)}</div>
+          <div className="chips">{(v.status === 'Complete' ? [...STATUSES.slice(0, 2), 'Complete' as VoStatus, STATUSES[2]] : STATUSES).map(s => <button key={s} className={'chip' + (v.status === s ? ' on' : '')} onClick={() => setV({ ...v, status: s })}>{s}</button>)}</div>
         </div>
         </fieldset>
         {v.photoIds.length > 0 && <div className="thumbs">{v.photoIds.map(id => <Thumb key={id} id={id} />)}</div>}

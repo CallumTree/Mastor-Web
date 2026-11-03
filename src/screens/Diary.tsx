@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { DiaryEntry, Job, Variation } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { Markup } from '../components/Markup'
-import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
 import { usePhotoThumb, usePhotoUrl } from '../lib/photos'
 import { addDays, dayKey, prettyDay } from '../lib/dates'
@@ -131,7 +130,6 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
     setErr(null); setBusy(true)
     try { await onAddMedia(f, kind, date) } catch (x) { setErr(`Couldn’t add that ${kind} — ${(x as Error).message || 'unknown problem'}. Try again, or pick a smaller file.`) } finally { setBusy(false) }
   }
-  const recent = [...new Set(entries.filter(e => e.type !== 'note' && e.type !== 'todo' && e.type !== 'event').map(e => e.date))].filter(d => d !== date).sort().reverse().slice(0, 7)
 
   return (
     <div className="stack">
@@ -142,10 +140,6 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <h2 className="diary-date">{date === today ? 'Today · ' : date === addDays(today, -1) ? 'Yesterday · ' : ''}{prettyDay(date)}</h2>
         </div>
         <button className="icon-btn" aria-label="Next day" disabled={date >= today} onClick={() => setDate(addDays(date, 1))} style={{ opacity: date >= today ? .35 : 1, transform: 'scaleX(-1)' }}><IconBack size={18} /></button>
-        <TabMenu title="Diary" actions={[
-          { label: 'Go to today', disabled: date === today, onClick: () => setDate(today) },
-          { label: 'Write a note for this day', onClick: () => noteRef.current?.focus() },
-        ]} />
       </div>
 
       <div className="panel" style={{ padding: 14 }}>
@@ -199,28 +193,10 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
             {reading ? 'Reading against the scope…' : `Read ${date === today ? 'today' : 'this day'} against the scope · ${toRead} new`}
           </button>}
           {readMsg && <div role="status" className="t-note">{readMsg}</div>}
-          {!readMsg && <div className="hint">Photos, voice notes, videos and the note are checked against the scope. What’s done, extra work and site events come back as suggestions in Vals — nothing is claimed until someone approves it.</div>}
+          {!readMsg && <div className="hint">What’s done and what’s extra come back as suggestions in Vals. Nothing is claimed until someone approves it.</div>}
         </div>
       )}
       {recording && <VoiceSheet onClose={() => setRecording(false)} onSave={async b => { await add(b, 'voice'); setRecording(false) }} />}
-
-      {recent.length > 0 && (
-        <div>
-          <h2 className="label" style={{ margin: '10px 0 6px' }}>Recent days</h2>
-          <div className="panel" style={{ padding: '2px 14px' }}>
-            {recent.map((d, i) => {
-              const n = entries.filter(e => e.date === d && (e.type === 'photo' || e.type === 'video')).length
-              const dd = entries.find(e => e.id === dayId(job.id, d))
-              return (
-                <button key={d} onClick={() => setDate(d)} className="row" style={{ width: '100%', background: 'none', border: 'none', borderTop: i ? '1px solid var(--line)' : 'none', padding: '10px 0', minHeight: 48, textAlign: 'left', color: 'var(--ink)' }}>
-                  <span className="grow"><b className="t-strong">{prettyDay(d)}</b><div className="hint">{[dd?.weather, dd?.labour != null ? `${dd.labour} on site` : '', n ? `${n} photo${n === 1 ? '' : 's'}/video` : ''].filter(Boolean).join(' · ') || 'Note only'}</div></span>
-                  <span className="muted">›</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {open && <MediaSheet e={open} rooms={rooms} vos={vos} onClose={() => setOpen(null)}
         onSave={(e, b) => { onSave(e, b); setOpen(o => (o ? { ...o, ...e } : o)) }}

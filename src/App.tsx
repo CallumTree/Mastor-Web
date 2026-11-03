@@ -219,7 +219,7 @@ export default function App() {
       ) : (
         <JobsList jobs={jobs} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
           alerts={weekAlerts(jobs, scope, vos, vals, orders, diary)}
-          onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} onRates={() => setRatesOpen(true)} />
+          onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
       {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}
@@ -312,9 +312,12 @@ export default function App() {
             const all = (await Promise.all((await db.jobs()).map(j => db.valuations(j.id)))).flat()
             const { number, next } = allocateInvoiceNo(fresh, all)
             // an invoice means the client agreed it
-            await db.putValuation({ ...(invoicing.review ? markAgreed(invoicing) : invoicing), invoiceNumber: number, invoiceDate: date, invoiceVatRate: rate })
+            const invoiced = { ...(invoicing.review ? markAgreed(invoicing) : invoicing), invoiceNumber: number, invoiceDate: date, invoiceVatRate: rate }
+            await db.putValuation(invoiced)
             await db.putSettings({ ...fresh, nextInvoiceNumber: next, updatedAt: Date.now() })
             setInvoicing(null); await reload()
+            // creating it hands over the PDF to send; it stays on the valuation's row to send again
+            try { await shareOrDownload(await buildInvoice({ job, val: invoiced, scope: jobScope, vos: jobVos, settings: fresh }), invoiceFileName(job, invoiced)) } catch (e) { console.warn('invoice PDF after creating', e) }
           }} />
       })()}
       {jobForm && (

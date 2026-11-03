@@ -69,10 +69,10 @@ describe('site diary', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: /open photo/i })).toBeNull())
     expect(await db.photo(vo.photoIds[0])).toBeTruthy()
 
-    // --- day pager + recent days
+    // --- day pager (the other days are on the job's line, not listed again under the day)
     click(screen.getByRole('button', { name: /previous day/i }))
     await screen.findByText(/^Yesterday · /)
-    expect(screen.getByText(/recent days/i)).toBeTruthy()
+    expect(screen.queryByText(/recent days/i)).toBeNull()
 
     // --- one kind of note: ⊕ capture offers "Note" (on record); today's site log is the Diary tab
     nav('scope')

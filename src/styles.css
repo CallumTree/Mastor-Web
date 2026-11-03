@@ -275,11 +275,6 @@ label.btn { cursor: pointer; }
 .val-week.now .val-week-c + .val-week-c small { color: var(--amber); font-weight: 600; }
 .val-week-f { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; padding-top: 8px; border-top: 1px solid var(--rule); }
 .val-week-f .linkish { flex: none; }
-.val-rhythm { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 10px; padding: 10px 14px; text-align: left; font: inherit; font-size: 13px; line-height: 1.35; color: var(--ink-2); cursor: pointer; }
-.val-rhythm:hover { background: var(--slate-2); }
-.val-rhythm .label { flex: none; }
-.val-rhythm b { color: var(--white); font-weight: 600; }
-.val-rhythm svg { flex: none; color: var(--meta); }
 .val-asked { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--amber); background: var(--void); border-radius: var(--r-sm); font-size: 14px; color: var(--white); }
 
 @media (max-width: 480px) {
@@ -309,6 +304,9 @@ label.btn { cursor: pointer; }
 .vo-amt .mono { font-weight: 520; font-size: 17px; letter-spacing: -.02em; white-space: nowrap; }
 .vo-actions { padding: 0 14px 14px 120px; display: flex; flex-direction: column; gap: 8px; }
 .vo-actions .btn { min-height: 48px; }
+/* a sent valuation's one next step (agreed → invoice → paid), on the row itself */
+.vo-next { padding: 0 14px 14px 120px; }
+.vo-next .btn { min-height: 48px; width: 100%; }
 /* phones: each entry heads itself (tick, ref, code ... value), and the description takes the full width beneath */
 @media (max-width: 559px) {
   .vo-head { display: none; }
@@ -317,7 +315,7 @@ label.btn { cursor: pointer; }
   .vo-ref .tick { order: -1; }
   .vo-main { grid-area: main; }
   .vo-amt { grid-area: amt; }
-  .vo-actions { padding-left: 14px; }
+  .vo-actions, .vo-next { padding-left: 14px; }
 }
 .vo-row.rejected .vo-desc { text-decoration: line-through; text-decoration-thickness: 1px; color: var(--meta); }
 .vo-row.rejected .ref-roman, .vo-row.rejected .vo-amt .mono { color: var(--meta); }

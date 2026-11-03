@@ -17,10 +17,10 @@ async function issueOne(desc: string, rate: string, valNo: number) {
   nav('vals')
   click(await screen.findByRole('button', { name: `Send VAL ${'I'.repeat(valNo)} for review` }))
   click(await screen.findByRole('button', { name: new RegExp(`^send val ${'i'.repeat(valNo)} for £`, 'i') }))
-  // sent for review, locked; this client agreed it straight away, so the invoice is next from the sent sheet
-  const done = await screen.findByRole('dialog', { name: new RegExp(`VAL ${'I'.repeat(valNo)} sent`) })
-  expect(within(done).getByText(/sent for .* — locked/)).toBeTruthy()
-  return () => click(within(done).getByRole('button', { name: 'Already agreed — create invoice' }))
+  // sent for review and locked; this client agreed it straight away, so the invoice is the next step on its row
+  await closed()
+  await screen.findAllByText(/^With client · For review/)
+  return () => click(screen.getAllByRole('button', { name: 'Agreed — create invoice' })[0])
 }
 
 describe('VAT invoicing', () => {
@@ -48,13 +48,12 @@ describe('VAT invoicing', () => {
     await screen.findByText('TS-1042')
     expect(screen.getByText(/£1,200\.00 incl\. VAT/)).toBeTruthy()
 
-    // payment is never assumed: blank, with one tap for 'paid in full' at the invoice total incl. VAT
+    // payment is never assumed: the amount is blank, and 'paid in full' at the invoice total incl. VAT is one tap
     click(screen.getByRole('button', { name: /mark as paid/i }))
     const amount = screen.getByLabelText(/amount received/i) as HTMLInputElement
     expect(amount.value).toBe('')
-    click(screen.getByRole('button', { name: /paid in full · £1,200\.00/i }))
-    expect(amount.value).toBe('1200.00')
-    fireEvent.click(document.querySelector('.sheet-bg')!); await closed()
+    click(screen.getByRole('button', { name: /paid in full · £1,200\.00/i })); await closed()
+    await screen.findByText(/^Paid /)
 
     // second valuation → next number
     ;(await issueOne('Kitchen upgrade', '500', 2))()
