@@ -21,14 +21,14 @@ describe('operative', () => {
     await db.putJob(job)
     await db.putScope({ id: 's1', jobId: 'j1', code: '0171AD', description: 'Renew fence', room: 'Rear', qty: 12, unit: 'LM', rate: 133.91, valuationId: null, order: 1, createdAt: 1 })
     await db.putVariation({ id: 'v1', jobId: 'j1', number: 1, description: 'Extra post', room: 'Rear', qty: 1, unit: 'NO', rate: 55, code: '0171ZZ', reason: '', clientRef: '', status: 'Identified', photoIds: [], dateRaised: 1 })
-    await db.putDiary({ id: 'n1', jobId: 'j1', date: '2026-10-01', type: 'note', note: 'Agreed £400 extra for skip', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: 'Commercial', createdAt: 1 })
-    await db.putDiary({ id: 'n2', jobId: 'j1', date: '2026-10-01', type: 'note', note: 'Dog in garden — keep gate shut', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: 'Site', createdAt: 2 })
+    await db.putDiary({ id: 'n1', jobId: 'j1', date: '2026-10-01', type: 'note', note: 'Agreed £400 extra for skip', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: 'Commercial', pinned: true, createdAt: 1 })
+    await db.putDiary({ id: 'n2', jobId: 'j1', date: '2026-10-01', type: 'note', note: 'Dog in garden — keep gate shut', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: 'Site', pinned: true, createdAt: 2 })
     await meta.set('company', { id: 'c', name: 'Tree & Sons', user: 'u', role: 'operative' })
 
     render(<App />)
     await screen.findByText('7 Hill Street')
     noMoney()
-    expect(screen.queryByRole('button', { name: /director dashboard/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /money across all jobs/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /schedule of rates/i })).toBeNull()
 
     click(screen.getByRole('button', { name: /7 Hill Street/ }))

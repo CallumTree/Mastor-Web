@@ -17,8 +17,9 @@ import { claimMany, deleteOpenValuation, ensureOpenValuation, isPriced, issueVal
 import { JobsList } from './screens/JobsList'
 import { newNote } from './screens/Notes'
 import { Dashboard } from './screens/Dashboard'
-import { currentCompany, fetchPhoto, onRemoteChange, settle } from './lib/sync'
-import { decide, readSite, unread, voFromSuggestion, MAX_ITEMS } from './lib/siteRead'
+import { fetchPhoto, onRemoteChange } from './lib/sync'
+import { decide, voFromSuggestion } from './lib/siteRead'
+import { autoRead, autoReadStopped } from './lib/autoRead'
 import { SyncBadge } from './components/SyncBadge'
 import { keepStorage, makeBackup, downloadBackup, restoreBackup } from './lib/backup'
 import { JobForm } from './screens/JobForm'
@@ -30,6 +31,10 @@ import { savePhoto, saveVideo, saveVoice, saveImageBlob } from './lib/photos'
 import { buildCertificate, certificateFileName, shareOrDownload } from './lib/certificate'
 import { meta } from './lib/db'
 import { BoqImport } from './screens/BoqImport'
+import { NewJob } from './screens/NewJob'
+import type { ParsedLine } from './lib/boq'
+import type { PackResult } from './lib/packIntake'
+import { schemeStreet } from './lib/packJob'
 import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
@@ -59,6 +64,32 @@ function weekAlerts(jobs: Job[], scope: ScopeItem[], vos: Variation[], vals: Val
 }
 import { Splash } from './components/Splash'
 
+/**
+ * What a read pack adds to a job: its lines into scope, the files kept with the job, the addresses and contract ref
+ * where the job has none, the PCI's ticked facts as notes and its ticked missing work as unpriced VOs.
+ */
+async function savePack(job: Job, jobScope: ScopeItem[], lines: ParsedLine[], pack: PackResult) {
+  let order = jobScope.reduce((m, s) => Math.max(m, s.order), 0)
+  for (const l of lines) {
+    await db.putScope({ id: uid(), jobId: job.id, code: l.code, description: l.description, room: l.room, qty: l.qty, unit: l.unit, rate: l.rate, valuationId: null, order: ++order, createdAt: Date.now(), property: l.property || undefined, workstream: l.workstream || undefined, hours: l.hours, contract: l.contract })
+  }
+  // the pack itself stays with the job, so every line can be traced back to the page it came from
+  if (pack.files.length > 1) for (const f of pack.files) {
+    const fileId = uid(); await db.putPhoto(fileId, f.file)
+    await db.put('docs', { id: uid(), jobId: job.id, name: f.file.name.replace(/\.[^.]+$/, ''), kind: 'Client pack', fileId, type: f.file.type || 'application/octet-stream', size: f.file.size, addedAt: Date.now() })
+  }
+  const street = schemeStreet(pack.addresses)
+  const next = { ...job, contractRef: job.contractRef || pack.ref, address: job.address || street || '', properties: Object.keys(pack.addresses).length ? { ...job.properties, ...pack.addresses } : job.properties }
+  if (next.contractRef !== job.contractRef || next.address !== job.address || next.properties !== job.properties) await db.putJob(next)
+  // what the PCI and surveys say: ticked facts → job notes, ticked missing work → unpriced VOs, each with its quote
+  const from = (x: { document: string; page: number | null; quote: string }) => `${x.document.replace(/\.[^.]+$/, '')}${x.page ? `, p. ${x.page}` : ''}: “${x.quote}”`
+  const today = dayKey()
+  for (const x of pack.facts?.facts.filter(f => f.include) ?? [])
+    await db.putDiary({ id: uid(), jobId: job.id, date: today, type: 'note', note: `${x.text}${x.properties.length ? ` (no${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')})` : ''}\n— ${from(x)}`, labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: x.category, pinned: x.category === 'H&S', createdAt: Date.now() })
+  for (const x of pack.facts?.extras.filter(e => e.include) ?? [])
+    await db.putVariation({ id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: x.text, room: x.properties.length ? `No${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')}` : '', qty: null, unit: '', rate: null, code: '', reason: `${x.why ? x.why + ' ' : ''}— ${from(x)}`, clientRef: '', status: 'Identified', photoIds: [], dateRaised: Date.now(), valuationId: null })
+}
+
 export default function App() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [vos, setVos] = useState<Variation[]>([])
@@ -85,6 +116,7 @@ export default function App() {
   const [openId, setOpenIdState] = useState<string | null>(() => placeParam('job'))
   const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab }) }
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
+  const [newJob, setNewJob] = useState(false)
   const [logging, setLogging] = useState(false)
   const [editing, setEditing] = useState<Variation | null>(null)
   const [scopeForm, setScopeForm] = useState<ScopeItem | 'new' | null>(null)
@@ -117,6 +149,17 @@ export default function App() {
   useEffect(() => { const el = document.scrollingElement; if (el) el.scrollTop = 0 }, [openId])
   // changes made on another device arrive → refresh what's on screen
   useEffect(() => onRemoteChange(() => { void reload() }), [reload])
+  // site captures are read against the scope on their own, on the office's devices (src/lib/autoRead.ts)
+  const [readNote, setReadNote] = useState<string | null>(null)
+  useEffect(() => {
+    if (!ready || !access.money) return
+    const go = () => { void autoRead(async () => { setReadNote(autoReadStopped()); await reload() }) }
+    go()
+    const t = window.setInterval(go, 5 * 60_000)
+    const seen = () => { if (document.visibilityState === 'visible') go() }
+    document.addEventListener('visibilitychange', seen)
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', seen) }
+  }, [ready, access.money, diary.length, reload])
 
   const job = jobs.find(j => j.id === openId) ?? null
   const jobVos = job ? vos.filter(v => v.jobId === job.id) : []
@@ -203,23 +246,11 @@ export default function App() {
             }
             await db.putDiary(decide(e, s.id, state)); await reload()
           }}
-          onReadSite={async date => {
-            const items = unread(jobDiary, date)
-            if (!items.length) return 'Nothing new to read.'
-            const company = currentCompany()
-            if (!company) return 'Sign in to read site captures — they’re read in the cloud.'
-            await settle()   // the media must be uploaded before it can be read
-            const r = await readSite(company, items, jobScope, jobVos)
-            for (const e of r.updated) await db.putDiary(e)
-            await reload()
-            if (!r.updated.length) return r.error ?? 'Nothing was read.'
-            const more = items.length > MAX_ITEMS ? ` ${items.length - MAX_ITEMS} more to read — tap again.` : ''
-            return `${r.suggestions ? `${r.suggestions} suggestion${r.suggestions === 1 ? '' : 's'} waiting in Vals for review.` : 'Read — nothing to suggest.'}${r.error ? ` ${r.error}` : ''}${more}`
-          }} />
+          readNote={readNote} />
       ) : (
         <JobsList jobs={jobs} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
           alerts={weekAlerts(jobs, scope, vos, vals, orders, diary)}
-          onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
+          onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
       {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}
@@ -320,6 +351,8 @@ export default function App() {
             try { await shareOrDownload(await buildInvoice({ job, val: invoiced, scope: jobScope, vos: jobVos, settings: fresh }), invoiceFileName(job, invoiced)) } catch (e) { console.warn('invoice PDF after creating', e) }
           }} />
       })()}
+      {newJob && <NewJob books={books} onClose={() => setNewJob(false)} onByHand={() => { setNewJob(false); setJobForm('new') }}
+        onCreate={async (j, lines, pack) => { await db.putJob(j); await savePack(j, [], lines, pack); setNewJob(false); await reload(); setOpenId(j.id) }} />}
       {jobForm && (
         <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} onClose={() => setJobForm(null)}
           onSave={async j => { await db.putJob({ ...j, byClaude: null }); setJobForm(null); await reload(); setOpenId(j.id) }}
@@ -351,28 +384,7 @@ export default function App() {
       )}
       {importing && job && (
         <BoqImport job={job} existing={jobScope.length} books={books} onClose={() => setImporting(false)}
-          onImport={async (lines, pack) => {
-            let order = jobScope.reduce((m, s) => Math.max(m, s.order), 0)
-            for (const l of lines) {
-              await db.putScope({ id: uid(), jobId: job.id, code: l.code, description: l.description, room: l.room, qty: l.qty, unit: l.unit, rate: l.rate, valuationId: null, order: ++order, createdAt: Date.now(), property: l.property || undefined, workstream: l.workstream || undefined, hours: l.hours, contract: l.contract })
-            }
-            // the pack itself stays with the job, so every line can be traced back to the page it came from
-            if (pack.files.length > 1) for (const f of pack.files) {
-              const fileId = uid(); await db.putPhoto(fileId, f.file)
-              await db.put('docs', { id: uid(), jobId: job.id, name: f.file.name.replace(/\.[^.]+$/, ''), kind: 'Client pack', fileId, type: f.file.type || 'application/octet-stream', size: f.file.size, addedAt: Date.now() })
-            }
-            const streets = Object.values(pack.addresses).map(a => a.replace(/^\s*(flat\s+)?\d+[a-z]?\s*,?\s*/i, '').replace(/,?\s*[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\s*$/i, '').trim())
-            const street = streets.sort((a, b) => streets.filter(x => x === b).length - streets.filter(x => x === a).length)[0]
-            const next = { ...job, contractRef: job.contractRef || pack.ref, address: job.address || street || '', properties: Object.keys(pack.addresses).length ? { ...job.properties, ...pack.addresses } : job.properties }
-            if (next.contractRef !== job.contractRef || next.address !== job.address || next.properties !== job.properties) await db.putJob(next)
-            // what the PCI and surveys say: ticked facts → job notes, ticked missing work → unpriced VOs, each with its quote
-            const from = (x: { document: string; page: number | null; quote: string }) => `${x.document.replace(/\.[^.]+$/, '')}${x.page ? `, p. ${x.page}` : ''}: “${x.quote}”`
-            const today = dayKey()
-            for (const x of pack.facts?.facts.filter(f => f.include) ?? [])
-              await db.putDiary({ id: uid(), jobId: job.id, date: today, type: 'note', note: `${x.text}${x.properties.length ? ` (no${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')})` : ''}\n— ${from(x)}`, labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: x.category, pinned: x.category === 'H&S', createdAt: Date.now() })
-            for (const x of pack.facts?.extras.filter(e => e.include) ?? [])
-              await db.putVariation({ id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: x.text, room: x.properties.length ? `No${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')}` : '', qty: null, unit: '', rate: null, code: '', reason: `${x.why ? x.why + ' ' : ''}— ${from(x)}`, clientRef: '', status: 'Identified', photoIds: [], dateRaised: Date.now(), valuationId: null })
-            setImporting(false); await reload()
+          onImport={async (lines, pack) => { await savePack(job, jobScope, lines, pack); setImporting(false); await reload()
           }} />
       )}
       {scopeForm && job && (

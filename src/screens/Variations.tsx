@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useAccess } from '../lib/access'
 import type { RateBook } from '../lib/types'
 import { RateLookup } from './Rates'
-import type { Job, Valuation, Variation, VoStatus } from '../lib/types'
+import type { Job, Valuation, Variation } from '../lib/types'
 import { Tick, ValBadge } from './Scope'
 import { lockedIn } from '../lib/valuation'
-import { CourtLine, voCourt } from '../lib/chase'
+import { CourtLine, voCourt, voStage, voStatusAfter, type VoStage } from '../lib/chase'
 import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
 import { groupValue, registerSummary, VO_GROUP_SHORT } from '../lib/voRegister'
@@ -84,8 +84,6 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
   )
 }
 
-const STATUSES: VoStatus[] = ['Identified', 'Instructed', 'Rejected']
-
 export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClose }: { vo: Variation; locked: boolean; books?: RateBook[]; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
   const [v, setV] = useState(vo)
   const [qty, setQty] = useState(vo.qty != null ? String(vo.qty) : '')
@@ -93,6 +91,7 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
   const qn = parseFloat(qty.replace(',', '.')); const rn = parseFloat(rate.replace(/[£,]/g, ''))
   const qv = isFinite(qn) && qn > 0 ? qn : null; const rv = isFinite(rn) && rn > 0 ? rn : null
   const { money: m } = useAccess()
+  const save = (next: Variation) => { const out = { ...next, qty: qv, rate: m ? rv : vo.rate }; onSave({ ...out, status: voStatusAfter(vo, out) }) }
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
@@ -118,21 +117,22 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
             ? <div className="row"><span className="grow flag">Sent to client {ukd(v.submittedAt)} — waiting on their instruction</span><button className="chip" onClick={() => setV({ ...v, submittedAt: null })}>Undo</button></div>
             : <button className="btn btn-secondary" onClick={() => setV({ ...v, submittedAt: Date.now() })}>Mark as sent to client for instruction</button>
         )}
-        {m && <Field label="Client VO reference" hint="Once the client issues one, it’s instructed"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value, status: e.target.value.trim() && v.status === 'Identified' ? 'Instructed' : v.status })} /></Field>}
-        <div>
-          <div className="field"><span>Status</span></div>
-          <div className="chips">{(v.status === 'Complete' ? [...STATUSES.slice(0, 2), 'Complete' as VoStatus, STATUSES[2]] : STATUSES).map(s => <button key={s} className={'chip' + (v.status === s ? ' on' : '')} onClick={() => setV({ ...v, status: s })}>{s}</button>)}</div>
-        </div>
+        {m && <Field label="Client VO reference" hint="Once the client issues one, it’s instructed"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value })} /></Field>}
+        {m && v.status === 'Rejected' && <div className="flag">The client rejected this variation. It isn’t counted or claimed.</div>}
         </fieldset>
         {v.photoIds.length > 0 && <div className="thumbs">{v.photoIds.map(id => <Thumb key={id} id={id} />)}</div>}
-        {!locked && <button className="btn btn-primary" onClick={() => onSave({ ...v, qty: qv, rate: m ? rv : vo.rate })}>Save</button>}
+        {!locked && <button className="btn btn-primary" onClick={() => save(v)}>Save</button>}
+        {/* the status follows the facts; the one thing only the client can say is no */}
+        {m && !locked && (v.status === 'Rejected'
+          ? <button className="btn btn-secondary" onClick={() => save({ ...v, status: v.clientRef.trim() ? 'Instructed' : 'Identified' })}>Not rejected after all</button>
+          : <button className="btn btn-secondary" onClick={() => save({ ...v, status: 'Rejected' })}>Client rejected it</button>)}
         {m && !locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete {voRef(vo.number)}</>} onConfirm={onDelete} />}
       </div>
     </Sheet>
   )
 }
 
-const statusClass: Record<VoStatus, string> = { Identified: 'b-amber', Instructed: 'b-slate', Complete: 'b-green', Rejected: 'b-red' }
+const stageClass: Record<VoStage, string> = { Logged: 'b-amber', Priced: 'b-amber', 'With client': 'b-quiet', Instructed: 'b-slate', Claimed: 'b-green', Rejected: 'b-red' }
 
 /** The VO tab reads like the Variation Register: summary strip, then one ruled schedule. */
 export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister, onDayworks }: { job: Job; vos: Variation[]; vals: Valuation[]; onDayworks?: () => void; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
@@ -181,7 +181,8 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
                   <div className="vo-meta">
                     <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef ? `Council ref ${v.clientRef}` : 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
                   </div>
-                  <div className="vo-status"><span className={'badge ' + statusClass[v.status]}>{v.status}</span>{!lockedIn(v, vals) && <ByClaude at={v.byClaude} />}{m && v.status !== 'Rejected' && <CourtLine c={c} />}</div>
+                  <div className="vo-status">{/* the office reads where it stands from its court line; operatives (no money, no court line) from the stage */}
+                    {(!m || v.status === 'Rejected') && <span className={'badge ' + stageClass[voStage(v)]}>{voStage(v)}</span>}{!lockedIn(v, vals) && <ByClaude at={v.byClaude} />}{m && v.status !== 'Rejected' && <CourtLine c={c} />}</div>
                 </div>
                 {m ? <div className="vo-amt">
                   <span className="mono">{priced ? money(lineValue(v.qty, v.rate)) : '—'}</span>

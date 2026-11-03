@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { DiaryEntry, ScopeItem, SiteSuggestion } from '../lib/types'
-import { openSuggestions } from '../lib/siteRead'
+import { openSuggestions, unread } from '../lib/siteRead'
+
+const unreadCount = (diary: DiaryEntry[]) => [...new Set(diary.map(e => e.date))].reduce((t, d) => t + unread(diary, d).length, 0)
 import { usePhotoThumb } from '../lib/photos'
 import { money } from '../lib/format'
 import { lineValue } from '../lib/valuation'
@@ -20,17 +22,22 @@ function Capture({ e }: { e: DiaryEntry }) {
 }
 
 /** Vals → From site: what the day's captures suggest, for a person to approve or reject one by one. */
-export function SiteReview({ diary, scope, valLabel, onDecide }: {
+export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
   diary: DiaryEntry[]; scope: ScopeItem[]; valLabel: string
   onDecide: (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => Promise<void>
+  /** why the day's captures aren't being read just now (the daily limit, not set up…) */
+  note?: string | null
 }) {
   const [busy, setBusy] = useState<string | null>(null)
   const list = openSuggestions(diary)
-  if (!list.length) return null
+  const waiting = unreadCount(diary)
+  if (!list.length) return note && waiting ? <div className="hint site-note">Site captures aren’t being read just now: {note}</div> : null
   const act = async (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => { setBusy(s.id); try { await onDecide(e, s, state) } finally { setBusy(null) } }
   return (
     <div className="stack site-review" style={{ gap: 8 }}>
       <Plate kind="do">From site · {list.length} to review</Plate>
+      <div className="hint">Read from the site’s photos, video and voice notes. Check each one: nothing is claimed or raised until you approve it.</div>
+      {note && waiting > 0 && <div className="hint">{waiting} more capture{waiting === 1 ? '' : 's'} not read yet: {note}</div>}
       <div className="panel flush clip">
         {list.map(({ entry: e, s }, n) => {
           const lines = scope.filter(i => s.lineIds.includes(i.id))
@@ -48,7 +55,6 @@ export function SiteReview({ diary, scope, valLabel, onDecide }: {
                   {s.kind === 'vo' && <div className="hint">{s.qty != null ? `${s.qty} ${s.unit}` : 'Not measured'}{s.code ? ` · ${s.code}` : ''} · unpriced until you price it</div>}
                   {s.quote && <div className="hint" style={{ marginTop: 2 }}>“{s.quote}”</div>}
                   {s.basis === 'seen' && <div className="flag t-strong">From the {e.type === 'video' ? 'video' : 'photo'} alone — look before approving</div>}
-                  {s.basis !== 'seen' && !s.verified && <div className="flag t-strong">Those words weren’t found in what was said — check before approving</div>}
                 </div>
               </div>
               <div className="row" style={{ marginTop: 10 }}>

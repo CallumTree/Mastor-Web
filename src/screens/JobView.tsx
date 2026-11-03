@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
 import { WORK_LABEL, type Cost, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder, type SiteSuggestion } from '../lib/types'
@@ -49,7 +49,8 @@ function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation
 }
 
 /** The job's black header: where you are, the way back, and the neon rail of how far the job has got. */
-function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: boolean; rail: Rail | null; onBack: () => void; onSetup: () => void }) {
+function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: Job; compact: boolean; rail: Rail | null; onBack: () => void; onSetup: () => void; onClerk: () => void; inClerk: boolean }) {
+  const { money: seesMoney } = useAccess()
   return (
     <header className={'jbar bleed' + (compact ? ' compact' : '')}>
       <div className="jbar-in">
@@ -59,7 +60,11 @@ function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: bool
           <h1 className="jbar-name">{job.name}</h1>
           {!compact && (job.client || job.address) && <div className="jbar-sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
         </div>
-        {useAccess().money ? <button className="icon-btn on-dark" onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button> : <span className="icon-gap" />}
+        <div className="jbar-tools">
+          {/* Clerk sits with the job, not in the dock: one tap from any tab */}
+          <button className={'icon-btn on-dark' + (inClerk ? ' on' : '')} onClick={onClerk} aria-label="Clerk" aria-current={inClerk ? 'page' : undefined}><IconAsk size={20} /></button>
+          {seesMoney && <button className="icon-btn on-dark" onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button>}
+        </div>
       </div>
       {rail && (
         <div className="jrail-in">
@@ -77,9 +82,11 @@ function Hero({ job, compact, rail, onBack, onSetup }: { job: Job; compact: bool
 
 const FigN = ({ text, neg }: { text: string; neg?: boolean }) => <div className={'fig-n' + (neg ? ' neg' : '')} style={fitLen(text)}>{text}</div>
 
-function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, margin, onCosts, orders, documents, diary }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode; diary: DiaryEntry[] }) {
+function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, onOpenDay, margin, onCosts, orders, documents, diary }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; onOpenDay: (date: string) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode; diary: DiaryEntry[] }) {
   const [notesOpen, setNotesOpen] = useState(false)
   const [noteEdit, setNoteEdit] = useState<DiaryEntry | null>(null)
+  const pinned = notes.filter(n => n.pinned).sort(sortNotes)
+  const days = diary.filter(d => d.type === 'day' && d.note.trim())
   const open = vals.find(v => v.status === 'Open')
   const openTotals = open ? valTotals(job, open.id, scope, vos) : null
   const certified = vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
@@ -133,16 +140,19 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
         // the reason goes on record in the job's notes
         if (j.poGapAccepted) onSaveNote(newNote(job, `PO difference of ${money(Math.abs(j.poGapAccepted.diff))} accepted (BoQ ${j.poGapAccepted.diff > 0 ? 'over' : 'under'} PO): ${j.poGapAccepted.note}`, 'Commercial'))
       }} />}
-      <div className="row" style={{ margin: '18px 0 8px' }}>
-        <h2 className="sec-h grow" style={{ margin: 0 }}>Notes &amp; decisions</h2>
-        <button className="linkish tap t-note" onClick={() => setNotesOpen(true)}>{notes.length ? `All ${notes.length}` : '+ Add'}</button>
-      </div>
-      <div className="panel" style={{ padding: '0 14px' }}>
-        {notes.length === 0 && <button className="muted" onClick={() => setNotesOpen(true)} style={{ background: 'none', border: 'none', padding: '14px 0', textAlign: 'left', width: '100%' }}>Agreements, client requests, chasers — put them on record.</button>}
-        {[...notes].sort(sortNotes).slice(0, 3).map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}><NoteRow n={n} onOpen={() => setNoteEdit(n)} /></div>)}
-      </div>
+      {/* notes are written on the day, in the diary; the job's home keeps only the pinned ones in view */}
+      {(notes.length > 0 || days.length > 0) && <>
+        <div className="row" style={{ margin: '18px 0 8px' }}>
+          <h2 className="sec-h grow" style={{ margin: 0 }}>Pinned notes</h2>
+          <button className="linkish tap t-note" onClick={() => setNotesOpen(true)}>All notes</button>
+        </div>
+        <div className="panel" style={{ padding: '0 14px' }}>
+          {pinned.length === 0 && <div className="muted t-note" style={{ padding: '14px 0' }}>Nothing pinned. Pin a note in the diary to keep it here; H&amp;S notes pin themselves.</div>}
+          {pinned.map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}><NoteRow n={n} onOpen={() => setNoteEdit(n)} /></div>)}
+        </div>
+      </>}
       {documents}
-      {notesOpen && <NotesSheet job={job} notes={notes} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} />}
+      {notesOpen && <NotesSheet job={job} notes={notes} days={days} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} onOpenDay={onOpenDay} />}
       {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
       {seesMoney && <div className="hint" style={{ marginTop: 12 }}>
         PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts <ByClaude at={job.byClaude} />
@@ -169,7 +179,6 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
   { tab: 'scope', label: 'Scope', Icon: IconScope },
   { tab: 'vos', label: 'VOs', Icon: IconMarkup },
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
-  { tab: 'ask', label: 'Clerk', Icon: IconAsk },
 ]
 
 export function JobView(p: {
@@ -183,15 +192,15 @@ export function JobView(p: {
   orders: WorkOrder[]; onNewOrder: () => void; onOpenOrder: (o: WorkOrder) => void; onClaimOrders: (lines: ScopeItem[]) => void
   diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
   onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
-  onReadSite?: (date: string) => Promise<string>
+  /** why site captures aren't being read just now, if they aren't */
+  readNote?: string | null
   onDecideSite?: (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => Promise<void>
 }) {
   const { job, vos, scope, vals, onBack, onSetup, onLogVariation, onEditVariation } = p
   const access = useAccess()
   const nav = NAV.filter(n => access.money || !MONEY_TABS.includes(n.tab))
-  const left = Math.ceil(nav.length / 2)
-  // the tab is kept in the address with the job, so a reload comes back to it
-  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return nav.find(n => n.tab === t)?.tab ?? 'home' })
+  // the tab is kept in the address with the job, so a reload comes back to it (Clerk too, from the header)
+  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return t === 'ask' ? 'ask' : nav.find(n => n.tab === t)?.tab ?? 'home' })
   const setTab = (t: Tab) => { setTabState(t); setPlace({ tab: t === 'home' ? null : t }) }
   const [askSeed, setAskSeed] = useState<string | null>(null)   // a question handed to Clerk from elsewhere (e.g. a PO just added)
   const askClerk = (q: string) => { setAskSeed(q); setTab('ask') }
@@ -203,7 +212,6 @@ export function JobView(p: {
   const [capture, setCapture] = useState(false)
   const [focusNote, setFocusNote] = useState(false)
   const [capErr, setCapErr] = useState<string | null>(null)
-  const [quickNote, setQuickNote] = useState(false)
   const [quickVoice, setQuickVoice] = useState(false)
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
@@ -214,11 +222,11 @@ export function JobView(p: {
   return (
     <>
       <main className="page with-rail">
-        <Hero job={job} compact={tab !== 'home'} rail={jobRail(job, scope, vals, vos, access.money)} onBack={onBack} onSetup={onSetup} />
+        <Hero job={job} compact={tab !== 'home'} rail={jobRail(job, scope, vals, vos, access.money)} onBack={onBack} onSetup={onSetup} onClerk={() => setTab('ask')} inClerk={tab === 'ask'} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
           documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} onAsk={currentCompany() ? askClerk : undefined} />}
-          notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} diary={p.diary} />}
+          notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} onOpenDay={openDay} diary={p.diary} />}
         {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && diaryView === 'line' && !focusNote && <JobLine job={job} entries={p.diary}
           properties={[...new Set([...Object.keys(job.properties ?? {}), ...scope.map(s => s.property ?? '')].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}
@@ -226,23 +234,20 @@ export function JobView(p: {
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onOpenDay={openDay} marks={access.money ? valMarks(job, vals, p.diary, () => setTab('vals')) : []} />}
         {tab === 'diary' && (diaryView === 'day' || focusNote) && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
-          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} onRead={p.onReadSite} />}
+          onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
         {tab === 'scope' && job.kind === 'orders' && <OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
-          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
+          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} readNote={p.readNote} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
       </main>
-      {/* the capture key sits dead centre: half the tabs left (the odd one too), the rest right, each side the same width (left cells R fr, right cells L fr) */}
-      <nav className="nav" style={{ '--dock-cols': `repeat(${left}, ${nav.length - left}fr) 68px repeat(${nav.length - left}, ${left}fr)` } as React.CSSProperties}>
-        {nav.map(({ tab: t, label: navLabel, Icon }, i) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
-          <Fragment key={t}>{i === left && (
-            <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={26} /></span></button>
-          )}
-          <button className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); if (t === 'diary') setDiaryView('line'); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button></Fragment>
+      {/* the tabs share the dock evenly; the capture key is raised above its centre, in front of the page (on the rail it heads the column) */}
+      <nav className="nav" style={{ '--dock-cols': `repeat(${nav.length}, minmax(0, 1fr))` } as React.CSSProperties}>
+        {tab !== 'ask' && <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={28} /></span></button>}
+        {nav.map(({ tab: t, label: navLabel, Icon }) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
+          <button key={t} className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); if (t === 'diary') setDiaryView('line'); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button>
         ) })}
       </nav>
-      {quickNote && <NoteEditor job={job} onClose={() => setQuickNote(false)} onSave={n => { p.onSaveDiary(n); setQuickNote(false) }} />}
       {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); openDay(d) }} />}
       {capture && (
         <Sheet onClose={() => setCapture(false)}>
@@ -256,10 +261,10 @@ export function JobView(p: {
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickVoice(true) }}><IconMic /> Voice note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onDayworks(true) }}><IconClock /> Dayworks</button>
-              <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickNote(true) }}><IconPin /> Note</button>
+              <button className="btn btn-secondary" onClick={() => { setCapture(false); setFocusNote(true); openDay(dayKey()) }}><IconPin /> Note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
-            <div className="hint">Photos, video and voice notes go into today’s diary.</div>
+            <div className="hint">Everything here goes into today’s diary.</div>
           </div>
         </Sheet>
       )}

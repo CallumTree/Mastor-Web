@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { Job, RateBook } from '../lib/types'
 import { RateVerdict, useRateCheck } from './RateCheck'
 import { Sheet } from '../components/Ui'
@@ -54,8 +54,12 @@ export function BoqImport({ job, existing, books = [], onImport, onClose }: {
   )
 }
 
-export function Review({ job, existing, boq, books = [], onImport, onBack, onClose }: {
+export function Review({ job, existing, boq, books = [], onImport, onBack, onClose, setup, heading = 'Check before importing', action, ready = true }: {
   job: Job; existing: number; boq: PackResult; books?: RateBook[]; onImport: ImportPack; onBack: () => void; onClose: () => void
+  /** a new job: its details, read from the pack, above the lines */
+  setup?: ReactNode; heading?: string
+  /** the button's words for n lines (default "Import n items"); ready = false holds it until the setup is complete */
+  action?: (n: number) => string; ready?: boolean
 }) {
   const [lines, setLines] = useState(boq.lines)
   const [facts, setFacts] = useState<PackFacts | undefined>(boq.facts)
@@ -92,7 +96,8 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <h2 className="label bracket">Check before importing</h2>
+        <h2 className="label bracket">{heading}</h2>
+        {setup}
 
         <div className="panel">
           <div className="row" style={{ alignItems: 'baseline' }}>
@@ -205,7 +210,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
         })}
 
         {existing > 0 && <div className="hint">This adds to the {existing} item{existing === 1 ? '' : 's'} already in scope.</div>}
-        <button className="btn btn-primary" disabled={!chosen.length} onClick={() => onImport(chosen, { ...boq, facts })}>Import {chosen.length} item{chosen.length === 1 ? '' : 's'}</button>
+        <button className="btn btn-primary" disabled={!chosen.length || !ready} onClick={() => onImport(chosen, { ...boq, facts })}>{action ? action(chosen.length) : `Import ${chosen.length} item${chosen.length === 1 ? '' : 's'}`}</button>
         <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onBack}>Choose different files</button>
       </div>
     </Sheet>

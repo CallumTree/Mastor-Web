@@ -18,12 +18,12 @@ describe('by Claude', () => {
     await local.put('valuations', { id: 'vc', jobId: 'jc', number: 1, status: 'Open', createdAt: at, issuedAt: null, byClaude: at })
     await local.put('scope', { id: 'sc', jobId: 'jc', code: '4360BD', description: 'Masonry paint', room: 'Walls', qty: 10, unit: 'SM', rate: 5, valuationId: 'vc', order: 1, createdAt: 1, byClaude: at })
     await local.put('scope', { id: 'sp', jobId: 'jc', code: '4361BD', description: 'Gloss doors', room: 'Walls', qty: 2, unit: 'NO', rate: 20, valuationId: null, order: 2, createdAt: 1 })
-    await local.put('diary', { id: 'nc', jobId: 'jc', date: '2026-10-20', type: 'note', note: 'Dylan agreed the skip position', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: at, category: 'Client', byClaude: at })
+    await local.put('diary', { id: 'nc', jobId: 'jc', date: '2026-10-20', type: 'note', note: 'Dylan agreed the skip position', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: at, category: 'Client', pinned: true, byClaude: at })
 
     render(<App />)
     click(await screen.findByRole('button', { name: /Claude Close/ }))
     await screen.findByText('Dylan agreed the skip position')
-    expect(screen.getAllByText('by Claude').length).toBe(1)          // the note, on Home
+    expect(screen.getAllByText('by Claude').length).toBe(1)          // the note, pinned on Home
 
     nav('vals')
     await screen.findByText('Masonry paint')

@@ -2,7 +2,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import read from '../api/read-pack.js'
-import { verify, quoteFound, pdfText, scopeSummary } from '../src/lib/packFacts'
+import { verify, quoteFound, pdfText, scopeSummary, clientFrom } from '../src/lib/packFacts'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
 
@@ -26,7 +26,7 @@ let r = await call({ docs, scope: '2032AA Slate: renew' }, '')
 ok(r.status === 401, 'no sign-in: refused before the AI is called')
 r = await call({ docs, scope: '2032AA Slate: renew' })
 ok(r.status === 200 && r.json.facts.length === 1 && r.json.cut.length === 0, 'reads and returns the facts')
-ok(sent.model === 'claude-opus-5-5' && sent.output_config?.format?.type === 'json_schema' && sent.output_config.format.schema.required.join() === 'facts,extras', 'asks for schema-checked JSON')
+ok(sent.model === 'claude-opus-5-5' && sent.output_config?.format?.type === 'json_schema' && sent.output_config.format.schema.required.join() === 'facts,extras,client', 'asks for schema-checked JSON (facts, missing work, and the client by name)')
 ok(sent.fallbacks === 'default' && headers['anthropic-beta'] === 'server-side-fallback-2026-07-01', 'a declined request is retried on the fallback model')
 ok(JSON.stringify(sent.messages).includes('<document name=\\"pci.pdf\\">') && JSON.stringify(sent.messages).includes('2032AA Slate'), 'documents and the scope go in')
 r = await call({ docs: [{ name: 'big.pdf', text: 'x '.repeat(70_000) }], scope: '' })
@@ -65,6 +65,13 @@ if (bat && pci) {
   ok(quoteFound('Asbo 4 to be completed prior to work commencement', pciText), 'REAL PCI: the asbestos requirement can be quoted')
   ok(!quoteFound('Asbestos survey not required', pciText), 'REAL PCI: an invented quote isn’t found')
 } else console.log('  · real Windsor Road documents not on this machine — skipped')
+
+// the client's name for a new job: only when the document says it, in the words quoted
+const pciDoc = [{ name: 'PCI.pdf', text: 'Pre-construction information. Client: Seaview Homes Housing Association. Principal designer: Arc Design Ltd.' }]
+ok(clientFrom({ text: 'Seaview Homes Housing Association', document: 'PCI.pdf', quote: 'Client: Seaview Homes Housing Association' }, pciDoc) === 'Seaview Homes Housing Association', 'client named in a quote the PCI holds → used')
+ok(clientFrom({ text: 'Bayside Council', document: 'PCI.pdf', quote: 'Client: Bayside Council' }, pciDoc) === undefined, 'a quote the PCI doesn’t hold → left blank')
+ok(clientFrom({ text: 'Bayside Council', document: 'PCI.pdf', quote: 'Client: Seaview Homes Housing Association' }, pciDoc) === undefined, 'a name that isn’t in its own quote → left blank')
+ok(clientFrom({ text: '', document: 'PCI.pdf', quote: '' }, pciDoc) === undefined && clientFrom(null, pciDoc) === undefined, 'nothing named → blank')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 if (fail) process.exit(1)

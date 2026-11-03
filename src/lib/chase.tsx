@@ -18,6 +18,26 @@ export const termsOf = (job: Job) => (job.paymentTermsDays && job.paymentTermsDa
 const daysSince = (t: number, now: number) => Math.floor((now - t) / DAY)
 const ordinal = (n: number) => (n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`)
 
+/**
+ * Where a VO stands, from its facts alone (nobody sets it): logged → priced → with the client → instructed (a client
+ * ref, or a signed dayworks sheet) → claimed. Rejected is the one thing a person says, because only the client knows it.
+ */
+export type VoStage = 'Logged' | 'Priced' | 'With client' | 'Instructed' | 'Claimed' | 'Rejected'
+export function voStage(v: Variation): VoStage {
+  if (v.status === 'Rejected') return 'Rejected'
+  if (v.valuationId) return 'Claimed'
+  if (v.clientRef.trim() || v.status === 'Instructed' || v.status === 'Complete') return 'Instructed'
+  if (v.qty != null && v.rate != null) return v.submittedAt ? 'With client' : 'Priced'
+  return 'Logged'
+}
+/** The stored status that goes with the facts after an edit: a client ref instructs it; taking the ref away undoes that. */
+export function voStatusAfter(before: Variation, after: Variation): Variation['status'] {
+  if (after.status === 'Rejected') return 'Rejected'
+  if (after.clientRef.trim()) return after.status === 'Complete' ? 'Complete' : 'Instructed'
+  if (before.clientRef.trim() && after.status === 'Instructed') return 'Identified'
+  return after.status
+}
+
 export function voCourt(v: Variation, vals: Valuation[], now = Date.now()): Court {
   if (v.status === 'Rejected') return { who: 'none', text: 'Rejected', tone: 'done' }
   if (v.valuationId) {

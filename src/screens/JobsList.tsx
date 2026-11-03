@@ -36,7 +36,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
             <Wordmark />
             <div className="cover-sub">{sorted.length ? `${active} active job${active === 1 ? '' : 's'}` : 'Site · Variations · Valuations'}</div>
           </div>
-          {m && sorted.length > 0 ? <button onClick={onDashboard} aria-label="Director dashboard" className="icon-btn on-dark"><IconChart size={22} /></button> : <span className="icon-gap" />}
+          {m && sorted.length > 0 ? <button onClick={onDashboard} aria-label="Money across all jobs" className="icon-btn on-dark"><IconChart size={22} /></button> : <span className="icon-gap" />}
         </div>
         <div className="cover-sync"><SyncBadge /></div>
       </header>

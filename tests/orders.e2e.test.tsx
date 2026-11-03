@@ -20,6 +20,7 @@ describe('small works orders', () => {
 
     render(<App />)
     click(await screen.findByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     click(screen.getByLabelText(/Responsive or voids contract/))
     type('Job name *', 'PCC Responsive 2026')
     click(screen.getByRole('button', { name: 'Create job' }))

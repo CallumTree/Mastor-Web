@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import read from '../api/read-site.js'
 import { encodeWav } from '../src/lib/voice'
-import { buildRequest, verifySuggestions, voFromSuggestion, unread, openSuggestions, decide } from '../src/lib/siteRead'
+import { buildRequest, verifySuggestions, voFromSuggestion, unread, openSuggestions, decide, dueToRead } from '../src/lib/siteRead'
 import type { DiaryEntry, ScopeItem } from '../src/lib/types'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
@@ -16,9 +16,10 @@ ok(String.fromCharCode(...head.slice(0, 4)) === 'RIFF' && String.fromCharCode(..
 // ---- what goes out, and what comes back is checked
 const D = (id: string, type: DiaryEntry['type'], extra: Partial<DiaryEntry> = {}): DiaryEntry => ({ id, jobId: 'j', date: '2026-10-17', type, note: '', labour: null, weather: '', mediaId: type === 'note' || type === 'day' ? null : 'm-' + id, originalMediaId: null, room: '', voId: null, createdAt: 1, ...extra })
 const S = (id: string, property: string, code: string, valuationId: string | null = null): ScopeItem => ({ id, jobId: 'j', code, description: code + ' work', room: 'Front', qty: 93, unit: 'SM', rate: 5.62, valuationId, order: 1, property, workstream: 'PPR Paint', createdAt: 1 })
-const diary = [D('p1', 'photo'), D('v1', 'voice'), D('d1', 'day', { note: 'Scaffold struck at number 3, all clear' }), D('old', 'photo', { read: { at: 1, suggestions: [] } }), D('n0', 'day', { note: 'ok' })]
+const diary = [D('p1', 'photo'), D('v1', 'voice'), D('d1', 'day', { note: 'Scaffold struck at number 3, all clear' }), D('old', 'photo', { read: { at: 1, suggestions: [] } }), D('n0', 'day', { note: 'ok' }),
+  D('f1', 'note', { note: 'Dylan agreed the partition can be claimed', category: 'Commercial' })]
 const items = unread(diary, '2026-10-17')
-ok(items.map(e => e.id).join() === 'p1,v1,d1', 'unread: new photo, voice note and a real written note; already-read and one-word notes skipped')
+ok(items.map(e => e.id).join() === 'p1,v1,d1', 'unread: new photo, voice note and the day’s own note; already-read, one-word and filed notes skipped')
 const scope = [S('s1', '4', '4360BD'), S('s2', '4', '4350AA'), S('s3', '3', '4360BD', 'val1')]
 const { req, itemKey, lineKey } = buildRequest('c1', items, scope, [])
 ok(req.items.map(i => `${i.key}:${i.kind}:${i.mediaId ?? '-'}`).join() === 'M1:photo:m-p1,M2:voice:m-v1,M3:day:-', 'captures sent as short keys with their stored media')
@@ -32,16 +33,37 @@ const found = verifySuggestions([
   { item: 'M9', kind: 'note', lines: [], text: 'No such capture', quote: '', basis: 'seen' },
   { item: 'M3', kind: 'vo', lines: [], text: '', quote: '', basis: 'said' },
 ], { M2: 'Number four front is painted. Found rotten joists under the bath, about two metres.' }, itemKey, lineKey)
-const v = found.get('v1')!, p = found.get('p1')!
-ok(v[0].kind === 'complete' && v[0].lineIds.join() === 's1' && v[0].verified, 'complete: only real, unclaimed lines kept; quote found in the transcript')
+const v = found.get('v1')!
+ok(v[0].kind === 'complete' && v[0].lineIds.join() === 's1' && v[0].verified, 'complete: only real, unclaimed lines in the house named; quote found in the transcript')
 ok(v[1].kind === 'vo' && v[1].qty === 2 && v[1].verified, 'extra work: measurement as said, quote found')
-ok(!v[2].verified, 'a quote not in what was said is marked unverified')
-ok(p.length === 1 && p[0].basis === 'seen' && !p[0].verified, 'from the photo alone: kept, marked for a look; a suggestion for an already-claimed line is dropped')
-ok(!found.has('d1') && [...found.values()].flat().length === 4, 'unknown captures and empty suggestions are dropped')
+ok(v.length === 2, 'a quote that wasn’t said is dropped, not just marked')
+ok(!found.has('p1'), '“done” from a photo alone is dropped: a photo can’t show a line is finished, or which house')
+ok(!found.has('d1') && [...found.values()].flat().length === 2, 'unknown captures and empty suggestions are dropped')
+// a scheme of several houses: "done" must name the house, and only that house's lines count
+const many = verifySuggestions([
+  { item: 'M2', kind: 'complete', lines: ['L1', 'L2'], text: 'Painted', property: '', quote: 'number four front is painted', basis: 'said' },
+  { item: 'M2', kind: 'complete', lines: ['L1', 'L4'], text: 'No. 4 painted', property: 'No. 4', quote: 'number four front is painted', basis: 'said' },
+  { item: 'M1', kind: 'vo', lines: [], text: 'Cracked lintel over the back door', property: '4', quote: '', basis: 'seen' },
+], { M2: 'Number four front is painted.' }, itemKey, new Map([...lineKey, ['L4', S('s4', '5', '4360BD')]]))
+const m = many.get('v1') ?? []
+ok(m.length === 1 && m[0].lineIds.join() === 's1', 'several houses: a "done" with no house is dropped; one naming No. 4 keeps only No. 4’s lines')
+ok(many.get('p1')?.[0].kind === 'vo' && many.get('p1')?.[0].basis === 'seen', 'extra work spotted in a photo is kept, marked for a look')
 const vo = voFromSuggestion(v[1], diary[1], 'j', 7)
 ok(vo.number === 7 && vo.status === 'Identified' && vo.rate === null && vo.qty === 2 && vo.room === 'No. 4 · Bathroom' && vo.reason === 'From site 2026-10-17: “rotten joists under the bath”', 'approved extra work → Identified VO, unpriced, with the words that raised it')
 const withRead = { ...diary[1], read: { at: 1, suggestions: v } }
-ok(openSuggestions([withRead]).length === 3 && openSuggestions([decide(withRead, v[0].id, 'approved')]).length === 2, 'review list: open suggestions only')
+ok(openSuggestions([withRead]).length === 2 && openSuggestions([decide(withRead, v[0].id, 'approved')]).length === 1, 'review list: open suggestions only')
+
+// ---- when a day is read on its own: once it has gone quiet, or is over; only the last week
+const T = Date.UTC(2026, 9, 17, 15), MIN = 60_000
+const day = (id: string, date: string, createdAt: number, extra: Partial<DiaryEntry> = {}) => D(id, 'photo', { date, createdAt, ...extra })
+const dueIds = (es: DiaryEntry[]) => dueToRead(es, '2026-10-17', T).map(d => `${d.jobId}|${d.date}|${d.items.map(i => i.id).join('+')}`).join(' ')
+ok(dueIds([day('a', '2026-10-17', T - 10 * MIN)]) === '', 'a capture ten minutes ago: still on site, not yet')
+ok(dueIds([day('a', '2026-10-17', T - 50 * MIN)]) === 'j|2026-10-17|a', 'nothing new for 45 minutes: read')
+ok(dueIds([day('a', '2026-10-17', T - 50 * MIN), day('b', '2026-10-17', T - 5 * MIN)]) === '', 'a new capture restarts the wait')
+ok(dueIds([day('y', '2026-10-16', T - 30 * MIN)]) === 'j|2026-10-16|y', 'yesterday is over: read')
+ok(dueIds([day('o', '2026-10-05', 1)]) === '', 'older than a week: left as it was')
+ok(dueIds([day('r', '2026-10-16', 1, { read: { at: 1, suggestions: [] } })]) === '', 'already read: never again')
+ok(dueIds([day('b2', '2026-10-16', 9), day('b1', '2026-10-16', 3), { ...day('x', '2026-10-15', 1), jobId: 'k' }]) === 'k|2026-10-15|x j|2026-10-16|b1+b2', 'oldest day first, captures in the order made, per job')
 
 // ---- the endpoint
 process.env.ANTHROPIC_API_KEY = 'k'

@@ -13,6 +13,7 @@ describe('payments and chasing', () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Pay Street'); type(/PO number/i, 'PO9'); type(/payment terms/i, '30')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Pay Street')
@@ -59,7 +60,7 @@ describe('payments and chasing', () => {
 
     // dashboard
     click(screen.getByRole('button', { name: 'Jobs' }))
-    click(await screen.findByRole('button', { name: /director dashboard/i }))
+    click(await screen.findByRole('button', { name: /money across all jobs/i }))
     await screen.findByText('Paid this year')
     await waitFor(() => expect(screen.getAllByText('£100').length).toBeGreaterThan(0))
   })

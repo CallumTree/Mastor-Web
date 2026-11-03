@@ -14,7 +14,9 @@ export interface PackDoc { name: string; text: string }
 export interface Source { document: string; page: number | null; quote: string }
 export interface PackFact extends Source { category: NoteCategory; text: string; properties: string[]; verified: boolean; include: boolean }
 export interface PackExtra extends Source { text: string; why: string; properties: string[]; verified: boolean; include: boolean }
-export interface PackFacts { facts: PackFact[]; extras: PackExtra[]; read: string[]; cut: string[]; error?: string }
+export interface PackFacts { facts: PackFact[]; extras: PackExtra[]; read: string[]; cut: string[]; error?: string
+  /** the client as the documents name it — only when its quote was found in the document and names it */
+  client?: string }
 
 const readAsBuffer = (f: Blob) => new Promise<ArrayBuffer>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as ArrayBuffer); r.onerror = () => rej(r.error); r.readAsArrayBuffer(f) })
 const readAsText = (f: Blob) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsText(f) })
@@ -79,16 +81,25 @@ export function verify(raw: { facts?: unknown[]; extras?: unknown[] }, docs: Pac
   return { facts, extras }
 }
 
+/** The client's name, kept only when the quote is in the document and the name is in the quote: never a guess. */
+export function clientFrom(raw: unknown, docs: PackDoc[]): string | undefined {
+  const o = (raw ?? {}) as Record<string, unknown>
+  const text = String(o.text ?? '').trim(), quote = String(o.quote ?? '').trim()
+  if (!text || text.length > 80) return undefined
+  const doc = docs.find(d => d.name === String(o.document ?? ''))?.text
+  return quoteFound(quote, doc) && norm(quote).includes(norm(text)) ? text : undefined
+}
+
 /** Sends the documents (and a short list of what's already in scope) to /api/read-pack. Never throws: a failure comes back as `error`. */
 export async function readPackFacts(docs: PackDoc[], scope: string): Promise<PackFacts> {
   const empty = { facts: [], extras: [], read: docs.map(d => d.name), cut: [] as string[] }
   if (!docs.length) return empty
   try {
     const r = await fetch('/api/read-pack', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) }, body: JSON.stringify({ docs, scope }) })
-    let data: { facts?: unknown[]; extras?: unknown[]; cut?: string[]; error?: string } = {}
+    let data: { facts?: unknown[]; extras?: unknown[]; client?: unknown; cut?: string[]; error?: string } = {}
     try { data = await r.json() } catch { /* handled below */ }
     if (!r.ok || data.error) return { ...empty, error: data.error || (r.status === 404 ? 'The document reader isn’t deployed yet.' : `Couldn’t read the documents (${r.status}).`) }
-    return { ...verify(data, docs), read: docs.map(d => d.name), cut: data.cut ?? [] }
+    return { ...verify(data, docs), client: clientFrom(data.client, docs), read: docs.map(d => d.name), cut: data.cut ?? [] }
   } catch {
     return { ...empty, error: 'Couldn’t reach the document reader. Check signal — the schedules above are unaffected.' }
   }

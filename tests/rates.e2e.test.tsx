@@ -64,6 +64,7 @@ describe('schedule of rates', () => {
 
     // --- a job with a variation, priced from the book
     click(screen.getByRole('button', { name: /new job/i }))
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', '4 Rates Road')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('4 Rates Road')

@@ -9,7 +9,10 @@ import { weatherFor } from '../lib/weather'
 import { voRef } from '../lib/format'
 import { IconBack, IconCamera, IconFlag, IconMarkup, IconMic, IconPlay, IconVideo } from '../components/Icons'
 import { MAX_VOICE_SECONDS, startRecording, type Recorder } from '../lib/voice'
-import { unread } from '../lib/siteRead'
+import { AUTO_DAYS, unread } from '../lib/siteRead'
+import { useAccess } from '../lib/access'
+import { NoteEditor, NoteRow, newNote, sortNotes } from './Notes'
+import type { NoteCategory } from '../lib/types'
 
 export const dayId = (jobId: string, date: string) => `day:${jobId}:${date}`
 export const blankDay = (jobId: string, date: string): DiaryEntry => ({ id: dayId(jobId, date), jobId, date, type: 'day', note: '', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
@@ -70,21 +73,17 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
   )
 }
 
-export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onBack, onSave, onDelete, onAddMedia, onRaiseVo, onRead }: {
+export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, onBack, onSave, onDelete, onAddMedia, onRaiseVo }: {
   job: Job; entries: DiaryEntry[]; rooms: string[]; vos: Variation[]; date: string; setDate: (d: string) => void; focusNote?: boolean
   /** back to the job's line of days */
   onBack?: () => void
   onSave: (e: DiaryEntry, markedUp?: Blob) => void; onDelete: (e: DiaryEntry) => void
   onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVo: (e: DiaryEntry) => void
-  /** read this day's captures against the scope; resolves to a one-line result */
-  onRead?: (date: string) => Promise<string>
 }) {
   const today = dayKey()
   const day = entries.find(e => e.id === dayId(job.id, date)) ?? null
   const media = entries.filter(e => e.date === date && (e.type === 'photo' || e.type === 'video' || e.type === 'voice')).sort((a, b) => a.createdAt - b.createdAt)
   const [recording, setRecording] = useState(false)
-  const [reading, setReading] = useState(false)
-  const [readMsg, setReadMsg] = useState<string | null>(null)
   const toRead = unread(entries, date).length
   const [note, setNote] = useState(day?.note ?? '')
   const [weather, setWeather] = useState(day?.weather ?? '')
@@ -93,6 +92,11 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const noteRef = useRef<HTMLTextAreaElement>(null)
+  const { money } = useAccess()
+  // the day's own note, and the notes filed from it (client, commercial, H&S): one place for every note, on the day
+  const dayNotes = entries.filter(e => e.type === 'note' && e.date === date && (money || e.category !== 'Commercial')).sort(sortNotes)
+  const [noteOpen, setNoteOpen] = useState<DiaryEntry | null>(null)
+  const FILE_AS: NoteCategory[] = money ? ['Client', 'Commercial', 'H&S'] : ['Client', 'H&S']
 
   // Refresh from storage (or another device) — but never overwrite the note while it's being typed
   const shownDate = useRef(date)
@@ -125,6 +129,13 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
     document.addEventListener('visibilitychange', hide); window.addEventListener('pagehide', flushNote)
     return () => { document.removeEventListener('visibilitychange', hide); window.removeEventListener('pagehide', flushNote); flushNote() }
   }, [])
+  /** What's in the box becomes a note of its own with that tag (H&S stays pinned to the job), and the box is clear for the next. */
+  const fileAs = (c: NoteCategory) => {
+    const text = note.trim(); if (!text) return
+    if (pending.current) { clearTimeout(pending.current.timer); pending.current = null }
+    onSave(newNote(job, text, c, c === 'H&S', date))
+    setNote(''); saveDay({ note: '' })
+  }
   const add = async (f: File | Blob | undefined, kind: 'photo' | 'video' | 'voice') => {
     if (!f) return
     setErr(null); setBusy(true)
@@ -153,11 +164,18 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <button aria-label="More operatives" onClick={() => { const n = (labour ?? 0) + 1; setLabour(n); saveDay({ labour: n }) }} className="step-btn">+</button>
         </div>
         <div style={{ marginTop: 12 }}>
-          <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate">
+          <Field label="Note" hint={note.trim() ? undefined : 'What happened, what was agreed, anything to watch. Tip: tap the mic on your keyboard to dictate'}>
             <textarea ref={noteRef} rows={4} value={note} onChange={e => typeNote(e.target.value)} onBlur={flushNote} placeholder="What happened on site today?" />
           </Field>
+          {note.trim().length > 0 && <div className="row file-as" role="group" aria-label="File this note as">
+            <span className="hint">File as</span>
+            {FILE_AS.map(c => <button key={c} className="chip" onClick={() => fileAs(c)}>{c}</button>)}
+          </div>}
           <ByClaude at={day?.byClaude} />
         </div>
+        {dayNotes.length > 0 && <div className="day-notes">
+          {dayNotes.map(n => <NoteRow key={n.id} n={n} onDay onOpen={() => setNoteOpen(n)} />)}
+        </div>}
       </div>
 
       <div className="row">
@@ -187,17 +205,12 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         </label>
       </div>
 
-      {onRead && (toRead > 0 || readMsg) && (
-        <div className="panel stack" style={{ gap: 8 }}>
-          {toRead > 0 && <button className="btn btn-primary" disabled={reading} onClick={async () => { setReading(true); setReadMsg(null); try { setReadMsg(await onRead(date)) } finally { setReading(false) } }}>
-            {reading ? 'Reading against the scope…' : `Read ${date === today ? 'today' : 'this day'} against the scope · ${toRead} new`}
-          </button>}
-          {readMsg && <div role="status" className="t-note">{readMsg}</div>}
-          {!readMsg && <div className="hint">What’s done and what’s extra come back as suggestions in Vals. Nothing is claimed until someone approves it.</div>}
-        </div>
-      )}
+      {toRead > 0 && date >= addDays(today, -AUTO_DAYS) && <div className="hint">{money
+        ? 'Mastor reads these against the scope once they’ve uploaded and the day goes quiet. What’s done or extra waits in Vals for you to approve.'
+        : 'Mastor reads these against the scope once they’ve uploaded. What’s done or extra goes to the office to approve.'}</div>}
       {recording && <VoiceSheet onClose={() => setRecording(false)} onSave={async b => { await add(b, 'voice'); setRecording(false) }} />}
 
+      {noteOpen && <NoteEditor job={job} note={noteOpen} onClose={() => setNoteOpen(null)} onSave={n => { onSave(n); setNoteOpen(null) }} onDelete={() => { onDelete(noteOpen); setNoteOpen(null) }} />}
       {open && <MediaSheet e={open} rooms={rooms} vos={vos} onClose={() => setOpen(null)}
         onSave={(e, b) => { onSave(e, b); setOpen(o => (o ? { ...o, ...e } : o)) }}
         onDelete={() => { onDelete(open); setOpen(null) }}

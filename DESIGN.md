@@ -187,11 +187,11 @@ components:
     rounded: "{rounded.md}"
     height: "64px"
   capture-key:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.cyan}"
     textColor: "{colors.on-signal}"
-    rounded: "{rounded.md}"
-    width: "52px"
-    height: "46px"
+    rounded: "50%"
+    width: "60px"
+    height: "60px"
   sheet:
     backgroundColor: "{colors.slate}"
     textColor: "{colors.white}"
@@ -268,7 +268,7 @@ A drafting sheet with two signals; every neutral leans blue.
 - **Figure** (Mono 520, clamp(22px, 6.4vw, 28px), -0.03em): figure grids and summary strips, fitted to their cell.
 - **Title** (Archivo 700, 16px, 1.25, -0.01em): an action row's title, a sheet's question, a property.
 - **Body** (Archivo 450, 16px, 1.45): reading text; Clerk's answers to 62ch.
-- **Section head** (Archivo 87.5% 700, 13px, 0.1em, uppercase, cyan, over a 1px Hairline): ACTION NEEDED, NOTES & DECISIONS.
+- **Section head** (Archivo 87.5% 700, 13px, 0.1em, uppercase, cyan, over a 1px Hairline): ACTION NEEDED, PINNED NOTES.
 - **Label** (Archivo 87.5% 650, 13px, 0.08em, uppercase, Slate Note): figure labels, register heads, field labels (in Ink 2).
 - **Status** (Archivo 87.5% 700, 13px, 0.05em, uppercase): tags and plates.
 - **Amount / Code** (Mono 520 / 450, 13–17px): amounts in rows, SoR codes, contract refs, dates on the line.
@@ -333,8 +333,8 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - 0px corners, Slate Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Slate Edge rule.
 
 ### Navigation
-- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Tabs are Slate Note markings; the current one is white with a 22×2px cyan bar at its top edge. The capture key is a white block with a drawn plus.
-- **Desktop:** the same as a 104px Milled Steel rail with a Hairline edge; the current tab carries a 2px cyan bar on its left.
+- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Its five tabs (four for operatives) share it evenly; they are Slate Note markings and the current one is white with a 22×2px cyan bar at its top edge. The capture key is not a tab: it is a 60px Blueprint Cyan disc with an ink plus, standing on the dock's top edge over its centre, cut out of the page by a 4px Ink Navy ring and lifted by a soft shadow (0 8px 18px). It is the one round control, by the user's choice, so capture reads as the single thing you can always do. Clerk sits in the job's header beside Job setup, not in the dock.
+- **Desktop:** the same as a 104px Milled Steel rail with a Hairline edge; the current tab carries a 2px cyan bar on its left. The capture disc heads the rail.
 
 ### The Job Header and Certified Rail (signature)
 - Ink navy at 92%, so the grid shows faintly through, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
