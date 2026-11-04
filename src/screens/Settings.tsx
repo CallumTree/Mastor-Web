@@ -34,7 +34,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         <div className="hint">Used on your VAT invoices. Shared with everyone in your company.</div>
 
         <h3 className="label sec">Company</h3>
-        {T('name', 'Company name *', { placeholder: 'Tree & Sons Ltd' })}
+        {T('name', 'Company name *', { placeholder: 'As it appears on your invoices' })}
         <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
         <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
         <div className="row pair"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
@@ -45,7 +45,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 
         <h3 className="label sec">Invoices</h3>
         <div className="row pair">
-          <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. TS- (or blank)' })}</div>
+          <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. INV- (or blank)' })}</div>
           <div className="grow"><Field label="Next invoice number" hint="Carry on from your current sequence"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
         </div>
         <div className="row pair">
@@ -110,9 +110,11 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 }
 
 /** Confirm before a number is used — invoice numbers can't be taken back. */
-export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onCreate, onSettings, onClose }: {
+export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, jobMissing = [], onCreate, onSettings, onJobSetup, onClose }: {
   number: string; net: string; vat: string; total: string; rate: number; missing: string[]
-  onCreate: (date: number) => void; onSettings: () => void; onClose: () => void
+  /** what the job itself still needs (who the invoice is to) */
+  jobMissing?: string[]
+  onCreate: (date: number) => void; onSettings: () => void; onJobSetup?: () => void; onClose: () => void
 }) {
   const d = new Date(); const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const [date, setDate] = useState(key)
@@ -124,6 +126,11 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onC
           <>
             <div className="t-note">Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
             <button className="btn btn-primary" onClick={onSettings}>Open company settings</button>
+          </>
+        ) : jobMissing.length ? (
+          <>
+            <div className="t-note">A VAT invoice has to say who it’s to. Add <b>{jobMissing.join(' and ')}</b> in the job’s setup.</div>
+            {onJobSetup && <button className="btn btn-primary" onClick={onJobSetup}>Open job setup</button>}
           </>
         ) : (
           <>

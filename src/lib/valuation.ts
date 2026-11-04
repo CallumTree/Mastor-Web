@@ -145,7 +145,7 @@ export function issuePlan(job: Job, val: Valuation, vals: Valuation[], scope: Sc
 const gbp = (n: number) => '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 /**
- * Uplifts compound (uplift 2 on top of uplift 1) and — as Pembrokeshire's POs do — the total is
+ * Uplifts compound (uplift 2 on top of uplift 1) and — as council POs commonly do — the total is
  * rounded ONCE: base × (1+u1) × (1+u2). Uplift 1 is shown to the penny; uplift 2 is the balance,
  * so the printed lines always add up to the total exactly.
  */

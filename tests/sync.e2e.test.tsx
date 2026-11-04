@@ -54,10 +54,10 @@ beforeAll(() => {
 })
 
 describe('cloud sync', () => {
-  it('jobs already on the phone upload on first sign-in (College Park comes with you)', async () => {
-    await db.putJob(job('j-existing', 'College Park'))          // written before sync started: not queued
+  it('jobs already on the phone upload on first sign-in (Park Road comes with you)', async () => {
+    await db.putJob(job('j-existing', 'Park Road'))          // written before sync started: not queued
     await db.putPhoto('ph1', new Blob(['jpeg'], { type: 'image/jpeg' }))
-    await db.putJob({ ...job('j-existing', 'College Park'), photoId: 'ph1' })
+    await db.putJob({ ...job('j-existing', 'Park Road'), photoId: 'ph1' })
     await startSync(CO)
     await settle()
     expect(cloud.jobs.find(r => r.id === 'j-existing')).toBeTruthy()
@@ -117,7 +117,7 @@ describe('cloud sync', () => {
     const line = (bookId: string, code: string, rate: number): RateItem => ({ bookId, code, short: code, long: '', unit: 'NO', rate, section: '', subsection: '' })
     // imported here: the list goes in settings, the lines go up as one file
     const book = { id: 'rb1', name: 'Planned v8', source: 'p.docx', notes: [], lines: 2, importedAt: 1 }
-    await db.putSettings({ ...blankSettings(), name: 'Tree & Sons', rateBooks: [book] })
+    await db.putSettings({ ...blankSettings(), name: 'Example Builders', rateBooks: [book] })
     await rates.put('rb1', [line('rb1', '0171AD', 133.91), line('rb1', '3051AB', 42.1)])
     await settle()
     const sent = bucket[`${CO}/rates/rb1.json`]

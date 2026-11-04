@@ -16,7 +16,7 @@ const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.cl
 
 describe('the job line', () => {
   it('a key date and the to-do that leads up to it, each linked to the other', async () => {
-    const job: Job = { id: 'jl', name: 'Hill Terrace', client: 'PCC', address: '', contractRef: 'HT1', poNumber: 'PO1', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1, properties: { '6': '6 Hill Terrace', '8': '8 Hill Terrace' } }
+    const job: Job = { id: 'jl', name: 'Hill Terrace', client: 'Example Council', address: '', contractRef: 'HT1', poNumber: 'PO1', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1, properties: { '6': '6 Hill Terrace', '8': '8 Hill Terrace' } }
     await db.putJob(job)
     await db.putScope({ id: 'k1', jobId: 'jl', code: 'KIT1', description: 'Kitchen units', room: 'Kitchen', qty: 1, unit: 'IT', rate: 100, valuationId: null, order: 1, property: '6', workstream: 'Kitchen', createdAt: 1 })
     render(<App />)
@@ -65,7 +65,7 @@ describe('the job line', () => {
     expect(await screen.findByRole('button', { name: '+ Date' })).toBeTruthy()   // opens the job on its line
 
     // an operative: the office-only to-do isn't on their line
-    await meta.set('company', { id: 'c', name: 'Tree & Sons', user: 'u', role: 'operative' })
+    await meta.set('company', { id: 'c', name: 'Example Builders', user: 'u', role: 'operative' })
     cleanup(); render(<App />)
     await screen.findByRole('heading', { name: 'Hill Terrace' })
     nav('home'); nav('diary')

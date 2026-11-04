@@ -9,7 +9,7 @@
 :root {
   --void: #0A0F1D; --slate: #101827; --slate-2: #16213A; --rule: #1E293B; --rule-ctl: #64748B;
   --white: #F8FAFC; --meta: #8291A7; --cyan: #38BDF8; --gold: #F59E0B; --on-signal: #0A0F1D;
-  --grid: rgba(56, 189, 248, .055); --taken: #273449;
+  --grid: rgba(148, 163, 184, .06); --taken: #273449; --prussian: #1B4A80; --white-press: #DCE1E8;   /* the grid is drafting-neutral: cyan is a signal, never wallpaper */
   /* the older names, mapped into this world */
   --ink: var(--white); --ink-2: #CBD5E1; --ink-muted: var(--meta);
   --ground: var(--void); --panel: var(--slate); --line: var(--rule); --field-line: var(--rule-ctl); --row-open: var(--slate-2); --disabled: var(--slate-2);
@@ -25,7 +25,7 @@
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: 16px; scrollbar-color: var(--field-line) var(--ground); background: var(--void); }
-body { margin: 0; font-family: var(--sans); background-color: var(--void); color: var(--ink); font-size: 16px; line-height: 1.45; font-weight: 450; -webkit-font-smoothing: antialiased;
+body { margin: 0; font-family: var(--sans); background-color: var(--void); color: var(--ink); font-size: 16px; line-height: 1.45; font-weight: 450; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums;
   background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 24px 24px; background-attachment: fixed; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -36,17 +36,17 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
 /* ---------- the bars: navy over the grid at the top, steel at the foot ---------- */
-.top { position: relative; z-index: 1; color: var(--white); border-bottom: 1px solid rgba(248, 250, 252, .14); }
+.top { position: relative; z-index: 1; color: var(--white); border-bottom: 1px solid var(--rule-ctl); }
 
 /* ---------- behind the header and headline: a real terraced street, printed in blueprint blue ----------
-   The photo's light is printed in Prussian blue (luminosity over #1B4A80), the way a cyanotype prints, laid under an ink scrim and the
-   drafting grid, and fades into the page below the offer. Decorative (aria-hidden); credited in the footer. */
-.lead-bg { position: absolute; top: 0; left: 0; right: 0; z-index: 0; height: clamp(560px, 150vw, 700px); overflow: hidden; pointer-events: none; background: #1B4A80; isolation: isolate;
-  -webkit-mask-image: linear-gradient(to bottom, #000 68%, transparent); mask-image: linear-gradient(to bottom, #000 68%, transparent); }
-.lead-bg img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 65%; filter: grayscale(1) brightness(.7) contrast(1.15); mix-blend-mode: luminosity; }   /* the photo's light, the print's Prussian blue */
+   The photo's light is printed in Prussian blue (luminosity over --prussian), the way a cyanotype prints, dark enough on its own that
+   the headline and lede hold contrast over a white sky (no scrim, no fade), under the drafting grid, and cut off on a ruled edge just
+   under the offer (Landing.tsx measures it). Decorative (aria-hidden); credited in the footer. */
+.lead-bg { position: absolute; top: 0; left: 0; right: 0; z-index: 0; height: clamp(440px, 118vw, 520px); overflow: hidden; pointer-events: none; background: var(--prussian); isolation: isolate; border-bottom: 1px solid var(--rule-ctl); }
+.lead-bg img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 65%; filter: grayscale(1) brightness(.2); mix-blend-mode: luminosity; }   /* measured over a pure white sky: the lede 6.8:1, white type 9.7:1 */
 .lead-bg::after { content: ""; position: absolute; inset: 0;
-  background: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px), linear-gradient(180deg, rgba(10, 15, 29, .5) 0%, rgba(10, 15, 29, .62) 35%, rgba(10, 15, 29, .82) 65%, rgba(10, 15, 29, .9) 100%);
-  background-size: 24px 24px, 24px 24px, auto; background-attachment: fixed, fixed, scroll; }
+  background: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px; background-attachment: fixed; }
 .foot { background: var(--slate); color: var(--white); border-top: 1px solid var(--rule); }
 .top-in, .foot-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
 .top-mark { color: inherit; text-decoration: none; display: inline-flex; padding: 6px 0; }
@@ -99,7 +99,7 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
   background: var(--white); color: var(--on-signal); font-size: 18px; font-weight: 700; text-align: left; transition: background .15s, transform .08s; --icon-dot: currentColor; }
 .claim b { font-stretch: 87.5%; font-weight: 800; letter-spacing: .04em; margin-left: .2em; }
 .claim svg { flex: none; }
-.claim:hover:not(:disabled) { background: #DCE1E8; }
+.claim:hover:not(:disabled) { background: var(--white-press); }
 .claim:active:not(:disabled) { transform: translateY(1px); }
 .claim:disabled { background: var(--slate-2); border-color: var(--rule); color: var(--meta); cursor: progress; }
 .claim.on-white { width: auto; min-width: min(100%, 360px); margin-top: 28px; }
@@ -138,8 +138,8 @@ h1, h2, h3, p, dl, dd, figure { margin: 0; }
 .k.taken { background: var(--taken); } .k.next { background: var(--cyan); } .k.free { box-shadow: inset 0 0 0 1px var(--rule-ctl); }
 
 /* ---------- the app in a phone: a black slab around a real screenshot ---------- */
-.phone { background: var(--void); border: 1px solid var(--rule-ctl); border-radius: 28px; padding: 7px; }   /* the device drawn in outline, flat: it doesn't float */
-.phone img, .phone video { display: block; width: 100%; height: auto; border-radius: 21px; background: var(--slate-2); }
+.phone { background: var(--void); border: 1px solid var(--rule-ctl); border-radius: 2px; padding: 6px; }   /* the device drawn in outline, flat, on the 2px drafted corner: it doesn't float */
+.phone img, .phone video { display: block; width: 100%; height: auto; border-radius: 0; background: var(--slate-2); }
 
 /* ---------- first screen art: a photo from site with the app over it ---------- */
 .hero-art { position: relative; min-width: 0; padding-bottom: 28px; grid-area: art; }

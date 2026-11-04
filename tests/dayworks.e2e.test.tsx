@@ -24,10 +24,10 @@ describe('dayworks', () => {
   })
 
   it('on site: new sheet from Capture, hours by trade, claim as a variation', async () => {
-    await db.putSettings({ ...blankSettings(), name: 'Tree & Sons', rateBooks: [{ id: 'rb', name: 'Planned v8', source: 'p.docx', notes: [], lines: 2, importedAt: 1 }] })
+    await db.putSettings({ ...blankSettings(), name: 'Example Builders', rateBooks: [{ id: 'rb', name: 'Planned v8', source: 'p.docx', notes: [], lines: 2, importedAt: 1 }] })
     await rates.put('rb', [{ bookId: 'rb', code: 'M', short: 'Multiskilled operative', long: '', unit: 'HR', rate: 20.92, section: 'LABOUR RATES', subsection: 'Dayworks labour' },
       { bookId: 'rb', code: 'P', short: 'Plumber operative', long: '', unit: 'HR', rate: 27.65, section: 'LABOUR RATES', subsection: 'Dayworks labour' }])
-    const job: Job = { id: 'jd', name: '3 Mill Lane', client: 'PCC', address: '', contractRef: 'ML3', poNumber: 'PO9', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+    const job: Job = { id: 'jd', name: '3 Mill Lane', client: 'Example Council', address: '', contractRef: 'ML3', poNumber: 'PO9', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
     await db.putJob(job)
     render(<App />)
     click(await screen.findByRole('button', { name: /3 Mill Lane/ }))
@@ -38,7 +38,7 @@ describe('dayworks', () => {
     await waitFor(() => expect(screen.getAllByRole('option').some(o => o.textContent?.startsWith('M — Multiskilled'))).toBe(true))
     fireEvent.change(screen.getByLabelText('Trade 1'), { target: { value: 'M' } })
     type('Hours', '6')
-    expect(screen.getAllByText('£125.52').length).toBe(2)   // labour and total: 6 × 20.92
+    expect(screen.getAllByText('£125.52').filter(e => !e.closest('button')).length).toBe(2)   // labour and total: 6 × 20.92 (the claim button names it too)
     type(/^Signed by/, 'Dylan Rees')
     click(screen.getByRole('button', { name: 'Claim as a variation · £125.52' }))
     await waitFor(async () => {

@@ -15,23 +15,23 @@ const HEAD = tr('Description', 'Comments', 'Code', 'Quantity', 'Units', 'Rate', 
 const box = (ref: string, title: string, value: string) => tbl(tr('Contract Reference:', ref), tr('Project Reference:', '25W000X'), tr('Title of Work:', title), tr('Contract Value', value))
 const doc = (...parts: string[]) => `<w:document><w:body>${parts.join('')}</w:body></w:document>`
 const paint = doc(
-  box('MH1', 'Elm Road Pembroke Painting', '£1350.36'),
-  p('Property Address:  3 Elm Road, Pembroke, SA71 4PY'), p('Location:  All Elv'),
+  box('MH1', 'Elm Road Anytown Painting', '£1350.36'),
+  p('Property Address:  3 Elm Road, Anytown, AB1 4PY'), p('Location:  All Elv'),
   tbl(HEAD, tr('Walls: Wash Down And Apply Masonry Paint', '', '4360BD', '93', 'SM', '£5.62', '£522.66'), tr('Scaffolding: Provide 5 To 10m', '', 'SCA005', '1', 'IT', '£750.00', '£750.00')),
   p('Location:  Rear'), tbl(HEAD, tr('Gutter: Clean Out', 'Back only', '4350AA', '21.8', 'LM', '£3.19', '£69.54')),
   tbl(tr('', 'Total Cost'), tr('', '£1342.20')),
-  p('Property Address:  4 Elm Road, Pembroke, SA71 4PY'), p('Location:'),
+  p('Property Address:  4 Elm Road, Anytown, AB1 4PY'), p('Location:'),
   tbl(tr('', 'Total Cost'), tr('', '£8.16')),
 )
 const roof = doc(
-  box('MH2', 'Elm Road, Pembroke- WHQS', '£5575.80'),
-  p('Property Address:  3 Elm Road, Pembroke, SA71 4PY'), p('Location:  All Elv'),
+  box('MH2', 'Elm Road, Anytown- WHQS', '£5575.80'),
+  p('Property Address:  3 Elm Road, Anytown, AB1 4PY'), p('Location:  All Elv'),
   tbl(HEAD, tr('Scaffolding: Provide 5 To 10m', '', 'SCA005', '1', 'IT', '£750.00', '£750.00'), tr('Slate: Renew Fibre Cement', '', '2032AA', '60', 'SM', '£80.43', '£80.43')),
   p('Location:  Kitchen'), tbl(HEAD, tr('Fan: Isolate, Install Two Speed', '', '841013', '1', 'NO', '£378.00', '£378.00')),
 )
 const ev = docxEvents(paint)
 const a = readWorksOrder(ev, 'paint.docx')!
-ok(!!a && a.contract === 'MH1' && a.title === 'Elm Road Pembroke Painting' && a.contractValue === 1350.36, 'contract box: reference, title, contract value')
+ok(!!a && a.contract === 'MH1' && a.title === 'Elm Road Anytown Painting' && a.contractValue === 1350.36, 'contract box: reference, title, contract value')
 ok(a.lines.length === 3 && a.lines[2].location === 'Rear' && a.lines[2].comment === 'Back only' && a.lines[2].qty === 21.8 && a.lines[2].unit === 'LM', 'lines carry their address, location, comment, qty and unit')
 ok(a.properties.map(x => x.property).join(',') === '3,4' && a.properties[0].address.startsWith('3 Elm Road'), 'house numbers from the property address')
 ok(a.problems.some(x => /No\. 4: prints a total of £8\.16 but lists no lines/.test(x)), 'a property with a printed total but no lines is caught')
@@ -39,7 +39,7 @@ ok(a.problems.some(x => /Contract value £1350\.36, the lines add to £1342\.20/
 ok(!a.problems.some(x => /^No\. 3/.test(x)), 'no. 3 adds up to its printed total')
 const b = readWorksOrder(docxEvents(roof), 'roof.docx')!
 ok(b.problems.some(x => /2032AA: prints £80\.43, but 60 × £80\.43 = £4825\.80/.test(x)), 'a line printed as the rate instead of qty × rate is caught')
-ok(contractTrade('Elm Road, Pembroke- WHQS', ['3 Elm Road, Pembroke, SA71 4PY']) === 'WHQS', 'trade from the title, address words removed')
+ok(contractTrade('Elm Road, Anytown- WHQS', ['3 Elm Road, Anytown, AB1 4PY']) === 'WHQS', 'trade from the title, address words removed')
 ok(readWorksOrder(docxEvents(doc(p('HAZARD IDENTIFICATION'), tbl(tr('AREA', 'ACTION')))), 'ra.docx') === null, 'a risk register is not a works order')
 
 // ---- pieced together with the spec list
@@ -66,27 +66,9 @@ const four = r.lines.find(l => l.property === '4')!
 ok(four.include && four.issues.some(i => /MH1 \(Painting\) prints a total for no\. 4 but lists no lines/.test(i)), 'spec list line where the works order prints a total but no lines: included, and says why')
 const extra = readPack([{ ...spec, lines: [...spec.lines, L('3', '0030AB', 2, 98.21, 'Front', 'PPR Repairs')] }], [a, b]).lines.find(l => l.code === '0030AB')!
 ok(!extra.include && extra.issues.some(i => /not on the works order, so left out/.test(i)), 'spec list line the works order doesn’t have: left out (the works order is the contract), flagged')
-ok(r.addresses['3'] === '3 Elm Road, Pembroke, SA71 4PY' && r.ref === 'MH1 · MH2', 'addresses and contract refs for the job')
+ok(r.addresses['3'] === '3 Elm Road, Anytown, AB1 4PY' && r.ref === 'MH1 · MH2', 'addresses and contract refs for the job')
 ok(readPack([spec], []).lines.length === 6, 'spec list alone: read as before')
 
-// ---- the real Windsor Road pack, when it's on this machine (licensed client documents are never committed)
-const DIRS = [process.env.PCI_DIR, '/mnt/user-data/uploads', '/root/.claude/uploads'].filter((d): d is string => !!d && existsSync(d))
-const find = (re: RegExp): string | undefined => { for (const d of DIRS) { const walk = (dir: string): string | undefined => { for (const n of readdirSync(dir, { withFileTypes: true })) { const f = join(dir, n.name); if (n.isDirectory()) { const x = walk(f); if (x) return x } else if (re.test(n.name)) return f } }; const x = walk(d); if (x) return x } }
 ;(async () => {
-  const pdf = find(/Full_Spec_list_Windsor_Road.*\.pdf$/i)
-  const docs = [/MH21180.*\.docx$/i, /MH21190.*\.docx$/i, /MH211481.*\.docx$/i].map(find)
-  if (pdf && docs.every(Boolean)) {
-    const { readPdfSchedule, pdfPages } = await import('../src/lib/pdfTable')
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    const s = readPdfSchedule(await pdfPages(new Uint8Array(readFileSync(pdf)), pdfjs as never))!
-    const orders = await Promise.all(docs.map(async f => { const buf = readFileSync(f!); return readWorksOrder(docxEvents(await docxXml(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.length))), f!)! }))
-    ok(orders.map(o => `${o.contract}:${o.lines.length}`).join(' ') === 'MH21180:92 MH21190:57 MH211481:103', 'REAL Windsor Road: 3 works orders, 92 + 57 + 103 lines')
-    ok(orders[1].problems.length === 0 && orders[2].problems.length === 0, 'REAL: Repairs and WHQS add up to their contract values')
-    ok(orders[0].problems.some(x => /No\. 4: prints a total of £1801\.69 but lists no lines/.test(x)), 'REAL: Painting order has no lines for no. 4')
-    const w = readPack([s], orders)
-    ok(w.lines.length === 262 && w.agreed === 231, `REAL: 262 lines, 231 agree across the documents (got ${w.lines.length}, ${w.agreed})`)
-    ok(w.findings.some(f => /SCA005 on both MH21180 \(Painting\) and MH211481 .* for nos\. 3, 5, 6, 7 — £3,000\.00/.test(f)), 'REAL: £3,000 of scaffold on two contracts')
-    ok(w.findings.some(f => /^841009 on MH211481 .* at £237\.09 where the spec list has 8410XC at £180\.36 — nos\. 13, 14, 15, 27$/.test(f)), 'REAL: extract fans priced on different codes')
-  } else console.log('  · real Windsor Road pack not on this machine — skipped')
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
 })()

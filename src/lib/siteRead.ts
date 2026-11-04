@@ -138,9 +138,8 @@ export function decide(e: DiaryEntry, id: string, state: 'approved' | 'rejected'
 
 /** A VO from an approved suggestion: Identified, unpriced unless a quantity was actually said, with the capture as evidence. */
 export function voFromSuggestion(s: SiteSuggestion, e: DiaryEntry, jobId: string, number: number): Variation {
-  const where = [s.property ? `No. ${s.property}` : '', s.room].filter(Boolean).join(' · ')
   return {
-    id: uid(), jobId, number, description: s.text, room: where, qty: s.qty, unit: s.unit, rate: null, code: s.code,
+    id: uid(), jobId, number, description: s.text, room: s.room ?? '', property: s.property || undefined, qty: s.qty, unit: s.unit, rate: null, code: s.code,
     reason: `From site ${e.date}${s.quote ? `: “${s.quote}”` : ' (photo)'}`, clientRef: '', status: 'Identified',
     photoIds: e.type === 'photo' && e.mediaId ? [e.mediaId] : [], dateRaised: Date.now(), valuationId: null,
   }

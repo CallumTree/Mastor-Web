@@ -3,7 +3,7 @@ import { useAccess } from '../lib/access'
 import type { RateBook } from '../lib/types'
 import { RateLookup } from './Rates'
 import type { Job, Valuation, Variation } from '../lib/types'
-import { Tick, ValBadge } from './Scope'
+import { Tick, ValBadge } from '../components/Tick'
 import { lockedIn } from '../lib/valuation'
 import { CourtLine, voCourt, voStage, voStatusAfter, type VoStage } from '../lib/chase'
 import { TabMenu } from '../components/TabMenu'
@@ -17,6 +17,8 @@ import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoThumb } from '../lib/photos'
 import { IconCamera, IconFlag } from '../components/Icons'
+import { figs } from '../components/Figs'
+import { voHouse } from '../lib/property'
 
 const UNITS = ['nr', 'm', 'm2', 'lm', 'item']
 
@@ -36,9 +38,26 @@ function RemovableThumb({ id, n, onRemove }: { id: string; n: number; onRemove: 
   )
 }
 
-/** On-site capture: what, where, how much, why, photos. Price it later. */
-export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Variation, 'id' | 'jobId' | 'number'>) => void | Promise<void>; onClose: () => void; initial?: { description?: string; room?: string; photoIds?: string[] } }) {
+export interface House { key: string; label: string }
+
+/** Which house a VO is at, on a job of several: the houses, then "Whole job". One tap; nothing to type. */
+function HousePick({ houses, value, onChange }: { houses: House[]; value: string; onChange: (h: string) => void }) {
+  if (houses.length < 2) return null
+  return (
+    <div className="field">
+      <div className="label" id="vo-house">House</div>
+      <div className="chips house-chips" role="group" aria-labelledby="vo-house" style={{ marginTop: 6 }}>
+        {houses.map(h => <button key={h.key} type="button" className={'chip' + (value === h.key ? ' on' : '')} aria-pressed={value === h.key} onClick={() => onChange(h.key)}>{h.label}</button>)}
+        <button type="button" className={'chip' + (!value ? ' on' : '')} aria-pressed={!value} onClick={() => onChange('')}>Whole job</button>
+      </div>
+    </div>
+  )
+}
+
+/** On-site capture: what, where (the house, then the room), how much, why, photos. Price it later. */
+export function LogVariation({ onSave, onClose, initial, houses = [] }: { onSave: (v: Omit<Variation, 'id' | 'jobId' | 'number'>) => void | Promise<void>; onClose: () => void; initial?: { description?: string; room?: string; property?: string; photoIds?: string[] }; houses?: House[] }) {
   const [description, setDescription] = useState(initial?.description ?? '')
+  const [house, setHouse] = useState(initial?.property ?? '')
   const [room, setRoom] = useState(initial?.room ?? '')
   const [qty, setQty] = useState('')
   const [unit, setUnit] = useState('')
@@ -54,6 +73,7 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
         <h2 className="label bracket">Log variation</h2>
         <div className="hint" style={{ marginTop: 2 }}>Capture it now — price it later.</div>
         <Field label="What's the extra work? *"><textarea rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Replace rotten joists under bath" /></Field>
+        <HousePick houses={houses} value={house} onChange={setHouse} />
         <Field label="Where"><input value={room} onChange={e => setRoom(e.target.value)} placeholder="e.g. Bathroom" /></Field>
         <div className="row">
           <div className="grow"><Field label="Qty (if known)"><input inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} /></Field></div>
@@ -75,7 +95,7 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
           {photoErr && <div className="flag t-strong" role="alert" style={{ marginTop: 6 }}>{photoErr}</div>}
         </div>
         <button className="btn btn-primary" disabled={!description.trim() || busy || saving} onClick={once(() => onSave({
-          description: description.trim(), room: room.trim() || 'General',
+          description: description.trim(), room: room.trim() || 'General', property: house || undefined,
           qty: isFinite(q) && q > 0 ? q : null, unit: unit.trim() || 'item', rate: null, code: '',
           reason: reason.trim(), clientRef: '', status: 'Identified', photoIds, dateRaised: Date.now(),
         }))}>Log variation</button>
@@ -84,8 +104,8 @@ export function LogVariation({ onSave, onClose, initial }: { onSave: (v: Omit<Va
   )
 }
 
-export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClose }: { vo: Variation; locked: boolean; books?: RateBook[]; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
-  const [v, setV] = useState(vo)
+export function EditVariation({ vo, locked, books = [], houses = [], onSave, onDelete, onClose }: { vo: Variation; locked: boolean; books?: RateBook[]; houses?: House[]; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
+  const [v, setV] = useState({ ...vo, property: vo.property ?? (voHouse(vo) || undefined) })
   const [qty, setQty] = useState(vo.qty != null ? String(vo.qty) : '')
   const [rate, setRate] = useState(vo.rate != null ? String(vo.rate) : '')
   const qn = parseFloat(qty.replace(',', '.')); const rn = parseFloat(rate.replace(/[£,]/g, ''))
@@ -99,6 +119,7 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
         {locked && <div className="flag">Claimed on an issued valuation — locked.</div>}
         <fieldset disabled={locked} style={{ border: 'none', padding: 0, margin: 0 }} className="stack">
         <Field label="Description"><textarea rows={2} value={v.description} onChange={e => setV({ ...v, description: e.target.value })} /></Field>
+        <HousePick houses={houses} value={v.property ?? ''} onChange={h => setV({ ...v, property: h || undefined })} />
         <Field label="Where"><input value={v.room} onChange={e => setV({ ...v, room: e.target.value })} /></Field>
         <div className="row">
           {m && <div className="grow"><Field label="SoR code"><input value={v.code} autoCapitalize="characters" onChange={e => setV({ ...v, code: e.target.value, rateBook: undefined })} /></Field></div>}
@@ -134,65 +155,65 @@ export function EditVariation({ vo, locked, books = [], onSave, onDelete, onClos
 
 const stageClass: Record<VoStage, string> = { Logged: 'b-amber', Priced: 'b-amber', 'With client': 'b-quiet', Instructed: 'b-slate', Claimed: 'b-green', Rejected: 'b-red' }
 
-/** The VO tab reads like the Variation Register: summary strip, then one ruled schedule. */
-export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImportVo, onRegister, onDayworks }: { job: Job; vos: Variation[]; vals: Valuation[]; onDayworks?: () => void; onLog: () => void; onEdit: (v: Variation) => void; onToggle: (v: Variation) => void; onImportVo: () => void; onRegister: () => void }) {
-  const sorted = [...vos].sort((a, b) => a.number - b.number)
+/**
+ * A VO as one row of the job's work, beside the scope lines at its house: its number, what and where, how much, where it
+ * stands with the client, and the same tick into the valuation once it's priced. Operatives see what and where, never money.
+ */
+export function VoRow({ v, vals, idx, onToggle, onEdit }: { v: Variation; vals: Valuation[]; idx: number; onToggle: (v: Variation) => void; onEdit: (v: Variation) => void }) {
+  const { money: m } = useAccess()
+  const priced = v.qty != null && v.rate != null
+  const rejected = v.status === 'Rejected'
+  const locked = !!lockedIn(v, vals)
+  const evidence = [v.photoIds.length ? `${v.photoIds.length} photo${v.photoIds.length === 1 ? '' : 's'}` : '', (v.attachments?.length ?? 0) ? `${v.attachments!.length} doc${v.attachments!.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')
+  return (
+    <div className={'row has-hit line-row vo-line' + (rejected ? ' rejected' : '')} style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--line)' : 'none', alignItems: 'flex-start' }}>
+      <RowHit label={`${voRef(v.number)}: ${v.description}`} onClick={() => onEdit(v)} />
+      {m && ((priced && !rejected) || v.valuationId)
+        ? <div className="tick-col" onClick={e => { e.stopPropagation(); if (!locked) onToggle(v) }}><Tick on={!!v.valuationId} locked={locked} onClick={() => onToggle(v)} /></div>
+        : <span className="tick-col" aria-hidden="true" />}
+      <div className="grow">
+        <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+          <span className="badge b-vo">{voRef(v.number)}</span>
+          {v.code && <span className="mono t-small slate">{v.code}</span>}
+          {v.room && <span className="hint">{v.room}</span>}
+          <ValBadge val={vals.find(x => x.id === v.valuationId)} />
+          {!locked && <ByClaude at={v.byClaude} />}
+        </div>
+        <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{v.description}</div>
+        <div className="hint">
+          {figs(v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured')}{figs(m ? (v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced') : '')}
+          {v.clientRef ? <> · client ref <span className="mono">{v.clientRef}</span></> : ''}{evidence ? ` · ${evidence}` : ''}
+        </div>
+        <div className="vo-status">{/* the office reads where it stands from its court line; operatives from the stage */}
+          {m && !rejected ? <CourtLine c={voCourt(v, vals)} /> : <span className={'badge ' + stageClass[voStage(v)]}>{voStage(v)}</span>}
+        </div>
+      </div>
+      {m && <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap', color: priced && !rejected ? 'var(--ink)' : 'var(--ink-muted)' }}>{priced ? money(lineValue(v.qty, v.rate)) : '—'}</div>}
+    </div>
+  )
+}
+
+/** The variation register at a glance (the Scope tab's VOs view): only the stages that hold VOs, then the total. */
+export function VoSummary({ job, vos, vals }: { job: Job; vos: Variation[]; vals: Valuation[] }) {
   const sum = registerSummary(job, vos, vals)
   const none = sum.rows.filter(r => !r.count)
-  const { money: m } = useAccess()   // operatives: what and where, never what it's worth
+  return <SumStrip label="Variation summary" caption={[
+      none.length ? `None ${none.map(r => VO_GROUP_SHORT[r.key].toLowerCase()).join(', ').replace(/, ([^,]*)$/, ' or $1')}.` : '',
+      'Groups at base rates; the total includes uplifts and excludes rejected.'].filter(Boolean).join(' ')} cells={[
+    ...sum.rows.filter(r => r.count).map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced),
+      note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
+    { label: 'Total incl. uplifts', value: money(sum.gross), note: [`${money(sum.base)} base`, sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · '), hot: true },
+  ]} />
+}
+
+/** A job's VOs as one ruled list (the Orders tab, where work comes order by order rather than by house). */
+export function VoList({ vos, vals, onToggle, onEdit, onLog }: { vos: Variation[]; vals: Valuation[]; onToggle: (v: Variation) => void; onEdit: (v: Variation) => void; onLog: () => void }) {
+  const sorted = [...vos].sort((a, b) => a.number - b.number)
   return (
-    <div className="stack">
-      <TabHead label="Variations" menu={<TabMenu title="Variations" actions={[
-        ...(onDayworks ? [{ label: 'Dayworks sheets', hint: 'Hours, materials and plant — signed, then claimed as a variation', onClick: onDayworks }] : []),
-        ...(m ? [{ label: 'Import council instruction', hint: 'VO ticket, site instruction — photo, scan, PDF or Excel', onClick: onImportVo }, { label: 'Variation register (PDF)', hint: 'Every VO — council ref, status, value, evidence', onClick: onRegister }] : [])]} />} />
-      {m && sorted.length > 0 && <SumStrip label="Variation summary" caption={[
-          none.length ? `None ${none.map(r => VO_GROUP_SHORT[r.key].toLowerCase()).join(', ').replace(/, ([^,]*)$/, ' or $1')}.` : '',
-          'Groups at base rates; the total includes uplifts and excludes rejected.'].filter(Boolean).join(' ')} cells={[
-        // only the stages that hold VOs: an empty stage is a line in the caption, not a box
-        ...sum.rows.filter(r => r.count).map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced),
-          note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
-        { label: 'Total incl. uplifts', value: money(sum.gross), note: [`${money(sum.base)} base`, sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · '), hot: true },
-      ]} />}
-      <div className="row">
-        <button className="btn btn-primary" onClick={onLog}><IconFlag /> Log variation</button>
-        {m && sorted.length > 0 && <button className="btn btn-secondary" style={{ flex: '0 0 auto', width: 'auto' }} onClick={onRegister}>Register PDF</button>}
-      </div>
-      {sorted.length === 0 && <div className="card empty">No variations yet. Log extras the moment you spot them.</div>}
-      {sorted.length > 0 && (
-        <div className="card vo-list">
-          <div className="vo-head"><span>VO</span><span>Description · status</span><span>{m ? 'Value' : ''}</span></div>
-          {sorted.map(v => {
-            const priced = v.qty != null && v.rate != null
-            const c = voCourt(v, vals)
-            const evidence = [v.photoIds.length ? `${v.photoIds.length} photo${v.photoIds.length === 1 ? '' : 's'}` : '', (v.attachments?.length ?? 0) ? `${v.attachments!.length} doc${v.attachments!.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')
-            return (
-              <div key={v.id} className={'vo-row has-hit' + (v.status === 'Rejected' ? ' rejected' : '')}>
-                <RowHit label={`${voRef(v.number)}: ${v.description}`} onClick={() => onEdit(v)} />
-                <div className="vo-ref">
-                  <span className="ref-roman">{voRef(v.number)}</span>
-                  {v.code && <small className="mono">{v.code}</small>}
-                  {m && priced && v.status !== 'Rejected' && <Tick on={!!v.valuationId} locked={!!lockedIn(v, vals)} onClick={() => onToggle(v)} />}
-                </div>
-                <div className="vo-main">
-                  <div className="vo-desc clamp2">{v.description}</div>
-                  <div className="vo-meta">
-                    {v.room || '—'} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{m ? (v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced') : ''}
-                  </div>
-                  <div className="vo-meta">
-                    <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef ? `Council ref ${v.clientRef}` : 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
-                  </div>
-                  <div className="vo-status">{/* the office reads where it stands from its court line; operatives (no money, no court line) from the stage */}
-                    {(!m || v.status === 'Rejected') && <span className={'badge ' + stageClass[voStage(v)]}>{voStage(v)}</span>}{!lockedIn(v, vals) && <ByClaude at={v.byClaude} />}{m && v.status !== 'Rejected' && <CourtLine c={c} />}</div>
-                </div>
-                {m ? <div className="vo-amt">
-                  <span className="mono">{priced ? money(lineValue(v.qty, v.rate)) : '—'}</span>
-                  <ValBadge val={vals.find(x => x.id === v.valuationId)} />
-                </div> : <div />}
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
+    <section className="stack" style={{ gap: 8 }}>
+      <h3 className="sec-h">Variations{sorted.length ? ` · ${sorted.length}` : ''}</h3>
+      {sorted.length > 0 && <div className="panel flush clip">{sorted.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggle} onEdit={onEdit} />)}</div>}
+      <button className="btn btn-secondary" onClick={onLog}><IconFlag /> Add VO</button>
+    </section>
   )
 }

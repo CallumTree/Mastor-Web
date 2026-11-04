@@ -11,7 +11,7 @@ Scope: the public front page at `/` (index.html → src/landing/). Mode: **Persu
 
 Audience: UK contractors and their teams on schedule-of-rates work without a back office (councils, housing associations, NHS, police and fire, schools, private clients), from one person to a team on several jobs, money run in Excel. Copy speaks to the business, not to one job title, and names no client framework. Arrive on a phone as often as a desktop.
 Action: claim one of 50 founding places (name, firm, email, optional phone, the work they do). Offer: free through the pilot, then half price for as long as they stay. No price shown; pricing not set.
-Proof on hand: the product itself (what it really does), the founding story (built inside a working contractor's office). No testimonials, users, metrics or press exist; none are invented.
+Proof on hand: the product itself (what it really does). No testimonials, users, metrics or press exist; none are invented. Mastor is its own business: the page names no contractor, client or council and claims no link to any firm (owner, 4 Nov 2026).
 Constraints: the app's world (DESIGN.md, the drawing office). Count of places is live from the database, never faked.
 
 ## Direction contract
@@ -54,3 +54,6 @@ STORY (revised): what it is and who it's for (firms without a back office) → t
 Cut: the section links in the header, "who it's for" with its photos and facts, the strip of three work photos, the four phone screenshots and the desktop dashboard, the roof photo band, the six-stage job list and the Claude line, and the editable forecast (`Forecast.tsx`, deleted). The "For" term on the register repeated the hero and went too.
 Time back (revised): one monthly valuation, six steps, by hand against in Mastor, in a ruled register drawn twice: 3 hrs against 27 min, so "Two and a half hours back on every valuation", and with three jobs a working day a month. Stated as our estimate, not a measurement; the totals are summed from the steps shown, never typed.
 Hero art (revised): the kitchen mid-refit (Brett Jordan, already credited) replaces the worker photo; it is the work the example job's voice note is about. The app screen in the phone and the recording were recaptured on 3 Nov 2026 with the new dock (the raised capture disc, Clerk in the header) and the reading that now runs on its own.
+
+## Revision (4 Nov 2026): no ties to any firm
+Requested by the owner: Mastor is a separate business, with no links or ties to any contractor. The closing line that said it was built inside a named contractor is replaced by a line about the product ("Mastor is built for contractors on schedule-of-rates work: the whole job, from site to paid, in one place."). No firm, client or council is named anywhere on the page; examples stay made up (Example Housing, Hill Street refurb).

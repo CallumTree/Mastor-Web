@@ -4,7 +4,7 @@ import type { Job, ScopeItem, Valuation, Variation } from '../src/lib/types'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
 
-const job: Job = { id: 'j', name: 'Elm Road', client: 'PCC', address: '', contractRef: '', poNumber: 'PC1', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+const job: Job = { id: 'j', name: 'Elm Road', client: 'Example Council', address: '', contractRef: '', poNumber: 'PC1', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
 const S = (id: string, property: string, qty: number | null, rate: number | null, valuationId: string | null, workstream = 'Paint'): ScopeItem =>
   ({ id, jobId: 'j', code: id, description: id, room: 'Front', qty, unit: 'IT', rate, valuationId, order: 1, property, workstream, createdAt: 1 })
 const V = (n: number, status: Variation['status'], clientRef: string, valuationId: string | null, rate = 100): Variation =>

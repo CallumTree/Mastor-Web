@@ -7,6 +7,7 @@ import { dwRef, dwTotals } from '../lib/dayworks'
 import { money, ukDate, voRef } from '../lib/format'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { Plate } from '../components/Sign'
+import { figs } from '../components/Figs'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const num = (s: string) => { const v = parseFloat(s.replace(/[£,\s]/g, '')); return isFinite(v) && v >= 0 ? v : null }
@@ -54,7 +55,7 @@ export function DayworksSheet({ job, sheets, vos, books, onSave, onDelete, onCla
               return (
                 <button key={d.id} className="chk-row order-row" onClick={() => setEdit(d)}>
                   <span className="mono">{dwRef(d.number)}</span>
-                  <span className="grow">{d.description || 'No description'}<small>{ukDate(new Date(d.date + 'T12:00:00').getTime())} · {t.labourHours} hour{t.labourHours === 1 ? '' : 's'}{m ? ` · ${money(t.total)}` : ''}</small>
+                  <span className="grow">{d.description || 'No description'}<small>{ukDate(new Date(d.date + 'T12:00:00').getTime())} · {t.labourHours} hour{t.labourHours === 1 ? '' : 's'}{figs(m ? ` · ${money(t.total)}` : '')}</small>
                     <span className="order-plates">{d.signedBy ? <Plate kind="ok">Signed · {d.signedBy}</Plate> : <Plate kind="warn">Not signed</Plate>}{m && vo && <Plate kind="wait">Claimed as {voRef(vo.number)}</Plate>}</span>
                   </span>
                 </button>
@@ -158,7 +159,7 @@ function DayworksEditor({ job, d: initial, isNew, vo, books, onSave, onDelete, o
 
         <button className="btn btn-primary" disabled={busy || !d.description.trim()} onClick={() => run(() => onSave(d))}>{isNew ? 'Save sheet' : 'Save'}</button>
         <button className="btn btn-secondary" disabled={busy} onClick={() => run(() => onPdf(d))}>Dayworks sheet (PDF) — to sign or send</button>
-        {m && !claimedLocked && <button className="btn btn-secondary" disabled={busy || !d.description.trim() || t.total <= 0} onClick={() => run(() => onClaim(d))}>{vo ? `Update ${voRef(vo.number)} to ${money(t.total)}` : `Claim as a variation · ${money(t.total)}`}</button>}
+        {m && !claimedLocked && <button className="btn btn-secondary" disabled={busy || !d.description.trim() || t.total <= 0} onClick={() => run(() => onClaim(d))}>{figs(vo ? `Update ${voRef(vo.number)} to ${money(t.total)}` : `Claim as a variation · ${money(t.total)}`)}</button>}
         {!isNew && !vo && <ConfirmDelete label="Delete…" confirmLabel={`Delete ${dwRef(d.number)}`} onConfirm={() => run(onDelete)} />}
       </div>
     </Sheet>

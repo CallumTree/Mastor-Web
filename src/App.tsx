@@ -37,7 +37,7 @@ import type { PackResult } from './lib/packIntake'
 import { schemeStreet } from './lib/packJob'
 import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
-import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
+import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
 import { jobAlerts } from './lib/alerts'
 import { lastText, siteDaysSince, valRhythm } from './lib/rhythm'
@@ -63,6 +63,7 @@ function weekAlerts(jobs: Job[], scope: ScopeItem[], vos: Variation[], vals: Val
   })
 }
 import { Splash } from './components/Splash'
+import { Field } from './components/Ui'
 
 /**
  * What a read pack adds to a job: its lines into scope, the files kept with the job, the addresses and contract ref
@@ -87,7 +88,7 @@ async function savePack(job: Job, jobScope: ScopeItem[], lines: ParsedLine[], pa
   for (const x of pack.facts?.facts.filter(f => f.include) ?? [])
     await db.putDiary({ id: uid(), jobId: job.id, date: today, type: 'note', note: `${x.text}${x.properties.length ? ` (no${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')})` : ''}\n— ${from(x)}`, labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: x.category, pinned: x.category === 'H&S', createdAt: Date.now() })
   for (const x of pack.facts?.extras.filter(e => e.include) ?? [])
-    await db.putVariation({ id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: x.text, room: x.properties.length ? `No${x.properties.length > 1 ? 's' : ''}. ${x.properties.join(', ')}` : '', qty: null, unit: '', rate: null, code: '', reason: `${x.why ? x.why + ' ' : ''}— ${from(x)}`, clientRef: '', status: 'Identified', photoIds: [], dateRaised: Date.now(), valuationId: null })
+    await db.putVariation({ id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: x.text, room: x.properties.length > 1 ? `Nos. ${x.properties.join(', ')}` : '', property: x.properties.length === 1 ? x.properties[0] : undefined, qty: null, unit: '', rate: null, code: '', reason: `${x.why ? x.why + ' ' : ''}— ${from(x)}`, clientRef: '', status: 'Identified', photoIds: [], dateRaised: Date.now(), valuationId: null })
 }
 
 export default function App() {
@@ -112,6 +113,8 @@ export default function App() {
   const [access, setAccess] = useState(accessFor(null))
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
+  const [voSchedule, setVoSchedule] = useState(false)
+  const [voSchedRef, setVoSchedRef] = useState('')
   // the open job is kept in the address, so a reload comes back to it (src/lib/place.ts)
   const [openId, setOpenIdState] = useState<string | null>(() => placeParam('job'))
   const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab }) }
@@ -164,6 +167,9 @@ export default function App() {
   const job = jobs.find(j => j.id === openId) ?? null
   const jobVos = job ? vos.filter(v => v.jobId === job.id) : []
   const jobScope = job ? scope.filter(s => s.jobId === job.id) : []
+  // the job's houses, for putting a VO at one: from its works orders' addresses and its scope lines
+  const houses = job ? [...new Set([...Object.keys(job.properties ?? {}), ...jobScope.map(s => s.property ?? '').filter(Boolean)])]
+    .sort((a, b) => a.localeCompare(b, 'en', { numeric: true })).map(k => ({ key: k, label: job.properties?.[k]?.split(',')[0] || `No. ${k}` })) : []
   const jobVals = job ? vals.filter(v => v.jobId === job.id) : []
   const jobDiary = job ? diary.filter(d => d.jobId === job.id) : []
   const jobCosts = job ? costs.filter(c => c.jobId === job.id) : []
@@ -192,7 +198,7 @@ export default function App() {
           onReview={(v, note) => run(async () => { await db.putValuation({ ...v, byClaude: null }); if (note) await db.putDiary(newNote(job, note, 'Commercial')) })()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
-          onImportVo={() => setVoImport(true)}
+          onImportVo={() => setVoImport(true)} onImportVos={() => { setVoSchedRef(''); setVoSchedule(true) }}
           onVoRegister={async () => {
             const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name
             await shareOrDownload(await buildVoRegister({ job, vos: jobVos, vals: jobVals, company }), registerFileName(job))
@@ -268,7 +274,7 @@ export default function App() {
               await db.putVariation({ ...v, ...base, code: l.code || v.code, reason: v.reason ? `${v.reason}\n${reason}` : reason,
                 photoIds: isImage ? [...v.photoIds, copy] : v.photoIds, attachments: [...(v.attachments ?? []), att] })
             } else {
-              await db.putVariation({ ...base, id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: l.description, room: l.room !== 'General' ? l.room : '',
+              await db.putVariation({ ...base, id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: l.description, room: l.room !== 'General' ? l.room : '', property: l.property || undefined,
                 reason, photoIds: isImage ? [copy] : [], dateRaised: vo.date ?? Date.now(), valuationId: null, attachments: [att] })
             }
           }
@@ -335,8 +341,8 @@ export default function App() {
         const rate = settings?.vatRate ?? 20
         const a = invoiceAmounts(job, invoicing, jobScope, jobVos, rate)
         const alloc = settings ? allocateInvoiceNo(settings, vals) : { number: '—', next: 1 }
-        return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)}
-          onClose={() => setInvoicing(null)} onSettings={() => { setInvoicing(null); setSettingsOpen(true) }}
+        return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)} jobMissing={jobMissingForInvoice(job)}
+          onClose={() => setInvoicing(null)} onSettings={() => { setInvoicing(null); setSettingsOpen(true) }} onJobSetup={() => { setInvoicing(null); setJobForm('edit') }}
           onCreate={async date => {
             // re-check against every invoice at the moment of creating, then move the sequence on
             const fresh = await db.settings(); if (!fresh) return
@@ -359,7 +365,7 @@ export default function App() {
           onDelete={jobForm === 'edit' && job ? async () => { await db.deleteJob(job.id); setJobForm(null); setOpenId(null); await reload() } : undefined} />
       )}
       {logging && job && (
-        <LogVariation onClose={() => { setLogging(false); setLogFrom(null) }}
+        <LogVariation houses={houses} onClose={() => { setLogging(false); setLogFrom(null) }}
           initial={logFrom ? { description: logFrom.note, room: logFrom.room, photoIds: logFrom.mediaId ? [logFrom.mediaId] : [] } : undefined}
           onSave={async data => {
             const id = uid()
@@ -374,13 +380,30 @@ export default function App() {
           }} />
       )}
       {editing && (
-        <EditVariation vo={editing} books={books} locked={!!lockedIn(editing, jobVals)} onClose={() => setEditing(null)}
+        <EditVariation vo={editing} books={books} houses={houses} locked={!!lockedIn(editing, jobVals)} onClose={() => setEditing(null)}
           onSave={async v => {
             // A VO that loses its price can't stay in a valuation
             const stillPriced = v.qty != null && v.rate != null && v.status !== 'Rejected'
             await db.putVariation(stillPriced ? v : { ...v, valuationId: null }); setEditing(null); await reload()
           }}
           onDelete={async () => { await db.deleteVariation(editing); setEditing(null); await reload() }} />
+      )}
+      {voSchedule && job && (
+        <BoqImport job={job} existing={0} books={books} variant="vos" onClose={() => setVoSchedule(false)}
+          setup={<Field label="The client’s VO reference" hint="On their schedule or covering email. With one, the VOs come in as instructed."><input value={voSchedRef} onChange={e => setVoSchedRef(e.target.value)} placeholder="Leave blank if they haven’t given one" /></Field>}
+          onImport={async (lines, pack) => {
+            const ref = voSchedRef.trim()
+            const file = pack.files[0]?.file
+            for (const l of lines.filter(x => x.include)) {
+              // every VO keeps its own copy of the client's schedule as its evidence
+              const att = file ? [{ id: await saveImageBlob(file), name: file.name, type: file.type || 'application/octet-stream' }] : []
+              await db.putVariation({ id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: l.description, room: l.room !== 'General' ? l.room : '',
+                property: l.property || undefined, qty: l.qty, unit: l.unit || 'item', rate: l.rate, code: l.code,
+                reason: `From the client’s VO schedule${file ? ` (${file.name})` : ''}`, clientRef: ref, status: ref ? 'Instructed' : 'Identified',
+                photoIds: [], dateRaised: Date.now(), valuationId: null, attachments: att })
+            }
+            setVoSchedule(false); await reload()
+          }} />
       )}
       {importing && job && (
         <BoqImport job={job} existing={jobScope.length} books={books} onClose={() => setImporting(false)}

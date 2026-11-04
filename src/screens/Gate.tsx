@@ -118,7 +118,7 @@ function CompanySetup({ onDone }: { onDone: () => void }) {
       <div style={{ fontWeight: 700 }}>Your company</div>
       <div className="muted t-note">Jobs belong to your company, so people you add later see the same jobs. Anything already on this phone comes with you.</div>
       <div className="muted t-note">Joining someone else’s company? Ask them to add your email under Settings → Team, then <button className="linkish tap" onClick={onDone}>check again</button>.</div>
-      <Field label="Company name"><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Tree & Sons Ltd" /></Field>
+      <Field label="Company name"><input value={name} onChange={e => setName(e.target.value)} placeholder="As it appears on your invoices" /></Field>
       {err && <div role="alert" className="t-note" style={{ fontWeight: 600, color: 'var(--red)' }}>{err}</div>}
       <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={async () => {
         setBusy(true); setErr(null)

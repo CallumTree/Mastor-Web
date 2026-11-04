@@ -4,14 +4,14 @@ import { tidyLocation } from '../src/lib/boq'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
 
-// Laid out like the Prescelly Road "Full Spec Sheet": title, totals row, header, '£ -' blanks, workstream £ columns
+// Laid out like the Example Road "Full Spec Sheet": title, totals row, header, '£ -' blanks, workstream £ columns
 const H = ['NUMBER', 'CODE', 'QTY', 'RATE', 'LOCATION', 'DESCRIPTION', 'PPR', 'PAINT', 'EST IMP', 'KITCHEN', 'BATHROOM', 'ROOFING', 'SCAFFOLD', 'WHQS', 'WINDOWS', 'DECARB', 'COMP DOORS', 'HOURS']
 const blank = '£ -'
 const row = (n: number, code: string, qty: number, rate: number, loc: string, desc: string, stream: string, cost: number, hrs: number) =>
   [n, code, qty, rate, loc, desc, ...H.slice(6, 17).map(s => (s === stream ? `£ ${cost.toFixed(2)}` : blank)), hrs]
 const rows = [
   ['', '', '', '', '', 'Total', '£ 5,775.35', '£ 9,250.83', '£ 1,740.77'],
-  ['SITE', 'PRESCELLY ROAD'],
+  ['SITE', 'EXAMPLE ROAD'],
   H,
   row(1, '4360BD', 71, 8.55, 'PROPERTY', 'WASHDOWN AND APPLY 1 COAT OF MASONRY PAINT TO RENDER', 'PAINT', 607.05, 0),
   row(1, '4350AA', 27, 3.7753, 'ALL ELVS', 'GUTTER:CLEAN OUT PRIOR TO DECORATION', 'PAINT', 101.93, 2.16),
@@ -26,7 +26,7 @@ const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.ao
 const back = XLSX.read(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }), { type: 'array' })
 const parsed = readSchedule(XLSX.utils.sheet_to_json(back.Sheets['Spec'], { header: 1, blankrows: false, defval: null }))!
 ok(!!parsed && parsed.lines.length === 7, `finds the header under the title/totals rows; 7 lines (got ${parsed?.lines.length})`)
-ok(parsed.ref === 'PRESCELLY ROAD', 'picks up the site name')
+ok(parsed.ref === 'EXAMPLE ROAD', 'picks up the site name')
 ok(parsed.lines.map(l => l.property).join(',') === '1,1,1,1,2,13,11', 'property from the NUMBER column, never from LOCATION')
 ok(parsed.lines[0].room === 'Property' && parsed.lines[1].room === 'All elevations' && parsed.lines[5].room === 'Rear elevation', 'locations tidied: PROPERTY / ALL ELVS / Rear Elv')
 ok(parsed.lines[0].workstream === 'Paint' && parsed.lines[2].workstream === 'Scaffold' && parsed.lines[6].workstream === 'Decarb', 'workstream = the £ column the cost sits in')
@@ -39,4 +39,13 @@ const wrapped = readSchedule([H, row(1, '4360BD', 71, 8.55, 'PROPERTY', 'WASHDOW
 ok(wrapped.lines.length === 2 && wrapped.lines[0].description.endsWith('masonry paint to render'), 'a wrapped description row joins the line above (PDF→Excel conversions)')
 const cased = readSchedule([H, row(1, '4360BD', 71, 8.55, 'PROPERTY', 'WASHDOWN AND APPLY 1 COAT OF MASONRY PAINT', 'PAINT', 607.05, 0), row(2, '2032AA', 60, 80.43, 'FRONT', 'Renew fascia and soffit in uPVC to BS 8000', 'ROOFING', 4825.8, 0)])!
 ok(cased.lines[0].description === 'Washdown and apply 1 coat of masonry paint' && cased.lines[1].description === 'Renew fascia and soffit in uPVC to BS 8000', 'capitals become a sentence; mixed case is the client’s wording, kept exactly (uPVC, BS 8000)')
+
+// heading rows with no figures name the house or room for the lines under them; they are never lines of work
+const headed = readSchedule([['Code', 'Description', 'Qty', 'Unit', 'Rate', 'Total'],
+  ['No. 3 Elm Row'], ['2032AA', 'Slate: strip and renew', 18, 'SM', 71.37, 1284.66], ['4350AA', 'Gutter: clean out', 21.8, 'LM', 3.19, 69.54],
+  ['No. 5 Elm Row'], ['FRONT ELEVATION'], ['2032AA', 'Slate: strip and renew', 22, 'SM', 71.37, 1570.14],
+  [null, '7 Station Road'], ['6310ZB', 'Bathroom: renew suite', 1, 'IT', 2437.35, 2437.35]])!
+ok(headed.lines.length === 4 && headed.lines.every(l => /\d/.test(l.code) && l.qty != null), 'house and room headings are not read as lines (4 lines, no unpriced phantoms)')
+ok(headed.lines.map(l => l.property).join() === '3,3,5,7', 'a house heading, in the code or description column, sets the house for the lines under it')
+ok(headed.lines[2].room === tidyLocation('FRONT ELEVATION') && headed.lines[0].room === 'General', 'a room heading where the codes go sets the room')
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)

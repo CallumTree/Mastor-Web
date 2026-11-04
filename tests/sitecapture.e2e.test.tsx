@@ -23,7 +23,7 @@ describe('site capture', () => {
         { item: 'M1', kind: 'note', lines: [], text: 'Tenant reports a leaking boiler', property: '4', room: '', qty: null, unit: '', code: '', quote: 'boiler is leaking', basis: 'said' },
       ] }), { status: 200 })
     }))
-    const job: Job = { id: 'js', name: 'Windsor Road', client: 'PCC', address: '', contractRef: '', poNumber: 'PO9', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+    const job: Job = { id: 'js', name: 'Station Road', client: 'Example Council', address: '', contractRef: '', poNumber: 'PO9', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
     await db.putJob(job)
     await db.putScope({ id: 's1', jobId: 'js', code: '4360BD', description: 'Masonry paint', room: 'Front', qty: 93, unit: 'SM', rate: 5.62, valuationId: null, order: 1, property: '4', workstream: 'PPR Paint', createdAt: 1 })
     await db.putScope({ id: 's2', jobId: 'js', code: '2032AA', description: 'Slates', room: 'Roof', qty: 60, unit: 'SM', rate: 80.43, valuationId: null, order: 2, property: '4', workstream: 'Roofing', createdAt: 1 })
@@ -32,7 +32,7 @@ describe('site capture', () => {
 
     // no button: the day has gone quiet (the voice note is long since uploaded), so the office's Mastor reads it on its own
     render(<App />)
-    click(await screen.findByRole('button', { name: /Windsor Road/ }))
+    click(await screen.findByRole('button', { name: /Station Road/ }))
     await waitFor(() => expect(sent).toBeTruthy())
     expect(sent.companyId).toBe('c1')
     expect(sent.items[0]).toMatchObject({ key: 'M1', kind: 'voice', mediaId: 'wav1' })
@@ -52,7 +52,7 @@ describe('site capture', () => {
     click(await screen.findByRole('button', { name: 'Raise as a VO' }))
     await waitFor(async () => expect((await db.variations('js')).length).toBe(1))
     const vo = (await db.variations('js'))[0]
-    expect(vo).toMatchObject({ description: 'Renew rotten joists under the bath', status: 'Identified', rate: null, qty: 2, unit: 'LM', room: 'No. 4 · Bathroom' })
+    expect(vo).toMatchObject({ description: 'Renew rotten joists under the bath', status: 'Identified', rate: null, qty: 2, unit: 'LM', property: '4', room: 'Bathroom' })   // at its house, so it sits with No. 4’s scope
 
     click(await screen.findByRole('button', { name: 'Reject' }))
     await waitFor(() => expect(screen.queryByText(/From site ·/)).toBeNull())

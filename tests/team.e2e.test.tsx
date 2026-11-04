@@ -22,13 +22,13 @@ vi.mock('../src/lib/supabase', () => ({ supabase: { rpc: (fn: string, a?: Record
 import { TeamSheet } from '../src/screens/Team'
 
 afterEach(cleanup)
-const me = (role: string): Row => ({ kind: 'member', id: 'u-me', email: 'callum@tree.co.uk', role, since: '2026-01-02T09:00:00Z', is_me: true })
+const me = (role: string): Row => ({ kind: 'member', id: 'u-me', email: 'sam@example.co.uk', role, since: '2026-01-02T09:00:00Z', is_me: true })
 
 describe('team', () => {
   it('owner adds a site manager, shares the invite, then changes a role and removes someone', async () => {
     rows = [me('owner'), { kind: 'member', id: 'u-2', email: 'dai@tree.co.uk', role: 'operative', since: '2026-03-01T09:00:00Z', is_me: false }]
     Object.assign(navigator, { clipboard: { writeText: vi.fn(async () => {}) } })
-    render(<TeamSheet company="Tree & Sons" onClose={() => {}} />)
+    render(<TeamSheet company="Example Builders" onClose={() => {}} />)
     await screen.findByText('People · 2')
     expect(screen.getByText('You')).toBeTruthy()
 
@@ -38,7 +38,7 @@ describe('team', () => {
     await screen.findByText('Added, not signed up yet · 1')
     expect(rpc).toHaveBeenCalledWith('invite_member', { p_email: 'site@tree.co.uk', p_role: 'site_manager' })
     // the invite message is ready to share straight away
-    expect(screen.getByText(/added to Tree & Sons on Mastor as Site manager/)).toBeTruthy()
+    expect(screen.getByText(/added to Example Builders on Mastor as Site manager/)).toBeTruthy()
     fireEvent.click(screen.getAllByRole('button', { name: 'Share invite' }).at(-1)!)
     await screen.findByText(/Copied/)
 
@@ -53,7 +53,7 @@ describe('team', () => {
 
   it('an operative sees the team but cannot change it', async () => {
     rows = [me('operative'), { kind: 'member', id: 'u-o', email: 'boss@tree.co.uk', role: 'owner', since: '2026-01-01T09:00:00Z', is_me: false }]
-    render(<TeamSheet company="Tree & Sons" onClose={() => {}} />)
+    render(<TeamSheet company="Example Builders" onClose={() => {}} />)
     await screen.findByText('People · 2')
     expect(screen.queryByLabelText('Their email')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Remove…' })).toBeNull()
@@ -62,9 +62,9 @@ describe('team', () => {
 
   it('a database error is shown, not swallowed', async () => {
     rows = [me('owner')]
-    render(<TeamSheet company="Tree & Sons" onClose={() => {}} />)
+    render(<TeamSheet company="Example Builders" onClose={() => {}} />)
     await screen.findByText('People · 1')
-    fireEvent.change(screen.getByLabelText('Their email'), { target: { value: 'callum@tree.co.uk' } })
+    fireEvent.change(screen.getByLabelText('Their email'), { target: { value: 'sam@example.co.uk' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add to team' }))
     await screen.findByText('They’re already on your team.')
   })

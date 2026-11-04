@@ -23,14 +23,14 @@ process.env.GEMINI_API_KEY = 'gk'
 const SB = 'https://susecnvepvwmqhziferf.supabase.co'
 
 // ---------- the fake company: one job, two properties, VAL I issued, VAL II open, a VO, a day on site ----------
-const job: Job = { id: 'j1', name: 'Windsor Road WHQS', client: 'PCC', address: 'Windsor Road, Pembroke', contractRef: 'MH21180', poNumber: '', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
-const other: Job = { ...job, id: 'j2', name: 'Windsor Court', contractRef: 'MH9', createdAt: 2 }
+const job: Job = { id: 'j1', name: 'Station Road WHQS', client: 'Example Council', address: 'Station Road, Anytown', contractRef: 'CR21180', poNumber: '', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+const other: Job = { ...job, id: 'j2', name: 'Station Court', contractRef: 'MH9', createdAt: 2 }
 const S = (id: string, property: string, qty: number | null, rate: number | null, valuationId: string | null): ScopeItem =>
   ({ id, jobId: 'j1', code: '4360BD', description: `Masonry paint ${id}`, room: 'Walls', qty, unit: 'SM', rate, valuationId, order: 1, property, workstream: 'Paint', createdAt: 1 })
 const scope = [S('s1', '3', 10, 5.62, 'va'), S('s2', '4', 20, 5.62, 'vb'), S('s3', '4', 30, 5.62, null), { ...S('t1', '', 5, 10, null), jobId: 'j2' }]
 const vals: Valuation[] = [{ id: 'va', jobId: 'j1', number: 1, status: 'Issued', createdAt: 1, issuedAt: Date.now() - 40 * 864e5 } as Valuation, { id: 'vb', jobId: 'j1', number: 2, status: 'Open', createdAt: 2, issuedAt: null }]
 const vos: Variation[] = [{ id: 'vo1', jobId: 'j1', number: 1, description: 'Renew rotten joists under bath', room: 'No. 4 bathroom', qty: 2, unit: 'LM', rate: null, code: '', reason: 'Found when bath removed', clientRef: '', status: 'Identified', photoIds: [], dateRaised: Date.now(), valuationId: null },
-  { id: 'vo2', jobId: 'j1', number: 2, description: 'Extra skirting', room: 'No. 3', qty: 3, unit: 'LM', rate: 10, code: 'SK1', reason: '', clientRef: 'PCC-1', status: 'Instructed', photoIds: [], dateRaised: 1, valuationId: 'va' }]
+  { id: 'vo2', jobId: 'j1', number: 2, description: 'Extra skirting', room: 'No. 3', qty: 3, unit: 'LM', rate: 10, code: 'SK1', reason: '', clientRef: 'CL-1', status: 'Instructed', photoIds: [], dateRaised: 1, valuationId: 'va' }]
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date())   // the diary's day is the UK day
 const E = (id: string, type: DiaryEntry['type'], extra: Partial<DiaryEntry> = {}): DiaryEntry =>
   ({ id, jobId: 'j1', date: today, type, note: '', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: 1, ...extra })
@@ -79,10 +79,10 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   const url = String(input instanceof Request ? input.url : input)
   const token = String(init.headers?.authorization ?? '').replace('Bearer ', '')
   if (url.startsWith(SB + '/auth/v1/user')) {
-    const user = token === 'office' ? { id: 'u1', email: 'callum@treeandsons.co.uk' } : token === 'op' ? { id: 'u2', email: 'dai@treeandsons.co.uk' } : null
+    const user = token === 'office' ? { id: 'u1', email: 'office@example.co.uk' } : token === 'op' ? { id: 'u2', email: 'dai@example.co.uk' } : null
     return user ? new Response(JSON.stringify(user)) : new Response('{"msg":"bad jwt"}', { status: 401 })
   }
-  if (url.startsWith(SB + '/rest/v1/memberships')) return new Response(JSON.stringify([{ company_id: 'c1', role: url.includes('u2') ? 'operative' : 'director', companies: { name: 'Tree & Sons' } }]))
+  if (url.startsWith(SB + '/rest/v1/memberships')) return new Response(JSON.stringify([{ company_id: 'c1', role: url.includes('u2') ? 'operative' : 'director', companies: { name: 'Example Builders' } }]))
   if (url.startsWith(SB + '/rest/v1/rpc/use_ai')) { hits.push('use_ai'); return new Response('1') }
   if (url.startsWith(SB + '/rest/v1/') && init.method === 'POST' && url.includes('on_conflict=id')) {   // a save: upsert into the fake tables
     const table = url.slice((SB + '/rest/v1/').length).split('?')[0], rows = JSON.parse(init.body), store = TABLES[table]() as any[]
@@ -141,7 +141,7 @@ ok(/\/api\/mcp$/.test(m.resource) && m.authorization_servers[0] === `${SB}/auth/
 
 // the MCP handshake
 r = await rpc('office', 'initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } })
-ok(r.status === 200 && r.body.result.serverInfo.name === 'mastor' && /Tree & Sons/.test(r.body.result.instructions) && /never here/.test(r.body.result.instructions), 'initialize: Mastor, the company, and “issuing is never here”')
+ok(r.status === 200 && r.body.result.serverInfo.name === 'mastor' && /Example Builders/.test(r.body.result.instructions) && /never here/.test(r.body.result.instructions), 'initialize: Mastor, the company, and “issuing is never here”')
 r = await rpc('office', 'tools/list')
 const tools = r.body.result.tools as any[]
 const READS = ['mastor_overview', 'get_job', 'get_scope', 'get_variations', 'get_valuations', 'get_site_diary', 'view_site_media', 'invoice_figures', 'find_rate', 'read_document']
@@ -159,10 +159,10 @@ ok(wr.actionNeeded.length === alerts.length && alerts.every(a => wr.actionNeeded
 // (the open valuation is only a next step in its valuation week, so which alerts there are depends on the date)
 ok(alerts.filter(a => a.kind === 'do').every(a => wr.actionNeeded.some((x: string) => x.startsWith(`NEXT: ${a.text}`))) && wr.actionNeeded.some((x: string) => /^URGENT: No PO number/.test(x)), 'next step and urgent items are labelled as such')
 
-const gj = json(await call('office', 'get_job', { job: 'MH21180' }))
+const gj = json(await call('office', 'get_job', { job: 'CR21180' }))
 ok(gj.id === 'j1' && gj.notesAndDecisions[0].pinned === true && gj.notesAndDecisions.some((x: any) => x.category === 'Commercial'), 'get_job by contract ref: pinned note first, commercial notes for the office')
 ok(gj.documents.some((x: any) => x.name === 'RAMS' && x.id === 'doc1') && gj.documents.some((x: any) => x.kind === 'Purchase order') && gj.counts.siteCaptures === 2, 'documents (with ids, the PO among them) and capture counts')
-const amb = await call('office', 'get_job', { job: 'windsor' })
+const amb = await call('office', 'get_job', { job: 'station' })
 ok(amb.isError === true && /matches 2 jobs/.test(amb.content[0].text), 'ambiguous job: an error that lists both, so Claude asks')
 
 const sc = json(await call('office', 'get_scope', { job: 'j1', show: 'to_do' }))
@@ -220,7 +220,7 @@ const started = upserts.find(u => u.table === 'valuations')?.rows[0]
 ok(/^VAL I \(started now/.test(w.valuation) && started?.data.number === 1 && started.data.status === 'Open' && started.job_id === 'j2' && saved('scope_items', 't1').data.valuationId === started.data.id, 'no valuation open: it starts the next one (open, never issued)')
 
 ok(/operative/.test(err(await call('op', 'update_variation', { job: 'j1', vo: 'VO I', rate: 40 }))), 'operative: can’t price a VO')
-w = json(await call('office', 'update_variation', { job: 'j1', vo: 'I', rate: 45.5, code: 'JST1', client_ref: 'PCC-7', status: 'Instructed', sent_to_client: true }))
+w = json(await call('office', 'update_variation', { job: 'j1', vo: 'I', rate: 45.5, code: 'JST1', client_ref: 'CL-7', status: 'Instructed', sent_to_client: true }))
 ok(w.changed.includes('rate: unpriced → £45.50') && w.changed.includes('status: Identified → Instructed') && w.value === `${money(91)} base` && saved('variations', 'vo1').data.byClaude, 'update_variation: priced and instructed, changes listed, value from Mastor')
 ok(/locked/.test(err(await call('office', 'update_variation', { job: 'j1', vo: 'VO II', qty: 4 }))), 'a VO certified in an issued valuation is locked')
 ok(/No VO IX/.test(err(await call('office', 'update_variation', { job: 'j1', vo: 'VO IX', qty: 4 }))), 'an unknown VO is said plainly')
@@ -268,10 +268,10 @@ const fr = json(await call('office', 'find_rate', { job: 'j1', what: 'wet room a
 const top = fr.matches[0]
 ok(fr.schedule === 'Planned Maint v8' && top.code === 'WR100' && top.suggestedRate === 1500 && top.rateFrom === 'Planned Maint v8' && /£1,?500\.00 per IT in Planned Maint v8/.test(top.schedule),
   'find_rate: a wet room finds the schedule’s wet room code, from the job’s own book')
-ok(/Windsor Court · VO I/.test(top.usedBefore[0]) && /£1,?450\.00/.test(top.usedBefore[0]) && /used at £1,?450\.00, the schedule says £1,?500\.00/.test(top.rateCheck), 'it shows where it was used before, and flags that it was priced differently there')
+ok(/Station Court · VO I/.test(top.usedBefore[0]) && /£1,?450\.00/.test(top.usedBefore[0]) && /used at £1,?450\.00, the schedule says £1,?500\.00/.test(top.rateCheck), 'it shows where it was used before, and flags that it was priced differently there')
 ok(!fr.matches.some((x: any) => x.code === 'WC01'), 'a WC isn’t a wet room: no loose matches')
 const past = json(await call('office', 'find_rate', { job: 'j2', what: 'skirting' }))
-ok(past.matches[0].code === 'SK1' && /not in any rate book/.test(past.matches[0].schedule) && past.matches[0].rateFrom === 'Windsor Road WHQS · VO II · No. 3' && past.matches[0].suggestedRate === 10,
+ok(past.matches[0].code === 'SK1' && /not in any rate book/.test(past.matches[0].schedule) && past.matches[0].rateFrom === 'Station Road WHQS · VO II · No. 3' && past.matches[0].suggestedRate === 10,
   'work no schedule covers: the rate a VO was already priced at, and where')
 const byCode = json(await call('office', 'find_rate', { job: 'j1', code: 'lin12' }))
 ok(byCode.matches[0].code === 'LIN12' && byCode.matches[0].usedBefore === 'not used on a job yet', 'find_rate by code')

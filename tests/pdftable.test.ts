@@ -14,7 +14,7 @@ const line = (y: number, n: string, code: string, qty: string, rate: string, loc
 ]
 const p1: Tok[] = [
   ...S.map(([name, x]) => ({ s: name === 'PPR PAINT' ? '708.98' : name === 'KITCHEN' ? '2,613.65' : name === 'SCAFFOLD' ? '350.00' : '115.23', x: x + 7, y: 60 })),
-  { s: 'SITE', x: 78, y: 75 }, { s: 'PRESCELLY ROAD', x: 95, y: 75 }, ...header,
+  { s: 'SITE', x: 78, y: 75 }, { s: 'EXAMPLE ROAD', x: 95, y: 75 }, ...header,
   ...line(103, '1', '4360BD', '71', '8.55', 'PROPERTY', 'WASHDOWN AND APPLY 1 COAT OF MASONRY PAINT', 'PPR PAINT', '607.05', '0.00'),
   ...line(118, '1', '4350AA', '27', '3.7753', 'ALL ELVS', 'GUTTER:CLEAN OUT PRIOR TO DECORATION', 'PPR PAINT', '101.93', '2.16'),
   ...line(133, '1', '2402AA', '1', '350', 'FRONT ELEVATION', 'SCAFFOLD TOWER:PROVIDE NE 5M HIGH STEEL', 'SCAFFOLD', '350.00', '0.00'),
@@ -25,7 +25,7 @@ const p2: Tok[] = [
 ]
 const r = readPdfSchedule([{ items: p1 }, { items: p2 }])!
 ok(!!r && r.lines.length === 5, `5 lines across two pages (header only on page 1) — got ${r?.lines.length}`)
-ok(r.ref === 'PRESCELLY ROAD', 'site name')
+ok(r.ref === 'EXAMPLE ROAD', 'site name')
 ok(r.lines.map(l => l.property).join(',') === '1,1,1,2,13', 'house number from NUMBER — never from LOCATION')
 ok(r.lines[0].room === 'Property' && r.lines[1].room === 'All elevations' && r.lines[2].room === 'Front elevation', 'locations kept separate and tidied')
 ok(r.lines[1].qty === 27 && r.lines[1].rate === 3.7753 && r.lines[1].cost === 101.93, 'qty, 4-dp rate and cost from the right columns')
@@ -34,19 +34,6 @@ ok(r.lines[0].description.startsWith('Washdown and apply'), 'description joined 
 ok(r.columnCheck.every(c => Math.abs(c.sheet - c.read) < 0.005), 'every column adds up to the sheet totals')
 ok(readPdfSchedule([{ items: [{ s: 'Dear Sir', x: 50, y: 50 }] }]) === null, 'not a schedule → null (AI takes over)')
 
-// The real Prescelly Road sheet, when it's available on this machine
-const REAL = '/mnt/user-data/uploads/Full_Spec_Sheet.pdf'
 ;(async () => {
-  if (existsSync(REAL)) {
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    const real = readPdfSchedule(await pdfPages(new Uint8Array(readFileSync(REAL)), pdfjs as never))!
-    ok(real.lines.length === 112 && [...new Set(real.lines.map(l => l.property))].join(',') === '1,2,4,5,11,13', 'REAL Prescelly PDF: 112 lines, properties 1, 2, 4, 5, 11, 13')
-    ok(real.lines.every(l => !l.issues.length) && real.columnCheck.every(c => Math.abs(c.sheet - c.read) <= 0.05), 'REAL Prescelly PDF: no flags, all 9 column totals match the sheet')
-  }
-  const CAP = '/mnt/user-data/uploads/CAP00290-_32_College_Park__Nayland-_Internal_Improvements.pdf'
-  if (existsSync(CAP)) {
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    ok(readPdfSchedule(await pdfPages(new Uint8Array(readFileSync(CAP)), pdfjs as never)) === null, 'REAL College Park (room-heading layout): steps aside for the AI instead of half-reading')
-  }
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
 })()

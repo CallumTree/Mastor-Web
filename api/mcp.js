@@ -40103,7 +40103,7 @@ function registerWrites(server, ctx) {
       unit: external_exports.string().optional().describe("Unit for the quantity, e.g. LM, SM, NO, IT"),
       rate: external_exports.number().min(0).optional().describe("\xA3 rate (office roles), only from a rate book, quote, the person, or a find_rate match"),
       code: external_exports.string().optional().describe("SoR code the rate came from"),
-      rate_from: external_exports.string().optional().describe("Where the rate came from: the rateFrom of a find_rate match, e.g. the schedule\u2019s name or \u201CWindsor Road \xB7 VO II\u201D"),
+      rate_from: external_exports.string().optional().describe("Where the rate came from: the rateFrom of a find_rate match, e.g. the schedule\u2019s name or \u201CStation Road \xB7 VO II\u201D"),
       client_ref: external_exports.string().optional().describe("The client\u2019s VO reference, if they\u2019ve given one"),
       instructed: external_exports.boolean().optional().describe("The client has already instructed it (status Instructed)"),
       evidence_entry_id: external_exports.string().optional().describe("A site photo\u2019s entryId from get_site_diary")

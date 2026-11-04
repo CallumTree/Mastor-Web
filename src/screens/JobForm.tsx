@@ -31,11 +31,12 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
             </label>
           ))}
         </fieldset>
-        <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder={f.kind === 'orders' ? 'e.g. Council repairs 2026' : 'e.g. 32 College Park'} /></Field>
+        <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder={f.kind === 'orders' ? 'e.g. Council repairs 2026' : 'e.g. 32 Park Road'} /></Field>
         <Field label="Client"><input value={f.client} onChange={set('client')} placeholder="e.g. the council, housing association or trust" /></Field>
+        <Field label="Client’s invoice address" hint="Where their invoices go: printed on every VAT invoice"><input value={f.clientAddress ?? ''} onChange={set('clientAddress')} placeholder="e.g. Finance, Civic Centre, Anytown, AB1 2CD" /></Field>
         <Field label="Site address"><input value={f.address} onChange={set('address')} /></Field>
         <div className="row">
-          <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CAP00290" /></Field></div>
+          <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CR-0290" /></Field></div>
           <div className="grow"><Field label="PO number" warn={!f.poNumber} hint={!f.poNumber ? 'Needed on invoices' : undefined}><input value={f.poNumber} onChange={set('poNumber')} /></Field></div>
         </div>
         <Field label={f.kind === 'orders' ? 'Contract value (£, optional)' : 'PO value — all-in, incl. uplifts (£)'} hint={f.kind === 'orders' ? 'Leave blank for a call-off contract' : 'Uplifts below should turn the BoQ total into this figure'}><input inputMode="decimal" value={valueText} onChange={e => setValueText(e.target.value)} placeholder="From the purchase order" /></Field>

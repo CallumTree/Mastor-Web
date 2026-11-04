@@ -5,7 +5,7 @@
  * up, and fifty numbered founding places to claim. The register shows the places as they really are
  * (counted in the database by /api/early-signup). It is never padded, and when the count can't be read it doesn't guess.
  */
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { PHOTOS, sized, srcSet, type Photo } from './photos'
 import { Wordmark } from '../components/Wordmark'
 import { IconArrow, IconCheck } from '../components/Icons'
@@ -192,6 +192,14 @@ export function Landing() {
   const [taken, setTaken] = useState<number | null>(null)
   const [claimed, setClaimed] = useState<Claimed | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
+  // the street print ends on a ruled edge just under the headline and offer, wherever they wrap to
+  const band = useRef<HTMLDivElement>(null), head = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const fit = () => { if (band.current && head.current) band.current.style.height = `${Math.ceil(head.current.getBoundingClientRect().bottom + scrollY) + 28}px` }
+    fit()
+    if (typeof ResizeObserver === 'undefined' || !head.current) return
+    const ro = new ResizeObserver(fit); ro.observe(head.current); return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     fetch('/api/early-signup').then(r => (r.ok ? r.json() : null)).then(b => { if (typeof b?.taken === 'number') setTaken(b.taken) }).catch(() => {})
@@ -202,8 +210,8 @@ export function Landing() {
 
   return (
     <>
-      {/* a real street of terraced houses behind the header and headline, printed in blueprint blue under the drafting grid; decorative, credited in the footer */}
-      <div className="lead-bg" aria-hidden="true"><img src={sized(PHOTOS.terrace, 1400)} srcSet={srcSet(PHOTOS.terrace)} sizes="100vw" alt="" width={1400} height={933} decoding="async" {...{ fetchpriority: "high" }} /></div>
+      {/* a real street of terraced houses behind the header and headline, printed dark in blueprint blue under the drafting grid and cut off on a ruled edge; decorative, credited in the footer */}
+      <div className="lead-bg" ref={band} aria-hidden="true"><img src={sized(PHOTOS.terrace, 1400)} srcSet={srcSet(PHOTOS.terrace)} sizes="100vw" alt="" width={1400} height={933} decoding="async" {...{ fetchpriority: "high" }} /></div>
       <header className="top">
         <div className="wrap top-in">
           <a href="/?site" className="top-mark" aria-label="Mastor, home"><Wordmark /></a>
@@ -213,7 +221,7 @@ export function Landing() {
 
       <main>
         <section className="hero wrap">
-          <div className="hero-head">
+          <div className="hero-head" ref={head}>
             <h1 className="h1">Run the job from site, not from a desk.</h1>
             <p className="lede">For firms without a back office. The scope, site diary, variations, valuations and invoices for schedule-of-rates work, on your phone. Say it or snap it on site, approve it, and it’s in the valuation.</p>
             <p className="offer"><b>Fifty founding places.</b> Free through the pilot, then half price for as long as you stay.</p>
@@ -302,7 +310,7 @@ export function Landing() {
 
         <section className="wrap origin">
           <img src="/icon.svg" alt="" width={44} height={44} />
-          <p>Mastor was built inside Tree &amp; Sons Ltd, a Pembrokeshire contractor, on live council framework jobs, to replace the spreadsheets we ran them on.</p>
+          <p>Mastor is built for contractors on schedule-of-rates work: the whole job, from site to paid, in one place.</p>
         </section>
       </main>
 

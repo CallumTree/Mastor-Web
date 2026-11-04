@@ -15,6 +15,7 @@ export const PRIORITIES = ['Emergency', 'Urgent', 'Routine', 'Void', 'Planned']
 const priorityPlate = (p: string) => (p === 'Emergency' ? 'stop' : p === 'Urgent' || p === 'Void' ? 'warn' : 'wait') as 'stop' | 'warn' | 'wait'
 export { isOverdue } from '../lib/alerts'
 import { isOverdue } from '../lib/alerts'
+import { figs } from '../components/Figs'
 const orderLines = (o: WorkOrder, scope: ScopeItem[]) => scope.filter(i => i.orderId === o.id)
 const value = (ls: ScopeItem[]) => ls.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
 
@@ -64,7 +65,7 @@ export function OrdersTab({ job, orders, scope, vals, onNew, onOpen, onClaim }: 
               <button key={o.id} className="chk-row order-row" onClick={() => onOpen(o)}>
                 <span className="mono">{o.ref || '—'}</span>
                 <span className="grow">{o.address || 'No address'}
-                  <small>{ls.length} line{ls.length === 1 ? '' : 's'}{m && ls.length ? ` · ${money(value(ls))}` : ''}{o.dueAt && o.status === 'open' ? ` · due ${ukDate(o.dueAt)}` : ''}{o.completedAt ? ` · done ${ukDate(o.completedAt)}` : ''}</small>
+                  <small>{ls.length} line{ls.length === 1 ? '' : 's'}{figs(m && ls.length ? ` · ${money(value(ls))}` : '')}{o.dueAt && o.status === 'open' ? ` · due ${ukDate(o.dueAt)}` : ''}{o.completedAt ? ` · done ${ukDate(o.completedAt)}` : ''}</small>
                   <span className="order-plates">
                     {o.status === 'cancelled' ? <Plate kind="wait">Cancelled</Plate>
                       : o.status === 'complete' ? <Plate kind="ok">{m && inVal ? 'Done · claimed' : 'Done'}</Plate>
@@ -137,18 +138,18 @@ export function OrderSheet({ job, order, scope, vals, books, onSave, onDelete, o
           <div className="grow"><Field label="Order number *"><input value={o.ref} onChange={e => setO({ ...o, ref: e.target.value })} placeholder="e.g. R-104882" /></Field></div>
           <div className="grow"><Field label="Due"><input type="date" value={due} onChange={e => setDue(e.target.value)} /></Field></div>
         </div>
-        <Field label="Address *"><input value={o.address} onChange={e => setO({ ...o, address: e.target.value })} placeholder="e.g. 14 Bush Street, Pembroke Dock" /></Field>
+        <Field label="Address *"><input value={o.address} onChange={e => setO({ ...o, address: e.target.value })} placeholder="e.g. 14 High Street, Anytown" /></Field>
         <fieldset className="chips" style={{ border: 0, padding: 0, margin: 0 }}><legend className="field" style={{ padding: 0 }}><span>Priority</span></legend>
           {PRIORITIES.map(p => <button key={p} type="button" className={'chip' + (o.priority === p ? ' on' : '')} aria-pressed={o.priority === p} onClick={() => setO({ ...o, priority: p })}>{p}</button>)}
         </fieldset>
 
-        <h3 className="sec-h">Work · {lines.length} line{lines.length === 1 ? '' : 's'}{m && lines.length ? ` · ${money(total)}` : ''}</h3>
+        <h3 className="sec-h">Work · {lines.length} line{lines.length === 1 ? '' : 's'}{figs(m && lines.length ? ` · ${money(total)}` : '')}</h3>
         {lines.length > 0 && (
           <div className="panel chk">
             {lines.map((l, n) => (
               <div key={l.id} className="chk-row order-line">
                 <span className="mono">{l.code || '—'}</span>
-                <span className="grow">{l.description}<small>{m ? (l.rate != null ? `${money(l.rate)} per ${l.unit}${l.rateBook ? ` · ${l.rateBook}` : ''}` : 'No rate') : l.unit}</small></span>
+                <span className="grow">{l.description}<small>{figs(m ? (l.rate != null ? `${money(l.rate)} per ${l.unit}${l.rateBook ? ` · ${l.rateBook}` : ''}` : 'No rate') : l.unit)}</small></span>
                 <label className="field qty"><span className="sr-only">Qty for {l.code}</span>
                   <input inputMode="decimal" value={l.qty} disabled={locked || !m} onChange={e => setLines(ls => ls.map((x, i) => (i === n ? { ...x, qty: e.target.value } : x)))} placeholder="Qty" /></label>
                 {m && !locked && <button type="button" className="icon-btn" aria-label={`Remove ${l.code}`} onClick={() => setLines(ls => ls.filter((_, i) => i !== n))}>×</button>}

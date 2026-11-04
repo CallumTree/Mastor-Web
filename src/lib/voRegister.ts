@@ -7,6 +7,7 @@ import type { Job, Valuation, Variation } from './types'
 import { lineValue, upliftAmounts, valRef } from './valuation'
 import { money, qtyText, ukDate, voRef } from './format'
 import { voCourt } from './chase'
+import { voWhere } from './property'
 
 export interface RegisterInput { job: Job; vos: Variation[]; vals: Valuation[]; company?: string; now?: number }
 
@@ -105,7 +106,7 @@ export async function buildVoRegister({ job, vos, vals, company, now = Date.now(
       voRef(v.number) + (v.code ? `\n${v.code}` : ''),
       v.clientRef || 'Not issued',
       v.description + (v.reason ? `\nReason: ${v.reason}` : ''),
-      v.room || '—',
+      voWhere(v) || '—',
       ukDate(v.dateRaised) + (v.submittedAt ? `\nSent ${ukDate(v.submittedAt)}` : ''),
       v.status + (v.status === 'Rejected' ? '' : `\n${c.who === 'client' ? c.text : c.who === 'us' ? 'Next: ' + nextStep(c.text) : c.text}`),
       v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'Not measured',

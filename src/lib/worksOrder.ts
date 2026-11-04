@@ -1,5 +1,5 @@
 /**
- * Council works orders in Word (one .docx per contract, e.g. PCC "MH21180 Windsor Road Painting"):
+ * Council works orders in Word (one .docx per contract, e.g. "CR21180 Station Road Painting"):
  * a contract box (Contract Reference, Project Reference, Title of Work, Contract Value), then per property
  * "Property Address: …", "Location: …" headings, line tables (Description | Comments | Code | Quantity |
  * Units | Rate | Cost) and a printed Total Cost. Read exactly — no AI — and every printed figure is
@@ -17,7 +17,7 @@ export interface WoLine {
 export interface WoProperty { property: string; address: string; printedTotal: number | null; lines: number; sum: number }
 export interface WorksOrder {
   file: string
-  contract: string          // Contract Reference, e.g. MH21180
+  contract: string          // Contract Reference, e.g. CR21180
   project: string           // Project Reference, e.g. 25W000PAI
   title: string             // Title of Work
   trade?: string            // the title without the scheme address, e.g. "Painting" (set when the pack is pieced together)
@@ -147,7 +147,7 @@ export function readWorksOrder(ev: Ev[], file = ''): WorksOrder | null {
   return wo
 }
 
-/** The trade from a works-order title, without the scheme's address words: "Windsor Road Pembroke Painting" → "Painting". */
+/** The trade from a works-order title, without the scheme's address words: "Station Road Anytown Painting" → "Painting". */
 export function contractTrade(title: string, addresses: string[]) {
   const addr = new Set(addresses.join(' ').toLowerCase().split(/[^a-z]+/).filter(Boolean))
   const words = title.split(/[\s,–-]+/).filter(w => w && !addr.has(w.toLowerCase()))

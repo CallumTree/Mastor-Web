@@ -5,6 +5,7 @@ import { Sheet } from '../components/Ui'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { readVoFile, suggestVo, type ParsedVo } from '../lib/voIntake'
 import { lineValue } from '../lib/valuation'
+import { figs } from '../components/Figs'
 
 export interface VoDecision { line: number; include: boolean; target: 'new' | string }
 
@@ -54,7 +55,7 @@ export function VoImport({ job, vos, onApply, onClose }: {
                   <span className="grow">
                     {l.code && <span className="mono t-small slate">{l.code} </span>}
                     <span className="t-strong">{l.description}</span>
-                    <div className="hint">{l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty'}{l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate'}</div>
+                    <div className="hint">{figs(l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty')}{figs(l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate')}</div>
                     {l.issues.length > 0 && <div className="flag">{l.issues.join(' · ')}</div>}
                   </span>
                   <span className="mono">{l.qty != null && l.rate != null ? money(lineValue(l.qty, l.rate)) : '—'}</span>

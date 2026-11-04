@@ -6,6 +6,7 @@
  */
 import type { ParsedBoq, ParsedLine } from './boq'
 import { tidyLocation } from './boq'
+import { propertyOf } from './property'
 
 type Cell = string | number | null | undefined
 const norm = (c: Cell) => String(c ?? '').replace(/\s+/g, ' ').trim()
@@ -48,6 +49,7 @@ export function readSchedule(rows: Cell[][]): ParsedBoq | null {
   for (const r of rows.slice(0, h)) { const t = r.map(norm).filter(Boolean); const i = t.findIndex(x => /^(SITE|CONTRACT|SCHEME|JOB)/i.test(x)); if (i >= 0) ref = t.slice(i).join(' ').replace(/^(SITE|CONTRACT( REFERENCE)?|SCHEME|JOB)[:\s]*/i, ''); }
 
   const lines: ParsedLine[] = []
+  let headProp = '', headRoom = ''
   for (const r of rows.slice(h + 1)) {
     const code = norm(r[col.code]); const description = col.desc >= 0 ? norm(r[col.desc]) : ''
     if (!code && !description) continue
@@ -55,6 +57,15 @@ export function readSchedule(rows: Cell[][]): ParsedBoq | null {
     // uplift / summary rows (BCIS, framework %, nett, VAT…) aren't work — skip them
     if (!code && /^(framework|bcis|uplift|total|nett?|vat|contractor|overheads?|profit|discount|%)/i.test(description)) continue
     const qty = money(r[col.qty]), rate = money(r[col.rate])
+    // A heading row with no figures names what the lines under it are for: a house ("No. 3 Elm Row", "51 Example Place")
+    // or, written where the codes go, a room or trade ("Front elevation", "KITCHEN"). It is never a line of work.
+    const noFigures = qty == null && rate == null && (col.cost < 0 || money(r[col.cost]) == null) && !streams.some(s => money(r[s.i]))
+    const lone = code && description ? '' : code || description
+    if (noFigures && lone) {
+      const house = col.prop < 0 ? propertyOf(lone) : null
+      if (house) { headProp = house; headRoom = ''; continue }
+      if (code && !description && (/\s/.test(code) || !/\d/.test(code))) { headRoom = tidyLocation(code); continue }
+    }
     // A wrapped description (common in PDF→Excel conversions): no code, qty or rate → belongs to the line above
     if (!code && qty == null && rate == null && lines.length) {
       const prev = lines[lines.length - 1]
@@ -74,10 +85,10 @@ export function readSchedule(rows: Cell[][]): ParsedBoq | null {
     }
     const hours = col.hours >= 0 ? money(r[col.hours]) : null
     lines.push({
-      include: true, code, room: tidyLocation(col.loc >= 0 ? norm(r[col.loc]) : '') || 'General',
+      include: true, code, room: tidyLocation(col.loc >= 0 ? norm(r[col.loc]) : '') || headRoom || 'General',
       description: (shouting(description) ? description.charAt(0) + description.slice(1).toLowerCase() : description).replace(/:(\S)/, ': $1') + (comment ? ` — ${comment}` : ''),
       qty, unit: col.unit >= 0 ? norm(r[col.unit]) || 'item' : 'item', rate, cost,
-      property: col.prop >= 0 ? norm(r[col.prop]).replace(/\.0+$/, '') : '', workstream, hours: hours ?? null, note: '', issues,
+      property: col.prop >= 0 ? norm(r[col.prop]).replace(/\.0+$/, '') : headProp, workstream, hours: hours ?? null, note: '', issues,
     })
   }
   return lines.length ? { ref, lines, truncated: false } : null

@@ -5,6 +5,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Trace } from './Trace'
 import { Roll } from './Roll'
+import { figs } from './Figs'
 
 export function TabHead({ label, meta, menu }: { label: string; title?: string; meta?: ReactNode; menu?: ReactNode }) {
   return (
@@ -29,7 +30,7 @@ export function SumStrip({ cells, cols = 2, progress, label, caption }: { cells:
           {c.hot && <Trace r={3} />}
           <div className="label">{c.label}</div>
           <div className="mono n" style={fitLen(c.nil ? '—' : c.value)}><Roll text={c.nil ? '—' : c.value} /></div>
-          {c.note && <small>{c.note}</small>}
+          {c.note && <small>{figs(c.note)}</small>}
         </div>
       ))}
       {progress != null && <div className="sum-bar"><div style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} /></div>}

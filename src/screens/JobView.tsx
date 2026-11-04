@@ -8,8 +8,8 @@ import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
 import { Trace } from '../components/Trace'
 import { placeParam, setPlace } from '../lib/place'
-import { IconBack, IconCamera, IconChevron, IconDiary, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
-import { VariationsTab } from './Variations'
+import { IconBack, IconCamera, IconChevron, IconDiary, IconFlag, IconHome, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
+import { VoList } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
 import { JobLine, type LineMark } from './Plan'
@@ -27,6 +27,7 @@ import { Roll } from '../components/Roll'
 import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
+import { fig, figs } from '../components/Figs'
 
 /** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
 const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
@@ -140,7 +141,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
           <FigN text={margin.costs || margin.labourEstimate != null ? pounds(margin.margin) : '—'} neg={margin.margin < 0} />
           <div className="fig-l">Margin ›</div>
           {margin.costs || margin.labourEstimate != null
-            ? (margin.provisional.length ? <div className="fig-note">Provisional</div> : margin.pct != null && <div className="fig-sub">{margin.pct}% · costs {pounds(margin.costs)}</div>)
+            ? (margin.provisional.length ? <div className="fig-note">Provisional</div> : margin.pct != null && <div className="fig-sub">{fig(`${margin.pct}%`)} · costs {fig(pounds(margin.costs))}</div>)
             : <div className="fig-sub">Add costs</div>}
         </button>
       </div>}
@@ -153,7 +154,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
             <button key={i} className={'act act-' + kind + (i === liveAt ? ' live' : '')} onClick={a.onClick}>
               {i === liveAt && <Trace r={8} />}
               <SignMark kind={kind} size={22} />
-              <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{a.text}</span><span className="act-h">{a.hint}</span></span>
+              <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{figs(a.text)}</span><span className="act-h">{figs(a.hint)}</span></span>
               <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
             </button>
           )
@@ -202,13 +203,12 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
   { tab: 'home', label: 'Home', Icon: IconHome },
   { tab: 'diary', label: 'Diary', Icon: IconDiary },
   { tab: 'scope', label: 'Scope', Icon: IconScope },
-  { tab: 'vos', label: 'VOs', Icon: IconMarkup },
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
 ]
 
 export function JobView(p: {
   job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
-  onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onImportVo: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
+  onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onImportVo: () => void; onImportVos?: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onClaimMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteScope: (items: ScopeItem[]) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void; onCheckRates?: () => void; onEvidence: () => Promise<void>
   onIssue: (v: Valuation) => Promise<Valuation>; onReview: (v: Valuation, note?: string) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
   costs: Cost[]; dayRate?: number | null; onCosts: () => void
@@ -225,8 +225,9 @@ export function JobView(p: {
   const access = useAccess()
   const nav = NAV.filter(n => access.money || !MONEY_TABS.includes(n.tab))
   // the tab is kept in the address with the job, so a reload comes back to it (Clerk too, from the header)
-  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return t === 'ask' ? 'ask' : nav.find(n => n.tab === t)?.tab ?? 'home' })
-  const setTab = (t: Tab) => { setTabState(t); setPlace({ tab: t === 'home' ? null : t }) }
+  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return t === 'ask' ? 'ask' : t === 'vos' ? 'scope' : nav.find(n => n.tab === t)?.tab ?? 'home' })
+  // the VOs live in Scope, at their house, with the lines: anything that asks for them (an alert, a link, an old address) opens Scope
+  const setTab = (t: Tab) => { const to = t === 'vos' ? 'scope' : t; setTabState(to); setPlace({ tab: to === 'home' ? null : to }) }
   const [askSeed, setAskSeed] = useState<string | null>(null)   // a question handed to Clerk from elsewhere (e.g. a PO just added)
   const askClerk = (q: string) => { setAskSeed(q); setTab('ask') }
   const [diaryDate, setDiaryDate] = useState(dayKey())
@@ -255,7 +256,6 @@ export function JobView(p: {
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
           documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} onAsk={currentCompany() ? askClerk : undefined} />}
           notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} onOpenDay={openDay} diary={p.diary} />}
-        {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && diaryView === 'line' && !focusNote && <JobLine job={job} entries={p.diary}
           properties={[...new Set([...Object.keys(job.properties ?? {}), ...scope.map(s => s.property ?? '')].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}
           trades={[...new Set(scope.map(s => s.workstream ?? '').filter(Boolean))]}
@@ -263,8 +263,10 @@ export function JobView(p: {
         {tab === 'diary' && (diaryView === 'day' || focusNote) && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
-        {tab === 'scope' && job.kind === 'orders' && <OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />}
-        {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
+        {tab === 'scope' && job.kind === 'orders' && <><OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />
+          <VoList vos={vos} vals={vals} onToggle={p.onToggleVo} onEdit={onEditVariation} onLog={onLogVariation} /></>}
+        {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence}
+          vos={vos} onToggleVo={p.onToggleVo} onEditVo={onEditVariation} onLogVo={onLogVariation} onImportVo={access.money ? p.onImportVo : undefined} onImportVos={access.money ? p.onImportVos : undefined} onRegister={access.money ? p.onVoRegister : undefined} onDayworks={() => p.onDayworks(false)} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} readNote={p.readNote} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
@@ -317,7 +319,7 @@ function PoGapSheet({ job, gap, onSave, onSetup, onClose }: {
           rows={[[['BoQ + uplifts', money(gap.withUplifts)], ['PO value', money(job.contractValue)]], [['Uplifts set', `${job.uplift1}% + ${job.uplift2}%`], ['Would reconcile at', `${gap.needed.toFixed(2)}% combined`]]]} />
         <div className="hint">Common reasons: items added after the PO was raised, a PO line missing, or the wrong uplifts. If you know why and will claim it anyway, accept it with a note — it'll stay recorded, and flag again if the difference changes.</div>
         <Field label="Why (for the record)"><textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Kitchen partition + ceiling patch added after PO — Dylan aware, will be claimed" /></Field>
-        <button className="btn btn-primary" disabled={!note.trim()} onClick={() => onSave({ ...job, poGapAccepted: { diff: gap.diff, note: note.trim(), at: Date.now() } })}>{accepted ? 'Update note' : `Accept ${money(Math.abs(gap.diff))} difference`}</button>
+        <button className="btn btn-primary" disabled={!note.trim()} onClick={() => onSave({ ...job, poGapAccepted: { diff: gap.diff, note: note.trim(), at: Date.now() } })}>{accepted ? 'Update note' : figs(`Accept ${money(Math.abs(gap.diff))} difference`)}</button>
         <button className="btn btn-secondary" onClick={onSetup}>Check uplifts / PO value in job setup</button>
         {accepted && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...job, poGapAccepted: null })}>Withdraw acceptance (flag it again)</button>}
       </div>

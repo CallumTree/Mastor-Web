@@ -12,7 +12,7 @@ afterAll(() => wipeLocal())
 
 describe('keeping your place', () => {
   it('comes back to the same job and tab after a reload, and Jobs goes back to the list', async () => {
-    await db.putJob({ id: 'jp', name: 'Reload Row', client: 'PCC', address: '', contractRef: 'RR1', poNumber: '', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 } as Job)
+    await db.putJob({ id: 'jp', name: 'Reload Row', client: 'Example Council', address: '', contractRef: 'RR1', poNumber: '', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 } as Job)
     render(<App />)
     click(await screen.findByText('Reload Row'))
     nav('scope')

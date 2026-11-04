@@ -10,13 +10,17 @@ import type { PackFacts, Source } from '../lib/packFacts'
 import { lineValue } from '../lib/valuation'
 import { TradeList, TradeMark } from '../components/Trade'
 import { IconChevron, IconScope } from '../components/Icons'
+import { figs } from '../components/Figs'
 
 type Stage = { s: 'pick' } | { s: 'reading'; name: string; of: number } | { s: 'review'; boq: PackResult } | { s: 'error'; msg: string }
 export type ImportPack = (lines: ParsedLine[], pack: PackResult) => void
 
-export function BoqImport({ job, existing, books = [], onImport, onClose }: {
+export function BoqImport({ job, existing, books = [], onImport, onClose, variant = 'scope', setup }: {
   job: Job; existing: number; books?: RateBook[]; onImport: ImportPack; onClose: () => void
+  /** 'vos': the client's VO schedule, laid out like a spec list; each line becomes a VO at its house */
+  variant?: 'scope' | 'vos'; setup?: ReactNode
 }) {
+  const vos = variant === 'vos'
   const [stage, setStage] = useState<Stage>({ s: 'pick' })
 
   const pick = async (files: File[]) => {
@@ -25,12 +29,13 @@ export function BoqImport({ job, existing, books = [], onImport, onClose }: {
     catch (e) { setStage({ s: 'error', msg: (e as Error).message }) }
   }
 
-  if (stage.s === 'review') return <Review job={job} books={books} existing={existing} boq={stage.boq} onImport={onImport} onBack={() => setStage({ s: 'pick' })} onClose={onClose} />
+  if (stage.s === 'review') return <Review job={job} books={books} existing={existing} boq={stage.boq} onImport={onImport} onBack={() => setStage({ s: 'pick' })} onClose={onClose}
+    {...(vos ? { forVos: true, setup, heading: 'Import VOs · check them', action: (n: number) => `Add ${n} VO${n === 1 ? '' : 's'}` } : {})} />
 
   return (
-    <Sheet onClose={onClose} locked={stage.s === 'reading'} label="Import BoQ">
+    <Sheet onClose={onClose} locked={stage.s === 'reading'} label={vos ? 'Import VOs' : 'Import BoQ'}>
       <div className="stack">
-        <h2 className="label bracket">Read the client’s pack</h2>
+        <h2 className="label bracket">{vos ? 'Read the client’s VO schedule' : 'Read the client’s pack'}</h2>
         {stage.s === 'reading' ? (
           <div className="panel" role="status" style={{ textAlign: 'center', padding: 28 }}>
             <div className="loading-bar" />
@@ -40,9 +45,11 @@ export function BoqImport({ job, existing, books = [], onImport, onClose }: {
         ) : (
           <>
             {stage.s === 'error' && <div className="card t-note" style={{ borderColor: 'var(--red)', color: 'var(--red)' }}>{stage.msg}</div>}
-            <div className="muted t-note">
+            {vos ? <div className="muted t-note">
+              Pick the VO schedule the client sent, laid out like a spec list (codes, quantities, rates, house by house), in Excel, CSV, PDF or Word. Each line becomes a VO at its house, priced as printed, for you to check first.
+            </div> : <div className="muted t-note">
               Pick everything the client sent: schedule of works, BoQ or scope, works orders, PCI, surveys, in Excel, CSV, PDF or Word, laid out however the client lays them out. Schedules and works orders are read exactly and checked against each other; everything else is kept with the job’s documents. Nothing is added until you confirm.
-            </div>
+            </div>}
             <label className="btn btn-primary">
               <IconScope /> Choose files
               <input type="file" className="sr-only" multiple accept=".pdf,.xlsx,.xlsm,.xls,.docx,.doc,.csv,.txt,application/pdf" onChange={e => { const f = [...(e.target.files ?? [])]; if (f.length) pick(f); e.target.value = '' }} />
@@ -54,12 +61,14 @@ export function BoqImport({ job, existing, books = [], onImport, onClose }: {
   )
 }
 
-export function Review({ job, existing, boq, books = [], onImport, onBack, onClose, setup, heading = 'Check before importing', action, ready = true }: {
+export function Review({ job, existing, boq, books = [], onImport, onBack, onClose, setup, heading = 'Check before importing', action, ready = true, forVos = false }: {
   job: Job; existing: number; boq: PackResult; books?: RateBook[]; onImport: ImportPack; onBack: () => void; onClose: () => void
   /** a new job: its details, read from the pack, above the lines */
   setup?: ReactNode; heading?: string
   /** the button's words for n lines (default "Import n items"); ready = false holds it until the setup is complete */
   action?: (n: number) => string; ready?: boolean
+  /** VOs, not the scope: no contract or works-order comparison (those are for the scope) */
+  forVos?: boolean
 }) {
   const [lines, setLines] = useState(boq.lines)
   const [facts, setFacts] = useState<PackFacts | undefined>(boq.facts)
@@ -86,7 +95,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
       <div className="grow">
         {l.code && <span className="mono t-small slate">{l.code}{l.contract ? <span className="muted"> · {l.contract}</span> : null}</span>}
         <div className="t-note" style={{ fontWeight: 500 }}>{l.description}</div>
-        <div className="hint">{l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty'}{l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate'}</div>
+        <div className="hint">{figs(l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty')}{figs(l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate')}</div>
         {l.issues.length > 0 && <div className="flag t-strong">{l.issues.join(' · ')}</div>}
       </div>
       <div className="mono t-small">{l.qty != null && l.rate != null ? money(lineValue(l.qty, l.rate)) : '—'}</div>
@@ -101,27 +110,27 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
 
         <div className="panel">
           <div className="row" style={{ alignItems: 'baseline' }}>
-            <div className="grow"><div className="label">BoQ total (base)</div><div className="amt" style={{ fontSize: 28, fontWeight: 700 }}>{money(base)}</div></div>
+            <div className="grow"><div className="label">{forVos ? 'VOs total (base)' : 'BoQ total (base)'}</div><div className="amt" style={{ fontSize: 28, fontWeight: 700 }}>{money(base)}</div></div>
             <div style={{ textAlign: 'right' }}><div className="label">Lines</div><div className="amt" style={{ fontSize: 22, fontWeight: 700 }}>{chosen.length}</div></div>
           </div>
           <div className="hint" style={{ marginTop: 6 }}>
-            {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''}{withUplift - base > 0.005 ? ` · incl. uplifts ${money(withUplift)}` : ''}
+            {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''}{figs(withUplift - base > 0.005 ? ` · incl. uplifts ${money(withUplift)}` : '')}
           </div>
-          {job.contractValue > 0 && (
+          {job.contractValue > 0 && !forVos && (
             <div className="t-small" style={{ marginTop: 10, fontWeight: 600, color: match ? 'var(--green)' : 'var(--ink-2)' }}>
               {match === 'base' && 'Matches your contract value'}
               {match === 'uplift' && 'Matches your contract value once uplifts are applied'}
-              {!match && `Contract value is ${money(job.contractValue)} — ${money(Math.abs(job.contractValue - base))} difference. Check for missed or flagged lines.`}
+              {!match && figs(`Contract value is ${money(job.contractValue)} — ${money(Math.abs(job.contractValue - base))} difference. Check for missed or flagged lines.`)}
             </div>
           )}
-          {boq.orders.length > 0 && <div className="t-small" style={{ marginTop: 8, fontWeight: 600, color: near(base, ordersValue) ? 'var(--green)' : 'var(--ink-2)' }}>
-            {near(base, ordersValue) ? `Matches the ${boq.orders.length} works order contract value${boq.orders.length === 1 ? '' : 's'}` : `Works order contract values ${money(ordersValue)} — ${money(Math.abs(ordersValue - base))} ${base < ordersValue ? 'short' : 'over'}. See below.`}
+          {boq.orders.length > 0 && !forVos && <div className="t-small" style={{ marginTop: 8, fontWeight: 600, color: near(base, ordersValue) ? 'var(--green)' : 'var(--ink-2)' }}>
+            {figs(near(base, ordersValue) ? `Matches the ${boq.orders.length} works order contract value${boq.orders.length === 1 ? '' : 's'}` : `Works order contract values ${money(ordersValue)} — ${money(Math.abs(ordersValue - base))} ${base < ordersValue ? 'short' : 'over'}. See below.`)}
           </div>}
           {boq.method && <div className="hint" style={{ marginTop: 6 }}>{boq.method === 'ai' ? 'Read by AI — check the flagged lines' : 'Read exactly from the documents — no AI'}</div>}
           {boq.columnCheck && boq.columnCheck.length > 0 && (() => {
             const off = boq.columnCheck.filter(c => Math.abs(c.sheet - c.read) > 0.05)
             return <div className="t-small" style={{ marginTop: 8, fontWeight: 600, color: off.length ? 'var(--ink-2)' : 'var(--green)' }}>
-              {off.length ? `Column totals differ: ${off.map(c => `${c.stream} sheet ${money(c.sheet)} vs read ${money(c.read)}`).join(' · ')}` : `All ${boq.columnCheck.length} column totals match the sheet`}
+              {figs(off.length ? `Column totals differ: ${off.map(c => `${c.stream} sheet ${money(c.sheet)} vs read ${money(c.read)}`).join(' · ')}` : `All ${boq.columnCheck.length} column totals match the sheet`)}
             </div>
           })()}
           {boq.truncated && <div className="t-small" style={{ marginTop: 8, color: 'var(--ink)', fontWeight: 600 }}>Check: the document was very long and may have been cut short — check the last section.</div>}

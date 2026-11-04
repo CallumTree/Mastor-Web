@@ -17,13 +17,13 @@ afterAll(async () => { cleanup(); await wipeLocal() })
 
 describe('operative', () => {
   it('sees the work, never the money', async () => {
-    const job: Job = { id: 'j1', name: '7 Hill Street', client: 'PCC', address: '', contractRef: 'PCC/7', poNumber: '', contractValue: 12000, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+    const job: Job = { id: 'j1', name: '7 Hill Street', client: 'Example Council', address: '', contractRef: 'CR/7', poNumber: '', contractValue: 12000, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
     await db.putJob(job)
     await db.putScope({ id: 's1', jobId: 'j1', code: '0171AD', description: 'Renew fence', room: 'Rear', qty: 12, unit: 'LM', rate: 133.91, valuationId: null, order: 1, createdAt: 1 })
     await db.putVariation({ id: 'v1', jobId: 'j1', number: 1, description: 'Extra post', room: 'Rear', qty: 1, unit: 'NO', rate: 55, code: '0171ZZ', reason: '', clientRef: '', status: 'Identified', photoIds: [], dateRaised: 1 })
     await db.putDiary({ id: 'n1', jobId: 'j1', date: '2026-10-01', type: 'note', note: 'Agreed £400 extra for skip', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: 'Commercial', pinned: true, createdAt: 1 })
     await db.putDiary({ id: 'n2', jobId: 'j1', date: '2026-10-01', type: 'note', note: 'Dog in garden — keep gate shut', labour: null, weather: '', mediaId: null, originalMediaId: null, room: '', voId: null, category: 'Site', pinned: true, createdAt: 2 })
-    await meta.set('company', { id: 'c', name: 'Tree & Sons', user: 'u', role: 'operative' })
+    await meta.set('company', { id: 'c', name: 'Example Builders', user: 'u', role: 'operative' })
 
     render(<App />)
     await screen.findByText('7 Hill Street')
@@ -44,7 +44,7 @@ describe('operative', () => {
     expect(screen.queryByRole('button', { name: /add to valuation/i })).toBeNull()
     noMoney()
 
-    nav('vos')
+    nav('scope')
     await screen.findByText('Extra post')
     noMoney()
     click(screen.getByRole('button', { name: /Extra post/ }))
