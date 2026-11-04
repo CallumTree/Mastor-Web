@@ -33,6 +33,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
         </fieldset>
         <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder={f.kind === 'orders' ? 'e.g. Council repairs 2026' : 'e.g. 32 Park Road'} /></Field>
         <Field label="Client"><input value={f.client} onChange={set('client')} placeholder="e.g. the council, housing association or trust" /></Field>
+        <Field label="Client’s invoice address" hint="Where their invoices go: printed on every VAT invoice"><input value={f.clientAddress ?? ''} onChange={set('clientAddress')} placeholder="e.g. Finance, Civic Centre, Anytown, AB1 2CD" /></Field>
         <Field label="Site address"><input value={f.address} onChange={set('address')} /></Field>
         <div className="row">
           <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CR-0290" /></Field></div>

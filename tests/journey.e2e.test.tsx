@@ -33,6 +33,7 @@ describe('Park Road, end to end', () => {
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', '32 Park Road')
     type('Client', 'Example Council')
+    type(/^Client’s invoice address/, 'Finance, Civic Centre, Anytown, AB1 2CD')
     type(/PO number/i, 'PO26061')
     type(/PO value/i, '40159.68')
     type('Uplift 1 (%)', '12.643')

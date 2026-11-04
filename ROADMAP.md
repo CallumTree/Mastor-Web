@@ -36,14 +36,22 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 - Send to accounts: for firms whose accounts team invoices in Sage — the issued valuation (certificate, breakdown, Sage CSV) emailed to accounts; they enter the Sage invoice number back.
 - Read a WhatsApp job-group export (messages + photos) the same way as site captures.
 
-## Before pilots (from the launch audit)
+## Before pilots (launch review, 4 Nov 2026)
 
-0. Run `supabase/schema.sql` in Supabase (adds the AI limit, team, costs, orders, dayworks and documents tables — safe to re-run).
-1. Error monitoring and "Report a problem".
-2. Company data export and deletion request.
-3. Supabase Pro + backups, own email sender; Vercel Pro; domain; Anthropic spend limit.
-4. Privacy policy and terms; ICO fee if applicable.
-5. Restyle the PDFs to the signage language.
+A new firm was walked through the whole app (sign-up → company → job from a schedule → scope → VO → diary photo → valuation sent, agreed, invoiced and paid → dashboard) on a phone and a desktop: it runs end to end with no errors, the figures agree from tick to paid, and no screen fails an accessibility scan or scrolls sideways at 320px. Two bugs were found and fixed (a schedule's house headings read as unpriced lines; a VAT invoice could go out with no client name or address).
+
+Done: `supabase/schema.sql` run (v7, founding sign-ups).
+
+Still to do, owner's decisions and accounts first:
+1. **Privacy notice and terms.** The front page collects names, emails and phone numbers and the app holds clients' job data: a privacy notice (who Mastor is, what's kept, why, how long, rights, contact) linked from the form and the sign-up, and terms for the pilot. ICO data-protection fee if it applies.
+2. **A contact for help.** No support email or "Report a problem" reaches anyone yet; the app's problem bar is on the device only.
+3. **Supabase for production:** Pro plan (the free plan pauses an idle project and has no backups), daily backups, and its own email sender (custom SMTP, e.g. Resend): the built-in sender only sends a few sign-up emails an hour.
+4. **Domain:** a Mastor domain instead of mastor-web.vercel.app, added to Supabase Auth's redirect URLs, the sign-up emails and the Claude connector.
+5. **Keys and limits in Vercel:** ANTHROPIC_API_KEY (with a spend limit), the transcription key, RESEND_API_KEY and SIGNUP_NOTIFY_TO, SIGNUP_FROM on the Mastor domain.
+6. **Company deletion on request** (data export already exists: Settings → Backup).
+7. **Front-page photos:** the two Unsplash photos are hotlinked stock; swap for your own when you have them.
+8. Pricing after the pilot (the page promises half price for founding places, no figure shown yet).
+9. Restyle the PDFs to the signage language (they're print-white and clear today; optional).
 
 ## Parked
 

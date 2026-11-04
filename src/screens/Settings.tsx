@@ -110,9 +110,11 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 }
 
 /** Confirm before a number is used — invoice numbers can't be taken back. */
-export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onCreate, onSettings, onClose }: {
+export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, jobMissing = [], onCreate, onSettings, onJobSetup, onClose }: {
   number: string; net: string; vat: string; total: string; rate: number; missing: string[]
-  onCreate: (date: number) => void; onSettings: () => void; onClose: () => void
+  /** what the job itself still needs (who the invoice is to) */
+  jobMissing?: string[]
+  onCreate: (date: number) => void; onSettings: () => void; onJobSetup?: () => void; onClose: () => void
 }) {
   const d = new Date(); const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const [date, setDate] = useState(key)
@@ -124,6 +126,11 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, onC
           <>
             <div className="t-note">Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
             <button className="btn btn-primary" onClick={onSettings}>Open company settings</button>
+          </>
+        ) : jobMissing.length ? (
+          <>
+            <div className="t-note">A VAT invoice has to say who it’s to. Add <b>{jobMissing.join(' and ')}</b> in the job’s setup.</div>
+            {onJobSetup && <button className="btn btn-primary" onClick={onJobSetup}>Open job setup</button>}
           </>
         ) : (
           <>

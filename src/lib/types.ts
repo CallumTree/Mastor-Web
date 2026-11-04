@@ -8,6 +8,8 @@ export interface Job {
   id: string
   name: string
   client: string
+  /** where the client's invoices go (their accounts address), printed under their name: a VAT invoice needs it */
+  clientAddress?: string
   address: string
   contractRef: string
   poNumber: string          // printed on invoices — blank until the client issues one, never invented

@@ -9,6 +9,15 @@ import { invoiceAmounts } from './invoice'
 import { dueAt } from './chase'
 import { valRef } from './valuation'
 
+/** The client's invoice address as Xero's four address lines, city, region and postcode (a UK postcode is picked out). */
+function xeroAddress(raw = ''): string[] {
+  const parts = raw.split(/\n|,\s*/).map(x => x.trim()).filter(Boolean)
+  const pc = parts.length && /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(parts[parts.length - 1]) ? parts.pop()! : ''
+  const city = parts.length > 1 ? parts.pop()! : ''
+  const lines = [...parts.slice(0, 3), parts.slice(3).join(', ')]
+  return [...lines, ...Array(4 - lines.length).fill(''), city, '', pc.toUpperCase(), pc ? 'United Kingdom' : '']
+}
+
 export type AccountsFormat = 'xero' | 'quickbooks'
 export interface InvoiceRow { job: Job; val: Valuation; net: number; vat: number; total: number; rate: number; date: number; due: number | null }
 
@@ -36,7 +45,7 @@ export function accountsCsv(rows: InvoiceRow[], format: AccountsFormat, accountC
     return csv([
       ['*ContactName', 'EmailAddress', 'POAddressLine1', 'POAddressLine2', 'POAddressLine3', 'POAddressLine4', 'POCity', 'PORegion', 'POPostalCode', 'POCountry',
         '*InvoiceNumber', 'Reference', '*InvoiceDate', '*DueDate', 'InventoryItemCode', '*Description', '*Quantity', '*UnitAmount', 'Discount', '*AccountCode', '*TaxType', 'TrackingName1', 'TrackingOption1', 'TrackingName2', 'TrackingOption2', 'Currency', 'BrandingTheme'],
-      ...rows.map(r => [r.job.client || r.job.name, '', '', '', '', '', '', '', '', '',
+      ...rows.map(r => [r.job.client || r.job.name, '', ...xeroAddress(r.job.clientAddress),
         r.val.invoiceNumber!, r.job.poNumber || r.job.contractRef || '', dmy(r.date), dmy(r.due ?? r.date), '', describe(r), 1, r.net.toFixed(2), '', accountCode, xeroTax(r.rate), '', '', '', '', 'GBP', '']),
     ])
   }

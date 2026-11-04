@@ -15,6 +15,8 @@
 import type { ParsedBoq, ParsedLine } from './boq'
 import { tidyLocation } from './boq'
 import { readSchedule } from './sheet'
+import { propertyOf } from './property'
+export { propertyOf } from './property'
 import type { PdfPage } from './pdfTable'
 
 export type Cell = string | number | null | undefined
@@ -60,23 +62,8 @@ const UPLIFTS = /^(vat\b|v\.a\.t|bcis\b|uplift\b|framework (uplift|%|percentage)
 /** A document's own title rather than a part of it: "BoQ", "Schedule of works", "Pricing document", "Sheet1". */
 const DOC_TITLE = /^(schedule|bill|scope|specification|spec|works order|order|quotation|quote|tender|boq|bq|bill of quantities|pricing|price|priced|rates|sor|sheet ?\d*|data|export|report|works|items|lines|main|master|full list|all)\b/i
 const FURNITURE = /^(page \d+( of \d+)?|\d+ of \d+|-? ?\d+ ?-?|continued( overleaf)?|cont'?d\.?|printed( on)?\b.*|\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4})$/i
-const STREET = /\b(road|rd|street|st|avenue|ave|close|cl|lane|ln|drive|dr|way|court|ct|crescent|cres|place|pl|terrace|tce|gardens|gdns|hill|row|square|sq|park|grove|view|mews|walk|green|rise|parade|estate|house|cottages?|flats)\b/i
 const ROOM = /^(the )?(kitchen|bathroom|en-?suite|shower room|wet ?room|w\.?c\.?|toilet|cloakroom|hall(way)?|landing|stair(s|case|well)?|bed(room)?\s*\d*|living( room)?|lounge|sitting room|dining( room)?|utility( room)?|loft|attic|garage|porch|conservatory|store( room)?|cupboard|airing cupboard|externals?|external works|garden|(front|rear|side|all) (elevations?|garden)|roof( ?space)?|communal( areas?)?|throughout|general|internal(s)?|plant room|reception|office|classroom|ward|corridor)(\s*(\d+|[a-z]))?$/i
 
-/** A heading that names a property: "No. 12", "Plot 4", "Flat 3", "12 Acacia Avenue", "Property: 4A Hill Street". */
-export function propertyOf(raw: string): string | null {
-  const t = raw.replace(/^(property( address)?|address|site|dwelling)\s*[:\-–]\s*/i, '').trim()
-  // also the address after a title's colon: "Scope of works: 7 Quarry Row"
-  const after = /^[^:\d]{1,40}:\s*(\S.*)$/.exec(raw.trim())?.[1]
-  for (const c of after && after !== t ? [t, after] : [t]) {
-    const tagged = /^(?:no\.?|number|plot|flat|house|unit|property|block|apartment)\s*(\d+[a-z]?)\b/i.exec(c)
-    if (tagged) return tagged[1].toUpperCase()
-    const addr = /^(?:flat\s+)?(\d+[a-z]?)[,\s]+\S.*$/i.exec(c)
-    if (addr && STREET.test(c) && words(c) <= 9) return addr[1].toUpperCase()
-  }
-  if (/^(property|address)\s*[:\-–]/i.test(raw) && t) return t
-  return null
-}
 
 interface Cols { [k: string]: number }
 /** 1, 2, 3, 4… each once, in order. */

@@ -30,7 +30,7 @@ describe('VAT invoicing', () => {
     await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
-    type('Job name *', 'Invoice Close'); type('Client', 'Example Council'); type(/PO number/i, 'PC1')
+    type('Job name *', 'Invoice Close'); type('Client', 'Example Council'); type(/^Client’s invoice address/, 'Finance, Civic Centre, Anytown, AB1 2CD'); type(/PO number/i, 'PC1')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Invoice Close')
 
@@ -44,7 +44,7 @@ describe('VAT invoicing', () => {
     await screen.findByText('TS-1042')
     click(screen.getByRole('button', { name: 'Save' })); await closed()
 
-    click(screen.getByRole('button', { name: 'Create invoice' }))
+    click(await screen.findByRole('button', { name: 'Create invoice' }))
     await screen.findByText('£200.00')                                  // VAT @ 20% on £1,000
     click(screen.getByRole('button', { name: 'Create invoice TS-1042' })); await closed()
     await screen.findByText('TS-1042')

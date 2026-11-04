@@ -27,6 +27,9 @@ ok(q[0] === 'InvoiceNo,Customer,InvoiceDate,DueDate,Terms,Location,Memo,Item(Pro
 ok(q[1].startsWith('TS-0042,Example Council,15/09/2026,15/10/2026') && q[1].includes(',1100.00,1100.00,20.0% S,220.00,GBP'), 'QuickBooks line: amounts and UK VAT code')
 const quoted = accountsCsv([{ ...rows[0], job: { ...job, client: 'Smith, Jones & Co "Ltd"' } }], 'xero').split('\r\n')[1]
 ok(quoted.startsWith('"Smith, Jones & Co ""Ltd"""'), 'commas and quotes escaped')
+const addr = accountsCsv([{ ...rows[0], job: { ...job, clientAddress: 'Finance, Civic Centre, High Street, Anytown, ab1 2cd' } }], 'xero').split('\r\n')[1].split(',')
+const acol = (n: string) => addr[head.indexOf(n)]
+ok(acol('POAddressLine1') === 'Finance' && acol('POAddressLine3') === 'High Street' && acol('POCity') === 'Anytown' && acol('POPostalCode') === 'AB1 2CD' && acol('POCountry') === 'United Kingdom', 'Xero: the client’s invoice address in its own columns, postcode picked out')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 if (fail) process.exit(1)

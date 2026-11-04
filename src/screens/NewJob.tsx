@@ -60,12 +60,12 @@ function PackReview({ pack, books, onCreate, onBack, onClose }: {
   pack: PackResult; books: RateBook[]; onCreate: (job: Job, lines: ParsedLine[], pack: PackResult) => Promise<void>; onBack: () => void; onClose: () => void
 }) {
   const [read] = useState(() => jobFromPack(pack))
-  const [f, setF] = useState({ name: read.name, client: read.client, address: read.address, contractRef: read.contractRef, poNumber: '',
+  const [f, setF] = useState({ name: read.name, client: read.client, clientAddress: '', address: read.address, contractRef: read.contractRef, poNumber: '',
     value: read.contractValue != null ? String(read.contractValue) : '', u1: '', u2: '' })
   const [saving, setSaving] = useState(false)
   const [id] = useState(uid)
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
-  const job: Job = { id, name: f.name.trim(), client: f.client.trim(), address: f.address.trim(), contractRef: f.contractRef.trim(), poNumber: f.poNumber.trim(),
+  const job: Job = { id, name: f.name.trim(), client: f.client.trim(), clientAddress: f.clientAddress.trim() || undefined, address: f.address.trim(), contractRef: f.contractRef.trim(), poNumber: f.poNumber.trim(),
     contractValue: num(f.value), uplift1: num(f.u1), uplift2: num(f.u2), workType: 'PPR', status: 'Active', photoId: null, kind: 'scheme',
     properties: Object.keys(read.properties).length ? read.properties : undefined, paymentTermsDays: 30, createdAt: Date.now() }
   const fromHint = (k: keyof PackJob['from'], edited: boolean) => (read.from[k] && !edited ? `From ${read.from[k]}` : undefined)
@@ -73,6 +73,7 @@ function PackReview({ pack, books, onCreate, onBack, onClose }: {
     <div className="panel stack new-job" style={{ gap: 10 }}>
       <Field label="Job name *" hint={fromHint('name', f.name !== read.name)}><input value={f.name} onChange={set('name')} placeholder="e.g. 32 Park Road" /></Field>
       <Field label="Client" hint={fromHint('client', f.client !== read.client)}><input value={f.client} onChange={set('client')} placeholder="e.g. the council, housing association or trust" /></Field>
+      <Field label="Client’s invoice address" hint="Where their invoices go: needed before the first invoice"><input value={f.clientAddress} onChange={set('clientAddress')} placeholder="e.g. Finance, Civic Centre, Anytown, AB1 2CD" /></Field>
       <Field label="Site address" hint={fromHint('address', f.address !== read.address)}><input value={f.address} onChange={set('address')} /></Field>
       <div className="row pair">
         <div className="grow"><Field label="Contract ref" hint={fromHint('contractRef', f.contractRef !== read.contractRef)}><input value={f.contractRef} onChange={set('contractRef')} /></Field></div>

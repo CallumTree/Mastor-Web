@@ -1,4 +1,4 @@
-import { allocateInvoiceNo, formatInvoiceNo, missingForInvoice, invoiceAmounts, buildInvoice } from '../src/lib/invoice'
+import { allocateInvoiceNo, formatInvoiceNo, missingForInvoice, jobMissingForInvoice, invoiceAmounts, buildInvoice } from '../src/lib/invoice'
 import { valCourt } from '../src/lib/chase'
 import { blankSettings, type Job, type ScopeItem, type Valuation } from '../src/lib/types'
 let pass = 0, fail = 0
@@ -20,5 +20,10 @@ ok(valCourt({ ...inv, paidAt: Date.UTC(2026, 8, 20), paidAmount: 6033.97 }, job,
 ;(async () => {
   const text = Buffer.from(await (await buildInvoice({ job, val: inv, scope, vos: [], settings: s })).arrayBuffer()).toString('latin1')
   ok(text.includes('VAT INVOICE') && text.includes('TS-1042') && text.includes('GB123456789') && text.includes('PO26061') && text.includes('6,033.97'), 'PDF: title, number, VAT no., PO and total')
+  // a VAT invoice names who it's to: the client and their invoice address
+  ok(jobMissingForInvoice({ ...job, client: '', clientAddress: '' }).join(' and ') === 'the client’s name and the client’s invoice address', 'no client: says what the job needs before it can be invoiced')
+  ok(jobMissingForInvoice({ ...job, clientAddress: 'Finance, Civic Centre, Anytown, AB1 2CD' }).length === 0, 'client and address → ready')
+  const to = Buffer.from(await (await buildInvoice({ job: { ...job, clientAddress: 'Finance, Civic Centre, Anytown, AB1 2CD' }, val: inv, scope, vos: [], settings: s })).arrayBuffer()).toString('latin1')
+  ok(to.includes('Example Council') && to.includes('Civic Centre') && to.includes('AB1 2CD'), 'PDF: invoice to the client, at their address')
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
 })()

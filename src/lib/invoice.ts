@@ -17,6 +17,13 @@ export function allocateInvoiceNo(s: CompanySettings, allVals: Valuation[]): { n
 }
 
 /** What's missing before a legal VAT invoice can be produced. */
+/** What the job needs before it can be invoiced: a VAT invoice names the customer and their address. */
+export function jobMissingForInvoice(job: Job): string[] {
+  const m: string[] = []
+  if (!job.client.trim()) m.push('the client’s name'); if (!(job.clientAddress ?? '').trim()) m.push('the client’s invoice address')
+  return m
+}
+
 export function missingForInvoice(s: CompanySettings | undefined): string[] {
   if (!s) return ['company details']
   const m: string[] = []
@@ -67,7 +74,10 @@ export async function buildInvoice({ job, val, scope, vos, settings }: { job: Jo
   y = Math.max(y + 16, ty + rh * 3 + 10)
   doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.setTextColor(...MUTED); doc.text('INVOICE TO', M, y)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...INK); doc.text(job.client || '—', M, y + 5)
-  doc.setFontSize(8.5); doc.setTextColor(...MUTED); doc.text(`Site: ${job.name}${job.address ? `, ${job.address}` : ''}`, M, y + 10)
+  const to = (job.clientAddress ?? '').split(/\n|,\s*/).map(x => x.trim()).filter(Boolean).slice(0, 5)
+  doc.setFontSize(8.5); to.forEach((l, i) => doc.text(l, M, y + 9.5 + i * 3.8))
+  y += to.length * 3.8
+  doc.setTextColor(...MUTED); doc.text(`Site: ${job.name}${job.address ? `, ${job.address}` : ''}`, M, y + 10.5)
 
   // the line + totals
   y += 20

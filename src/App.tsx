@@ -37,7 +37,7 @@ import type { PackResult } from './lib/packIntake'
 import { schemeStreet } from './lib/packJob'
 import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
-import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, missingForInvoice } from './lib/invoice'
+import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
 import { jobAlerts } from './lib/alerts'
 import { lastText, siteDaysSince, valRhythm } from './lib/rhythm'
@@ -335,8 +335,8 @@ export default function App() {
         const rate = settings?.vatRate ?? 20
         const a = invoiceAmounts(job, invoicing, jobScope, jobVos, rate)
         const alloc = settings ? allocateInvoiceNo(settings, vals) : { number: '—', next: 1 }
-        return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)}
-          onClose={() => setInvoicing(null)} onSettings={() => { setInvoicing(null); setSettingsOpen(true) }}
+        return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)} jobMissing={jobMissingForInvoice(job)}
+          onClose={() => setInvoicing(null)} onSettings={() => { setInvoicing(null); setSettingsOpen(true) }} onJobSetup={() => { setInvoicing(null); setJobForm('edit') }}
           onCreate={async date => {
             // re-check against every invoice at the moment of creating, then move the sequence on
             const fresh = await db.settings(); if (!fresh) return

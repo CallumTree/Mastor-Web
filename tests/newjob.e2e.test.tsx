@@ -47,7 +47,7 @@ describe('new job from the client’s pack', () => {
     await screen.findByText('New job · check it')
 
     expect((screen.getByLabelText(/^Job name \*/) as HTMLInputElement).value).toBe('Ash Grove')
-    expect((screen.getByLabelText(/^Client/) as HTMLInputElement).value).toBe('Seaview Homes Housing Association')
+    expect((screen.getByLabelText(/^Client(?!’s)/) as HTMLInputElement).value).toBe('Seaview Homes Housing Association')
     expect((screen.getByLabelText(/^Site address/) as HTMLInputElement).value).toBe('Ash Grove, Anytown')
     expect((screen.getByLabelText(/^Contract ref/) as HTMLInputElement).value).toBe('MH9')
     expect((screen.getByLabelText(/PO value/) as HTMLInputElement).value).toBe('592.2')
@@ -74,7 +74,7 @@ describe('new job from the client’s pack', () => {
     click(await screen.findByRole('button', { name: /new job/i }))
     fireEvent.change(await screen.findByLabelText(/choose the client’s files/i), { target: { files: [order, pci] } })
     await screen.findByText('New job · check it')
-    expect((screen.getByLabelText(/^Client/) as HTMLInputElement).value).toBe('')
+    expect((screen.getByLabelText(/^Client(?!’s)/) as HTMLInputElement).value).toBe('')
     click(screen.getByRole('button', { name: /choose different files/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))
     expect(await screen.findByRole('button', { name: 'Create job' })).toBeTruthy()
