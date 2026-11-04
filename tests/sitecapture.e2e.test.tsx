@@ -52,7 +52,7 @@ describe('site capture', () => {
     click(await screen.findByRole('button', { name: 'Raise as a VO' }))
     await waitFor(async () => expect((await db.variations('js')).length).toBe(1))
     const vo = (await db.variations('js'))[0]
-    expect(vo).toMatchObject({ description: 'Renew rotten joists under the bath', status: 'Identified', rate: null, qty: 2, unit: 'LM', room: 'No. 4 · Bathroom' })
+    expect(vo).toMatchObject({ description: 'Renew rotten joists under the bath', status: 'Identified', rate: null, qty: 2, unit: 'LM', property: '4', room: 'Bathroom' })   // at its house, so it sits with No. 4’s scope
 
     click(await screen.findByRole('button', { name: 'Reject' }))
     await waitFor(() => expect(screen.queryByText(/From site ·/)).toBeNull())

@@ -49,7 +49,7 @@ const m = many.get('v1') ?? []
 ok(m.length === 1 && m[0].lineIds.join() === 's1', 'several houses: a "done" with no house is dropped; one naming No. 4 keeps only No. 4’s lines')
 ok(many.get('p1')?.[0].kind === 'vo' && many.get('p1')?.[0].basis === 'seen', 'extra work spotted in a photo is kept, marked for a look')
 const vo = voFromSuggestion(v[1], diary[1], 'j', 7)
-ok(vo.number === 7 && vo.status === 'Identified' && vo.rate === null && vo.qty === 2 && vo.room === 'No. 4 · Bathroom' && vo.reason === 'From site 2026-10-17: “rotten joists under the bath”', 'approved extra work → Identified VO, unpriced, with the words that raised it')
+ok(vo.number === 7 && vo.status === 'Identified' && vo.rate === null && vo.qty === 2 && vo.property === '4' && vo.room === 'Bathroom' && vo.reason === 'From site 2026-10-17: “rotten joists under the bath”', 'approved extra work → Identified VO at its house, unpriced, with the words that raised it')
 const withRead = { ...diary[1], read: { at: 1, suggestions: v } }
 ok(openSuggestions([withRead]).length === 2 && openSuggestions([decide(withRead, v[0].id, 'approved')]).length === 1, 'review list: open suggestions only')
 

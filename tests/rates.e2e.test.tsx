@@ -68,8 +68,8 @@ describe('schedule of rates', () => {
     type('Job name *', '4 Rates Road')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('4 Rates Road')
-    nav('vos')
-    click(await screen.findByRole('button', { name: /log variation/i }))
+    nav('scope')
+    click(await screen.findByRole('button', { name: /^add vo$/i }))
     type(/extra work/i, 'Replace fence panels to rear')
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!)
     click(await screen.findByRole('button', { name: /Replace fence panels to rear/ }))
@@ -88,7 +88,7 @@ describe('schedule of rates', () => {
 
     // --- a scope line found by description fills code, description, unit and rate
     nav('scope')
-    click(await screen.findByRole('button', { name: /add item/i }))
+    click(await screen.findByRole('button', { name: /add line/i }))
     click(screen.getByRole('button', { name: /find a rate by description/i }))
     type(/search by code or words/i, 'hardwall')
     click(await screen.findByRole('button', { name: /3051AB/ }))
@@ -97,11 +97,11 @@ describe('schedule of rates', () => {
     expect((screen.getByLabelText('Description *') as HTMLTextAreaElement).value).toBe('PLASTER:RENEW WALL HARDWALL')
     expect((screen.getByLabelText(/Rate \(£\)/) as HTMLInputElement).value).toBe('42.1')
     type('Qty', '10')
-    click(screen.getAllByRole('button', { name: 'Add item' }).at(-1)!)
+    click(screen.getAllByRole('button', { name: 'Add line' }).at(-1)!)
     await waitFor(() => expect(screen.getAllByText('£421.00').length).toBeGreaterThan(0))
 
     // --- check the scope's rates against the book
-    await screen.findByText('1 item')
+    await screen.findByText(/^1 item · 1 VO$/)   // the scope and its VO, one list
     click(screen.getByRole('button', { name: 'Scope options' }))
     click(screen.getByRole('button', { name: /check rates against your sor/i }))
     await screen.findByText('All 1 priced lines follow the SoR rates exactly')

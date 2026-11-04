@@ -8,8 +8,8 @@ import { lineValue } from '../lib/valuation'
 import { money, upliftFactor } from '../lib/format'
 import { Trace } from '../components/Trace'
 import { placeParam, setPlace } from '../lib/place'
-import { IconBack, IconCamera, IconChevron, IconDiary, IconFlag, IconHome, IconMarkup, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
-import { VariationsTab } from './Variations'
+import { IconBack, IconCamera, IconChevron, IconDiary, IconFlag, IconHome, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
+import { VoList } from './Variations'
 import { ScopeTab } from './Scope'
 import { DiaryTab, VoiceSheet } from './Diary'
 import { JobLine, type LineMark } from './Plan'
@@ -203,13 +203,12 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
   { tab: 'home', label: 'Home', Icon: IconHome },
   { tab: 'diary', label: 'Diary', Icon: IconDiary },
   { tab: 'scope', label: 'Scope', Icon: IconScope },
-  { tab: 'vos', label: 'VOs', Icon: IconMarkup },
   { tab: 'vals', label: 'Vals', Icon: IconValuation },
 ]
 
 export function JobView(p: {
   job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
-  onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onImportVo: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
+  onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onImportVo: () => void; onImportVos?: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onClaimMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteScope: (items: ScopeItem[]) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void; onCheckRates?: () => void; onEvidence: () => Promise<void>
   onIssue: (v: Valuation) => Promise<Valuation>; onReview: (v: Valuation, note?: string) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
   costs: Cost[]; dayRate?: number | null; onCosts: () => void
@@ -226,8 +225,9 @@ export function JobView(p: {
   const access = useAccess()
   const nav = NAV.filter(n => access.money || !MONEY_TABS.includes(n.tab))
   // the tab is kept in the address with the job, so a reload comes back to it (Clerk too, from the header)
-  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return t === 'ask' ? 'ask' : nav.find(n => n.tab === t)?.tab ?? 'home' })
-  const setTab = (t: Tab) => { setTabState(t); setPlace({ tab: t === 'home' ? null : t }) }
+  const [tab, setTabState] = useState<Tab>(() => { const t = placeParam('tab'); return t === 'ask' ? 'ask' : t === 'vos' ? 'scope' : nav.find(n => n.tab === t)?.tab ?? 'home' })
+  // the VOs live in Scope, at their house, with the lines: anything that asks for them (an alert, a link, an old address) opens Scope
+  const setTab = (t: Tab) => { const to = t === 'vos' ? 'scope' : t; setTabState(to); setPlace({ tab: to === 'home' ? null : to }) }
   const [askSeed, setAskSeed] = useState<string | null>(null)   // a question handed to Clerk from elsewhere (e.g. a PO just added)
   const askClerk = (q: string) => { setAskSeed(q); setTab('ask') }
   const [diaryDate, setDiaryDate] = useState(dayKey())
@@ -256,7 +256,6 @@ export function JobView(p: {
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
           documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} onAsk={currentCompany() ? askClerk : undefined} />}
           notes={p.diary.filter(d => d.type === 'note' && (access.money || d.category !== 'Commercial'))} onSaveNote={e => p.onSaveDiary(e)} onDeleteNote={p.onDeleteDiary} onOpenDay={openDay} diary={p.diary} />}
-        {tab === 'vos' && <VariationsTab job={job} vos={vos} vals={vals} onDayworks={() => p.onDayworks(false)} onLog={onLogVariation} onEdit={onEditVariation} onToggle={p.onToggleVo} onImportVo={p.onImportVo} onRegister={p.onVoRegister} />}
         {tab === 'diary' && diaryView === 'line' && !focusNote && <JobLine job={job} entries={p.diary}
           properties={[...new Set([...Object.keys(job.properties ?? {}), ...scope.map(s => s.property ?? '')].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}
           trades={[...new Set(scope.map(s => s.workstream ?? '').filter(Boolean))]}
@@ -264,8 +263,10 @@ export function JobView(p: {
         {tab === 'diary' && (diaryView === 'day' || focusNote) && <DiaryTab job={job} entries={p.diary} rooms={[...new Set(scope.map(s => s.room))]} vos={vos}
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
-        {tab === 'scope' && job.kind === 'orders' && <OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />}
-        {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence} />}
+        {tab === 'scope' && job.kind === 'orders' && <><OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />
+          <VoList vos={vos} vals={vals} onToggle={p.onToggleVo} onEdit={onEditVariation} onLog={onLogVariation} /></>}
+        {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence}
+          vos={vos} onToggleVo={p.onToggleVo} onEditVo={onEditVariation} onLogVo={onLogVariation} onImportVo={access.money ? p.onImportVo : undefined} onImportVos={access.money ? p.onImportVos : undefined} onRegister={access.money ? p.onVoRegister : undefined} onDayworks={() => p.onDayworks(false)} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} readNote={p.readNote} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}

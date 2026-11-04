@@ -44,7 +44,7 @@ describe('operative', () => {
     expect(screen.queryByRole('button', { name: /add to valuation/i })).toBeNull()
     noMoney()
 
-    nav('vos')
+    nav('scope')
     await screen.findByText('Extra post')
     noMoney()
     click(screen.getByRole('button', { name: /Extra post/ }))

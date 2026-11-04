@@ -10,9 +10,9 @@ beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { 
 
 async function issueOne(desc: string, rate: string, valNo: number) {
   nav('scope')
-  click(await screen.findByRole('button', { name: 'Add item' }))
+  click(await screen.findByRole('button', { name: 'Add line' }))
   type('Description *', desc); type('Qty', '1'); type('Rate (£)', rate)
-  click(screen.getAllByRole('button', { name: 'Add item' }).at(-1)!); await closed()
+  click(screen.getAllByRole('button', { name: 'Add line' }).at(-1)!); await closed()
   await waitFor(() => expect(screen.getByText(desc)).toBeTruthy())
   click((await screen.findAllByRole('button', { name: /add to valuation/i }))[0])
   nav('vals')

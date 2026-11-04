@@ -16,3 +16,12 @@ export function propertyOf(raw: string): string | null {
   if (/^(property|address)\s*[:\-–]/i.test(raw) && t) return t
   return null
 }
+
+/** The house a VO is at: its own property, or the house its "where" names ("No. 3 rear", "Plot 4"); blank = the whole job. */
+export const voHouse = (v: { property?: string; room: string }): string => v.property?.trim() || (v.room ? propertyOf(v.room) ?? '' : '')
+
+/** Where a VO is, in words, for lists and the register: "No. 3 · Rear" (the house isn't said twice). */
+export function voWhere(v: { property?: string; room: string }): string {
+  const house = v.property?.trim()
+  return [house && !(v.room && propertyOf(v.room) === house.toUpperCase()) ? `No. ${house}` : '', v.room].filter(Boolean).join(' · ')
+}

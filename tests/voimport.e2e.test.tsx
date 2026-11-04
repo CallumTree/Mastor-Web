@@ -20,9 +20,9 @@ async function newJob(name: string, po: string) {
   await screen.findByText(name)
 }
 async function importFile(file: File) {
-  nav('vos')
-  click(await screen.findByRole('button', { name: 'Variations options' }))
-  click(screen.getByRole('button', { name: /import council instruction/i }))
+  nav('scope')
+  click(await screen.findByRole('button', { name: 'Scope options' }))   // VOs live in Scope now, at their house
+  click(screen.getByRole('button', { name: /import a vo instruction/i }))
   fireEvent.change([...document.querySelectorAll('input[type=file]')].find(i => !(i as HTMLInputElement).capture)!, { target: { files: [file] } })
   await screen.findByText(/check before adding/i)
 }
@@ -51,8 +51,8 @@ describe('council VO instructions', () => {
     render(<App />)
     await screen.findByRole('button', { name: /new job/i })   // the jobs screen
     await newJob('57 Mill Drive', 'PO21812')
-    nav('vos')
-    click(await screen.findByRole('button', { name: /log variation/i }))
+    nav('scope')
+    click(await screen.findByRole('button', { name: /^add vo$/i }))
     type(/extra work/i, 'Chimney stack unsafe — demolish and make good'); type('Where', 'Roof')
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!); await closed()
     await importFile(new File([new Uint8Array([255, 216, 255])], 'VO11284.jpg', { type: 'image/jpeg' }))

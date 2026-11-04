@@ -20,7 +20,7 @@ describe('multi-property scheme', () => {
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Example Road')
     nav('scope')
-    click(await screen.findByRole('button', { name: /import boq/i }))
+    click(await screen.findByRole('button', { name: /import scope/i }))
     fireEvent.change(document.querySelector('input[type=file][accept*=".pdf"]')!, { target: { files: [new File(['x'], 'p.csv', { type: 'text/csv' })] } })
     await screen.findByText(/3 properties: 1, 2, 13/)
     // review is grouped by house number, collapsed; open one → its workstream groups
@@ -45,7 +45,7 @@ describe('multi-property scheme', () => {
     expect(screen.getByRole('button', { name: 'No. 1 Scaffold' })).toBeTruthy()
 
     // tick all remaining in No. 1 → VAL I, 100%
-    click(screen.getByRole('button', { name: /tick all remaining \(3\)/i }))
+    click(screen.getByRole('button', { name: /tick all remaining lines \(3\)/i }))
     click(screen.getByRole('button', { name: 'Yes' }))
     await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))   // property header (+ open group)
     expect(screen.getAllByText('VAL I').length).toBe(2)                                // the open PPR Paint group's lines
@@ -69,9 +69,9 @@ describe('multi-property scheme', () => {
     click(await screen.findByRole('button', { name: /^send val i for £/i }))
     await screen.findAllByText(/^With client · For review · 0 days/)
     nav('scope')
-    click(await screen.findByRole('button', { name: 'Add item' }))
+    click(await screen.findByRole('button', { name: 'Add line' }))
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Wrong spec line' } })
-    click(screen.getAllByRole('button', { name: 'Add item' }).at(-1)!)
+    click(screen.getAllByRole('button', { name: 'Add line' }).at(-1)!)
     await screen.findByText('4 items')
     click(screen.getByRole('button', { name: 'Scope options' }))
     click(screen.getByRole('button', { name: /delete entire scope/i }))

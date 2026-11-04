@@ -118,7 +118,7 @@ export function lines(c: Convo): Line[] {
       if (!r) continue   // waiting: shown as the card
       const outcome = /tapped Cancel/.test(r.text) ? 'cancelled' : r.error ? 'failed' : 'done'
       let note = outcome === 'failed' ? r.text : undefined
-      if (outcome === 'done') try { const o = JSON.parse(r.text) as { logged?: unknown; job?: unknown }; if (typeof o.logged === 'string') note = `${o.logged} · in the VOs tab${typeof o.job === 'string' ? ` on ${o.job}` : ''}` } catch { /* not JSON: nothing to add */ }
+      if (outcome === 'done') try { const o = JSON.parse(r.text) as { logged?: unknown; job?: unknown }; if (typeof o.logged === 'string') note = `${o.logged} · in Scope${typeof o.job === 'string' ? ` on ${o.job}` : ''}, at its house` } catch { /* not JSON: nothing to add */ }
       out.push({ kind: 'change', title: changeTitle(b.name), detail: changeDetail(b.input as Record<string, unknown>), outcome, ...(note ? { note } : {}) })
     }
   }

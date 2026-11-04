@@ -19,8 +19,8 @@ describe('payments and chasing', () => {
     await screen.findByText('Pay Street')
 
     // a priced VO → "send to client" → then waiting on the client
-    nav('vos')
-    click(await screen.findByRole('button', { name: /log variation/i }))
+    nav('scope')
+    click(await screen.findByRole('button', { name: /^add vo$/i }))
     type(/extra work/i, 'Extra socket'); type('Qty (if known)', '1')
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())

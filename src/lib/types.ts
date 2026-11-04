@@ -39,6 +39,8 @@ export interface Variation {
   number: number            // sequential per job: VO-001, VO-002 — never reused
   description: string
   room: string
+  /** the house it's at on a scheme of several ("3"); blank = the whole job. Older VOs carry it in `room` ("No. 3 rear") */
+  property?: string
   qty: number | null        // null = not measured. Never guessed.
   unit: string
   rate: number | null       // null = unpriced. Never shown as £0.

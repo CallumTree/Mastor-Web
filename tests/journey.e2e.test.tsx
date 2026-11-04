@@ -43,7 +43,7 @@ describe('Park Road, end to end', () => {
 
     // --- import BoQ
     nav('scope')
-    click(await screen.findByRole('button', { name: /import boq/i }))
+    click(await screen.findByRole('button', { name: /import scope/i }))
     const input = document.querySelector('input[type=file][accept*=".pdf"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['x'], 'CR00290.csv', { type: 'text/csv' })] } })
     await screen.findByText(/check before importing/i)
@@ -85,8 +85,8 @@ describe('Park Road, end to end', () => {
     await screen.findByText('VAL II')
 
     // --- log a variation, price it, tick it into VAL II
-    nav('vos')
-    click(await screen.findByRole('button', { name: /log variation/i }))
+    nav('scope')
+    click(await screen.findByRole('button', { name: /^add vo$/i }))
     type(/extra work/i, 'Replace rotten joists under bath')
     type('Where', 'Bathroom')
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!)
@@ -96,7 +96,8 @@ describe('Park Road, end to end', () => {
     type('Qty', '2'); type('Rate (£)', '85.50'); type('SoR code', '3051AB')
     click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(screen.queryByText(/^price it$/i)).toBeNull())
-    click(screen.getByRole('button', { name: /add to valuation/i }))
+    // the VO sits in Scope with the lines: tick it there, like any line
+    click(within(screen.getByText('Replace rotten joists under bath').closest('.vo-line') as HTMLElement).getByRole('button', { name: /add to valuation/i }))
     await waitFor(() => expect(screen.getAllByText('VAL II').length).toBeGreaterThan(0))
     nav('vals')
     await screen.findByText(/VO I/)
@@ -106,9 +107,9 @@ describe('Park Road, end to end', () => {
     render(<App />)
     await screen.findByRole('heading', { name: '32 Park Road' })   // still in the job after the reload
     nav('scope')
-    await screen.findByText('58 items')
+    await screen.findByText(/^58 items · 1 VO$/)   // the scope and its VO, one list, after a reload
     expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)
-    expect(screen.getAllByText('VAL II').length).toBe(1)
+    expect(screen.getAllByText('VAL II').length).toBe(2)   // the line and the VO ticked into it, side by side
 
     // --- the money across all jobs reflects it
     cleanup()
