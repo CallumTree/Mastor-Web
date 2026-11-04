@@ -14,6 +14,7 @@ import { CourtLine, valCourt } from '../lib/chase'
 import { Field, Sheet } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
 import { invoiceAmounts } from '../lib/invoice'
+import { fig, figs } from '../components/Figs'
 
 function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   val: Valuation; scope: ScopeItem[]; vos: Variation[]
@@ -28,7 +29,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
       <div className="grow">
         <div className="row" style={{ gap: 6 }}>{ref && <span className="mono t-small slate">{ref}</span>}{open && <ByClaude at={claude} />}</div>
         <div style={{ fontWeight: 500 }}>{desc}</div>
-        <div className="hint">{sub}</div>
+        <div className="hint">{typeof sub === 'string' ? figs(sub) : sub}</div>
       </div>
       <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap' }}>{money(value)}</div>
       {onRemove && <button className="icon-btn" onClick={onRemove} aria-label="Remove from valuation" style={{ color: 'var(--ink-muted)', fontSize: 20 }}>×</button>}
@@ -37,7 +38,7 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   return (
     <div>
       {s.length > 0 && !byProp && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}{i.room && i.room !== i.workstream ? ` · ${i.room}` : ''}</>}{!i.workstream && i.room} · {qtyText(i.qty!)} {i.unit} @ {money(i.rate!)}</>, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}{i.room && i.room !== i.workstream ? ` · ${i.room}` : ''}</>}{!i.workstream && i.room} · {fig(`${qtyText(i.qty!)} ${i.unit}`)} @ {fig(money(i.rate!))}</>, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
       {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
       {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
     </div>
@@ -114,7 +115,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             { label: 'Cumulative', value: money(certified + current.gross), note: `${money(certified)} previously certified` },
           ]} />
           {current.lines > 0 && <div className="val-build">
-            {current.voBase ? <>{money(current.scopeBase)} scope + {money(current.voBase)} VOs = <b>{money(current.base)}</b> at base rates</> : <><b>{money(current.base)}</b> scope at base rates</>}
+            {current.voBase ? <>{fig(money(current.scopeBase))} scope + {fig(money(current.voBase))} VOs = <b>{money(current.base)}</b> at base rates</> : <><b>{money(current.base)}</b> scope at base rates</>}
             {(job.uplift1 || job.uplift2) ? <>, plus uplifts of {job.uplift1}%{job.uplift2 ? <>&nbsp;+&nbsp;{job.uplift2}%</> : null}</> : null}
           </div>}
           {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
@@ -146,8 +147,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                   <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span><small><IconLock size={12} /> {word}</small></div>
                   <div className="vo-main">
                     <div className="vo-desc">{v.issuedAt ? ukDate(v.issuedAt) : 'Sent'}</div>
-                    <div className="vo-meta">{t.lines} line{t.lines === 1 ? '' : 's'} · base {money(t.base)}</div>
-                    {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {money(invoiceAmounts(job, v, scope, vos).total)} incl. VAT</div>}
+                    <div className="vo-meta">{t.lines} line{t.lines === 1 ? '' : 's'} · base {fig(money(t.base))}</div>
+                    {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {fig(money(invoiceAmounts(job, v, scope, vos).total))} incl. VAT</div>}
                     <div className="vo-status"><CourtLine c={courts.get(v.id)!} /></div>
                   </div>
                   <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" aria-hidden="true" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}><IconChevron size={16} /></span></div>
@@ -200,10 +201,10 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
       <div className="stack">
         <h2 className="label bracket">Payment · {valRef(v.number)}</h2>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
-        <div className="hint">{v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`} Less than that landed? Enter what did — the rest stays owed.</div>
+        <div className="hint">{figs(v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`)} Less than that landed? Enter what did — the rest stays owed.</div>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
-        {!v.paidAt && <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(gross * 100) / 100 }) }}>Paid in full · {money(gross)}</button>}
-        {isFinite(n) && n < gross - 0.005 && <div className="flag">{money(gross - n)} will still show as owed</div>}
+        {!v.paidAt && <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(gross * 100) / 100 }) }}>Paid in full · {fig(money(gross))}</button>}
+        {isFinite(n) && n < gross - 0.005 && <div className="flag">{fig(money(gross - n))} will still show as owed</div>}
         <button className={'btn ' + (v.paidAt ? 'btn-primary' : 'btn-secondary')} disabled={!date || !isFinite(n) || n <= 0} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(n * 100) / 100 }) }}>Save payment</button>
         {v.paidAt && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...v, paidAt: null, paidAmount: null })}>Remove payment (not paid)</button>}
       </div>
@@ -257,7 +258,7 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onClos
         {p.checks.map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
         <button className="btn btn-secondary" disabled={busy !== null} onClick={() => cert(val)}>{busy === 'cert' ? 'Preparing…' : 'Preview certificate (draft)'}</button>
         <div className="hint">Sending locks {ref} while the client reviews it and gives you the certificate to send them. If they ask for changes, you can open it again.{again ? '' : ` Next ticks start ${valRef(val.number + 1)}.`}</div>
-        <button className="btn btn-primary" disabled={busy !== null} onClick={send}>{busy === 'issue' ? 'Sending…' : `Send ${ref} for ${money(p.totals.gross)}`}</button>
+        <button className="btn btn-primary" disabled={busy !== null} onClick={send}>{busy === 'issue' ? 'Sending…' : figs(`Send ${ref} for ${money(p.totals.gross)}`)}</button>
       </div>
     </Sheet>
   )

@@ -11,6 +11,7 @@ import { prettyDay } from '../lib/dates'
 import { Roll } from '../components/Roll'
 import { reducedMotion, wait } from '../lib/motion'
 import { IconCheck } from '../components/Icons'
+import { fig, figs } from '../components/Figs'
 
 const KIND: Record<SiteSuggestion['kind'], { badge: string; cls: string }> = {
   complete: { badge: 'Done', cls: 'b-green' },
@@ -83,9 +84,9 @@ export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
                   <div><span className={'badge ' + KIND[s.kind].cls}>{KIND[s.kind].badge}</span> <span className="hint">{prettyDay(e.date)}{s.property ? ` · No. ${s.property}` : ''}{s.room ? ` · ${s.room}` : ''}</span></div>
                   <div style={{ fontWeight: 600, fontSize: 15, marginTop: 4 }}>{s.text}</div>
                   {s.kind === 'complete' && lines.map(i => (
-                    <div key={i.id} className="hint">{i.property ? `No. ${i.property} · ` : ''}<span className="mono">{i.code}</span> {i.description} · {money(lineValue(i.qty, i.rate))}{i.valuationId ? ' · already claimed' : ''}</div>
+                    <div key={i.id} className="hint">{i.property ? `No. ${i.property} · ` : ''}<span className="mono">{i.code}</span> {i.description} · {fig(money(lineValue(i.qty, i.rate)))}{i.valuationId ? ' · already claimed' : ''}</div>
                   ))}
-                  {s.kind === 'vo' && <div className="hint">{s.qty != null ? `${s.qty} ${s.unit}` : 'Not measured'}{s.code ? ` · ${s.code}` : ''} · unpriced until you price it</div>}
+                  {s.kind === 'vo' && <div className="hint">{figs(s.qty != null ? `${s.qty} ${s.unit}` : 'Not measured')}{s.code ? ` · ${s.code}` : ''} · unpriced until you price it</div>}
                   {s.quote && <div className="hint" style={{ marginTop: 2 }}>“{s.quote}”</div>}
                   {s.basis === 'seen' && <div className="flag t-strong">From the {e.type === 'video' ? 'video' : 'photo'} alone — look before approving</div>}
                 </div>

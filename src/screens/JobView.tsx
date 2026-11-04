@@ -27,6 +27,7 @@ import { Roll } from '../components/Roll'
 import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
+import { fig, figs } from '../components/Figs'
 
 /** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
 const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
@@ -140,7 +141,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
           <FigN text={margin.costs || margin.labourEstimate != null ? pounds(margin.margin) : '—'} neg={margin.margin < 0} />
           <div className="fig-l">Margin ›</div>
           {margin.costs || margin.labourEstimate != null
-            ? (margin.provisional.length ? <div className="fig-note">Provisional</div> : margin.pct != null && <div className="fig-sub">{margin.pct}% · costs {pounds(margin.costs)}</div>)
+            ? (margin.provisional.length ? <div className="fig-note">Provisional</div> : margin.pct != null && <div className="fig-sub">{fig(`${margin.pct}%`)} · costs {fig(pounds(margin.costs))}</div>)
             : <div className="fig-sub">Add costs</div>}
         </button>
       </div>}
@@ -153,7 +154,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
             <button key={i} className={'act act-' + kind + (i === liveAt ? ' live' : '')} onClick={a.onClick}>
               {i === liveAt && <Trace r={8} />}
               <SignMark kind={kind} size={22} />
-              <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{a.text}</span><span className="act-h">{a.hint}</span></span>
+              <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{figs(a.text)}</span><span className="act-h">{figs(a.hint)}</span></span>
               <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
             </button>
           )
@@ -317,7 +318,7 @@ function PoGapSheet({ job, gap, onSave, onSetup, onClose }: {
           rows={[[['BoQ + uplifts', money(gap.withUplifts)], ['PO value', money(job.contractValue)]], [['Uplifts set', `${job.uplift1}% + ${job.uplift2}%`], ['Would reconcile at', `${gap.needed.toFixed(2)}% combined`]]]} />
         <div className="hint">Common reasons: items added after the PO was raised, a PO line missing, or the wrong uplifts. If you know why and will claim it anyway, accept it with a note — it'll stay recorded, and flag again if the difference changes.</div>
         <Field label="Why (for the record)"><textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Kitchen partition + ceiling patch added after PO — Dylan aware, will be claimed" /></Field>
-        <button className="btn btn-primary" disabled={!note.trim()} onClick={() => onSave({ ...job, poGapAccepted: { diff: gap.diff, note: note.trim(), at: Date.now() } })}>{accepted ? 'Update note' : `Accept ${money(Math.abs(gap.diff))} difference`}</button>
+        <button className="btn btn-primary" disabled={!note.trim()} onClick={() => onSave({ ...job, poGapAccepted: { diff: gap.diff, note: note.trim(), at: Date.now() } })}>{accepted ? 'Update note' : figs(`Accept ${money(Math.abs(gap.diff))} difference`)}</button>
         <button className="btn btn-secondary" onClick={onSetup}>Check uplifts / PO value in job setup</button>
         {accepted && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...job, poGapAccepted: null })}>Withdraw acceptance (flag it again)</button>}
       </div>

@@ -12,6 +12,7 @@ import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
 import { TradeList, TradeMark } from '../components/Trade'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
+import { fig, figs } from '../components/Figs'
 
 /** Valuation tick. 44px to hit with a glove; the visible box sits inside. */
 export function Tick({ on, locked, onClick }: { on: boolean; locked?: boolean; onClick: () => void }) {
@@ -105,7 +106,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           </div>
           <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
           <div className="hint">
-            {i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated'}{i.rate != null ? ` @ ${money(i.rate)}` : ''}{i.hours ? ` · ${i.hours}h` : ''}
+            {figs(i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated')}{figs(i.rate != null ? ` @ ${money(i.rate)}` : '')}{figs(i.hours ? ` · ${i.hours}h` : '')}
           </div>
           {!isPriced(i) && <div className="flag">{i.rate == null ? 'NO RATE' : 'NO QTY'} — tap to fix</div>}
         </div>
@@ -164,7 +165,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
                 <span className="prop-name">{p === '—' ? 'Unassigned' : job.properties?.[p]?.split(',')[0] || `No. ${p}`}</span>
                 <span className="prop-meta" style={{ display: 'block' }}><TradeList names={[...new Set(all.map(groupName))]} /></span>
               </span>
-              <span className="prop-amt"><span className="mono">{money(tot)}</span><small style={{ color: pct === 100 ? 'var(--green)' : undefined }}>{pct === 100 ? <><IconCheck size={14} /> all claimed</> : `${pct}% claimed`}</small></span>
+              <span className="prop-amt"><span className="mono">{money(tot)}</span><small style={{ color: pct === 100 ? 'var(--green)' : undefined }}>{pct === 100 ? <><IconCheck size={14} /> all claimed</> : <>{fig(`${pct}%`)} claimed</>}</small></span>
               <span className="prop-chev" aria-hidden="true"><IconChevron size={16} /></span>
             </button>
             <div className="prop-bar"><div style={{ width: `${pct}%` }} /></div>
@@ -173,7 +174,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
                 {remaining.length > 0 && (
                   <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--line)' }}>
                     {confirmAll === p
-                      ? <div className="row"><span className="grow t-small">Put all {remaining.length} remaining lines ({money(remaining.reduce((t, i) => t + lineValue(i.qty, i.rate), 0))}) into the valuation?</span>
+                      ? <div className="row"><span className="grow t-small">Put all {remaining.length} remaining lines ({fig(money(remaining.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)))}) into the valuation?</span>
                           <button className="chip lg" onClick={() => setConfirmAll(null)}>No</button><button className="chip lg on" onClick={() => { setConfirmAll(null); onToggleMany(remaining) }}>Yes</button></div>
                       : <button className="btn btn-secondary" onClick={() => setConfirmAll(p)}>Tick all remaining ({remaining.length})</button>}
                   </div>

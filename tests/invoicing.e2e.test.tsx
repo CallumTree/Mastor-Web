@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import App from '../src/App'
+import { text } from './text'
 const click = (el: Element) => fireEvent.click(el)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
 const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.closest('nav') && b.textContent?.toLowerCase().includes(name))!)
@@ -47,7 +48,7 @@ describe('VAT invoicing', () => {
     await screen.findByText('£200.00')                                  // VAT @ 20% on £1,000
     click(screen.getByRole('button', { name: 'Create invoice TS-1042' })); await closed()
     await screen.findByText('TS-1042')
-    expect(screen.getByText(/£1,200\.00 incl\. VAT/)).toBeTruthy()
+    expect(screen.getByText(text(/£1,200\.00 incl\. VAT/))).toBeTruthy()
 
     // payment is never assumed: the amount is blank, and 'paid in full' at the invoice total incl. VAT is one tap
     click(screen.getByRole('button', { name: /mark as paid/i }))

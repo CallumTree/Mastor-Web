@@ -10,18 +10,20 @@ colors:
   white: "#F8FAFC"
   ink-2: "#CBD5E1"
   meta: "#8291A7"
-  grid: "rgba(56, 189, 248, 0.055)"
+  grid: "rgba(148, 163, 184, 0.06)"
   cyan: "#38BDF8"
   gold: "#F59E0B"
   on-signal: "#0A0F1D"
   white-press: "#DCE1E8"
+  cyan-press: "#6CCFFA"
+  scrim: "rgba(0, 0, 0, 0.72)"
   arch-copper: "#C97B3F"
   core-clay: "#C46A49"
   core-bronze: "#B07D36"
   core-olive: "#8A9348"
   core-teal: "#2A9C9C"
   core-slate: "#7187A6"
-  core-violet: "#9670BF"
+  core-moss: "#5E8C61"
   core-rose: "#CC6994"
   core-graphite: "#80858D"
 typography:
@@ -231,11 +233,11 @@ A drafting sheet with two signals; every neutral leans blue.
 - **Surveyor Gold** (#F59E0B): what needs you. Overdue money, late to-dos, things to do, caution notes, destructive actions, the mic while recording. 8.3:1 on a panel; type on it is On-Signal ink.
 
 ### Trade Cores (categorical)
-- Clay #C46A49, Bronze #B07D36, Olive #8A9348, Teal #2A9C9C, Slate #7187A6, Violet #9670BF, Rose #CC6994, Graphite #80858D: one per trade, only ever a 14×5px band beside the trade's name (`src/lib/trade.ts`). They identify, they never signal.
+- Clay #C46A49, Bronze #B07D36, Olive #8A9348, Teal #2A9C9C, Slate #7187A6, Moss #5E8C61, Rose #CC6994, Graphite #80858D: one per trade, only ever a 14×5px band beside the trade's name (`src/lib/trade.ts`). They identify, they never signal.
 
 ### Neutral
 - **Ink Navy** (#0A0F1D): the ground, inputs, the inside of a status tag.
-- **Drafting Grid** (rgba(56, 189, 248, 0.055)): the 24px alignment grid drawn on the ground, fixed behind the page.
+- **Drafting Grid** (rgba(148, 163, 184, 0.06)): the 24px alignment grid drawn on the ground, fixed behind the page. Drafting-neutral slate, not cyan: cyan is a signal and never wallpaper.
 - **Milled Steel** (#101827): panels, the dock and rail, sheets.
 - **Steel Raised** (#16213A): an open, hovered or hot row; Clerk's "you said" block.
 - **Hairline** (#1E293B): dividers, panel edges and the bounding boxes.
@@ -288,10 +290,10 @@ One column on a phone (16px gutters, 720px max), a 104px rail and a 960px column
 
 ## Elevation & Depth
 
-Flat. Depth is told by value and by drawing: Ink Navy ground, Milled Steel panels, Steel Raised for what is open, hovered or hot, the bounding box around each data block, and a dimmed backdrop (black at 72%) under sheets. The only shadow in the app is a drop shadow under the white play mark laid over a video frame.
+Flat. Depth is told by value and by drawing: Ink Navy ground, Milled Steel panels, Steel Raised for what is open, hovered or hot, the bounding box around each data block, and the one dim, Scrim (black at 72%, never milky), under sheets. The only shadow in the app is a drop shadow under the white play mark laid over a video frame.
 
 ### Named Rules
-**The No Glow Rule.** Signals are flat fills and flat lines. No glow, no blur, no glass, no gradients except the dashed open-valuation segment of the rail and the drafting grid itself.
+**The No Glow Rule.** Signals are flat fills and flat lines. No glow, no blur, no glass, and no smooth gradient anywhere: the only gradients are hard-edged patterns (the drafting grid, the dashed open-valuation segment of the rail, the corner marks, scale bars).
 
 ## Shapes
 
@@ -333,11 +335,11 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - 0px corners, Slate Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Slate Edge rule.
 
 ### Navigation
-- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Its five tabs (four for operatives) share it evenly; they are Slate Note markings and the current one is white with a 22×2px cyan bar on the dock's bottom edge (the top edge of the middle tab is under the capture disc). The bar is one marker that slides to the tab you tap (240ms). The capture key is not a tab: it is a 60px Blueprint Cyan disc with an ink plus, standing on the dock's top edge over its centre, cut out of the page by a 4px Ink Navy ring and lifted by a soft shadow (0 8px 18px). It is the one round control, by the user's choice, so capture reads as the single thing you can always do. When it opens the capture menu, the menu rises behind it and the plus turns a quarter and a half into an × (300ms) that closes the menu where the thumb already is; the ring turns Milled Steel against the sheet. Clerk sits in the job's header beside Job setup, not in the dock.
+- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Its five tabs (four for operatives) share it evenly; they are Slate Note markings and the current one is white with a 22×2px cyan bar on the dock's bottom edge (the top edge of the middle tab is under the capture disc). The bar is one marker that slides to the tab you tap (240ms). The capture key is not a tab: it is a 60px Blueprint Cyan disc with an ink plus, standing on the dock's top edge over its centre, cut out of the page by a 4px Ink Navy ring, with no shadow. It is the one round control, by the owner's choice (confirmed again on 4 Nov 2026 against the guardrails), so capture reads as the single thing you can always do. When it opens the capture menu, the menu rises behind it and the plus turns a quarter and a half into an × (300ms) that closes the menu where the thumb already is; the ring turns Milled Steel against the sheet. Clerk sits in the job's header beside Job setup, not in the dock.
 - **Desktop:** the same as a 104px Milled Steel rail with a Hairline edge; the current tab carries a 2px cyan bar on its left, which slides down the rail. The capture disc heads the rail; its menu keeps its own ×.
 
 ### The Job Header and Certified Rail (signature)
-- Ink navy at 92%, so the grid shows faintly through, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
+- Solid Ink Navy, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
 
 ### The Selection (signature)
 - The one live thing on a screen (the next step on the job home, the hot figure in a strip, the change waiting for Do it in Clerk) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
@@ -366,7 +368,7 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 - An Ink Navy toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
 
 ### The Street Print (front page)
-- Behind the header and headline, a real photograph of a terraced street printed like a cyanotype: its light in Prussian blue (#1B4A80, luminosity blend), under an ink scrim and the drafting grid, fading into the sheet above the form. Decorative and credited; white text over it measures at least 6:1 against a bright sky.
+- Behind the header and headline, a real photograph of a terraced street printed like a cyanotype: its light in Prussian blue (#1B4A80, luminosity blend), printed dark enough on its own (no scrim, no fade) under the drafting grid, and cut off on a 1px Slate Edge rule just under the offer. Decorative and credited; measured over a pure white sky, the lede holds 6.8:1 and white type 9.7:1.
 
 ### Founding Register (front page)
 - Fifty Roman-numeral places on a steel board inside its bounding box: free places outlined in Slate Edge, taken places filled #273449, the next place lit cyan with an ink numeral, the visitor's own place white with a cyan ring. The claim button is the white block naming the next numeral; the place count is mono.
@@ -393,3 +395,13 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 - **Don't** round corners past 2px or draw pills.
 - **Don't** add a kicker or eyebrow label above a heading.
 - **Don't** draw a bounding box around a block that sits inside another block or a sheet.
+
+## Guardrails (enforced)
+Set by the owner on 4 Nov 2026 as zero tolerance, and checked on every test run by `tests/guardrails.test.ts`, so a change that breaks one fails the build:
+1. **No decorative light.** No `backdrop-filter`, blur, frosted glass or milky overlays; no glowing orbs, radial blooms or halos; no shadow that blurs more than 4px. Depth comes from 1px rules, value steps and the bounding box.
+2. **No gradient wallpaper, no SaaS purple.** No smooth or multi-stop gradients: only hard-edged patterns. Nothing in the purple or indigo range (the test rejects any hue from 245° to 320°). Surfaces are solid dark neutrals; colour is a signal only. Every colour is a token defined once in `:root`; no hex or rgba written into a screen.
+3. **Industrial geometry.** Corners 4px at most (the design's own are 0–2px); no pills, no bubbles, no soft circular cards.
+4. **One level of container.** No card inside a card; rows are divided by hairlines on a grid. No decorative icons, emoji or filler badges.
+5. **Figures are mono and tabular.** Every amount, rate, quantity, percentage, code and ref is JetBrains Mono with tabular numerals, inside a sentence, a button or a note too (`src/components/Figs.tsx`: `fig`, `figs`); any digit left in Archivo is tabular. Text keeps its contrast at full strength: nothing fades by opacity.
+
+Recorded exceptions, each named in the test: the capture key stays round (the owner's choice, kept on 4 Nov 2026); photo mark-up ink (red, yellow, blue, white, black) is drawn onto the client's photos, not the interface; the sign marks keep their circle and triangle shapes, because the shape carries the meaning; the sheet's dim is the Scrim token.

@@ -38,7 +38,7 @@ describe('dayworks', () => {
     await waitFor(() => expect(screen.getAllByRole('option').some(o => o.textContent?.startsWith('M — Multiskilled'))).toBe(true))
     fireEvent.change(screen.getByLabelText('Trade 1'), { target: { value: 'M' } })
     type('Hours', '6')
-    expect(screen.getAllByText('£125.52').length).toBe(2)   // labour and total: 6 × 20.92
+    expect(screen.getAllByText('£125.52').filter(e => !e.closest('button')).length).toBe(2)   // labour and total: 6 × 20.92 (the claim button names it too)
     type(/^Signed by/, 'Dylan Rees')
     click(screen.getByRole('button', { name: 'Claim as a variation · £125.52' }))
     await waitFor(async () => {

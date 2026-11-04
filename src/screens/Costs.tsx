@@ -7,6 +7,7 @@ import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { SumStrip } from '../components/Register'
 import { TradeMark } from '../components/Trade'
 import { Plate } from '../components/Sign'
+import { fig, figs } from '../components/Figs'
 
 const KINDS: { k: CostKind; label: string }[] = [{ k: 'subbie', label: 'Subcontractor' }, { k: 'labour', label: 'Labour' }, { k: 'materials', label: 'Materials' }, { k: 'plant', label: 'Plant / hire' }, { k: 'other', label: 'Other' }]
 const STATUS: { s: CostStatus; label: string; hint: string }[] = [
@@ -50,7 +51,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
           <b>Labour from the site diary</b>
           <div className="muted t-note" style={{ marginTop: 4 }}>
             {m.labourDays ? `${m.labourDays} operative-day${m.labourDays === 1 ? '' : 's'} recorded` : 'No labour recorded in the diary yet'}
-            {m.labourEstimate != null ? ` × ${money(dayRate!)} a day = ${money(m.labourEstimate)} (an estimate, included above).` : m.labourDays ? ' — set your day rate in Settings to include them as an estimate.' : '.'}
+            {figs(m.labourEstimate != null ? ` × ${money(dayRate!)} a day = ${money(m.labourEstimate)} (an estimate, included above).` : m.labourDays ? ' — set your day rate in Settings to include them as an estimate.' : '.')}
           </div>
         </div>
 
@@ -61,7 +62,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
               <div key={t.trade} className="panel trade">
                 <div className="trade-head">
                   <b><TradeMark name={t.trade} />{t.trade}</b>
-                  <span className="muted">{t.lines ? `${t.lines} line${t.lines === 1 ? '' : 's'}: ${money(t.base)} base · ${money(t.value)} with uplifts` : 'No scope lines in this trade'}{t.unpriced ? ` · + ${t.unpriced} unpriced` : ''}</span>
+                  <span className="muted">{figs(t.lines ? `${t.lines} line${t.lines === 1 ? '' : 's'}: ${money(t.base)} base · ${money(t.value)} with uplifts` : 'No scope lines in this trade')}{t.unpriced ? ` · + ${t.unpriced} unpriced` : ''}</span>
                 </div>
                 {t.accepted != null && <div className="trade-row"><span className="grow">Agreed / paid</span><span className="amt">{money(t.accepted)}</span>
                   {t.value > 0 && <span className={'amt trade-m' + (t.value - t.accepted < 0 ? ' neg' : '')}>{signed(t.value - t.accepted)} · {pctOf(t.value - t.accepted, t.value)}%</span>}</div>}
@@ -74,7 +75,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
                       : <span className="trade-none">No scope lines to compare</span>}
                     {accepting === q.cost.id ? (
                       <div className="trade-confirm">
-                        <span>Accept {q.cost.amount != null ? money(q.cost.amount) : 'this quote'} from {q.cost.who || 'this supplier'}? It counts against the margin.</span>
+                        <span>Accept {q.cost.amount != null ? fig(money(q.cost.amount)) : 'this quote'} from {q.cost.who || 'this supplier'}? It counts against the margin.</span>
                         <div className="row">
                           <button className="btn btn-secondary" onClick={() => setAccepting(null)}>Cancel</button>
                           <button className="btn btn-primary" onClick={() => { setAccepting(null); void onSave({ ...q.cost, status: 'committed' }) }}>Accept quote</button>

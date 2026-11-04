@@ -7,6 +7,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import App from '../src/App'
 import { db, rates, wipeLocal } from '../src/lib/db'
 import { blankSettings } from '../src/lib/types'
+import { text } from './text'
 
 afterAll(async () => { cleanup(); await wipeLocal() })
 const click = (el: Element) => fireEvent.click(el)
@@ -34,7 +35,7 @@ describe('small works orders', () => {
     type('Add an SoR code', '015003')
     click(await screen.findByRole('button', { name: 'Use £228.62' }))
     type('Qty for 015003', '2.5')
-    expect(screen.getByText(/Work · 1 line · £571.55/)).toBeTruthy()
+    expect(screen.getByText(text(/Work · 1 line · £571.55/))).toBeTruthy()
     click(screen.getByRole('button', { name: 'Mark done' }))
 
     click(await screen.findByRole('button', { name: /Complete · 1/ }))

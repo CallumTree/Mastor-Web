@@ -5,6 +5,7 @@ import { coveredBy, readRateFile, searchRates, type RateDraft } from '../lib/rat
 import { money, ukDate } from '../lib/format'
 import { ConfirmDelete, Sheet } from '../components/Ui'
 import { Plate } from '../components/Sign'
+import { fig } from '../components/Figs'
 
 /** Every rate line on this device, loaded once and refreshed when the books change. */
 function useRates(books: RateBook[]) {
@@ -168,7 +169,7 @@ export function RateLookup({ code, books, onUse }: { code: string; books: RateBo
           <div key={h.bookId} className="lookup-hit">
             <div className="grow"><b>{h.short}</b><small>{b?.name} · <span className="amt">{money(h.rate)}</span> per {h.unit}</small>
               {b?.notes.map(n => <div key={n} style={{ marginTop: 4 }}><Plate kind="warn">{n}</Plate></div>)}</div>
-            <button type="button" className="btn btn-primary" onClick={() => onUse(h, b)}>Use {money(h.rate)}</button>
+            <button type="button" className="btn btn-primary" onClick={() => onUse(h, b)}>Use {fig(money(h.rate))}</button>
           </div>
         )
       })}

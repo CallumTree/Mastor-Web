@@ -4,7 +4,7 @@
  * anything else takes a stable core from its name. The colour is only ever a small band beside the
  * trade's name, never a fill, and never red, yellow, green, volt or neon (those carry meaning).
  */
-export const CORES = ['clay', 'bronze', 'olive', 'teal', 'slate', 'violet', 'rose', 'graphite'] as const
+export const CORES = ['clay', 'bronze', 'olive', 'teal', 'slate', 'moss', 'rose', 'graphite'] as const
 export type Core = typeof CORES[number]
 
 const BY_WORD: [RegExp, Core][] = [
@@ -13,7 +13,7 @@ const BY_WORD: [RegExp, Core][] = [
   [/decarb|insulat|solar|\bpv\b|energy|\bewi\b|\biwi\b|loft|ventilat|heat pump/, 'olive'],
   [/bath|wet ?room|shower|plumb|heating|boiler|\bwc\b|sanitary/, 'teal'],
   [/roof|gutter|chimney|fascia|soffit|rainwater/, 'slate'],
-  [/window|door|glaz|frame/, 'violet'],
+  [/window|door|glaz|frame/, 'moss'],
   [/paint|decor|plaster|render|ceiling|wall finish/, 'rose'],
   [/scaffold|prelim|general|site set|welfare|skip/, 'graphite'],
 ]

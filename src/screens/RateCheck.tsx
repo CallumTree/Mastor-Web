@@ -5,6 +5,7 @@ import { bestBook, checkRates, patternText, type CheckLine, type CheckResult, ty
 import { money } from '../lib/format'
 import { Sheet } from '../components/Ui'
 import { Plate } from '../components/Sign'
+import { fig, figs } from '../components/Figs'
 
 export function useRateCheck(lines: CheckLine[], books: RateBook[]) {
   const [items, setItems] = useState<RateItem[] | null>(null)
@@ -22,7 +23,7 @@ export function RateVerdict({ r }: { r: CheckResult }) {
   if (!compared) return <Plate kind="wait">None of these codes are in {r.book?.name}</Plate>
   if (r.pattern) {
     return r.counts.off
-      ? <Plate kind="warn">{r.counts.off} line{r.counts.off === 1 ? '' : 's'} don’t follow the {patternText(r.pattern)} pattern{r.below ? ` · ${money(r.below)} below it` : ''}</Plate>
+      ? <Plate kind="warn">{r.counts.off} line{r.counts.off === 1 ? '' : 's'} don’t follow the {patternText(r.pattern)} pattern{figs(r.below ? ` · ${fig(money(r.below))} below it` : '')}</Plate>
       : <Plate kind="ok">All {compared} priced lines follow {patternText(r.pattern)}</Plate>
   }
   return <Plate kind="wait">Doesn’t follow {r.book?.name} — {r.counts.differs} of {compared} lines differ</Plate>
@@ -32,11 +33,11 @@ const line = (r: CheckRow) => (
   <div key={r.line.id} className="chk-row">
     <span className="mono">{r.line.code || '—'}</span>
     <span className="grow">{r.line.description}<small>
-      {r.status === 'off' && <>BoQ {money(r.line.rate!)} · pattern {money(r.expected!)} · SoR {money(r.sor!.rate)} per {r.sor!.unit}</>}
-      {r.status === 'differs' && <>BoQ {money(r.line.rate!)} · SoR {money(r.sor!.rate)} per {r.sor!.unit}</>}
-      {r.status === 'unit' && <>BoQ per {r.line.unit || '—'} · SoR per {r.sor!.unit} ({money(r.sor!.rate)})</>}
+      {r.status === 'off' && <>BoQ {fig(money(r.line.rate!))} · pattern {fig(money(r.expected!))} · SoR {fig(money(r.sor!.rate))} per {r.sor!.unit}</>}
+      {r.status === 'differs' && <>BoQ {fig(money(r.line.rate!))} · SoR {fig(money(r.sor!.rate))} per {r.sor!.unit}</>}
+      {r.status === 'unit' && <>BoQ per {r.line.unit || '—'} · SoR per {r.sor!.unit} ({fig(money(r.sor!.rate))})</>}
       {r.status === 'missing' && <>Not in this schedule</>}
-      {r.status === 'norate' && <>No rate in the BoQ · SoR {money(r.sor!.rate)} per {r.sor!.unit}</>}
+      {r.status === 'norate' && <>No rate in the BoQ · SoR {fig(money(r.sor!.rate))} per {r.sor!.unit}</>}
     </small></span>
     {r.diff != null && <span className={'amt chk-diff' + (r.diff < 0 ? ' neg' : '')}>{r.diff < 0 ? '−' : '+'}{money(Math.abs(r.diff))}</span>}
   </div>

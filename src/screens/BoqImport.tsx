@@ -10,6 +10,7 @@ import type { PackFacts, Source } from '../lib/packFacts'
 import { lineValue } from '../lib/valuation'
 import { TradeList, TradeMark } from '../components/Trade'
 import { IconChevron, IconScope } from '../components/Icons'
+import { figs } from '../components/Figs'
 
 type Stage = { s: 'pick' } | { s: 'reading'; name: string; of: number } | { s: 'review'; boq: PackResult } | { s: 'error'; msg: string }
 export type ImportPack = (lines: ParsedLine[], pack: PackResult) => void
@@ -86,7 +87,7 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
       <div className="grow">
         {l.code && <span className="mono t-small slate">{l.code}{l.contract ? <span className="muted"> · {l.contract}</span> : null}</span>}
         <div className="t-note" style={{ fontWeight: 500 }}>{l.description}</div>
-        <div className="hint">{l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty'}{l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate'}</div>
+        <div className="hint">{figs(l.qty != null ? `${qtyText(l.qty)} ${l.unit}` : 'no qty')}{figs(l.rate != null ? ` @ ${money(l.rate)}` : ' · no rate')}</div>
         {l.issues.length > 0 && <div className="flag t-strong">{l.issues.join(' · ')}</div>}
       </div>
       <div className="mono t-small">{l.qty != null && l.rate != null ? money(lineValue(l.qty, l.rate)) : '—'}</div>
@@ -105,23 +106,23 @@ export function Review({ job, existing, boq, books = [], onImport, onBack, onClo
             <div style={{ textAlign: 'right' }}><div className="label">Lines</div><div className="amt" style={{ fontSize: 22, fontWeight: 700 }}>{chosen.length}</div></div>
           </div>
           <div className="hint" style={{ marginTop: 6 }}>
-            {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''}{withUplift - base > 0.005 ? ` · incl. uplifts ${money(withUplift)}` : ''}
+            {props.length > 1 ? `${props.length} properties: ${props.join(', ')}` : `${rooms.length} area${rooms.length === 1 ? '' : 's'}`}{boq.ref ? ` · ref ${boq.ref}` : ''}{figs(withUplift - base > 0.005 ? ` · incl. uplifts ${money(withUplift)}` : '')}
           </div>
           {job.contractValue > 0 && (
             <div className="t-small" style={{ marginTop: 10, fontWeight: 600, color: match ? 'var(--green)' : 'var(--ink-2)' }}>
               {match === 'base' && 'Matches your contract value'}
               {match === 'uplift' && 'Matches your contract value once uplifts are applied'}
-              {!match && `Contract value is ${money(job.contractValue)} — ${money(Math.abs(job.contractValue - base))} difference. Check for missed or flagged lines.`}
+              {!match && figs(`Contract value is ${money(job.contractValue)} — ${money(Math.abs(job.contractValue - base))} difference. Check for missed or flagged lines.`)}
             </div>
           )}
           {boq.orders.length > 0 && <div className="t-small" style={{ marginTop: 8, fontWeight: 600, color: near(base, ordersValue) ? 'var(--green)' : 'var(--ink-2)' }}>
-            {near(base, ordersValue) ? `Matches the ${boq.orders.length} works order contract value${boq.orders.length === 1 ? '' : 's'}` : `Works order contract values ${money(ordersValue)} — ${money(Math.abs(ordersValue - base))} ${base < ordersValue ? 'short' : 'over'}. See below.`}
+            {figs(near(base, ordersValue) ? `Matches the ${boq.orders.length} works order contract value${boq.orders.length === 1 ? '' : 's'}` : `Works order contract values ${money(ordersValue)} — ${money(Math.abs(ordersValue - base))} ${base < ordersValue ? 'short' : 'over'}. See below.`)}
           </div>}
           {boq.method && <div className="hint" style={{ marginTop: 6 }}>{boq.method === 'ai' ? 'Read by AI — check the flagged lines' : 'Read exactly from the documents — no AI'}</div>}
           {boq.columnCheck && boq.columnCheck.length > 0 && (() => {
             const off = boq.columnCheck.filter(c => Math.abs(c.sheet - c.read) > 0.05)
             return <div className="t-small" style={{ marginTop: 8, fontWeight: 600, color: off.length ? 'var(--ink-2)' : 'var(--green)' }}>
-              {off.length ? `Column totals differ: ${off.map(c => `${c.stream} sheet ${money(c.sheet)} vs read ${money(c.read)}`).join(' · ')}` : `All ${boq.columnCheck.length} column totals match the sheet`}
+              {figs(off.length ? `Column totals differ: ${off.map(c => `${c.stream} sheet ${money(c.sheet)} vs read ${money(c.read)}`).join(' · ')}` : `All ${boq.columnCheck.length} column totals match the sheet`)}
             </div>
           })()}
           {boq.truncated && <div className="t-small" style={{ marginTop: 8, color: 'var(--ink)', fontWeight: 600 }}>Check: the document was very long and may have been cut short — check the last section.</div>}

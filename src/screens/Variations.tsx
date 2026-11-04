@@ -17,6 +17,7 @@ import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoThumb } from '../lib/photos'
 import { IconCamera, IconFlag } from '../components/Icons'
+import { figs } from '../components/Figs'
 
 const UNITS = ['nr', 'm', 'm2', 'lm', 'item']
 
@@ -176,7 +177,7 @@ export function VariationsTab({ job, vos, vals, onLog, onEdit, onToggle, onImpor
                 <div className="vo-main">
                   <div className="vo-desc clamp2">{v.description}</div>
                   <div className="vo-meta">
-                    {v.room || '—'} · {v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured'}{m ? (v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced') : ''}
+                    {v.room || '—'} · {figs(v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured')}{figs(m ? (v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced') : '')}
                   </div>
                   <div className="vo-meta">
                     <span className={v.clientRef ? 'vo-cref' : ''}>{v.clientRef ? `Council ref ${v.clientRef}` : 'No council ref'}</span> · raised {ukDate(v.dateRaised)}{evidence ? ` · ${evidence}` : ''}
