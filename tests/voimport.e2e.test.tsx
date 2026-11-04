@@ -1,6 +1,6 @@
 /** Council VO instructions in: Excel (read directly) and a handwritten scan (AI reply mocked) that matches an open VO. */
 import { describe, it, expect, vi, beforeAll } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'
 import * as XLSX from 'xlsx'
 import App from '../src/App'
 import { db } from '../src/lib/db'
@@ -21,10 +21,10 @@ async function newJob(name: string, po: string) {
 }
 async function importFile(file: File) {
   nav('scope')
-  click(await screen.findByRole('button', { name: 'Scope options' }))   // VOs live in Scope now, at their house
-  click(screen.getByRole('button', { name: /import a vo instruction/i }))
-  fireEvent.change([...document.querySelectorAll('input[type=file]')].find(i => !(i as HTMLInputElement).capture)!, { target: { files: [file] } })
-  await screen.findByText(/check before adding/i)
+  click(await screen.findByRole('button', { name: 'Import' }))   // VOs live in Scope, at their house; one importer for tickets, instructions and schedules
+  click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^VOs/ }))
+  fireEvent.change(document.querySelector('.sheet input[type=file]:not([capture])')!, { target: { files: [file] } })
+  await screen.findByText('Import VOs · check them')
 }
 
 describe('council VO instructions', () => {
@@ -36,10 +36,10 @@ describe('council VO instructions', () => {
       [null, null, 'BCIS ', 0.1468, 220.2, 1720.2], [null, 'Framework (Example Builders)', null, 0.35, 602.07, 2322.27]]
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'BOQ')
     await importFile(new File([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], '51 Example Place - VO 5.xlsx'))
-    expect(screen.getByText('VO 5')).toBeTruthy()
+    expect(screen.getByDisplayValue('VO 5')).toBeTruthy()   // the client’s ref, read from the title, can be corrected
     expect(screen.getByText(/read exactly from the spreadsheet/i)).toBeTruthy()
     expect(screen.getByText('£1,500.00')).toBeTruthy()
-    click(screen.getByRole('button', { name: 'Add 1 to variations' })); await closed()
+    click(screen.getByRole('button', { name: 'Add 1 VO' })); await closed()
     await screen.findByText('Scaffolding to all elevations')
     const [v] = await db.variations((await db.jobs()).find(j => j.name === '51 Example Place')!.id)
     expect(v.clientRef).toBe('VO 5'); expect(v.status).toBe('Instructed'); expect(v.qty).toBe(6); expect(v.rate).toBe(250)
@@ -56,11 +56,11 @@ describe('council VO instructions', () => {
     type(/extra work/i, 'Chimney stack unsafe — demolish and make good'); type('Where', 'Roof')
     click(screen.getAllByRole('button', { name: /^log variation$/i }).at(-1)!); await closed()
     await importFile(new File([new Uint8Array([255, 216, 255])], 'VO11284.jpg', { type: 'image/jpeg' }))
-    expect(screen.getByText('11284')).toBeTruthy()
+    expect(screen.getByDisplayValue('11284')).toBeTruthy()
     expect(screen.getByText(/varies order H\/PO21812 — this job/i)).toBeTruthy()
     expect((screen.getByLabelText('Line 1 goes to') as HTMLSelectElement).selectedOptions[0].textContent).toMatch(/VO I .*likely match/)
     expect((screen.getByLabelText('Line 2 goes to') as HTMLSelectElement).value).toBe('new')
-    click(screen.getByRole('button', { name: 'Add 2 to variations' })); await closed()
+    click(screen.getByRole('button', { name: 'Add 2 VOs' })); await closed()
     const vs = (await db.variations((await db.jobs()).find(j => j.name === '57 Mill Drive')!.id)).sort((a, b) => a.number - b.number)
     expect(vs.length).toBe(2)
     expect(vs[0].clientRef).toBe('11284'); expect(vs[0].status).toBe('Instructed'); expect(vs[0].rate).toBe(540.02); expect(vs[0].code).toBe('120021')

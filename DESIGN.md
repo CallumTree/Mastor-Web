@@ -346,6 +346,7 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 
 ### Variations in the Scope
 - A VO is a row of the house's work, above its scope lines and never folded away: the VO's number as a cyan outlined badge (no dot: the dot marks the open valuation), its code, where, the description, quantity and rate in mono, the client's court plate, and the same tick once priced. A house's row carries a "2 VOs" badge beside its trades, so a folded house still says it has extra work. Unpriced reads "unpriced", never £0.
+- **A tab's ways in sit under its heading, never at the foot of a long list:** compact 44px buttons, left-aligned (`.tab-actions`, `.btn-sm`), the white block first. Scope has two: Add VO, and Import (one question: the scope or VOs). With no scope yet, Import takes the white block. Anything rarer goes in the ⋯ menu.
 
 ### Motion: what just happened
 Motion explains a change you made or that arrived; nothing plays when a screen first opens, and nothing loops except an upload in progress. In: exponential ease-out (cubic-bezier(.16, 1, .3, 1)); out: a quicker ease-in. Transform, clip, stroke and opacity only, so an old phone outdoors keeps up. Under reduced motion the movement goes and the colour change that confirms it stays. (src/lib/motion.ts, styles.css "MOTION")

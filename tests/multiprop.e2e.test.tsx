@@ -1,6 +1,6 @@
 /** Multi-property scheme: import → collapsed per property → expand → tick all → valuation grouped by property. */
 import { describe, it, expect, vi, beforeAll } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import App from '../src/App'
@@ -20,7 +20,7 @@ describe('multi-property scheme', () => {
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Example Road')
     nav('scope')
-    click(await screen.findByRole('button', { name: /import scope/i }))
+    click(await screen.findByRole('button', { name: 'Import' })); click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^Scope/ }))
     fireEvent.change(document.querySelector('input[type=file][accept*=".pdf"]')!, { target: { files: [new File(['x'], 'p.csv', { type: 'text/csv' })] } })
     await screen.findByText(/3 properties: 1, 2, 13/)
     // review is grouped by house number, collapsed; open one → its workstream groups
@@ -69,7 +69,7 @@ describe('multi-property scheme', () => {
     click(await screen.findByRole('button', { name: /^send val i for £/i }))
     await screen.findAllByText(/^With client · For review · 0 days/)
     nav('scope')
-    click(await screen.findByRole('button', { name: 'Add line' }))
+    click(await screen.findByRole('button', { name: 'Scope options' })); click(screen.getByRole('button', { name: /^add a scope line/i }))
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Wrong spec line' } })
     click(screen.getAllByRole('button', { name: 'Add line' }).at(-1)!)
     await screen.findByText('4 items')

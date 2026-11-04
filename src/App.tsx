@@ -113,8 +113,6 @@ export default function App() {
   const [access, setAccess] = useState(accessFor(null))
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
-  const [voSchedule, setVoSchedule] = useState(false)
-  const [voSchedRef, setVoSchedRef] = useState('')
   // the open job is kept in the address, so a reload comes back to it (src/lib/place.ts)
   const [openId, setOpenIdState] = useState<string | null>(() => placeParam('job'))
   const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab }) }
@@ -198,7 +196,7 @@ export default function App() {
           onReview={(v, note) => run(async () => { await db.putValuation({ ...v, byClaude: null }); if (note) await db.putDiary(newNote(job, note, 'Commercial')) })()}
           onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
           onPaid={v => run(() => db.putValuation(v))()}
-          onImportVo={() => setVoImport(true)} onImportVos={() => { setVoSchedRef(''); setVoSchedule(true) }}
+          onImportVo={() => setVoImport(true)}
           onVoRegister={async () => {
             const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name
             await shareOrDownload(await buildVoRegister({ job, vos: jobVos, vals: jobVals, company }), registerFileName(job))
@@ -259,23 +257,26 @@ export default function App() {
           onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
-      {voImport && job && <VoImport job={job} vos={jobVos} onClose={() => setVoImport(false)}
+      {voImport && job && <VoImport job={job} vos={jobVos} houses={houses} onClose={() => setVoImport(false)}
         onApply={async (vo, dec, file) => {
           const isImage = file.type.startsWith('image/')
-          const reason = `Council instruction ${vo.ref}${vo.issuedBy ? ` (${vo.issuedBy})` : ''}${vo.date ? ` issued ${new Date(vo.date).toLocaleDateString('en-GB')}` : ''}`
+          const ref = vo.ref.trim()
+          // with the client's reference the VOs are instructed; without one they wait, raised, for it
+          const reason = ref ? `Client’s instruction ${ref}${vo.issuedBy ? ` (${vo.issuedBy})` : ''}${vo.date ? ` issued ${new Date(vo.date).toLocaleDateString('en-GB')}` : ''}`
+            : `From the client’s VO document (${file.name})`
           for (const d of dec.filter(x => x.include)) {
             const l = vo.lines[d.line]
             // every VO keeps its own copy of the document (deleting one never deletes another's evidence)
             const copy = await saveImageBlob(file)
             const att = { id: copy, name: file.name, type: file.type || 'application/octet-stream' }
-            const base = { clientRef: vo.ref, status: 'Instructed' as const, qty: l.qty, unit: l.unit || 'item', rate: l.rate, code: l.code }
+            const base = { ...(ref ? { clientRef: ref, status: 'Instructed' as const } : {}), qty: l.qty, unit: l.unit || 'item', rate: l.rate, code: l.code }
             if (d.target !== 'new') {
               const v = jobVos.find(x => x.id === d.target); if (!v) continue
               await db.putVariation({ ...v, ...base, code: l.code || v.code, reason: v.reason ? `${v.reason}\n${reason}` : reason,
                 photoIds: isImage ? [...v.photoIds, copy] : v.photoIds, attachments: [...(v.attachments ?? []), att] })
             } else {
-              await db.putVariation({ ...base, id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: l.description, room: l.room !== 'General' ? l.room : '', property: l.property || undefined,
-                reason, photoIds: isImage ? [copy] : [], dateRaised: vo.date ?? Date.now(), valuationId: null, attachments: [att] })
+              await db.putVariation({ status: 'Identified', clientRef: '', ...base, id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: l.description, room: l.room !== 'General' ? l.room : '',
+                property: d.property || undefined, reason, photoIds: isImage ? [copy] : [], dateRaised: vo.date ?? Date.now(), valuationId: null, attachments: [att] })
             }
           }
           setVoImport(false); await reload()
@@ -387,23 +388,6 @@ export default function App() {
             await db.putVariation(stillPriced ? v : { ...v, valuationId: null }); setEditing(null); await reload()
           }}
           onDelete={async () => { await db.deleteVariation(editing); setEditing(null); await reload() }} />
-      )}
-      {voSchedule && job && (
-        <BoqImport job={job} existing={0} books={books} variant="vos" onClose={() => setVoSchedule(false)}
-          setup={<Field label="The client’s VO reference" hint="On their schedule or covering email. With one, the VOs come in as instructed."><input value={voSchedRef} onChange={e => setVoSchedRef(e.target.value)} placeholder="Leave blank if they haven’t given one" /></Field>}
-          onImport={async (lines, pack) => {
-            const ref = voSchedRef.trim()
-            const file = pack.files[0]?.file
-            for (const l of lines.filter(x => x.include)) {
-              // every VO keeps its own copy of the client's schedule as its evidence
-              const att = file ? [{ id: await saveImageBlob(file), name: file.name, type: file.type || 'application/octet-stream' }] : []
-              await db.putVariation({ id: uid(), jobId: job.id, number: await nextVoNumber(job.id), description: l.description, room: l.room !== 'General' ? l.room : '',
-                property: l.property || undefined, qty: l.qty, unit: l.unit || 'item', rate: l.rate, code: l.code,
-                reason: `From the client’s VO schedule${file ? ` (${file.name})` : ''}`, clientRef: ref, status: ref ? 'Instructed' : 'Identified',
-                photoIds: [], dateRaised: Date.now(), valuationId: null, attachments: att })
-            }
-            setVoSchedule(false); await reload()
-          }} />
       )}
       {importing && job && (
         <BoqImport job={job} existing={jobScope.length} books={books} onClose={() => setImporting(false)}

@@ -1,6 +1,6 @@
 /** The client's pack through the screens: works order + PCI → review shows what each file is and what doesn't add up → import. */
 import { describe, it, expect, afterAll, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'
 import * as XLSX from 'xlsx'
 import App from '../src/App'
 import { db, wipeLocal } from '../src/lib/db'
@@ -33,7 +33,7 @@ describe('client pack', () => {
     render(<App />)
     click(await screen.findByRole('button', { name: /Elm Road/ }))
     nav('scope')
-    click(await screen.findByRole('button', { name: /import scope/i }))
+    click(await screen.findByRole('button', { name: 'Import' })); click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^Scope/ }))
     fireEvent.change(document.querySelector('input[type=file][multiple]')!, { target: { files: [order, pci] } })
     await screen.findByText(/check before importing/i)
     expect(screen.getByText('In the pack · 2 files')).toBeTruthy()
@@ -71,7 +71,7 @@ describe('client pack', () => {
     cleanup(); render(<App />)
     click(await screen.findByRole('button', { name: /Bat Road/ }))
     nav('scope')
-    click(await screen.findByRole('button', { name: /import scope/i }))
+    click(await screen.findByRole('button', { name: 'Import' })); click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^Scope/ }))
     fireEvent.change(document.querySelector('input[type=file][multiple]')!, { target: { files: [order, new File([survey], 'Bat survey.txt', { type: 'text/plain' })] } })
     await screen.findByText('From the documents · read by AI')
     expect(screen.getByText(/1 piece of work the documents ask for that isn’t in the scope/)).toBeTruthy()
