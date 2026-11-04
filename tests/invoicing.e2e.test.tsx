@@ -48,7 +48,7 @@ describe('VAT invoicing', () => {
     await screen.findByText('£200.00')                                  // VAT @ 20% on £1,000
     click(screen.getByRole('button', { name: 'Create invoice TS-1042' })); await closed()
     await screen.findByText('TS-1042')
-    expect(screen.getByText(text(/£1,200\.00 incl\. VAT/))).toBeTruthy()
+    expect(screen.getAllByText(text(/£1,200\.00 incl\. VAT/)).some(el => !el.closest('.ledger'))).toBe(true)   // on the valuation (the ledger also says what's owed)
 
     // payment is never assumed: the amount is blank, and 'paid in full' at the invoice total incl. VAT is one tap
     click(screen.getByRole('button', { name: /mark as paid/i }))

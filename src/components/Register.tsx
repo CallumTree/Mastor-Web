@@ -31,32 +31,55 @@ export interface SumCell {
   warn?: string
   /** the row opens something: it becomes a button with a chevron, named by `action` */
   onClick?: () => void; action?: string
+  /** the whole that the rows below split: the split bar is drawn under it */
+  whole?: boolean
+  /** one part of that whole: its swatch keys the row to its piece of the bar, sized by `amount` */
+  swatch?: Swatch; amount?: number
+}
+export type Swatch = 'paid' | 'due' | 'open' | 'left'
+
+/** One whole split into its parts, end to end, each the same fill as its row's swatch. Text-free: the ledger rows
+ *  beside it carry the names and figures, so nothing hides behind a tap. */
+function SplitBar({ parts }: { parts: SumCell[] }) {
+  const shown = parts.filter(c => (c.amount ?? 0) > 0.005)
+  if (!shown.length) return null
+  return (
+    <div className="split" role="img" aria-label={shown.map(c => `${c.label} ${c.value}`).join(', ')}>
+      {shown.map(c => <i key={c.key ?? c.label} className={'sw-' + c.swatch} style={{ flexGrow: c.amount }} />)}
+    </div>
+  )
 }
 
 /** The money, read like a statement: a ruled ledger, each label (and its note) on the left and its figure on the
  *  right, in one column, so amounts line up and compare at a glance. A reading, not a window: no box, no fill and
- *  no corner marks. Only a row that opens something looks like it does (a chevron). The job's progress is charted
- *  once, on the job's line in the header, so a ledger never repeats it as a bar. */
+ *  no corner marks. Only a row that opens something looks like it does (a chevron). A `whole` row can carry a split
+ *  bar of where it stands, its parts keyed by swatch to the rows below; progress itself is charted once, on the
+ *  job's line in the header. */
 export function SumStrip({ cells, label, caption }: { cells: SumCell[]; label: string; caption?: string }) {
+  const head = cells.find(c => c.whole)
+  const parts = cells.filter(c => c.swatch)
+  const rest = cells.filter(c => c !== head)
+  const row = (c: SumCell) => {
+    const text = c.nil ? '—' : c.value
+    const inner = <>
+      <span className="lg-l">
+        <span className="lg-name">{c.swatch && <i className={'lg-sw sw-' + c.swatch} aria-hidden="true" />}{c.label}</span>
+        {c.note && <small>{figs(c.note)}</small>}
+        {c.warn && <span className="fig-note">{figs(c.warn)}</span>}
+      </span>
+      <span className={'lg-n' + (c.neg ? ' neg' : '')} style={fitLen(text)}><Roll text={text} /></span>
+      {c.onClick && <span className="lg-go" aria-hidden="true"><IconChevron size={18} /></span>}
+    </>
+    const cls = 'lg-row' + (c.hot ? ' key' : '') + (c.nil ? ' nil' : '')
+    return c.onClick
+      ? <button key={c.key ?? c.label} type="button" className={cls + ' lg-link'} onClick={c.onClick} aria-label={c.action}>{inner}</button>
+      : <div key={c.key ?? c.label} className={cls}>{inner}</div>
+  }
   return (
     <div className="ledger-wrap">
-      <div className="ledger" role="group" aria-label={label} data-n={cells.length}>
-        {cells.map(c => {
-          const text = c.nil ? '—' : c.value
-          const inner = <>
-            <span className="lg-l">
-              <span className="lg-name">{c.label}</span>
-              {c.note && <small>{figs(c.note)}</small>}
-              {c.warn && <span className="fig-note">{figs(c.warn)}</span>}
-            </span>
-            <span className={'lg-n' + (c.neg ? ' neg' : '')} style={fitLen(text)}><Roll text={text} /></span>
-            {c.onClick && <span className="lg-go" aria-hidden="true"><IconChevron size={18} /></span>}
-          </>
-          const cls = 'lg-row' + (c.hot ? ' key' : '') + (c.nil ? ' nil' : '')
-          return c.onClick
-            ? <button key={c.key ?? c.label} type="button" className={cls + ' lg-link'} onClick={c.onClick} aria-label={c.action}>{inner}</button>
-            : <div key={c.key ?? c.label} className={cls}>{inner}</div>
-        })}
+      <div className="ledger" role="group" aria-label={label} data-n={rest.length}>
+        {head && <div className="lg-head">{row(head)}<SplitBar parts={parts} /></div>}
+        {rest.length > 0 && <div className="lg-rows">{rest.map(row)}</div>}
       </div>
       {caption && <div className="sum-caption">{caption}</div>}
     </div>

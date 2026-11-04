@@ -81,6 +81,15 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   const owed = issued.reduce((t, v) => t + (courts.get(v.id)?.owed ?? 0), 0)
   const overdue = issued.filter(v => courts.get(v.id)?.tone === 'late' && !courts.get(v.id)?.review).length
   const pct = target > 0 ? Math.round(((certified + (current?.gross ?? 0)) / target) * 100) : 0
+  // where the money is, all without VAT so the parts add up to the contract + VOs: a payment received against a VAT
+  // invoice is put back on the same footing (less its VAT), and never counts for more than the valuation it paid
+  const pence = (x: number) => Math.round(x * 100) / 100
+  const paidNet = pence(issued.reduce((t, v) => {
+    const got = v.paidAmount ?? 0, net = valTotals(job, v.id, scope, vos).gross
+    return t + Math.min(net, Math.max(0, v.invoiceNumber ? got / (1 + (v.invoiceVatRate ?? 20) / 100) : got))
+  }, 0))
+  const split = { paid: paidNet, due: Math.max(0, pence(certified - paidNet)), open: pence(current?.gross ?? 0), left: Math.max(0, pence(target - certified - (current?.gross ?? 0))),
+    vat: issued.some(v => v.invoiceNumber && (courts.get(v.id)?.owed ?? 0) > 0) }
 
   return (
     <div className="stack">
@@ -89,11 +98,16 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           { label: 'Delete open valuation', hint: open ? `Sends every line in ${valRef(open.number)} back to live` : 'No open valuation', danger: true, disabled: !open,
             confirm: open ? `Delete ${valRef(open.number)}? Its lines go back to live — nothing else is lost.` : '', onClick: () => open && onDeleteOpen(open) },
         ]} />} />
-      <SumStrip label="Valuation summary" cells={[
-        { label: 'Contract + VOs', value: money(target), nil: !target, note: target ? `${pct}% claimed incl. this valuation` : 'No contract value yet — add it in job setup' },
-        { label: 'Certified', value: money(certified), note: `${issued.length} valuation${issued.length === 1 ? '' : 's'} sent`, nil: !issued.length },
-        { label: 'Paid', value: money(paid), note: 'as received', nil: !paid },
-        { label: 'Owed', value: money(owed), note: overdue ? `${overdue} overdue` : 'incl. VAT once invoiced', hot: owed > 0 && !open && !fixing, nil: !owed },
+      <SumStrip label="Where the money is" cells={[
+        { label: 'Contract + VOs', value: money(target), nil: !target, whole: true, note: target ? `${pct}% claimed${open ? ' incl. this valuation' : ''}${pricedVos ? ` · VOs ${money(pricedVos)}` : ''}` : 'No contract value yet — add it in job setup' },
+        // the parts only once there's something to split: before the first valuation the whole is all still to claim
+        ...(!issued.length && !open ? [] : [
+          { label: 'Paid', swatch: 'paid' as const, amount: split.paid, value: money(split.paid), nil: split.paid < 0.005, note: paid - split.paid > 0.005 ? `${money(paid)} incl. VAT` : paid ? 'as received' : 'nothing yet' },
+          { label: 'Certified, unpaid', swatch: 'due' as const, amount: split.due, value: money(split.due), nil: split.due < 0.005, hot: owed > 0 && !open && !fixing,
+            note: [split.vat ? `${money(owed)} incl. VAT` : issued.length ? `${issued.length} valuation${issued.length === 1 ? '' : 's'} sent` : 'none sent yet', overdue ? `${overdue} overdue` : ''].filter(Boolean).join(' · ') },
+          ...(open ? [{ label: `${valRef(open.number)}, open`, swatch: 'open' as const, amount: split.open, value: money(split.open), nil: split.open < 0.005, note: 'not sent yet' }] : []),
+          { label: 'Still to claim', swatch: 'left' as const, amount: split.left, value: money(split.left), nil: split.left < 0.005, note: target ? `${Math.max(0, 100 - pct)}% left` : undefined },
+        ]),
       ]} />
 
       {rhythm && <ValWeek rhythm={rhythm} onWait={() => onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />}
