@@ -22,12 +22,11 @@ import { ValuationsTab } from './Valuations'
 import { AskTab } from './Ask'
 import { valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
-import { fitLen } from '../components/Register'
-import { Roll } from '../components/Roll'
+import { SumStrip } from '../components/Register'
 import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
-import { fig, figs } from '../components/Figs'
+import { figs } from '../components/Figs'
 
 /** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
 const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
@@ -106,7 +105,6 @@ function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: 
   )
 }
 
-const FigN = ({ text, neg }: { text: string; neg?: boolean }) => <div className={'fig-n' + (neg ? ' neg' : '')} style={fitLen(text)}><Roll text={text} /></div>
 
 function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNote, onDeleteNote, onOpenDay, margin, onCosts, orders, documents, diary }: { job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]; go: (t: Tab) => void; onSetup: () => void; onUpdateJob: (j: Job) => void; notes: DiaryEntry[]; onSaveNote: (n: DiaryEntry) => void; onDeleteNote: (n: DiaryEntry) => void; onOpenDay: (date: string) => void; margin: Margin; onCosts: () => void; orders: WorkOrder[]; documents: ReactNode; diary: DiaryEntry[] }) {
   const [notesOpen, setNotesOpen] = useState(false)
@@ -130,21 +128,18 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const placeAction = (p: AlertPlace) => (p === 'gap' ? () => setGapOpen(true) : p === 'setup' ? onSetup : () => go(p))
   const actions = alerts.filter(a => seesMoney || a.site).map(a => ({ ...a, onClick: placeAction(a.place) }))
   const liveAt = actions.findIndex(a => a.kind === 'do')   // one live thing: the first next step
+  // the margin row's note: provisional, its share and costs, or a nudge to add costs (set in the mono by the ledger)
+  const marginNote = !(margin.costs || margin.labourEstimate != null) ? { note: 'Add costs' } : margin.provisional.length ? { warn: 'Provisional' } : margin.pct != null ? { note: `${margin.pct}% · costs ${pounds(margin.costs)}` } : {}
 
   return (
     <div>
-      {seesMoney && <div className="figs">
-        <div className="fig"><FigN text={job.contractValue ? pounds(job.contractValue) : '—'} /><div className="fig-l">Contract</div></div>
-        <div className="fig"><FigN text={pounds(certified)} /><div className="fig-l">Certified</div></div>
-        <div className="fig"><FigN text={pounds(voGross)} /><div className="fig-l">Variations</div>{(unpriced || unmeasured) > 0 && <div className="fig-note">+ {Math.max(unpriced, unmeasured)} not priced</div>}</div>
-        <button className="fig fig-btn" onClick={onCosts} aria-label={`Margin ${pounds(margin.margin)} — costs and margin`}>
-          <FigN text={margin.costs || margin.labourEstimate != null ? pounds(margin.margin) : '—'} neg={margin.margin < 0} />
-          <div className="fig-l">Margin ›</div>
-          {margin.costs || margin.labourEstimate != null
-            ? (margin.provisional.length ? <div className="fig-note">Provisional</div> : margin.pct != null && <div className="fig-sub">{fig(`${margin.pct}%`)} · costs {fig(pounds(margin.costs))}</div>)
-            : <div className="fig-sub">Add costs</div>}
-        </button>
-      </div>}
+      {seesMoney && <SumStrip label="Job figures" cells={[
+        { label: 'Contract', value: pounds(job.contractValue), nil: !job.contractValue },
+        { label: 'Certified', value: pounds(certified), nil: !certified },
+        { label: 'Variations', value: pounds(voGross), nil: !voGross, warn: (unpriced || unmeasured) > 0 ? `+ ${Math.max(unpriced, unmeasured)} not priced` : undefined },
+        { label: 'Margin', value: pounds(margin.margin), nil: !(margin.costs || margin.labourEstimate != null), neg: margin.margin < 0, onClick: onCosts, action: `Margin ${pounds(margin.margin)} — costs and margin`,
+          ...marginNote },
+      ]} />}
       <h2 className="sec-h">{actions.length ? `Action needed · ${actions.length}` : 'All clear'}</h2>
       <div className="acts">
         {actions.length === 0 && <div className="act act-clear"><SignMark kind="ok" size={22} /><span>Nothing outstanding on this job.</span></div>}

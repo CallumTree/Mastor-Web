@@ -159,7 +159,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
       </div>
 
       {filter === 'vos' ? (vos.length > 0 && <VoSummary job={job} vos={vos} vals={vals} />)
-        : !empty && <SumStrip label="Work summary" cols={2} progress={total + voTotal ? ((claimed + voClaimed) / (total + voTotal)) * 100 : 0} cells={[
+        : !empty && <SumStrip label="Work summary" cells={[
         { label: 'Scope total', value: money(total), note: unpricedLines ? `base rates · + ${unpricedLines} unpriced` : 'base rates', nil: !scope.length },
         { label: 'Variations', value: money(voTotal), note: [`${vos.filter(counts).length} VO${vos.filter(counts).length === 1 ? '' : 's'}`, voUnpriced ? `+ ${voUnpriced} unpriced` : ''].filter(Boolean).join(' · '), nil: !voTotal },   // unpriced is never £0
         { label: 'Claimed', value: money(claimed + voClaimed), note: `${total + voTotal ? Math.round(((claimed + voClaimed) / (total + voTotal)) * 100) : 0}% of the work`, hot: true, nil: !(claimed + voClaimed) },

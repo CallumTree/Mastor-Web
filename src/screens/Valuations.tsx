@@ -89,7 +89,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           { label: 'Delete open valuation', hint: open ? `Sends every line in ${valRef(open.number)} back to live` : 'No open valuation', danger: true, disabled: !open,
             confirm: open ? `Delete ${valRef(open.number)}? Its lines go back to live — nothing else is lost.` : '', onClick: () => open && onDeleteOpen(open) },
         ]} />} />
-      <SumStrip label="Valuation summary" progress={pct} cells={[
+      <SumStrip label="Valuation summary" cells={[
         { label: 'Contract + VOs', value: money(target), nil: !target, note: target ? `${pct}% claimed incl. this valuation` : 'No contract value yet — add it in job setup' },
         { label: 'Certified', value: money(certified), note: `${issued.length} valuation${issued.length === 1 ? '' : 's'} sent`, nil: !issued.length },
         { label: 'Paid', value: money(paid), note: 'as received', nil: !paid },
@@ -276,12 +276,12 @@ function ValWeek({ rhythm: r, onWait, onUndo }: { rhythm: NonNullable<ReturnType
     <div className={'panel val-week' + (r.state === 'due' || r.state === 'late' ? ' now' : '')} aria-label="Valuation week">
       <div className="val-week-c">
         <div className="label">Last sent</div>
-        <div className="val-week-n">{r.last ? <>{valRef(r.last.number)} · {day(r.last.issuedAt!)}</> : 'None yet'}</div>
+        <div className="val-week-n">{r.last ? <><span>{valRef(r.last.number)} ·</span> <span>{day(r.last.issuedAt!)}</span></> : 'None yet'}</div>
         <small>{r.last ? (ago === 0 ? 'today' : `${ago} day${ago === 1 ? '' : 's'} ago`) : 'the first on this job'}</small>
       </div>
       <div className="val-week-c">
         <div className="label">Next</div>
-        <div className="val-week-n">{valRef(r.next)} · {weekText(r)}</div>
+        <div className="val-week-n"><span>{valRef(r.next)} ·</span> <span>{weekText(r)}</span></div>
         <small>{when}</small>
       </div>
       {(r.state === 'due' || r.state === 'late' || r.waited) && <div className="val-week-f">

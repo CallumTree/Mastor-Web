@@ -38,7 +38,7 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
     <Sheet onClose={onClose} label="Costs and margin">
       <div className="stack">
         <h2 className="label bracket">Costs &amp; margin · {job.name}</h2>
-        <SumStrip label="Margin" cols={3} cells={[
+        <SumStrip label="Margin" cells={[
           { label: 'Job value', value: money(m.value), note: m.unpriced ? `incl. uplifts · + ${m.unpriced} unpriced` : 'incl. uplifts' },
           { label: 'Costs', value: money(m.costs), note: [m.labourEstimate != null ? 'incl. labour estimate' : '', m.unknownCosts ? `+ ${m.unknownCosts} without an amount` : '', m.quotes ? `${m.quotes} quote${m.quotes === 1 ? '' : 's'} not counted` : ''].filter(Boolean).join(' · ') || 'agreed + paid', nil: !m.costs },
           { label: 'Margin', value: signed(m.margin), note: m.provisional.length ? 'provisional' : m.pct != null ? `${m.pct}% of value` : '—', hot: true },

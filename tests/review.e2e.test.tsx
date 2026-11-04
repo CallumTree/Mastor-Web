@@ -33,7 +33,7 @@ describe('the client’s review', () => {
     // sending hands over the certificate and closes: no second sheet to dismiss
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · 0 days/)
-    expect(within(screen.getByLabelText('Valuation week')).getByText(/^VAL I · /)).toBeTruthy()   // when the last one went
+    expect([...screen.getByLabelText('Valuation week').querySelectorAll('.val-week-n')].some(n => /^VAL I · /.test(n.textContent ?? ''))).toBe(true)   // when the last one went
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()
 
     // the client wants changes: say what, and it opens to amend

@@ -219,7 +219,7 @@ The user chose this world in November 2026 from three dark directions, after the
 - Two signals: cyan for the selection, gold for what needs you; done is white
 - Tabular mono for every figure, code, ref, quantity and date number
 - Uppercase micro-labels tracked at 0.08em; section heads are cyan title lines over a hairline
-- The one live thing on a screen is marked at its corners in cyan, like a selection in a drawing program
+- The one live thing on a screen, always something you can act on, is marked at its corners in cyan, like a selection in a drawing program. A figure is a reading and is never marked
 
 ## Colors
 
@@ -252,7 +252,7 @@ A drafting sheet with two signals; every neutral leans blue.
 
 **The Shape Carries It Rule.** Overdue and to-do are both gold, so they are never told apart by colour: overdue is a disc with a bar, to-do a triangle, the next step a cyan disc with an arrow, done a white square with a tick. Every sign also has its word for screen readers.
 
-**The Drawn Twice Rule.** A data block (figure grid, summary strip, panel, action row, job list, title block) carries a 1px Hairline bounding box 3px outside its own edge. A block inside a sheet or inside another block is drawn once.
+**The Drawn Twice Rule.** A block you work in (panel, action row, job list, title block) carries a 1px Hairline bounding box 3px outside its own edge. A block inside a sheet or inside another block is drawn once. The money ledger is never boxed: it's a reading, not a window.
 
 **The Drafting Sheet Rule.** The app and the front page are dark only (`color-scheme: only dark`) and drawn on the grid; the front page carries the same tokens in `src/landing/landing.css` (its brief: `.impeccable/surfaces/src-landing-landing-tsx.md`). The client's PDFs stay print-white.
 
@@ -267,7 +267,7 @@ A drafting sheet with two signals; every neutral leans blue.
 ### Hierarchy
 - **Headline figure** (Mono 560, clamp(32px, 10vw, 44px), -0.04em): the dashboard's owed figure.
 - **Job name / Tab title** (Archivo 720, 26–28px, 1.05–1.08, -0.02em): the one heavy line on a screen.
-- **Figure** (Mono 520, clamp(22px, 6.4vw, 28px), -0.03em): figure grids and summary strips, fitted to their cell.
+- **Figure** (Mono 520, 19px; the key figure 600 at 26px; -0.02em): the money ledger's column, shrunk to fit beside its label (down to 15px) rather than cut off.
 - **Title** (Archivo 700, 16px, 1.25, -0.01em): an action row's title, a sheet's question, a property.
 - **Body** (Archivo 450, 16px, 1.45): reading text; Clerk's answers to 62ch.
 - **Section head** (Archivo 87.5% 700, 13px, 0.1em, uppercase, cyan, over a 1px Hairline): ACTION NEEDED, PINNED NOTES.
@@ -323,8 +323,9 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - **Border:** 1px Hairline, plus the bounding box 3px outside.
 - **Internal Padding:** 14px; registers carry their own 12–14px row padding.
 
-### Figures and Summary Strips
-- Ruled grids of mono figures over uppercase labels; the hot cell sits on Steel Raised, marked at its corners. The bar under a strip is 3px: cyan on Hairline.
+### Figures: the ledger
+- The money is read like a statement (`SumStrip`, `.ledger`): each label and its note on the left, its figure on the right, so the amounts stand in one column and compare at a glance. Head and foot rules at 2px Hairline, 1px Hairline between rows. No box, no fill, no corner marks: nothing about it says tap. The key figure (the one the screen is about) is set heavier and larger, and nothing else. A row that opens something (Margin on the job home) is a button with a chevron, the only row that looks like one. From 560px the rows run in two columns.
+- **One chart per screen: the job's line.** Progress is charted once, on the job's line under the header (white certified, dashed cyan the open valuation), which keeps its length on a phone and drops its label underneath. A ledger never repeats it as a bar: a thin bar along a box's foot reads as a scrollbar.
 
 ### Inputs / Fields
 - **Style:** Ink Navy field, 1px Slate Edge, 1px corners, 50px tall; numbers and dates in Mono. Labels above in uppercase Ink 2.
@@ -342,7 +343,7 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - Solid Ink Navy, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
 
 ### The Selection (signature)
-- The one live thing on a screen (the next step on the job home, the hot figure in a strip, the change waiting for Do it in Clerk) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
+- The one live thing on a screen (the next step on the job home, the change waiting for Do it in Clerk: always something you act on, never a figure) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
 
 ### Variations in the Scope
 - A VO is a row of the house's work, above its scope lines and never folded away: the VO's number as a cyan outlined badge (no dot: the dot marks the open valuation), its code, where, the description, quantity and rate in mono, the client's court plate, and the same tick once priced. A house's row carries a "2 VOs" badge beside its trades, so a folded house still says it has extra work. Unpriced reads "unpriced", never £0.
