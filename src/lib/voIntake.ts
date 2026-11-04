@@ -51,6 +51,13 @@ export function readVoSheet(rows: Cell[][]): ParsedVo | null {
   }
 }
 
+/** Lines read from a table with no "Label: value" block: the VO number only if a title row names one. */
+function fromTable(lines: ParsedLine[], top: Cell[][]): ParsedVo {
+  const title = top.map(r => r.map(txt).filter(Boolean).join(' ')).find(t => /\bVO\s*\d+/i.test(t)) ?? ''
+  const ref = (title.match(/\bVO\s*\d+/i) ?? [''])[0].replace(/\s+/, ' ').toUpperCase()
+  return { ref, date: null, issuedBy: '', address: '', poNumber: '', description: '', lines: lines.filter(l => l.code || l.rate != null || l.qty != null), method: 'spreadsheet' }
+}
+
 /** The AI's reply for a scan/photo/PDF instruction (JSON). Missing values stay missing. */
 export function parseVoReply(text: string): ParsedVo | null {
   const j = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)
@@ -127,7 +134,18 @@ export async function readVoFile(file: File): Promise<ParsedVo> {
       const v = readVoSheet(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, blankrows: false, defval: null }))
       if (v) return v
     }
-    throw new Error("Couldn't find a schedule (CODE / DESCRIPTION / QTY / RATE) in that spreadsheet.")
+    // a VO schedule in a layout of its own, sent like a spec list: read by what its columns mean, a VO per line
+    const { readWorkbook } = await import('./scopeTable')
+    const sheets = wb.SheetNames.map(n => ({ name: n, rows: XLSX.utils.sheet_to_json<Cell[]>(wb.Sheets[n], { header: 1, blankrows: true, defval: null }) }))
+    const read = readWorkbook(sheets as { name: string; rows: (string | number | null)[][] }[])
+    if (read?.lines.length) return fromTable(read.lines, sheets.flatMap(s => s.rows.slice(0, 8)))
+    throw new Error("Couldn't find any lines of work (code, description, qty, rate) in that spreadsheet.")
+  }
+  if (name.endsWith('.docx')) {
+    const [{ docxEvents, docxXml }, { readDocxTables }] = await Promise.all([import('./worksOrder'), import('./scopeTable')])
+    const read = readDocxTables(docxEvents(await docxXml(await asBuffer(file))))
+    if (read?.lines.length) return fromTable(read.lines, [])
+    throw new Error("Couldn't find a table of work in that Word document. Save it as a PDF and try again.")
   }
   const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf'
   const blob = isPdf ? file : await shrinkImage(file)

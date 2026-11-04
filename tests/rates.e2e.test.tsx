@@ -88,7 +88,7 @@ describe('schedule of rates', () => {
 
     // --- a scope line found by description fills code, description, unit and rate
     nav('scope')
-    click(await screen.findByRole('button', { name: /add line/i }))
+    click(await screen.findByRole('button', { name: 'Scope options' })); click(screen.getByRole('button', { name: /^add a scope line/i }))
     click(screen.getByRole('button', { name: /find a rate by description/i }))
     type(/search by code or words/i, 'hardwall')
     click(await screen.findByRole('button', { name: /3051AB/ }))

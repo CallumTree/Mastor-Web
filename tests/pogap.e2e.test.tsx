@@ -18,7 +18,7 @@ describe('BoQ vs PO difference', () => {
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Gap Road')
     nav('scope')
-    click(await screen.findByRole('button', { name: /add line/i }))
+    click(await screen.findByRole('button', { name: 'Scope options' })); click(screen.getByRole('button', { name: /^add a scope line/i }))
     type('Description *', 'Kitchen partition'); type('Qty', '1'); type('Rate (£)', '900')
     click(screen.getAllByRole('button', { name: 'Add line' }).at(-1)!)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())

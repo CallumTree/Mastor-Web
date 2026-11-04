@@ -43,7 +43,7 @@ describe('Park Road, end to end', () => {
 
     // --- import BoQ
     nav('scope')
-    click(await screen.findByRole('button', { name: /import scope/i }))
+    click(await screen.findByRole('button', { name: 'Import' })); click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^Scope/ }))
     const input = document.querySelector('input[type=file][accept*=".pdf"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['x'], 'CR00290.csv', { type: 'text/csv' })] } })
     await screen.findByText(/check before importing/i)

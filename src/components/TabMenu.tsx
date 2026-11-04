@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Sheet } from './Ui'
 
 /**
@@ -7,18 +7,19 @@ import { Sheet } from './Ui'
  */
 export interface MenuAction { label: string; hint?: string; danger?: boolean; confirm?: string; disabled?: boolean; onClick: () => void }
 
-export function TabMenu({ title, actions }: { title: string; actions: MenuAction[] }) {
+/** `button`: a labelled trigger in place of the ⋯ (the Scope's Import, say); the sheet is then headed with the title alone. */
+export function TabMenu({ title, actions, button }: { title: string; actions: MenuAction[]; button?: { label: ReactNode; className: string } }) {
   const [open, setOpen] = useState(false)
   const [confirming, setConfirming] = useState<MenuAction | null>(null)
   const run = (a: MenuAction) => { if (a.confirm && confirming !== a) { setConfirming(a); return } setOpen(false); setConfirming(null); a.onClick() }
   return (
     <>
-      <button className="tabmenu-btn" aria-label={`${title} options`} onClick={() => { setConfirming(null); setOpen(true) }}>
+      {button ? <button className={button.className} aria-haspopup="dialog" onClick={() => { setConfirming(null); setOpen(true) }}>{button.label}</button> : <button className="tabmenu-btn" aria-label={`${title} options`} onClick={() => { setConfirming(null); setOpen(true) }}>
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7" fill="currentColor" /><circle cx="12" cy="12" r="1.7" fill="currentColor" /><circle cx="19" cy="12" r="1.7" fill="currentColor" /></svg>
-      </button>
+      </button>}
       {open && (
         <Sheet onClose={() => { setOpen(false); setConfirming(null) }}>
-          <h2 className="label bracket" style={{ marginBottom: 8 }}>{title} options</h2>
+          <h2 className="label bracket" style={{ marginBottom: 8 }}>{button ? title : `${title} options`}</h2>
           <div className="panel flush">
             {actions.map((a, i) => (
               <div key={a.label} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>

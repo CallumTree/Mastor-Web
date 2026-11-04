@@ -59,12 +59,13 @@ describe('VOs in Scope', () => {
     click(screen.getByRole('button', { name: 'All' }))
 
     // the client's VO schedule, laid out like a spec list: a VO per line, at its house, instructed under their ref
-    click(screen.getByRole('button', { name: /^import vos$/i }))
+    click(screen.getByRole('button', { name: 'Import' }))   // one importer for VOs: tickets, instructions and schedules
+    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^VOs/ }))
     const sheet = XLSX.utils.aoa_to_sheet([['Code', 'Description', 'Qty', 'Unit', 'Rate', 'Total'],
       ['No. 3 Elm Row'], ['4350AA', 'Gutter: renew in uPVC', 9, 'LM', 31.2, 280.8],
       ['No. 5 Elm Row'], ['5110AB', 'Fascia: renew', 6, 'LM', 44, 264]])
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, sheet, 'VOs')
-    fireEvent.change(document.querySelector('input[type=file][accept*=".pdf"]')!, { target: { files: [new File([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], 'Client VO schedule.xlsx')] } })
+    fireEvent.change(document.querySelector('.sheet input[type=file]:not([capture])')!, { target: { files: [new File([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], 'Client VO schedule.xlsx')] } })
     await screen.findByText('Import VOs · check them')
     type(/client’s VO reference/i, 'VO-77')
     click(screen.getByRole('button', { name: 'Add 2 VOs' }))
@@ -74,5 +75,22 @@ describe('VOs in Scope', () => {
     expect(added[0].attachments?.[0].name).toBe('Client VO schedule.xlsx')   // the schedule kept as each VO's evidence
     expect(await screen.findByRole('button', { name: 'Property 3, 1 VO' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Property 5, 2 VOs' })).toBeTruthy()
+
+    // a VO schedule in a layout of its own (no CODE / QTY / RATE headings) is read by what its columns mean; with no
+    // reference from the client the VOs wait as raised, at the house the schedule names, which can be changed
+    click(screen.getByRole('button', { name: 'Import' }))
+    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^VOs/ }))
+    const own = XLSX.utils.aoa_to_sheet([['Variation schedule – Elm Row'], [], ['Ref', 'Work required', 'Quantity', 'Unit', 'Rate (£)', 'Amount (£)'],
+      ['3 Elm Row'], ['V1', 'Ease and adjust back door', 1, 'nr', 45, 45], ['V2', 'Renew rear gate', 1, 'nr', 180, 180]])
+    const wb2 = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb2, own, 'VOs')
+    fireEvent.change(document.querySelector('.sheet input[type=file]:not([capture])')!, { target: { files: [new File([XLSX.write(wb2, { type: 'array', bookType: 'xlsx' })], 'Extras.xlsx')] } })
+    await screen.findByText('Import VOs · check them')
+    expect((screen.getByLabelText(/client’s VO reference/i) as HTMLInputElement).value).toBe('')
+    expect((screen.getByLabelText('Line 1 house') as HTMLSelectElement).value).toBe('3')
+    fireEvent.change(screen.getByLabelText('Line 2 house'), { target: { value: '5' } })
+    click(screen.getByRole('button', { name: 'Add 2 VOs' }))
+    await waitFor(async () => expect((await db.variations('jv')).length).toBe(5))
+    const extras = (await db.variations('jv')).filter(v => v.number > 3).sort((a, b) => a.number - b.number)
+    expect(extras.map(v => [v.property, v.code, v.rate, v.status, v.clientRef])).toEqual([['3', 'V1', 45, 'Identified', ''], ['5', 'V2', 180, 'Identified', '']])
   })
 })
