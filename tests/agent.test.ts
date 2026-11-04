@@ -16,7 +16,7 @@ const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? ' 
 process.env.ANTHROPIC_API_KEY = 'ak'
 const SB = 'https://susecnvepvwmqhziferf.supabase.co'
 
-const job: Job = { id: 'j1', name: 'Windsor Road WHQS', client: 'PCC', address: 'Windsor Road', contractRef: 'MH21180', poNumber: 'PO1', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+const job: Job = { id: 'j1', name: 'Station Road WHQS', client: 'Example Council', address: 'Station Road', contractRef: 'CR21180', poNumber: 'PO1', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
 const S = (id: string, property: string, valuationId: string | null): ScopeItem =>
   ({ id, jobId: 'j1', code: '4360BD', description: `Masonry paint ${id}`, room: 'Walls', qty: 10, unit: 'SM', rate: 5.62, valuationId, order: 1, property, workstream: 'Paint', createdAt: 1 })
 const scope = [S('s1', '3', 'vb'), S('s3', '4', null), S('s4', '5', null)]
@@ -58,8 +58,8 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   }
   const h = init.headers instanceof Headers ? Object.fromEntries(init.headers) : init.headers ?? {}
   const token = String(h.authorization ?? '').replace('Bearer ', '')
-  if (url.startsWith(SB + '/auth/v1/user')) return token === 'office' ? new Response(JSON.stringify({ id: 'u1', email: 'callum@treeandsons.co.uk' })) : new Response('{}', { status: 401 })
-  if (url.startsWith(SB + '/rest/v1/memberships')) return new Response(JSON.stringify([{ company_id: 'c1', role: 'director', companies: { name: 'Tree & Sons' } }]))
+  if (url.startsWith(SB + '/auth/v1/user')) return token === 'office' ? new Response(JSON.stringify({ id: 'u1', email: 'office@example.co.uk' })) : new Response('{}', { status: 401 })
+  if (url.startsWith(SB + '/rest/v1/memberships')) return new Response(JSON.stringify([{ company_id: 'c1', role: 'director', companies: { name: 'Example Builders' } }]))
   if (url.startsWith(SB + '/rest/v1/rpc/use_ai')) { hits.push('use_ai'); return new Response('1') }
   if (url.startsWith(SB + '/rest/v1/') && init.method === 'POST') {
     const table = url.slice((SB + '/rest/v1/').length).split('?')[0], rows = JSON.parse(init.body), store = TABLES[table]() as any[]

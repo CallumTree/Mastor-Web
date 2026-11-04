@@ -14,7 +14,7 @@ const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? ' 
 
 const DAY = 86_400_000
 const at = (k: string) => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d, 12).getTime() }
-const job = (p: Partial<Job> = {}): Job => ({ id: 'j', name: 'No. 18', client: 'PCC', address: '', contractRef: '', poNumber: 'P1', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: at('2026-10-27'), ...p })
+const job = (p: Partial<Job> = {}): Job => ({ id: 'j', name: 'No. 18', client: 'Example Council', address: '', contractRef: '', poNumber: 'P1', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: at('2026-10-27'), ...p })
 const sent = (k: string, p: Partial<Valuation> = {}): Valuation => ({ id: 'v1', jobId: 'j', number: 1, status: 'Issued', createdAt: at(k) - DAY, issuedAt: at(k), review: { sentAt: at(k), rounds: 1 }, ...p })
 const site = (date: string): DiaryEntry => ({ id: 'd' + date, jobId: 'j', date, type: 'day', note: '', labour: 3, weather: 'Dry', mediaId: null, originalMediaId: null, room: '', voId: null, createdAt: 1 })
 

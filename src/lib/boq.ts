@@ -9,7 +9,7 @@ export interface ParsedLine {
   workstream: string
   hours: number | null
   note: string
-  contract?: string         // the client contract / works order the line is on, e.g. MH21180
+  contract?: string         // the client contract / works order the line is on, e.g. CR21180
   issues: string[]          // why this line needs checking
 }
 /** One label per place, however the AMO wrote it: "ALL ELVS" → "All elevations", "Front Elv" → "Front elevation". */

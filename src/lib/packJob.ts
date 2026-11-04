@@ -13,7 +13,7 @@ export interface PackJob {
   from: Partial<Record<'name' | 'client' | 'address' | 'contractRef' | 'contractValue', string>>
 }
 
-/** A full address without its house number and postcode: "3 Elm Road, Pembroke, SA71 4PY" → "Elm Road, Pembroke". */
+/** A full address without its house number and postcode: "3 Elm Road, Anytown, AB1 4PY" → "Elm Road, Anytown". */
 export const streetOf = (a: string) => a.replace(/^\s*(flat\s+)?\d+[a-z]?\s*,?\s*/i, '').replace(/,?\s*[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\s*$/i, '').trim()
 
 /** The street most of the scheme's properties are on (a scheme is usually one street, sometimes a corner of another). */

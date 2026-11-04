@@ -16,21 +16,21 @@ const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.cl
 
 describe('small works orders', () => {
   it('new order from the SoR → done → claimed in the monthly valuation', async () => {
-    await db.putSettings({ ...blankSettings(), name: 'Tree & Sons', rateBooks: [{ id: 'rb', name: 'Responsive v8', source: 'r.docx', notes: [], lines: 1, importedAt: 1 }] })
+    await db.putSettings({ ...blankSettings(), name: 'Example Builders', rateBooks: [{ id: 'rb', name: 'Responsive v8', source: 'r.docx', notes: [], lines: 1, importedAt: 1 }] })
     await rates.put('rb', [{ bookId: 'rb', code: '015003', short: 'FLOOR:RENEW INTERNAL CONCRETE', long: '', unit: 'SM', rate: 228.62, section: 'FOUNDATIONS', subsection: '' }])
 
     render(<App />)
     click(await screen.findByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     click(screen.getByLabelText(/Responsive or voids contract/))
-    type('Job name *', 'PCC Responsive 2026')
+    type('Job name *', 'Council Responsive 2026')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('No orders yet')
     nav('orders')
 
     click(await screen.findByRole('button', { name: /^New order$/ }))
     type(/^Order number/, 'R-104882')
-    type(/^Address/, '14 Bush Street, Pembroke Dock')
+    type(/^Address/, '14 High Street, Anytown')
     click(screen.getByRole('button', { name: 'Urgent' }))
     type('Add an SoR code', '015003')
     click(await screen.findByRole('button', { name: 'Use £228.62' }))
@@ -39,7 +39,7 @@ describe('small works orders', () => {
     click(screen.getByRole('button', { name: 'Mark done' }))
 
     click(await screen.findByRole('button', { name: /Complete · 1/ }))
-    await screen.findByText('14 Bush Street, Pembroke Dock')
+    await screen.findByText('14 High Street, Anytown')
     expect(screen.getByText('No after photos')).toBeTruthy()
 
     click(screen.getByRole('button', { name: 'Claim 1 completed' }))

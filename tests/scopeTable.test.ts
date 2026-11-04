@@ -45,7 +45,7 @@ ok(a.lines[5].issues.some(i => i.startsWith('document cost £254.00 ≠ qty × r
 const scope: Cell[][] = [
   ['Scheme: Kitchen and bathroom replacements, phase 2'],
   ['Ref', 'Location', 'Work required', 'Notes'],
-  ['12 Acacia Avenue, Haverford'],
+  ['12 Acacia Avenue, Anytown'],
   ['Kitchen'],
   ['K1', '', 'Strip out existing kitchen units and worktops', ''],
   ['K2', '', 'Fit new kitchen to tenant choice', 'Tenant has chosen Shaker, oak'],
@@ -186,7 +186,7 @@ ok(readPdfTable(listPdf) === null, 'a PDF table without figures goes to the AI r
 // ---- 9. Not a schedule, and the property names it recognises
 ok(readTable([['Dear Sir'], ['Please find attached our quote.'], ['Regards']]) === null, 'a letter is not a schedule → null (the AI reader takes it)')
 ok(readTable([['Name', 'Phone'], ['A. Jones', '01234']]) === null, 'a contact list is not a schedule')
-ok(propertyOf('Property address: 3 Elm Road, Pembroke') === '3' && propertyOf('Plot 14') === '14' && propertyOf('Flat 2B') === '2B' && propertyOf('Kitchen') === null && propertyOf('2 nr doors') === null, 'property headings: address, plot, flat — not a room or a quantity')
+ok(propertyOf('Property address: 3 Elm Road, Anytown') === '3' && propertyOf('Plot 14') === '14' && propertyOf('Flat 2B') === '2B' && propertyOf('Kitchen') === null && propertyOf('2 nr doors') === null, 'property headings: address, plot, flat — not a room or a quantity')
 
 ok(readTable([['No.', 'Description', 'Qty', 'Unit'], ...[1, 2, 3, 4, 5].map(n => [n, `Ease and adjust door ${n}`, 1, 'nr'])])!.lines.every((l, i) => l.code === String(i + 1) && l.property === ''),
   '"No." counting 1, 2, 3 down the page is the item number (house numbers repeat over a property’s lines)')

@@ -85,5 +85,12 @@ ok(!bare.length, 'every £ figure on screen is set in the mono (fig, figs, or a 
 const emoji = TSX.flatMap(f => read(f).split('\n').map((l, i) => /[\u{1F300}-\u{1FAFF}\u{2728}\u{2B50}\u{2600}-\u{26FF}]/u.test(l) ? `${f}:${i + 1}` : '').filter(Boolean))
 ok(!emoji.length, 'no emoji or decorative symbols', emoji)
 
+// ---- Mastor is its own business: no contractor, client or council is named in the product, its docs or its tests (PRODUCT.md)
+const TIES = new RegExp(['tree ?(&|and|&amp;) ?sons', 'treeandsons', 'pembroke', '\\bPCC\\b(?! POST)'].join('|'), 'i')
+const docs = ['PRODUCT.md', 'DESIGN.md', 'README.md', 'index.html', 'app.html'].filter(f => { try { statSync(f); return true } catch { return false } })
+const tied = [...walk('src'), ...walk('server'), ...walk('tests'), ...walk('.impeccable/surfaces'), ...docs].filter(f => !f.endsWith('guardrails.test.ts') && /\.(tsx?|md|html|tsv|css|json)$/.test(f) && !f.includes('__shots'))
+  .flatMap(f => read(f).split('\n').map((l, i) => TIES.test(l) ? `${f}:${i + 1} ${l.trim().slice(0, 80)}` : '').filter(Boolean))
+ok(!tied.length, 'no other firm, client or council named anywhere: Mastor is its own business', tied)
+
 console.log(`\n${pass} passed, ${fail} failed`)
 if (fail) process.exit(1)

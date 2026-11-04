@@ -45,7 +45,7 @@ ok(lab.items.length === 2 && lab.items[0].code === 'M' && lab.items[0].rate === 
 console.log('Rate spreadsheets (additional rates)')
 const kitchen = sheetToRates([
   ['Kitchen Install only prices'], ['Material to be ordered from Kitchen Fittings order sheet'], [],
-  ['Document Code', 'Priority', 'Short Description', 'Section', 'Subsection', 'UOM', 'SOR PCC Framework', 'Long Description'],
+  ['Document Code', 'Priority', 'Short Description', 'Section', 'Subsection', 'UOM', 'SOR Framework', 'Long Description'],
   ['3710AA', 'X', 'KITCHEN UNIT:RENEW SINGLE BASE', 'Kitchen Units and Worktops', 'Kitchen Units', 'NO', 46.7736, 'Kitchen Unit:Renew any type of single base unit'],
 ], 'k')!
 ok(kitchen.items.length === 1 && kitchen.items[0].rate === 46.77 && kitchen.items[0].unit === 'NO', 'framework rate column read, rounded to the penny')

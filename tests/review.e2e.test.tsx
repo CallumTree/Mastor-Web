@@ -16,13 +16,13 @@ afterAll(async () => { cleanup(); await wipeLocal() })
 
 describe('the client’s review', () => {
   it('sent → changes asked → a line out → sent again → agreed → invoice next', async () => {
-    await db.putJob({ id: 'jr', name: '18 Precelly Place', client: 'PCC', address: '', contractRef: 'PP18', poNumber: 'PO18', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 } as Job)
+    await db.putJob({ id: 'jr', name: '18 Example Place', client: 'Example Council', address: '', contractRef: 'PP18', poNumber: 'PO18', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 } as Job)
     await db.putValuation({ id: 'v1', jobId: 'jr', number: 1, status: 'Open', createdAt: 1, issuedAt: null })
     await db.putScope({ id: 'k', jobId: 'jr', code: 'K1', description: 'Kitchen refit', room: 'Kitchen', qty: 1, unit: 'nr', rate: 4000, valuationId: 'v1', order: 1, createdAt: 1 })
     await db.putScope({ id: 'w', jobId: 'jr', code: 'W1', description: 'Wet room', room: 'Bathroom', qty: 1, unit: 'nr', rate: 3000, valuationId: 'v1', order: 2, createdAt: 1 })
 
     render(<App />)
-    click(await screen.findByRole('button', { name: /18 Precelly Place/ }))
+    click(await screen.findByRole('button', { name: /18 Example Place/ }))
     nav('vals')
     const week = await screen.findByLabelText('Valuation week')
     expect(within(week).getByText('None yet')).toBeTruthy()

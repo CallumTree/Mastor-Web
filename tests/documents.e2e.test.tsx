@@ -10,7 +10,7 @@ const click = (el: Element) => fireEvent.click(el)
 
 describe('job documents', () => {
   it('add a RAMS to the job; operatives see it but cannot remove it', async () => {
-    const job: Job = { id: 'jdoc', name: '12 Castle Way', client: 'PCC', address: '', contractRef: 'CW12', poNumber: 'PO2', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+    const job: Job = { id: 'jdoc', name: '12 Castle Way', client: 'Example Council', address: '', contractRef: 'CW12', poNumber: 'PO2', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
     await db.putJob(job)
     render(<App />)
     click(await screen.findByRole('button', { name: /12 Castle Way/ }))
@@ -37,7 +37,7 @@ describe('job documents', () => {
     expect(screen.getByText('Documents · 2')).toBeTruthy()
 
     // an operative on the same device: can see and open it, not remove it
-    await meta.set('company', { id: 'c', name: 'Tree & Sons', user: 'u', role: 'operative' })
+    await meta.set('company', { id: 'c', name: 'Example Builders', user: 'u', role: 'operative' })
     cleanup(); render(<App />)
     await screen.findByRole('heading', { name: '12 Castle Way' })   // still in the job after the reload
     await screen.findByText('CW12 RAMS rev B')

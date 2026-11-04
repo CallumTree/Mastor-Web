@@ -13,7 +13,7 @@ afterAll(() => wipeLocal())
 describe('by Claude', () => {
   it('shows on what Claude ticked, asks for a check before issue, and goes when a person saves it', async () => {
     const at = Date.now()
-    await db.putJob({ id: 'jc', name: 'Claude Close', client: 'PCC', address: '', contractRef: 'CC1', poNumber: 'PO1', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 } as Job)
+    await db.putJob({ id: 'jc', name: 'Claude Close', client: 'Example Council', address: '', contractRef: 'CC1', poNumber: 'PO1', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 } as Job)
     // as a sync pull lands them: straight into local storage, mark and all
     await local.put('valuations', { id: 'vc', jobId: 'jc', number: 1, status: 'Open', createdAt: at, issuedAt: null, byClaude: at })
     await local.put('scope', { id: 'sc', jobId: 'jc', code: '4360BD', description: 'Masonry paint', room: 'Walls', qty: 10, unit: 'SM', rate: 5, valuationId: 'vc', order: 1, createdAt: 1, byClaude: at })

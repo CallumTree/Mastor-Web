@@ -30,7 +30,7 @@ describe('VAT invoicing', () => {
     await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
-    type('Job name *', 'Invoice Close'); type('Client', 'Pembrokeshire County Council'); type(/PO number/i, 'PC1')
+    type('Job name *', 'Invoice Close'); type('Client', 'Example Council'); type(/PO number/i, 'PC1')
     click(screen.getByRole('button', { name: 'Create job' }))
     await screen.findByText('Invoice Close')
 
@@ -38,7 +38,7 @@ describe('VAT invoicing', () => {
     invoiceFirst()
     await screen.findByText(/before your first invoice/i)
     click(screen.getByRole('button', { name: /open company settings/i }))
-    type('Company name *', 'Tree & Sons Ltd'); type(/address \*/i, 'The Reclamation Yard, Milford Haven')
+    type('Company name *', 'Example Builders Ltd'); type(/address \*/i, '1 Station Yard, Anytown')
     type('VAT number *', 'GB123456789'); type('Sort code *', '12-34-56'); type('Account no. *', '12345678')
     type('Prefix', 'TS-'); type(/next invoice number/i, '1042')
     await screen.findByText('TS-1042')

@@ -71,7 +71,7 @@ function PackReview({ pack, books, onCreate, onBack, onClose }: {
   const fromHint = (k: keyof PackJob['from'], edited: boolean) => (read.from[k] && !edited ? `From ${read.from[k]}` : undefined)
   const setup = (
     <div className="panel stack new-job" style={{ gap: 10 }}>
-      <Field label="Job name *" hint={fromHint('name', f.name !== read.name)}><input value={f.name} onChange={set('name')} placeholder="e.g. 32 College Park" /></Field>
+      <Field label="Job name *" hint={fromHint('name', f.name !== read.name)}><input value={f.name} onChange={set('name')} placeholder="e.g. 32 Park Road" /></Field>
       <Field label="Client" hint={fromHint('client', f.client !== read.client)}><input value={f.client} onChange={set('client')} placeholder="e.g. the council, housing association or trust" /></Field>
       <Field label="Site address" hint={fromHint('address', f.address !== read.address)}><input value={f.address} onChange={set('address')} /></Field>
       <div className="row pair">

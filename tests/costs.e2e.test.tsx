@@ -12,7 +12,7 @@ const type = (label: string | RegExp, value: string) => fireEvent.change(screen.
 
 describe('costs and margin', () => {
   it('quotes are compared against what the client pays; the accepted one sets the margin', async () => {
-    const job: Job = { id: 'jc', name: '9 Quay Street', client: 'PCC', address: '', contractRef: 'Q9', poNumber: 'PO1', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
+    const job: Job = { id: 'jc', name: '9 Quay Street', client: 'Example Council', address: '', contractRef: 'Q9', poNumber: 'PO1', contractValue: 0, uplift1: 10, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 }
     await db.putJob(job)
     await db.putScope({ id: 's1', jobId: 'jc', code: '2401AA', description: 'Scaffold', room: 'Front', qty: 100, unit: 'SM', rate: 20, valuationId: null, order: 1, workstream: 'Scaffold', createdAt: 1 })
     await db.putScope({ id: 's2', jobId: 'jc', code: '4360BD', description: 'Paint', room: 'Front', qty: 100, unit: 'SM', rate: 10, valuationId: null, order: 2, workstream: 'Paint', createdAt: 1 })

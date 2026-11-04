@@ -10,7 +10,7 @@ Installable PWA (portrait, standalone). Mobile web on site and desktop browser i
 
 ## Users
 
-Mastor is for **UK contractors and their teams on schedule-of-rates work who don't have a back office behind them**: planned programmes, repairs and maintenance, and empty properties for councils, housing associations, NHS trusts, police and fire services, schools, colleges and private clients. Anyone from one person doing the lot to a team across several jobs, usually running the money side in Excel today (master schedule, subbie comparison, valuation tabs). The front page talks to the business and everyone in it, not to one job title, and names no client's own frameworks or programmes. Tree & Sons Ltd (Pembrokeshire County Council framework) is the first user and its work shapes the product.
+Mastor is for **UK contractors and their teams on schedule-of-rates work who don't have a back office behind them**: planned programmes, repairs and maintenance, and empty properties for councils, housing associations, NHS trusts, police and fire services, schools, colleges and private clients. Anyone from one person doing the lot to a team across several jobs, usually running the money side in Excel today (master schedule, subbie comparison, valuation tabs). The front page talks to the business and everyone in it, not to one job title, and names no client's own frameworks or programmes. **Mastor is its own business: it names no contractor, client or council anywhere (the app, the front page, the connector, the PDFs, the docs and the tests), and claims no link to any firm.** Examples use made-up names (Example Builders, Example Council, Anytown).
 
 People who use it every day:
 
@@ -20,7 +20,7 @@ People who use it every day:
 
 People who only see the outputs:
 
-- **The client** (council or housing association, e.g. Pembrokeshire County Council): never opens the app but receives its PDFs — Variation Register, valuation certificates, VAT invoices, dayworks sheets and completion evidence packs. These have to pass a client QS's scrutiny.
+- **The client** (a council or housing association): never opens the app but receives its PDFs — Variation Register, valuation certificates, VAT invoices, dayworks sheets and completion evidence packs. These have to pass a client QS's scrutiny.
 
 Membership roles: owner, director, qs, site_manager, operative. Owners and directors manage the team; operatives see no money.
 
@@ -71,8 +71,7 @@ Not now (parked deliberately): formal CVR (accruals, cost codes, period locks, f
 
 ## Evidence on Hand
 
-- Real fixtures: 51 Precelly Place VO 5 and BoQ (`tests/prescelly.tsv`), College Park BoQ (`tests/cap00290.tsv`).
-- The PCC 2025–2029 framework schedules (M3NHF v8 Planned, Responsive, Scaffolding, Appendix I additional rates) were used to build and verify the rates importer; they are licensed and not stored in the repository.
+- Test fixtures (`tests/boq-trades.tsv`, `tests/boq-rooms.tsv` and the rest) carry made-up names, addresses and references. No client's documents and no licensed schedule of rates are stored in the repository, and no test reads them.
 - **Not on hand:** customer testimonials, outside users, usage metrics, pricing or press. These must not be fabricated.
 
 ## Product Principles

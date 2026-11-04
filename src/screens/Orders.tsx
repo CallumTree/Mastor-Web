@@ -138,7 +138,7 @@ export function OrderSheet({ job, order, scope, vals, books, onSave, onDelete, o
           <div className="grow"><Field label="Order number *"><input value={o.ref} onChange={e => setO({ ...o, ref: e.target.value })} placeholder="e.g. R-104882" /></Field></div>
           <div className="grow"><Field label="Due"><input type="date" value={due} onChange={e => setDue(e.target.value)} /></Field></div>
         </div>
-        <Field label="Address *"><input value={o.address} onChange={e => setO({ ...o, address: e.target.value })} placeholder="e.g. 14 Bush Street, Pembroke Dock" /></Field>
+        <Field label="Address *"><input value={o.address} onChange={e => setO({ ...o, address: e.target.value })} placeholder="e.g. 14 High Street, Anytown" /></Field>
         <fieldset className="chips" style={{ border: 0, padding: 0, margin: 0 }}><legend className="field" style={{ padding: 0 }}><span>Priority</span></legend>
           {PRIORITIES.map(p => <button key={p} type="button" className={'chip' + (o.priority === p ? ' on' : '')} aria-pressed={o.priority === p} onClick={() => setO({ ...o, priority: p })}>{p}</button>)}
         </fieldset>

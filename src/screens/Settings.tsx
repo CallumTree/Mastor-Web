@@ -34,7 +34,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         <div className="hint">Used on your VAT invoices. Shared with everyone in your company.</div>
 
         <h3 className="label sec">Company</h3>
-        {T('name', 'Company name *', { placeholder: 'Tree & Sons Ltd' })}
+        {T('name', 'Company name *', { placeholder: 'As it appears on your invoices' })}
         <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
         <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
         <div className="row pair"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
@@ -45,7 +45,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 
         <h3 className="label sec">Invoices</h3>
         <div className="row pair">
-          <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. TS- (or blank)' })}</div>
+          <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. INV- (or blank)' })}</div>
           <div className="grow"><Field label="Next invoice number" hint="Carry on from your current sequence"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
         </div>
         <div className="row pair">

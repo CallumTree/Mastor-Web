@@ -155,7 +155,7 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
       unit: z.string().optional().describe('Unit for the quantity, e.g. LM, SM, NO, IT'),
       rate: z.number().min(0).optional().describe('£ rate (office roles), only from a rate book, quote, the person, or a find_rate match'),
       code: z.string().optional().describe('SoR code the rate came from'),
-      rate_from: z.string().optional().describe('Where the rate came from: the rateFrom of a find_rate match, e.g. the schedule’s name or “Windsor Road · VO II”'),
+      rate_from: z.string().optional().describe('Where the rate came from: the rateFrom of a find_rate match, e.g. the schedule’s name or “Station Road · VO II”'),
       client_ref: z.string().optional().describe('The client’s VO reference, if they’ve given one'),
       instructed: z.boolean().optional().describe('The client has already instructed it (status Instructed)'),
       evidence_entry_id: z.string().optional().describe('A site photo’s entryId from get_site_diary'),

@@ -51,20 +51,6 @@ ok(!quoteFound('Start', docs[0].text), 'too-short quotes don’t count as proof'
 ok(pdfText([{ items: [{ x: 50, y: 20, s: 'Start:' }, { x: 90, y: 21, s: 'August 2026' }, { x: 50, y: 40, s: 'Next' }] }]) === '[page 1]\nStart: August 2026\nNext', 'PDF text rebuilt into lines with a page marker')
 ok(scopeSummary([{ code: '2032AA', description: 'Slate: renew', property: '3', include: true }, { code: '2032AA', description: 'Slate: renew', property: '5', include: true }, { code: 'X', description: 'Left out', property: '', include: false }]) === '2032AA Slate: renew (nos. 3, 5)', 'scope summary: one line per code, ticked lines only')
 
-// ---- quotes from the real Windsor Road documents are found in their extracted text
-const DIRS = [process.env.PCI_DIR, '/mnt/user-data/uploads', '/root/.claude/uploads'].filter((d): d is string => !!d && existsSync(d))
-const find = (re: RegExp): string | undefined => { for (const d of DIRS) { const walk = (dir: string): string | undefined => { for (const n of readdirSync(dir, { withFileTypes: true })) { const f = join(dir, n.name); if (n.isDirectory()) { const x = walk(f); if (x) return x } else if (re.test(n.name)) return f } }; const x = walk(d); if (x) return x } }
-const bat = find(/RWN-021-SR02_WindsorRoad_FI\.pdf$/i), pci = find(/Pre-construction_Information_Package.*\.pdf$/i)
-if (bat && pci) {
-  const { pdfPages } = await import('../src/lib/pdfTable')
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const t = async (f: string) => pdfText(await pdfPages(new Uint8Array(readFileSync(f)), pdfjs as never))
-  const batText = await t(bat), pciText = await t(pci)
-  ok(quoteFound('a Woodstone bat box of one of the following types is erected below the eaves', batText), 'REAL bat survey: the bat box recommendation can be quoted')
-  ok(/\[page 12\][\s\S]*hand and checked underneath/.test(batText), 'REAL bat survey: tile-lifting precaution sits on page 12')
-  ok(quoteFound('Asbo 4 to be completed prior to work commencement', pciText), 'REAL PCI: the asbestos requirement can be quoted')
-  ok(!quoteFound('Asbestos survey not required', pciText), 'REAL PCI: an invented quote isn’t found')
-} else console.log('  · real Windsor Road documents not on this machine — skipped')
 
 // the client's name for a new job: only when the document says it, in the words quoted
 const pciDoc = [{ name: 'PCI.pdf', text: 'Pre-construction information. Client: Seaview Homes Housing Association. Principal designer: Arc Design Ltd.' }]

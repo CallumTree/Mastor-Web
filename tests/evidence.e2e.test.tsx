@@ -14,11 +14,11 @@ describe('completion evidence', () => {
     const bytes = Uint8Array.from(atob(JPEG), c => c.charCodeAt(0)), bytes2 = Uint8Array.from(atob(JPEG2), c => c.charCodeAt(0))
     // the in-memory test database can't round-trip a Blob, so the photo store is stood in for
     vi.spyOn(db, 'photo').mockImplementation(async id => (id === 'b1' ? new Blob([bytes], { type: 'image/jpeg' }) : id === 'a1' ? new Blob([bytes2], { type: 'image/jpeg' }) : undefined))
-    const job = { id: 'j', name: 'PCC Responsive', client: 'Pembrokeshire County Council', contractRef: 'PCC-R26' } as Job
-    const o: WorkOrder = { id: 'o', jobId: 'j', ref: 'R-104882', address: '14 Bush Street', priority: 'Urgent', raisedAt: Date.UTC(2026, 9, 1), dueAt: null, status: 'complete', completedAt: Date.UTC(2026, 9, 3), note: 'Tenant out', beforeIds: ['b1'], afterIds: ['a1'], signedBy: 'Mrs Evans', createdAt: 1 }
-    const line = { id: 'l', jobId: 'j', orderId: 'o', code: '015003', description: 'FLOOR:RENEW INTERNAL CONCRETE', room: '14 Bush Street', qty: 2.5, unit: 'SM', rate: 228.62, valuationId: null, order: 1, createdAt: 1 } as ScopeItem
-    const pdf = await text(await buildEvidence(orderEvidence(job, o, [line], 'Tree & Sons')))
-    for (const s of ['Completion evidence', 'Order R-104882', '14 Bush Street', 'Mrs Evans', '015003', 'FLOOR:RENEW INTERNAL CONCRETE', '2.50 SM', 'Before 1', 'After 1', 'TREE & SONS']) expect(pdf).toContain(s)
+    const job = { id: 'j', name: 'Council Responsive', client: 'Example Council', contractRef: 'CR-R26' } as Job
+    const o: WorkOrder = { id: 'o', jobId: 'j', ref: 'R-104882', address: '14 High Street', priority: 'Urgent', raisedAt: Date.UTC(2026, 9, 1), dueAt: null, status: 'complete', completedAt: Date.UTC(2026, 9, 3), note: 'Tenant out', beforeIds: ['b1'], afterIds: ['a1'], signedBy: 'Mrs Evans', createdAt: 1 }
+    const line = { id: 'l', jobId: 'j', orderId: 'o', code: '015003', description: 'FLOOR:RENEW INTERNAL CONCRETE', room: '14 High Street', qty: 2.5, unit: 'SM', rate: 228.62, valuationId: null, order: 1, createdAt: 1 } as ScopeItem
+    const pdf = await text(await buildEvidence(orderEvidence(job, o, [line], 'Example Builders')))
+    for (const s of ['Completion evidence', 'Order R-104882', '14 High Street', 'Mrs Evans', '015003', 'FLOOR:RENEW INTERNAL CONCRETE', '2.50 SM', 'Before 1', 'After 1', 'EXAMPLE BUILDERS']) expect(pdf).toContain(s)
     expect((pdf.match(/\/Subtype \/Image/g) ?? []).length).toBe(2)
     expect(pdf).not.toContain('228.62')
     expect(pdf).not.toContain('£')

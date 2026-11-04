@@ -1,6 +1,6 @@
 /**
  * End-to-end user journeys, driven through the real screens.
- * The AI is replaced by a stand-in that returns the real CAP00290 lines (58 items, £34,613.81).
+ * The AI is replaced by a stand-in that returns the real CR00290 lines (58 items, £34,613.81).
  */
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react'
@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import App from '../src/App'
 
-const TSV = readFileSync(join(process.cwd(), 'tests/cap00290.tsv'), 'utf8')
+const TSV = readFileSync(join(process.cwd(), 'tests/boq-rooms.tsv'), 'utf8')
 const click = (el: Element) => fireEvent.click(el)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
 const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.closest('nav') && b.textContent?.toLowerCase().includes(name))!)
@@ -23,7 +23,7 @@ beforeAll(() => {
 // issued = locked: the lock is a drawn icon next to the text
 const lockedText = (text: string) => (_: string, el: Element | null) => !!el && el.textContent?.trim() === text && !!el.querySelector(':scope > svg')
 
-describe('College Park, end to end', () => {
+describe('Park Road, end to end', () => {
   it('create job → import BoQ → scope → valuations → issue → VAL II → VOs → survives reload', async () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
@@ -31,20 +31,20 @@ describe('College Park, end to end', () => {
     // --- new job
     click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
-    type('Job name *', '32 College Park')
-    type('Client', 'Pembrokeshire County Council')
-    type(/PO number/i, 'PC26061')
+    type('Job name *', '32 Park Road')
+    type('Client', 'Example Council')
+    type(/PO number/i, 'PO26061')
     type(/PO value/i, '40159.68')
     type('Uplift 1 (%)', '12.643')
     type('Uplift 2 (%)', '3')
     click(screen.getByRole('button', { name: 'Create job' }))
-    await screen.findByText('32 College Park')
+    await screen.findByText('32 Park Road')
 
     // --- import BoQ
     nav('scope')
     click(await screen.findByRole('button', { name: /import boq/i }))
     const input = document.querySelector('input[type=file][accept*=".pdf"]') as HTMLInputElement
-    fireEvent.change(input, { target: { files: [new File(['x'], 'CAP00290.csv', { type: 'text/csv' })] } })
+    fireEvent.change(input, { target: { files: [new File(['x'], 'CR00290.csv', { type: 'text/csv' })] } })
     await screen.findByText(/check before importing/i)
     expect(screen.getByText('£34,613.81')).toBeTruthy()
     expect(screen.getByText(/matches your contract value once uplifts are applied/i)).toBeTruthy()
@@ -103,7 +103,7 @@ describe('College Park, end to end', () => {
     // --- everything survives a full reload
     cleanup()
     render(<App />)
-    await screen.findByRole('heading', { name: '32 College Park' })   // still in the job after the reload
+    await screen.findByRole('heading', { name: '32 Park Road' })   // still in the job after the reload
     nav('scope')
     await screen.findByText('58 items')
     expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)
@@ -117,7 +117,7 @@ describe('College Park, end to end', () => {
     await screen.findByText('Needs action')
     expect(screen.getByText('Certified this year · excl. VAT')).toBeTruthy()
     // in Chase payment (VAL I is owed) and in the jobs list
-    expect(screen.getAllByText('32 College Park').length).toBe(2)
+    expect(screen.getAllByText('32 Park Road').length).toBe(2)
     expect(screen.getByText(/Chase payment · 1/)).toBeTruthy()
   })
 })

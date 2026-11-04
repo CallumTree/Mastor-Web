@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import App from '../src/App'
-const TSV = readFileSync(join(process.cwd(), 'tests/prescelly.tsv'), 'utf8')
+const TSV = readFileSync(join(process.cwd(), 'tests/boq-trades.tsv'), 'utf8')
 const click = (el: Element) => fireEvent.click(el)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
 const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.closest('nav') && b.textContent?.toLowerCase().includes(name))!)
@@ -16,9 +16,9 @@ describe('multi-property scheme', () => {
     await screen.findByRole('img', { name: 'MASTOR' })
     click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
-    type('Job name *', 'Prescelly Road')
+    type('Job name *', 'Example Road')
     click(screen.getByRole('button', { name: 'Create job' }))
-    await screen.findByText('Prescelly Road')
+    await screen.findByText('Example Road')
     nav('scope')
     click(await screen.findByRole('button', { name: /import boq/i }))
     fireEvent.change(document.querySelector('input[type=file][accept*=".pdf"]')!, { target: { files: [new File(['x'], 'p.csv', { type: 'text/csv' })] } })

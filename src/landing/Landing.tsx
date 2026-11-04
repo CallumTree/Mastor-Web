@@ -310,7 +310,7 @@ export function Landing() {
 
         <section className="wrap origin">
           <img src="/icon.svg" alt="" width={44} height={44} />
-          <p>Mastor was built inside Tree &amp; Sons Ltd, a Pembrokeshire contractor, on live council framework jobs, to replace the spreadsheets we ran them on.</p>
+          <p>Mastor is built for contractors on schedule-of-rates work: the whole job, from site to paid, in one place.</p>
         </section>
       </main>
 

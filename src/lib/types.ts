@@ -72,7 +72,7 @@ export interface ScopeItem {
   rateBook?: string          // which rate book the rate came from, when looked up
   orderId?: string           // small works orders: the order this line belongs to
   evidence?: string[]         // diary captures (photos, video, voice) that showed it done
-  contract?: string          // the client's contract / works order ref for this line (packs with several), e.g. MH21180
+  contract?: string          // the client's contract / works order ref for this line (packs with several), e.g. CR21180
   /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
   byClaude?: number | null
   createdAt: number
@@ -186,9 +186,9 @@ export interface CompanySettings {
  */
 export interface RateBook {
   id: string
-  name: string                 // e.g. "Planned Maintenance v8 — PCC 2025–29"
+  name: string                 // e.g. "Planned Maintenance v8 — 2025–29"
   source: string               // file it came from (and sheet, for spreadsheets)
-  notes: string[]              // conditions printed with the rates, e.g. "Install only — materials ordered by PCC"
+  notes: string[]              // conditions printed with the rates, e.g. "Install only — materials ordered by the client"
   lines: number
   importedAt: number
 }
