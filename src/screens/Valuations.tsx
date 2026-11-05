@@ -4,7 +4,7 @@ import { SiteReview } from './SiteReview'
 import { IconChevron, IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
-import { amending, askChanges, issuePlan, lineValue, markAgreed, reviewStage, valRef, valTotals } from '../lib/valuation'
+import { amending, askChanges, issuePlan, lineValue, reviewStage, valRef, valTotals } from '../lib/valuation'
 import { valRhythm, waitAMonth, weekText, VAL_MIN_DAYS } from '../lib/rhythm'
 import { shortDay } from '../lib/plan'
 import { dayKey } from '../lib/dates'
@@ -15,6 +15,7 @@ import { Field, Sheet } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
 import { invoiceAmounts } from '../lib/invoice'
 import { fig, figs } from '../components/Figs'
+import { tell } from '../components/Problem'
 
 function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   val: Valuation; scope: ScopeItem[]; vos: Variation[]
@@ -170,9 +171,10 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                 {(() => {
                   // the one next step, without opening the row: agreed → invoice → paid
                   const owedHere = (courts.get(v.id)?.owed ?? 0) > 0.005
-                  if (stage === 'review') return <div className="vo-next"><button className="btn btn-primary" onClick={() => { const a = markAgreed(v); onReview(a); onCreateInvoice(a) }}>Agreed — create invoice</button></div>
-                  if (!v.invoiceNumber && !v.paidAt) return <div className="vo-next"><button className="btn btn-primary" onClick={() => onCreateInvoice(v)}>Create invoice</button></div>
-                  if (!v.paidAt && owedHere) return <div className="vo-next"><button className="btn btn-primary" onClick={() => setPaying(v)}>Mark as paid</button></div>
+                  const lead = !open && !fixing && v === sent[0]   // one white block on the screen: the open valuation's Send, else the newest row's next step
+                  if (stage === 'review') return <div className="vo-next"><button className={'btn ' + (lead ? 'btn-primary' : 'btn-secondary')} onClick={() => onCreateInvoice(v)}>Agreed — create invoice</button></div>   // nothing is recorded until the invoice (or 'agreed' alone) is
+                  if (!v.invoiceNumber && !v.paidAt) return <div className="vo-next"><button className={'btn ' + (lead ? 'btn-primary' : 'btn-secondary')} onClick={() => onCreateInvoice(v)}>Create invoice</button></div>
+                  if (!v.paidAt && owedHere) return <div className="vo-next"><button className={'btn ' + (lead ? 'btn-primary' : 'btn-secondary')} onClick={() => setPaying(v)}>Mark as paid</button></div>
                   return null
                 })()}
                 {isOpen && (
@@ -210,6 +212,8 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
   const [amount, setAmount] = useState(v.paidAmount != null ? String(v.paidAmount) : '')
   const full = (Math.round(gross * 100) / 100).toFixed(2)
   const n = parseFloat(amount.replace(/[£,\s]/g, ''))
+  const typed = isFinite(n) && n > 0
+  const save = (paid: number) => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: paid }) }
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
@@ -217,9 +221,10 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
         <div className="hint">{figs(v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`)} Less than that landed? Enter what did — the rest stays owed.</div>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
-        {!v.paidAt && <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(gross * 100) / 100 }) }}>Paid in full · {fig(money(gross))}</button>}
-        {isFinite(n) && n < gross - 0.005 && <div className="flag">{fig(money(gross - n))} will still show as owed</div>}
-        <button className={'btn ' + (v.paidAt ? 'btn-primary' : 'btn-secondary')} disabled={!date || !isFinite(n) || n <= 0} onClick={() => { const [y, m, d] = date.split('-').map(Number); onSave({ ...v, paidAt: new Date(y, m - 1, d, 12).getTime(), paidAmount: Math.round(n * 100) / 100 }) }}>Save payment</button>
+        {/* the white block is whatever matches what you typed: an amount typed means that amount, never "in full" */}
+        {typed && n < gross - 0.005 && <div className="flag">{fig(money(gross - n))} will still show as owed</div>}
+        {typed && <button className="btn btn-primary" disabled={!date} onClick={() => save(Math.round(n * 100) / 100)}>Save {fig(money(n))} received</button>}
+        {!v.paidAt && <button className={'btn ' + (typed ? 'btn-secondary' : 'btn-primary')} disabled={!date} onClick={() => save(Math.round(gross * 100) / 100)}>Paid in full · {fig(money(gross))}</button>}
         {v.paidAt && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...v, paidAt: null, paidAmount: null })}>Remove payment (not paid)</button>}
       </div>
     </Sheet>
@@ -245,7 +250,7 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onClos
     setBusy('issue')
     try {
       const issued = await onIssue(val)
-      try { await onCertificate(issued) } catch (e) { console.warn('certificate after sending', e) }   // it's on the row as well
+      try { await onCertificate(issued) } catch (e) { tell(e, `${ref} is sent and saved, but its certificate PDF didn’t open. It’s on ${ref}’s row: tap the row, then Certificate PDF.`) }
       onClose()
     } finally { setBusy(null) }
   }

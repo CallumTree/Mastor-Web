@@ -44,7 +44,8 @@ describe('VAT invoicing', () => {
     await screen.findByText('TS-1042')
     click(screen.getByRole('button', { name: 'Save' })); await closed()
 
-    click(await screen.findByRole('button', { name: 'Create invoice' }))
+    // nothing was recorded when the details were missing: the row still asks for agreement, and creating the invoice records it
+    click(await screen.findByRole('button', { name: 'Agreed — create invoice' }))
     await screen.findByText('£200.00')                                  // VAT @ 20% on £1,000
     click(screen.getByRole('button', { name: 'Create invoice TS-1042' })); await closed()
     await screen.findByText('TS-1042')

@@ -65,11 +65,11 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
             })}
           </section>
         ) : (
-          <div className="cover-empty">No jobs yet. Add your first job to get started.</div>
+          <div className="cover-empty">{m ? 'No jobs yet. Add your first job to get started.' : 'No jobs yet. The office adds them; they’ll be here when they do.'}</div>
         )}
-        <div className="cover-actions">
+        {m && <div className="cover-actions">
           <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
-        </div>
+        </div>}
       </div>
     </main>
   )

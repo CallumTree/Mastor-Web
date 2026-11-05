@@ -110,11 +110,14 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 }
 
 /** Confirm before a number is used — invoice numbers can't be taken back. */
-export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, jobMissing = [], onCreate, onSettings, onJobSetup, onClose }: {
+export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, jobMissing = [], onCreate, onSettings, onJobSetup, onClose, agreeing, onAgreeOnly }: {
   number: string; net: string; vat: string; total: string; rate: number; missing: string[]
   /** what the job itself still needs (who the invoice is to) */
   jobMissing?: string[]
   onCreate: (date: number) => void; onSettings: () => void; onJobSetup?: () => void; onClose: () => void
+  /** the valuation is still with the client: creating the invoice records their agreement; closing records nothing.
+   *  `onAgreeOnly` records the agreement alone, for when the invoice can't be made yet or will be made later. */
+  agreeing?: string; onAgreeOnly?: () => void
 }) {
   const d = new Date(); const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const [date, setDate] = useState(key)
@@ -122,6 +125,7 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, job
     <Sheet onClose={onClose}>
       <div className="stack">
         <h2 className="label bracket">Create VAT invoice</h2>
+        {agreeing && <div className="t-note">The client agreed {agreeing}. Creating the invoice records that; closing this records nothing.</div>}
         {missing.length ? (
           <>
             <div className="t-note">Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
@@ -145,6 +149,7 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, job
             <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, dd] = date.split('-').map(Number); onCreate(new Date(y, m - 1, dd, 12).getTime()) }}>Create invoice {number}</button>
           </>
         )}
+        {agreeing && onAgreeOnly && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onAgreeOnly}>Record {agreeing} agreed, invoice it later</button>}
       </div>
     </Sheet>
   )

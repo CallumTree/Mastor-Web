@@ -56,10 +56,10 @@ describe('the client’s review', () => {
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · 0 days · sent 2nd time/)
 
-    // agreed: one tap on the row marks it agreed and starts the invoice
+    // agreed: the row opens the invoice; with no company details yet, agreement is recorded on its own, on purpose
     click(screen.getByRole('button', { name: 'Agreed — create invoice' }))
     await screen.findByText(/before your first invoice/i)
-    fireEvent.click(document.querySelector('.sheet-bg')!)
+    click(screen.getByRole('button', { name: /^record val i agreed, invoice it later$/i }))
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findByText(/^Agreed .* · create the invoice$/)
     expect(screen.getByRole('button', { name: 'Create invoice' })).toBeTruthy()

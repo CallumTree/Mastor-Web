@@ -30,6 +30,7 @@ describe('operative', () => {
     noMoney()
     expect(screen.queryByRole('button', { name: /money across all jobs/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /schedule of rates/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /new job/i })).toBeNull()   // the pack reader shows BoQ totals and PO values: office only
 
     click(screen.getByRole('button', { name: /7 Hill Street/ }))
     await screen.findByText('Dog in garden — keep gate shut')

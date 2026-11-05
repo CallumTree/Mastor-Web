@@ -22,7 +22,9 @@ People who only see the outputs:
 
 - **The client** (a council or housing association): never opens the app but receives its PDFs — Variation Register, valuation certificates, VAT invoices, dayworks sheets and completion evidence packs. These have to pass a client QS's scrutiny.
 
-Membership roles: owner, director, qs, site_manager, operative. Owners and directors manage the team; operatives see no money.
+Membership roles: owner, director, qs, site_manager, operative. Owners and directors manage the team; operatives see no money, and the office's screens (new job and the pack reader, imports, job setup, scope lines, costs, rates) are closed to them at the app's root, not just hidden behind a button.
+
+Money is never recorded by a stray tap: "Agreed — create invoice" opens the invoice and records the client's agreement only when the invoice is made (or "agreed, invoice it later" is chosen); a payment's white button is the amount typed ("Save £10,000.00 received"), "Paid in full" stepping back once an amount is in; one white button per screen on Vals. When the PDF after sending or invoicing fails, the problem bar says what's saved and where the PDF is.
 
 ## Product Purpose
 

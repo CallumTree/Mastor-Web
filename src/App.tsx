@@ -13,7 +13,7 @@ import { buildDayworksPdf, dayworksVariation, dwRef } from './lib/dayworks'
 import { accountsCsv, invoiceRows, periods } from './lib/accounts'
 import { buildEvidence, evidenceFileName, orderEvidence, schemeEvidence } from './lib/evidence'
 import { AccessContext, accessFor } from './lib/access'
-import { claimMany, deleteOpenValuation, ensureOpenValuation, isPriced, issueValuation, lockedIn, markAgreed, toggleScope, toggleVariation, valRef } from './lib/valuation'
+import { claimMany, deleteOpenValuation, ensureOpenValuation, isPriced, issueValuation, lockedIn, markAgreed, reviewStage, toggleScope, toggleVariation, valRef } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { newNote } from './screens/Notes'
 import { Dashboard } from './screens/Dashboard'
@@ -37,6 +37,7 @@ import type { PackResult } from './lib/packIntake'
 import { schemeStreet } from './lib/packJob'
 import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
+import { tell } from './components/Problem'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
 import { jobAlerts } from './lib/alerts'
@@ -257,7 +258,7 @@ export default function App() {
           onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
-      {voImport && job && <VoImport job={job} vos={jobVos} houses={houses} onClose={() => setVoImport(false)}
+      {voImport && job && access.money && <VoImport job={job} vos={jobVos} houses={houses} onClose={() => setVoImport(false)}
         onApply={async (vo, dec, file) => {
           const isImage = file.type.startsWith('image/')
           const ref = vo.ref.trim()
@@ -320,11 +321,11 @@ export default function App() {
           const vo = dayworksVariation(d, job, existing?.number ?? await nextVoNumber(job.id), existing)
           await db.putVariation(vo); await db.put('dayworks', { ...d, voId: vo.id }); await reload()
         }} />}
-      {costsOpen && job && <CostsSheet job={job} scope={jobScope} vos={jobVos} diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate}
+      {costsOpen && job && access.money && <CostsSheet job={job} scope={jobScope} vos={jobVos} diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate}
         onClose={() => setCostsOpen(false)} onSave={async c => { await db.put('costs', c); await reload() }} onDelete={async c => { await db.remove('costs', c); await reload() }} />}
-      {checking && job && <RateCheckSheet books={books} lines={jobScope} onClose={() => setChecking(false)} />}
-      {teamOpen && <TeamSheet company={settings?.name ?? ''} onClose={() => setTeamOpen(false)} />}
-      {ratesOpen && <RatesSheet books={books} onClose={() => setRatesOpen(false)}
+      {checking && job && access.money && <RateCheckSheet books={books} lines={jobScope} onClose={() => setChecking(false)} />}
+      {teamOpen && access.manage && <TeamSheet company={settings?.name ?? ''} onClose={() => setTeamOpen(false)} />}
+      {ratesOpen && access.money && <RatesSheet books={books} onClose={() => setRatesOpen(false)}
         onAddBooks={async (added, items) => {
           // the book list goes in company settings (shared); then the lines, which sync as one file per book
           const s = (await db.settings()) ?? blankSettings()
@@ -344,6 +345,8 @@ export default function App() {
         const alloc = settings ? allocateInvoiceNo(settings, vals) : { number: '—', next: 1 }
         return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)} jobMissing={jobMissingForInvoice(job)}
           onClose={() => setInvoicing(null)} onSettings={() => { setInvoicing(null); setSettingsOpen(true) }} onJobSetup={() => { setInvoicing(null); setJobForm('edit') }}
+          agreeing={reviewStage(invoicing) === 'review' ? valRef(invoicing.number) : undefined}
+          onAgreeOnly={async () => { await db.putValuation(markAgreed(invoicing)); setInvoicing(null); await reload() }}
           onCreate={async date => {
             // re-check against every invoice at the moment of creating, then move the sequence on
             const fresh = await db.settings(); if (!fresh) return
@@ -355,12 +358,13 @@ export default function App() {
             await db.putSettings({ ...fresh, nextInvoiceNumber: next, updatedAt: Date.now() })
             setInvoicing(null); await reload()
             // creating it hands over the PDF to send; it stays on the valuation's row to send again
-            try { await shareOrDownload(await buildInvoice({ job, val: invoiced, scope: jobScope, vos: jobVos, settings: fresh }), invoiceFileName(job, invoiced)) } catch (e) { console.warn('invoice PDF after creating', e) }
+            try { await shareOrDownload(await buildInvoice({ job, val: invoiced, scope: jobScope, vos: jobVos, settings: fresh }), invoiceFileName(job, invoiced)) } catch (e) { tell(e, `Invoice ${number} is made and saved, but its PDF didn’t open. It’s on ${valRef(invoiced.number)}’s row: tap the row, then Invoice PDF.`) }
           }} />
       })()}
-      {newJob && <NewJob books={books} onClose={() => setNewJob(false)} onByHand={() => { setNewJob(false); setJobForm('new') }}
+      {/* the office's screens: an operative never reaches a figure, even through a stale button */}
+      {newJob && access.money && <NewJob books={books} onClose={() => setNewJob(false)} onByHand={() => { setNewJob(false); setJobForm('new') }}
         onCreate={async (j, lines, pack) => { await db.putJob(j); await savePack(j, [], lines, pack); setNewJob(false); await reload(); setOpenId(j.id) }} />}
-      {jobForm && (
+      {jobForm && access.money && (
         <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} onClose={() => setJobForm(null)}
           onSave={async j => { await db.putJob({ ...j, byClaude: null }); setJobForm(null); await reload(); setOpenId(j.id) }}
           onDelete={jobForm === 'edit' && job ? async () => { await db.deleteJob(job.id); setJobForm(null); setOpenId(null); await reload() } : undefined} />
@@ -389,12 +393,12 @@ export default function App() {
           }}
           onDelete={async () => { await db.deleteVariation(editing); setEditing(null); await reload() }} />
       )}
-      {importing && job && (
+      {importing && job && access.money && (
         <BoqImport job={job} existing={jobScope.length} books={books} onClose={() => setImporting(false)}
           onImport={async (lines, pack) => { await savePack(job, jobScope, lines, pack); setImporting(false); await reload()
           }} />
       )}
-      {scopeForm && job && (
+      {scopeForm && job && access.money && (
         <ScopeForm item={scopeForm === 'new' ? undefined : scopeForm} jobId={job.id} books={books}
           nextOrder={jobScope.reduce((m, s) => Math.max(m, s.order), 0) + 1}
           rooms={[...new Set(jobScope.map(s => s.room))]}
