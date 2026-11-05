@@ -327,6 +327,14 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - Houses fold to a 60px row (name in white, "10 lines · 6 done · 1 VO" in Slate Note, a filled white tick square when the house is all done). Inside, each line ends in a Done button at least 48px tall: an outlined 20px square and the word; marked, the square fills drafting white with a tick and the edge turns white. Signed off is the same, greyed and fixed. Gloves and glare: nothing under 44px, the word always beside the mark.
 - The capture sheet leads with Photo as the one white block (64px); video, voice, variation, dayworks and note sit under it, outlined, two across.
 
+### Small rules the polish pass settled
+- Every money figure on every screen is in pence, the same as Vals: no "£12.5k" anywhere in the app (the Dashboard's figures are a ledger now, like the job's).
+- Radio choices are drafted squares (an outlined square, a smaller white square inside when chosen), never round.
+- A disabled menu item is said in Slate Note, never faded with opacity.
+- Valuation and VO refs are set as Roman markings (`.ref-roman`) even inside a mono line.
+- VO units are the client's schedule units (IT, NO, LM, SM, M3). "0 days" is "sent today".
+- Every sheet's title is the cyan ruled title, menus included.
+
 ### First run
 - **Getting set up** sits at the top of the jobs screen for a new firm: a ruled list (2px head and foot, hairlines between), each step a 60px row with a 20px square that fills drafting white with a tick when the app sees it done, the step's name in white and one line of why in Slate Note; a step that may not apply carries a quiet link to set it aside. No progress bar, no percentages: "2 of 4" in the heading. Gone when done or hidden.
 - **Sign-in's two modes are tabs, not blocks:** white type over the dock's 2px cyan marker, so the white button below stays the only thing that says press me.

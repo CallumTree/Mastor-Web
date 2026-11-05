@@ -32,7 +32,7 @@ describe('the client’s review', () => {
     click(await screen.findByRole('button', { name: /^send val i for £7,000\.00/i }))
     // sending hands over the certificate and closes: no second sheet to dismiss
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    await screen.findAllByText(/^With client · For review · 0 days/)
+    await screen.findAllByText(/^With client · For review · sent today/)
     expect([...screen.getByLabelText('Valuation week').querySelectorAll('.val-week-n')].some(n => /^VAL I · /.test(n.textContent ?? ''))).toBe(true)   // when the last one went
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()
 
@@ -54,7 +54,7 @@ describe('the client’s review', () => {
     click(screen.getByRole('button', { name: 'Send VAL I again' }))
     click(await screen.findByRole('button', { name: /^send val i for £4,000\.00/i }))
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    await screen.findAllByText(/^With client · For review · 0 days · sent 2nd time/)
+    await screen.findAllByText(/^With client · For review · sent today · sent 2nd time/)
 
     // agreed: the row opens the invoice; with no company details yet, agreement is recorded on its own, on purpose
     click(screen.getByRole('button', { name: 'Agreed — create invoice' }))

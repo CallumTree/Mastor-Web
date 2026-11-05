@@ -4,7 +4,8 @@ import { jobMargin } from '../lib/margin'
 import { valCourt, voCourt } from '../lib/chase'
 import { valRef } from '../lib/valuation'
 import { money } from '../lib/format'
-import { TitleBlock } from '../components/Ui'
+import { SumStrip } from '../components/Register'
+import { fig } from '../components/Figs'
 import { IconBack } from '../components/Icons'
 import { Plate } from '../components/Sign'
 import { isOverdue } from './Orders'
@@ -14,8 +15,7 @@ import { isOverdue } from './Orders'
  * who owes you and how late, what's ready to claim, what can't be claimed until it's priced,
  * and what each job is making. No charts: every row leads to an action.
  */
-const k = (n: number) => (Math.abs(n) >= 1e6 ? `£${(n / 1e6).toFixed(2)}m` : Math.abs(n) >= 1e4 ? `£${(n / 1e3).toFixed(1)}k` : money(n).replace(/\.00$/, ''))
-const signedK = (n: number) => (n < 0 ? `−${k(-n)}` : k(n))
+const signed = (n: number) => (n < 0 ? `−${money(-n)}` : money(n))
 
 export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orders = [], dayRate, onBack, onOpenJob }: {
   jobs: Job[]; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]; costs?: Cost[]; diary?: DiaryEntry[]; orders?: WorkOrder[]; dayRate?: number | null
@@ -51,20 +51,19 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
     <main className="page dash" style={{ paddingBottom: 48 }}>
       <div className="row" style={{ marginBottom: 20 }}>
         <button className="icon-btn" onClick={onBack} aria-label="Back to jobs"><IconBack size={20} /></button>
-        <h1 className="tab-title grow">Needs action</h1>
+        <h1 className="tab-title grow">Money across all jobs</h1>
       </div>
 
-      <TitleBlock
-        head={['Owed to you · incl. VAT', money(p.owed)]}
-        rows={[
-          [[p.overdueCount ? `Overdue · ${p.overdueCount} valuation${p.overdueCount === 1 ? '' : 's'}` : 'Overdue', p.overdueCount ? k(p.overdue) : '—', p.overdueCount ? 'var(--red)' : undefined], ['Ready to claim', k(p.inValuation)]],
-          [['Unpriced lines', unpricedTotal ? String(unpricedTotal) : '—'], // the qualifier rides in the label, so the figure keeps to its cell
-          [`Margin${!withCosts.length ? '' : anyProvisional ? ' · provisional' : valueTotal > 0 ? ` · ${Math.round((marginTotal / valueTotal) * 1000) / 10}%` : ''}`, withCosts.length ? signedK(marginTotal) : '—']],
-          [['Certified this year · excl. VAT', k(p.certifiedThisYear)], ['Paid this year', k(p.paidThisYear)]],
-        ]} />
-      <div className="hint" style={{ marginTop: 6 }}>
-        Owed includes VAT once invoiced; other values are net of VAT and include uplifts.{p.unpricedVos ? ` ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not counted until priced.` : ''}{withCosts.length && withCosts.length < work.length ? ` Margin covers the ${withCosts.length} job${withCosts.length === 1 ? '' : 's'} with costs recorded.` : ''}
-      </div>
+      <SumStrip label="Money across all jobs" caption={`Owed includes VAT once invoiced; everything else is with uplifts, excl. VAT.${p.unpricedVos ? ` ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not counted until priced.` : ''}${withCosts.length && withCosts.length < work.length ? ` Margin covers the ${withCosts.length} job${withCosts.length === 1 ? '' : 's'} with costs in.` : ''}`} cells={[
+        { label: 'Owed to you', value: money(p.owed), nil: !p.owed, hot: p.owed > 0, note: 'incl. VAT once invoiced' },
+        { label: 'Overdue', value: money(p.overdue), nil: !p.overdueCount, neg: p.overdueCount > 0, note: p.overdueCount ? `${p.overdueCount} valuation${p.overdueCount === 1 ? '' : 's'} · chase below` : 'nothing late' },
+        { label: 'With clients', value: money(p.withClient), nil: !p.withClient, note: 'sent, not agreed yet' },
+        { label: 'Ready to claim', value: money(p.inValuation), nil: !p.inValuation, note: 'in open valuations' },
+        { label: 'Unpriced lines', value: String(unpricedTotal), nil: !unpricedTotal, note: unpricedTotal ? 'can’t be claimed until priced' : undefined },
+        { label: 'Margin so far', value: signed(marginTotal), nil: !withCosts.length, neg: marginTotal < 0, note: !withCosts.length ? 'no costs in yet' : anyProvisional ? 'provisional' : valueTotal > 0 ? `${Math.round((marginTotal / valueTotal) * 1000) / 10}% of value` : undefined },
+        { label: 'Certified this year', value: money(p.certifiedThisYear), nil: !p.certifiedThisYear, note: 'agreed by clients' },
+        { label: 'Paid this year', value: money(p.paidThisYear), nil: !p.paidThisYear, note: 'as received' },
+      ]} />
 
       <div className="dash-secs">
         <section>
@@ -93,13 +92,13 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
                 <button key={w.job.id} className="chk-row order-row" onClick={() => onOpenJob(w.job)}>
                   <span className="grow">{w.job.name}<small>{w.job.contractRef || w.job.client || ''}</small>
                     <span className="order-plates">
-                      {w.ready > 0 && <Plate kind="do">{k(w.ready)} ready to claim{w.open ? ` · ${valRef(w.open.number)}` : ''}</Plate>}
+                      {w.ready > 0 && <Plate kind="do">{fig(money(w.ready))} ready to claim{w.open ? ` · ${valRef(w.open.number)}` : ''}</Plate>}
                       {w.unpriced > 0 && <Plate kind="warn">{w.unpriced} unpriced</Plate>}
                       {w.lateOrders > 0 && <Plate kind="stop">{w.lateOrders} overdue order{w.lateOrders === 1 ? '' : 's'}</Plate>}
                       {!w.ready && !w.unpriced && !w.lateOrders && <Plate kind="ok">Nothing waiting</Plate>}
                     </span>
                   </span>
-                  <span className={'amt dash-amt' + (w.hasCosts && w.m.margin < 0 ? ' neg' : '')}>{w.hasCosts ? <>{signedK(w.m.margin)}<small>{w.m.provisional.length ? `provisional · ${w.m.provisional.join(', ')}` : w.m.pct != null ? `${w.m.pct}% margin` : 'margin'}</small></> : <small>No costs yet</small>}</span>
+                  <span className={'amt dash-amt' + (w.hasCosts && w.m.margin < 0 ? ' neg' : '')}>{w.hasCosts ? <>{signed(w.m.margin)}<small>{w.m.provisional.length ? `provisional · ${w.m.provisional.join(', ')}` : w.m.pct != null ? `${w.m.pct}% margin` : 'margin'}</small></> : <small>No costs yet</small>}</span>
                 </button>
               ))}
             </div>

@@ -26,7 +26,7 @@ import { doneMark, doneMarks } from '../lib/siteDone'
 import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
-import { figs } from '../components/Figs'
+import { fig, figs } from '../components/Figs'
 
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals' | 'ask'
@@ -180,7 +180,7 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       {notesOpen && <NotesSheet job={job} notes={notes} days={days} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} onOpenDay={onOpenDay} />}
       {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
       {seesMoney && <div className="hint" style={{ marginTop: 12 }}>
-        PO {job.poNumber || 'not set'} · Uplifts {job.uplift1}% + {job.uplift2}% · Variations shown incl. uplifts <ByClaude at={job.byClaude} />
+        PO number {job.poNumber ? <span className="mono">{job.poNumber}</span> : 'not set'} · uplifts {fig(`${job.uplift1}%`)} + {fig(`${job.uplift2}%`)} <ByClaude at={job.byClaude} />
       </div>}
     </div>
   )
@@ -327,7 +327,7 @@ function PoGapSheet({ job, gap, onSave, onSetup, onClose }: {
         <TitleBlock head={[gap.diff > 0 ? 'BoQ is over the PO by' : 'BoQ is under the PO by', money(Math.abs(gap.diff))]}
           rows={[[['BoQ + uplifts', money(gap.withUplifts)], ['PO value', money(job.contractValue)]], [['Uplifts set', `${job.uplift1}% + ${job.uplift2}%`], ['Would reconcile at', `${gap.needed.toFixed(2)}% combined`]]]} />
         <div className="hint">Common reasons: items added after the PO was raised, a PO line missing, or the wrong uplifts. If you know why and will claim it anyway, accept it with a note — it'll stay recorded, and flag again if the difference changes.</div>
-        <Field label="Why (for the record)"><textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Kitchen partition + ceiling patch added after PO — Dylan aware, will be claimed" /></Field>
+        <Field label="Why (for the record)"><textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Kitchen partition + ceiling patch added after PO — client’s officer aware, will be claimed" /></Field>
         <button className="btn btn-primary" disabled={!note.trim()} onClick={() => onSave({ ...job, poGapAccepted: { diff: gap.diff, note: note.trim(), at: Date.now() } })}>{accepted ? 'Update note' : figs(`Accept ${money(Math.abs(gap.diff))} difference`)}</button>
         <button className="btn btn-secondary" onClick={onSetup}>Check uplifts / PO value in job setup</button>
         {accepted && <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => onSave({ ...job, poGapAccepted: null })}>Withdraw acceptance (flag it again)</button>}

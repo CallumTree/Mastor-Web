@@ -148,7 +148,8 @@ label.btn { cursor: pointer; }
 .tabmenu-btn { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 1px solid var(--rule-ctl); border-radius: var(--r-md); background: var(--slate); color: var(--white); }
 .tabmenu-btn:active { background: var(--slate-2); }
 .tabmenu-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 13px 14px; background: none; border: none; text-align: left; font: inherit; font-weight: 600; }
-.tabmenu-item:active, .tabmenu-item:hover { background: var(--slate-2); }
+.tabmenu-item:not(:disabled):active, .tabmenu-item:not(:disabled):hover { background: var(--slate-2); }
+.tabmenu-item:disabled { cursor: not-allowed; }   /* said in Slate Note, never faded: faded type fails in glare */
 
 /* ---------- panels ---------- */
 .card, .panel { background: var(--slate); color: var(--white); border: 1px solid var(--rule); border-radius: var(--r-lg); padding: 14px; }
@@ -721,6 +722,12 @@ body { background-image: linear-gradient(var(--grid) 1px, transparent 1px), line
 .role { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; border: 1px solid var(--rule-ctl); border-radius: var(--r); cursor: pointer; }
 .role.on { border-color: var(--white); background: var(--slate-2); }
 .role input { width: 22px; height: 22px; accent-color: var(--white); flex: none; margin: 0; }
+/* radio choices are drafted squares like every other mark: an outlined square, filled with a smaller white square when chosen */
+input[type=radio] { appearance: none; -webkit-appearance: none; display: inline-grid; place-items: center; width: 22px; height: 22px; flex: none; margin: 0;
+  border: 1px solid var(--rule-ctl); border-radius: var(--r-sm); background: var(--void); cursor: pointer; }
+input[type=radio]:checked { border-color: var(--white); }
+input[type=radio]:checked::after { content: ""; width: 12px; height: 12px; background: var(--white); }
+input[type=radio]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .role b { display: block; }
 .role small { display: block; font-size: 13px; color: var(--meta); }
 

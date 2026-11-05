@@ -16,11 +16,12 @@ import { describeProblem } from '../components/Problem'
 import { lineValue } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoThumb } from '../lib/photos'
-import { IconCamera, IconFlag } from '../components/Icons'
+import { IconCamera, IconPlus } from '../components/Icons'
 import { figs } from '../components/Figs'
 import { voHouse } from '../lib/property'
 
-const UNITS = ['nr', 'm', 'm2', 'lm', 'item']
+// the units the client's schedule uses (IT, NO, LM, SM, M3), so a VO reads like the BoQ it sits beside
+const UNITS = ['IT', 'NO', 'LM', 'SM', 'M3']
 
 function Thumb({ id }: { id: string }) {
   const url = usePhotoThumb(id)
@@ -130,9 +131,9 @@ export function EditVariation({ vo, locked, books = [], houses = [], onSave, onD
           <div className="grow"><Field label="Qty"><input inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} placeholder="Not measured" /></Field></div>
           {m && <div className="grow"><Field label="Rate (£)" hint={v.rateBook ? `From ${v.rateBook}` : undefined}><input inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setV({ ...v, rateBook: undefined }) }} placeholder="Unpriced" /></Field></div>}
         </div>
-        {m && <div className="amt" style={{ fontSize: 20, color: qv && rv ? 'var(--ink)' : 'var(--ink-muted)', fontWeight: 700 }}>
-          {qv && rv ? money(lineValue(qv, rv)) : 'Add qty and rate to price'}
-        </div>}
+        {m && (qv && rv
+          ? <div className="amt" style={{ fontSize: 20, color: 'var(--ink)', fontWeight: 700 }}>{money(lineValue(qv, rv))}</div>
+          : <div className="hint">Add the quantity and rate to price it.</div>)}
         {m && qv && rv && v.status === 'Identified' && !v.clientRef && (
           v.submittedAt
             ? <div className="row"><span className="grow flag">Sent to client {ukd(v.submittedAt)} — waiting on their instruction</span><button className="chip" onClick={() => setV({ ...v, submittedAt: null })}>Undo</button></div>
@@ -217,8 +218,8 @@ export function VoList({ vos, vals, onToggle, onEdit, onLog }: { vos: Variation[
   return (
     <section className="stack" style={{ gap: 8 }}>
       <h3 className="sec-h">Variations{sorted.length ? ` · ${sorted.length}` : ''}</h3>
+      <div className="tab-actions"><button className="btn btn-sm btn-secondary" onClick={onLog}><IconPlus /> Add VO</button></div>
       {sorted.length > 0 && <div className="panel flush clip">{sorted.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggle} onEdit={onEdit} />)}</div>}
-      <button className="btn btn-secondary" onClick={onLog}><IconFlag /> Add VO</button>
     </section>
   )
 }

@@ -116,8 +116,8 @@ describe('Park Road, end to end', () => {
     render(<App />)
     click(await screen.findByRole('button', { name: 'Jobs' }))   // the reload kept the job open; back to the list
     click(await screen.findByRole('button', { name: /money across all jobs/i }))
-    await screen.findByText('Needs action')
-    expect(screen.getByText('Certified this year · excl. VAT')).toBeTruthy()
+    await screen.findByRole('heading', { name: 'Money across all jobs' })
+    expect(screen.getByText('Certified this year')).toBeTruthy()
     // in Chase payment (VAL I is owed) and in the jobs list
     expect(screen.getAllByText('32 Park Road').length).toBe(2)
     expect(screen.getByText(/Chase payment · 1/)).toBeTruthy()

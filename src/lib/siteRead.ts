@@ -115,7 +115,7 @@ export async function readSite(companyId: string, items: DiaryEntry[], scope: Sc
   try {
     const r = await fetch('/api/read-site', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) }, body: JSON.stringify(req) })
     try { data = await r.json() } catch { /* below */ }
-    if (!r.ok || data.error) return { updated: [], suggestions: 0, skipped: 0, stop: [401, 403, 404, 429, 503].includes(r.status), error: data.error || (r.status === 404 ? 'Site reading isn’t deployed yet.' : `Couldn’t read the site captures (${r.status}).`) }
+    if (!r.ok || data.error) return { updated: [], suggestions: 0, skipped: 0, stop: [401, 403, 404, 429, 503].includes(r.status), error: data.error || (r.status === 404 ? 'the reader isn’t answering. They’re kept and read once it is.' : `the reader answered ${r.status}. They’re kept and read on the next try.`) }
   } catch { return { updated: [], suggestions: 0, skipped: 0, error: 'Couldn’t reach the reader — check signal. The captures are safe; try again later.' } }
   const transcripts = data.transcripts ?? {}
   const found = verifySuggestions(data.suggestions ?? [], transcripts, itemKey, lineKey)

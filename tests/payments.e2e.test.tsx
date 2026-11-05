@@ -40,7 +40,7 @@ describe('payments and chasing', () => {
     click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
     click(await screen.findByRole('button', { name: /^send val i for £/i }))
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    await screen.findAllByText(/^With client · For review · 0 days/)
+    await screen.findAllByText(/^With client · For review · sent today/)
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()   // nothing to pay until it's agreed
     click(screen.getByRole('button', { name: 'Agreed — create invoice' }))
     fireEvent.click(document.querySelector('.sheet-bg')!)                     // closing records nothing: a mis-tap commits no agreement
@@ -69,6 +69,6 @@ describe('payments and chasing', () => {
     click(screen.getByRole('button', { name: 'Jobs' }))
     click(await screen.findByRole('button', { name: /money across all jobs/i }))
     await screen.findByText('Paid this year')
-    await waitFor(() => expect(screen.getAllByText('£100').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('£100.00').length).toBeGreaterThan(0))   // in pence, like every other screen
   })
 })

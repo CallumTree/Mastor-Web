@@ -35,7 +35,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
         <Field label="Client"><input value={f.client} onChange={set('client')} placeholder="e.g. the council, housing association or trust" /></Field>
         <Field label="Client’s invoice address" hint="Where their invoices go: printed on every VAT invoice"><input value={f.clientAddress ?? ''} onChange={set('clientAddress')} placeholder="e.g. Finance, Civic Centre, Anytown, AB1 2CD" /></Field>
         <Field label="Site address"><input value={f.address} onChange={set('address')} /></Field>
-        <div className="row">
+        <div className="row" style={{ alignItems: 'flex-start' }}>
           <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CR-0290" /></Field></div>
           <div className="grow"><Field label="PO number" warn={!f.poNumber} hint={!f.poNumber ? 'Needed on invoices' : undefined}><input value={f.poNumber} onChange={set('poNumber')} /></Field></div>
         </div>

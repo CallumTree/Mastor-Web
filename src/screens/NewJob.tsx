@@ -80,7 +80,7 @@ function PackReview({ pack, books, onCreate, onBack, onClose }: {
         <div className="grow"><Field label="PO number" warn={!f.poNumber} hint={!f.poNumber ? 'Needed on invoices' : undefined}><input value={f.poNumber} onChange={set('poNumber')} /></Field></div>
       </div>
       <Field label="PO value — all-in, incl. uplifts (£)" hint={read.contractValue != null && f.value === String(read.contractValue) ? `From ${read.from.contractValue} — check it against the PO` : 'Uplifts below should turn the BoQ total into this figure'}>
-        <input inputMode="decimal" value={f.value} onChange={set('value')} placeholder="From the purchase order" /></Field>
+        <input inputMode="decimal" value={f.value} onChange={set('value')} placeholder="0.00" /></Field>
       <div className="row pair">
         <div className="grow"><Field label="Uplift 1 (%)"><input inputMode="decimal" value={f.u1} onChange={set('u1')} placeholder="0" /></Field></div>
         <div className="grow"><Field label="Uplift 2 (%)"><input inputMode="decimal" value={f.u2} onChange={set('u2')} placeholder="0" /></Field></div>

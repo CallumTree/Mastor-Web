@@ -65882,7 +65882,7 @@ function valCourt(val, job, scope, vos, now = Date.now()) {
     const d = daysSince(r.sentAt, now);
     return {
       who: "client",
-      text: `For review \xB7 ${d} day${d === 1 ? "" : "s"}${r.rounds > 1 ? ` \xB7 sent ${ordinal(r.rounds)} time` : ""}`,
+      text: `For review \xB7 ${d ? `${d} day${d === 1 ? "" : "s"}` : "sent today"}${r.rounds > 1 ? ` \xB7 sent ${ordinal(r.rounds)} time` : ""}`,
       days: d,
       owed,
       review: true,

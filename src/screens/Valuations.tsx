@@ -300,12 +300,12 @@ function ValWeek({ rhythm: r, onWait, onUndo }: { rhythm: NonNullable<ReturnType
     <div className={'panel val-week' + (r.state === 'due' || r.state === 'late' ? ' now' : '')} aria-label="Valuation week">
       <div className="val-week-c">
         <div className="label">Last sent</div>
-        <div className="val-week-n">{r.last ? <><span>{valRef(r.last.number)} ·</span> <span>{day(r.last.issuedAt!)}</span></> : 'None yet'}</div>
+        <div className="val-week-n">{r.last ? <><span><span className="ref-roman">{valRef(r.last.number)}</span> ·</span> <span>{day(r.last.issuedAt!)}</span></> : 'None yet'}</div>
         <small>{r.last ? (ago === 0 ? 'today' : `${ago} day${ago === 1 ? '' : 's'} ago`) : 'the first on this job'}</small>
       </div>
       <div className="val-week-c">
         <div className="label">Next</div>
-        <div className="val-week-n"><span>{valRef(r.next)} ·</span> <span>{weekText(r)}</span></div>
+        <div className="val-week-n"><span><span className="ref-roman">{valRef(r.next)}</span> ·</span> <span>{weekText(r)}</span></div>
         <small>{when}</small>
       </div>
       {(r.state === 'due' || r.state === 'late' || r.waited) && <div className="val-week-f">
