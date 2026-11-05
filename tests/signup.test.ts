@@ -29,10 +29,10 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
 }) as typeof fetch
 
 const { default: handler } = await import('../api/early-signup.js')
-const call = async (method: string, body?: unknown) => {
+const call = async (method: string, body?: unknown, headers: Record<string, string> = {}) => {
   let status = 0, json: any = null
   const res: any = { setHeader() {}, status(n: number) { status = n; return res }, json(b: unknown) { json = b } }
-  await handler({ method, body } as any, res)
+  await handler({ method, body, headers } as any, res)
   return { status, json }
 }
 const person = (n: number, extra = {}) => ({ name: `Dai ${n}`, firm: `Firm ${n}`, email: `dai${n}@example.co.uk`, ...extra })
@@ -62,6 +62,18 @@ ok(r.status === 405, 'only GET and POST')
 for (let i = 3; i <= 50; i++) await call('POST', person(i))
 r = await call('POST', person(51))
 ok(r.json.place === null && r.json.taken === 50 && /waiting list/.test(mails.at(-1).text), 'after fifty: the waiting list, and the email says so')
+
+// robots can't take every place: a form sent in under a second and a half is asked again; one connection gets six tries an hour
+const before = rows.length
+r = await call('POST', { ...person(70), took: 400 })
+ok(r.status === 400 && /very quickly/.test(r.json.error) && rows.length === before, 'a form sent faster than a person can fill it: asked to send again, nothing claimed')
+r = await call('POST', { ...person(71), took: 9000 })
+ok(r.status === 200 && rows.length === before + 1, 'a person taking their time: saved')
+for (let i = 0; i < 6; i++) await call('POST', person(80 + i), { 'x-forwarded-for': '203.0.113.7' })
+r = await call('POST', person(90), { 'x-forwarded-for': '203.0.113.7, 10.0.0.1' })
+ok(r.status === 429 && /this connection/.test(r.json.error), 'a seventh try in an hour from one connection: refused, saying why')
+r = await call('POST', person(91), { 'x-forwarded-for': '198.51.100.2' })
+ok(r.status === 200, 'another connection is unaffected')
 
 dbReady = false
 r = await call('GET')

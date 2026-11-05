@@ -42,6 +42,10 @@ First run: the jobs screen lists a new firm's setup (`src/components/Setup.tsx`)
 
 Figures reconcile: certified means agreed by the client (`isCertified`); a valuation sent for review is "with client" until then, on the job's line, in Vals' split bar and to Clerk. What a job is worth is one function (`jobWorth`: the contract, or the scope with uplifts, plus live priced VOs with uplifts, each to the penny the way a valuation is), used by Home, Vals, the job's line, the Dashboard, Costs and Clerk. Each ledger states its basis once (Scope at base rates; Home and Vals with uplifts, excl. VAT); "incl. VAT" is only ever an invoice's figure; the VOs view adds up at base rates with the total with uplifts as its note; margin is "so far".
 
+Help: Settings → How Mastor works (`src/screens/Help.tsx`) walks a month on a job in six steps, I to VI, start to paid; a support address shows there once `SUPPORT_EMAIL` is set. A backup file now carries everything a firm needs to start again: company settings (never winding back the invoice number on a device that already has them), rate books, and every photo, PDF and VO attachment.
+
+The front page shows the three plans (`Prices` in `src/landing/Landing.tsx`: monthly with VAT, yearly, seats, the founding half price) and seven common questions (`Questions`). Prices are shown + VAT on the assumption Mastor is VAT registered (`VAT_REGISTERED`); change that one line if not. The founding sign-up turns away a form sent faster than a person could fill it and more than six sign-ups an hour from one connection.
+
 Money is never recorded by a stray tap: "Agreed — create invoice" opens the invoice and records the client's agreement only when the invoice is made (or "agreed, invoice it later" is chosen); a payment's white button is the amount typed ("Save £10,000.00 received"), "Paid in full" stepping back once an amount is in; one white button per screen on Vals. When the PDF after sending or invoicing fails, the problem bar says what's saved and where the PDF is.
 
 ## Product Purpose

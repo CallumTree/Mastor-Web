@@ -135,6 +135,9 @@ label.btn { cursor: pointer; }
 .icon-btn { width: 44px; height: 44px; flex: none; display: grid; place-items: center; padding: 0; border: 1px solid var(--rule-ctl); border-radius: var(--r-md); background: var(--slate); color: var(--white); }
 .icon-btn:hover:not(:disabled) { border-color: var(--white); }
 .icon-btn.on-dark { background: var(--slate); border-color: var(--rule-ctl); color: var(--white); }
+/* the job header's tools say what they are: the icon over its word, still 44px tall */
+.icon-btn.labelled { width: auto; min-width: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 8px; }
+.icon-btn.labelled .ib-l { font-size: 13px; font-weight: 650; line-height: 1; font-stretch: 87.5%; }
 .icon-gap { width: 44px; flex: none; }
 .jbar-tools { flex: none; display: flex; gap: 8px; }
 /* the diary day: tag what's in the note box; the notes filed from the day sit under it, ruled */
@@ -362,7 +365,7 @@ label.btn { cursor: pointer; }
 .core-slate { background: var(--core-slate); } .core-moss { background: var(--core-moss); } .core-rose { background: var(--core-rose); } .core-graphite { background: var(--core-graphite); }
 .core-bundle { display: inline-flex; gap: 3px; margin-right: 8px; vertical-align: 0.14em; }
 .core-bundle .core { margin-right: 0; vertical-align: top; }
-.prop-meta { font-size: 14px; color: var(--meta); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prop-meta { font-size: 14px; color: var(--meta); margin-top: 3px; overflow-wrap: anywhere; }   /* every trade in full: they wrap rather than cut off */
 .prop-amt { text-align: right; flex: none; }
 .prop-amt .mono { font-weight: 520; font-size: 17px; letter-spacing: -.02em; }
 .prop-amt small svg { vertical-align: -2px; margin-right: 2px; }
@@ -978,6 +981,12 @@ input[type=radio]:focus-visible { outline: 2px solid var(--cyan); outline-offset
 .setup-row.done .setup-t small { display: none; }
 .setup-chev { flex: none; color: var(--meta); display: grid; }
 .setup-skip { display: block; margin: -10px 0 4px 34px; min-height: 44px; font-size: 14px; color: var(--ink-2); }
+/* the help guide: a month in six steps, each led by its Roman marking like a valuation */
+.help-steps { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.help-steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.help-n { font-size: 18px; color: var(--cyan); }
+.help-steps b { display: block; font-size: 16px; font-weight: 650; }
+.help-steps p { margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
 /* the sign-in form's two modes: tabs, not blocks. The selected one is white type over the dock's 2px cyan marker,
    so the white block below stays the only thing that says press me */
 .mode-switch { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--rule); }

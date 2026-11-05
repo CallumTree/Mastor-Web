@@ -91,8 +91,8 @@ function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: 
         </div>
         <div className="jbar-tools">
           {/* Clerk sits with the job, not in the dock: one tap from any tab */}
-          <button className={'icon-btn on-dark' + (inClerk ? ' on' : '')} onClick={onClerk} aria-label="Clerk" aria-current={inClerk ? 'page' : undefined}><IconAsk size={20} /></button>
-          {seesMoney && <button className="icon-btn on-dark" onClick={onSetup} aria-label="Job setup"><IconSettings size={20} /></button>}
+          <button className={'icon-btn on-dark labelled' + (inClerk ? ' on' : '')} onClick={onClerk} aria-current={inClerk ? 'page' : undefined}><IconAsk size={18} /><span className="ib-l">Clerk</span></button>
+          {seesMoney && <button className="icon-btn on-dark labelled" onClick={onSetup} aria-label="Job setup"><IconSettings size={18} /><span className="ib-l" aria-hidden="true">Setup</span></button>}
         </div>
       </div>
       {rail && (

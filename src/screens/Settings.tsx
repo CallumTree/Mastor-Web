@@ -8,9 +8,10 @@ import { SignOutButton } from '../components/SyncBadge'
 import { checkAi, type AiCheck } from '../lib/aiCheck'
 
 /** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
-export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices }: {
+export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices, onHelp }: {
   settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
   onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void; onRates: () => void; onTeam: () => void
+  onHelp?: () => void
   onExportInvoices?: (format: 'xero' | 'quickbooks', period: 'thisMonth' | 'lastMonth' | 'all', code: string) => Promise<number>
 }) {
   const { money: m } = useAccess()
@@ -59,6 +60,11 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>
 
+        </>}
+
+        {onHelp && <>
+          <h3 className="label bracket sec">Help</h3>
+          <button className="btn btn-secondary" onClick={onHelp}>How Mastor works</button>
         </>}
 
         <h3 className="label bracket sec">Team</h3>

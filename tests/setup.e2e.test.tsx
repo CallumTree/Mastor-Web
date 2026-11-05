@@ -34,6 +34,18 @@ describe('first run', () => {
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Getting set up' })).toBeNull())
   })
 
+  it('explains a month in Mastor from Settings, in six steps, without a support line until there is one', async () => {
+    cleanup()
+    render(<App />)
+    click(await screen.findByRole('button', { name: 'Settings' }))
+    click(await screen.findByRole('button', { name: 'How Mastor works' }))
+    const guide = await screen.findByRole('dialog', { name: 'How Mastor works' })
+    const steps = within(guide).getAllByRole('listitem')
+    expect(steps.map(li => li.querySelector('.help-n')?.textContent)).toEqual(['I', 'II', 'III', 'IV', 'V', 'VI'])
+    expect(within(guide).getByText(/Valuation week/)).toBeTruthy()
+    expect(within(guide).queryByText(/Stuck\? Email/)).toBeNull()
+  })
+
   it('says sign-in problems in plain words, with what to do next', () => {
     expect(plainAuth('Invalid login credentials')).toMatch(/don’t match an account.*I’m new/)
     expect(plainAuth('User already registered')).toMatch(/already an account with that email/)

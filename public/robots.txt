@@ -1,0 +1,6 @@
+# Mastor: the front page is public; the app and its server functions aren't for search engines
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /api/
+Disallow: /oauth/

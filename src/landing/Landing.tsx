@@ -2,7 +2,7 @@
  * The front page, kept to what a contractor needs to decide: what Mastor is and who it's for, the one thing
  * it does that nothing else does (the site diary runs the valuation, recorded from the real app with an
  * example job), the time it gives back on a valuation (our stated estimate), that it never makes a number
- * up, and fifty numbered founding places to claim. The register shows the places as they really are
+ * up, the price schedule (three plans, per firm), fifty numbered founding places to claim, and the questions firms ask. The register shows the places as they really are
  * (counted in the database by /api/early-signup). It is never padded, and when the count can't be read it doesn't guess.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
@@ -16,6 +16,82 @@ const PLACES = 50
 const WORK = ['Planned programmes', 'Repairs and maintenance', 'Empty properties', 'A mix of these', 'Something else'] as const
 
 type Claimed = { place: number | null; already: boolean; listed?: boolean }
+
+/** The plans (PRODUCT.md → Plans): per firm, never per head. Prices are ex VAT; with VAT_REGISTERED the VAT-inclusive
+ *  figure sits beside each (the ASA wants both where some buyers can't reclaim VAT). Founding firms pay half. */
+const VAT_REGISTERED = true
+const PLANS = [
+  { n: 'I', name: 'Mercury', line: 'The full record, by hand.', month: 29, year: 290, seats: 2, extra: false, lead: false,
+    adds: ['Jobs, works orders and scope, house by house', 'Variations and dayworks', 'Site diary: photos, video and voice notes', 'Monthly valuations, the client’s review and VAT invoices', 'Payments, and exports to Xero and QuickBooks', 'Reads your spreadsheets and PDFs, plus five AI reads of messy documents a month'] },
+  { n: 'II', name: 'Minerva', line: 'With Clerk and the AI readers.', month: 69, year: 690, seats: 5, extra: true, lead: true,
+    adds: ['Everything in Mercury', 'Clerk, the assistant on every job', 'Reads VO tickets, works orders and whole client packs', 'Reads the site diary and lines up what’s done for you to approve', 'Costs and margin on every job', 'A rate check against your schedule of rates', 'An AI allowance that covers a typical firm, and never a surprise bill'] },
+  { n: 'III', name: 'Jupiter', line: 'High use, more people, set-up help.', month: 149, year: 1490, seats: 12, extra: true, lead: false,
+    adds: ['Everything in Minerva', 'A bigger AI allowance that slows down rather than stops', 'Help moving your rate books and live jobs in', 'Same-day support'] },
+]
+const pounds = (n: number) => `£${n.toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`
+
+/** The price schedule: three plans ruled like a rate book. The one most firms choose is marked, never boxed in. */
+function Prices({ onClaim }: { onClaim: () => void }) {
+  return (
+    <section className="prices" id="prices" aria-labelledby="prices-h">
+      <div className="wrap">
+        <h2 className="h2" id="prices-h">One price for the firm, not for each person.</h2>
+        <p className="body-l prices-lede">Every plan covers the whole firm, with a set number of people who run the job and see the figures. {VAT_REGISTERED ? 'Prices are before VAT, with the VAT-inclusive price beside each.' : ''} Founding firms pay half, for as long as they stay.</p>
+        <ol className="plan-grid">
+          {PLANS.map(p => (
+            <li key={p.name} className={'plan' + (p.lead ? ' lead' : '')} aria-label={`${p.name} ${p.n}`}>
+              {p.lead && <span className="plan-flag">Most firms choose this</span>}
+              <h3 className="plan-name"><span className="plan-n">{p.name} {p.n}</span><span className="plan-line">{p.line}</span></h3>
+              <div className="plan-price">
+                <span className="plan-fig">{pounds(p.month)}</span><span className="plan-per">a month{VAT_REGISTERED ? ' + VAT' : ''}</span>
+              </div>
+              <dl className="plan-terms">
+                {VAT_REGISTERED && <div><dt>With VAT</dt><dd className="pf">{pounds(p.month * 1.2)} a month</dd></div>}
+                <div><dt>Paid yearly</dt><dd><span className="pf">{pounds(p.year)}</span> a year, two months free</dd></div>
+                <div><dt>People</dt><dd><span className="pf">{p.seats}</span> included{p.extra ? <>, then <span className="pf">£10</span> a month each</> : ''}</dd></div>
+                <div className="founding"><dt>Founding firms</dt><dd><span className="pf">{pounds(p.month / 2)}</span> a month, for as long as you stay</dd></div>
+              </dl>
+              <ul className="plan-adds">
+                {p.adds.map((a, i) => <li key={a} className={i === 0 && p.n !== 'I' ? 'base' : ''}><IconCheck size={16} /><span>{a}</span></li>)}
+              </ul>
+            </li>
+          ))}
+        </ol>
+        <p className="fine prices-fine">No card for the pilot. Monthly plans stop at the end of the month you’re in. AI use is counted at what it costs Mastor and shown to you in plain terms; when an allowance runs out, the AI pauses and your records carry on, with no extra charge unless you choose a top-up.</p>
+        <button className="claim on-white" onClick={onClaim}><span>Claim a founding place at half price</span><IconArrow size={22} /></button>
+      </div>
+    </section>
+  )
+}
+
+const QUESTIONS: [string, string][] = [
+  ['Who sees the money?', 'The people you give a place to: directors, QSs, contracts and site managers, foremen. Everyone with a place sees the job’s figures. A version for operatives, with the money hidden, comes after launch.'],
+  ['Is my data mine, and can I take it with me?', 'Your firm owns its data. Settings → Backup saves everything to one file at any time: jobs, scope, VOs, valuations, the diary with its photos, video and voice notes, documents, your company details and your rate books.'],
+  ['Does it work without signal?', 'Yes. Everything is saved on your phone first and goes up when there’s signal again, so a site with no bars doesn’t stop the diary.'],
+  ['Can I bring my schedule of rates?', 'Yes. Import the schedule you price from once, and every line and variation can be priced and checked against it, exactly as printed.'],
+  ['Does the AI send anything on its own?', 'No. It reads your documents, photos and voice notes and suggests what’s done and what’s extra. Nothing goes into a valuation, and nothing goes to a client, until a person says so.'],
+  ['What happens if a payment fails or I stop?', 'Your account goes read-only. Nothing is deleted for a missed payment, and you can export everything whenever you like. Pick it up again and it’s all where you left it.'],
+  ['Do I need to install anything?', 'No. Open Mastor in your phone’s browser and add it to your home screen: it works like an app, on iPhone and Android, and on a laptop in the office.'],
+]
+
+/** What firms ask before they sign up, answered plainly. Native details/summary: works with no script. */
+function Questions() {
+  return (
+    <section className="questions" id="questions" aria-labelledby="q-h">
+      <div className="wrap q-in">
+        <h2 className="h2" id="q-h">Questions firms ask.</h2>
+        <div className="q-list">
+          {QUESTIONS.map(([q, a]) => (
+            <details key={q} className="q">
+              <summary><span>{q}</span><span className="q-mark" aria-hidden="true" /></summary>
+              <p>{a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 /** Fifty places on a black board. Taken ones filled, the next one lit, yours ringed once you claim it. */
 function Register({ taken, yours }: { taken: number | null; yours: number | null }) {
@@ -52,6 +128,7 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const robot = useRef<HTMLInputElement>(null)
+  const shown = useRef(Date.now())   // when the form appeared: a form sent faster than a person can fill it is a robot's
   const next = taken != null && taken < PLACES ? taken + 1 : null
   const full = taken != null && taken >= PLACES
 
@@ -65,7 +142,7 @@ function SignUp({ taken, onClaimed, claimed, nameRef }: {
       const q = new URLSearchParams(location.search)
       const r = await fetch('/api/early-signup', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name, firm, email, phone, work, website: robot.current?.value ?? '', source: q.get('utm_source') || q.get('ref') || document.referrer || '' }),
+        body: JSON.stringify({ name, firm, email, phone, work, website: robot.current?.value ?? '', took: Date.now() - shown.current, source: q.get('utm_source') || q.get('ref') || document.referrer || '' }),
       })
       const b = await r.json().catch(() => ({}))
       if (!r.ok || !b.ok) throw new Error(b.error || 'Couldn’t save that just now. Try again in a minute.')
@@ -292,6 +369,8 @@ export function Landing() {
           </div>
         </section>
 
+        <Prices onClaim={toForm} />
+
         <section className="places" id="places">
           <div className="wrap places-in">
             <div>
@@ -300,13 +379,15 @@ export function Landing() {
               <dl className="term-list">
                 <div><dt>The pilot</dt><dd>Free for the whole pilot. No card needed.</dd></div>
                 <div><dt>After the pilot</dt><dd>Half the standard price, for as long as your firm stays with Mastor.</dd></div>
-                <div><dt>The price</dt><dd>Not set yet. You’ll see it before you pay anything, and you can leave whenever you like.</dd></div>
+                <div><dt>The price</dt><dd>Half of whichever plan you choose: from <span className="pf">£14.50</span> a month{VAT_REGISTERED ? ' + VAT' : ''}. You can leave whenever you like.</dd></div>
               </dl>
               {cta && <button className="claim on-white" onClick={toForm}><span>{cta}</span><IconArrow size={22} /></button>}
             </div>
             <Register taken={taken} yours={claimed?.place ?? null} />
           </div>
         </section>
+
+        <Questions />
 
         <section className="wrap origin">
           <img src="/icon.svg" alt="" width={44} height={44} />

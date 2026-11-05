@@ -37,6 +37,7 @@ import type { PackResult } from './lib/packIntake'
 import { schemeStreet } from './lib/packJob'
 import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
+import { HelpSheet } from './screens/Help'
 import { tell } from './components/Problem'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
@@ -114,6 +115,7 @@ export default function App() {
   const [access, setAccess] = useState(accessFor(null))
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
   const [voImport, setVoImport] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   // the open job is kept in the address, so a reload comes back to it (src/lib/place.ts)
   const [openId, setOpenIdState] = useState<string | null>(() => placeParam('job'))
   const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab }) }
@@ -292,6 +294,7 @@ export default function App() {
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
         onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }}
+        onHelp={() => { setSettingsOpen(false); setHelpOpen(true) }}
         onExportInvoices={async (format, period, code) => {
           const [from, to] = periods()[period]
           const rows = invoiceRows(jobs, vals, scope, vos, from, to)
@@ -330,6 +333,7 @@ export default function App() {
       {costsOpen && job && access.money && <CostsSheet job={job} scope={jobScope} vos={jobVos} diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate}
         onClose={() => setCostsOpen(false)} onSave={async c => { await db.put('costs', c); await reload() }} onDelete={async c => { await db.remove('costs', c); await reload() }} />}
       {checking && job && access.money && <RateCheckSheet books={books} lines={jobScope} onClose={() => setChecking(false)} />}
+      {helpOpen && <HelpSheet onClose={() => setHelpOpen(false)} />}
       {teamOpen && access.manage && <TeamSheet company={settings?.name ?? ''} onClose={() => setTeamOpen(false)} />}
       {ratesOpen && access.money && <RatesSheet books={books} onClose={() => setRatesOpen(false)}
         onAddBooks={async (added, items) => {

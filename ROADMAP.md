@@ -40,7 +40,9 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 
 A new firm was walked through the whole app (sign-up → company → job from a schedule → scope → VO → diary photo → valuation sent, agreed, invoiced and paid → dashboard) on a phone and a desktop: it runs end to end with no errors, the figures agree from tick to paid, and no screen fails an accessibility scan or scrolls sideways at 320px. Two bugs were found and fixed (a schedule's house headings read as unpriced lines; a VAT invoice could go out with no client name or address).
 
-Done: `supabase/schema.sql` run (v7, founding sign-ups).
+Done: `supabase/schema.sql` run (v7, founding sign-ups). Launch route batch 1 (5 Nov): the job header's Clerk and Setup buttons are labelled; long trade names wrap; security headers on every route (HSTS, nosniff, frame deny, referrer and permissions policies); the founding sign-up turns away bots (too fast, too many from one connection); dompurify and fast-uri patched; robots.txt; a link-preview card (`public/og.png`); backups carry settings, rate books and VO attachments; the front page has the plans and common questions; Settings → How Mastor works.
+
+Follow-ups from batch 1: **xlsx** (spreadsheet reading) has a known high-severity advisory with no fix on npm; upgrade to 0.20.3 from the SheetJS CDN (blocked from this build machine). **sitemap.xml** needs the domain first. **The support address** goes in `SUPPORT_EMAIL` (`src/screens/Help.tsx`) and on the front page once chosen.
 
 Still to do, owner's decisions and accounts first:
 1. **Privacy notice and terms.** The front page collects names, emails and phone numbers and the app holds clients' job data: a privacy notice (who Mastor is, what's kept, why, how long, rights, contact) linked from the form and the sign-up, and terms for the pilot. ICO data-protection fee if it applies.

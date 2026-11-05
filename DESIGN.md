@@ -334,6 +334,7 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - Valuation and VO refs are set as Roman markings (`.ref-roman`) even inside a mono line.
 - VO units are the client's schedule units (IT, NO, LM, SM, M3). "0 days" is "sent today".
 - Every sheet's title is the cyan ruled title, menus included.
+- The job header's icon buttons carry a word under the icon (Clerk, Setup): an unlabelled icon in the header was guessed at.
 
 ### First run
 - **Getting set up** sits at the top of the jobs screen for a new firm: a ruled list (2px head and foot, hairlines between), each step a 60px row with a 20px square that fills drafting white with a tick when the app sees it done, the step's name in white and one line of why in Slate Note; a step that may not apply carries a quiet link to set it aside. No progress bar, no percentages: "2 of 4" in the heading. Gone when done or hidden.
@@ -390,6 +391,12 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 
 ### Photo Mark-up
 - An Ink Navy toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
+
+### How Mastor works (help)
+- One sheet, the month as six ruled steps, each led by its Roman numeral in cyan (`.ref-roman`) like a valuation: the step's name in white, two or three lines of plain how-to in Ink 2. No screenshots, no tooltips, no tour.
+
+### Plans and questions (front page)
+- The three plans are ruled columns, not cards: Minerva carries the 2px cyan top rule and "Most firms choose this"; each plan's price is mono, with VAT and yearly underneath as a ruled list. Questions are plain details rows with a + that turns to − when open, answers in Ink 2.
 
 ### The Street Print (front page)
 - Behind the header and headline, a real photograph of a terraced street printed like a cyanotype: its light in Prussian blue (#1B4A80, luminosity blend), printed dark enough on its own (no scrim, no fade) under the drafting grid, and cut off on a 1px Slate Edge rule just under the offer. Decorative and credited; measured over a pure white sky, the lede holds 6.8:1 and white type 9.7:1.
