@@ -981,6 +981,11 @@ input[type=radio]:focus-visible { outline: 2px solid var(--cyan); outline-offset
 .setup-row.done .setup-t small { display: none; }
 .setup-chev { flex: none; color: var(--meta); display: grid; }
 .setup-skip { display: block; margin: -10px 0 4px 34px; min-height: 44px; font-size: 14px; color: var(--ink-2); }
+/* Settings → AI this month: the plan and the share of its allowance used, as a plain filled rule */
+.ai-month { display: grid; gap: 6px; padding: 10px 0 4px; border-top: 2px solid var(--rule); }
+.ai-month b { font-weight: 600; }
+.ai-meter { height: 8px; background: var(--rule); }
+.ai-meter > i { display: block; height: 100%; background: var(--white); }
 /* the help guide: a month in six steps, each led by its Roman marking like a valuation */
 .help-steps { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
 .help-steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--rule); }

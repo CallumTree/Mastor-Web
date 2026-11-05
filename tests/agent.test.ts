@@ -45,6 +45,7 @@ function claude(body: any) {
 
 // ---------- fake Supabase and Anthropic ----------
 const realFetch = globalThis.fetch
+const spentAi: any[] = [], checked: string[] = []
 const hits: string[] = [], upserts: { table: string; rows: any[] }[] = []
 globalThis.fetch = (async (input: any, init: any = {}) => {
   const url = String(input instanceof Request ? input.url : input)
@@ -60,7 +61,8 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   const token = String(h.authorization ?? '').replace('Bearer ', '')
   if (url.startsWith(SB + '/auth/v1/user')) return token === 'office' ? new Response(JSON.stringify({ id: 'u1', email: 'office@example.co.uk' })) : new Response('{}', { status: 401 })
   if (url.startsWith(SB + '/rest/v1/memberships')) return new Response(JSON.stringify([{ company_id: 'c1', role: 'director', companies: { name: 'Example Builders' } }]))
-  if (url.startsWith(SB + '/rest/v1/rpc/use_ai')) { hits.push('use_ai'); return new Response('1') }
+  if (url.startsWith(SB + '/rest/v1/rpc/ai_check')) { hits.push('use_ai'); checked.push(JSON.parse(String(init?.body)).p_kind); return new Response(JSON.stringify({ company: 'c1', plan: 'pilot', lane: 'normal' })) }
+  if (url.startsWith(SB + '/rest/v1/rpc/ai_spend')) { spentAi.push(JSON.parse(String(init?.body))); return new Response(null, { status: 204 }) }
   if (url.startsWith(SB + '/rest/v1/') && init.method === 'POST') {
     const table = url.slice((SB + '/rest/v1/').length).split('?')[0], rows = JSON.parse(init.body), store = TABLES[table]() as any[]
     upserts.push({ table, rows })
@@ -153,9 +155,12 @@ const [docAsk, docRead] = asked.slice(n)
 ok(docAsk?.body.model === 'claude-haiku-5-5' && docRead?.body.model === 'claude-opus-5-5' && docRead.body.fallbacks === 'default' && /server-side-fallback-2026-07-01/.test(docRead.beta ?? '') && docRead.body.output_config?.effort === 'medium',
   'a document is read by Claude Opus 5.5, with refusal fallbacks')
 ok(/£10,000\.00/.test(r.done?.messages.at(-1).content[0].text ?? ''), 'and answered from')
+ok(checked.includes('ask_doc') && spentAi.some(x => x.p_kind === 'ask_doc' && x.p_model === 'claude-opus-5-5' && x.p_credits > 0), 'reading a document is checked against the plan’s allowance, and its real cost counts towards it')
+const docConvo = r.done.messages
 n = asked.length
-r = await ask('office', { messages: [...r.done.messages, { role: 'user', content: 'And the uplifts?' }] })
-ok(asked[n]?.body.model === 'claude-opus-5-5', 'the rest of that conversation stays on Opus')
+r = await ask('office', { messages: [...docConvo, { role: 'user', content: 'And the uplifts?' }] })
+ok(asked[n]?.body.model === 'claude-haiku-5-5', 'the next question goes back to Haiku, which can open the document again if it needs to')
+ok(JSON.stringify(asked[n]?.body.messages.slice(0, docConvo.length)) === JSON.stringify(docConvo), 'the conversation is sent as it was: nothing cut out of it')
 
 // declined by the low-cost model: tried once on Opus
 n = asked.length
@@ -163,6 +168,7 @@ r = await ask('office', { messages: [{ role: 'user', content: 'Ask something odd
 ok(asked[n]?.body.model === 'claude-haiku-5-5' && asked[n + 1]?.body.model === 'claude-opus-5-5' && /Here is the answer/.test(r.done?.messages.at(-1).content[0].text ?? ''),
   'what Haiku declines is tried once on Opus')
 ok(r.done?.messages.length === 2, 'the declined attempt leaves nothing in the conversation')
+ok(spentAi.at(-1)?.p_kind === 'ask' && spentAi.at(-1)?.p_model === 'claude-opus-5-5', 'Opus answering what Haiku declined is still an everyday question (fair use, not the allowance)')
 
 // what each question used, by model, in the log
 const lines = logged.map(l => JSON.parse(l).clerk).filter(Boolean)

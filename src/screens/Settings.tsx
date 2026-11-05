@@ -6,6 +6,7 @@ import { Field, Sheet } from '../components/Ui'
 import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
 import { SignOutButton } from '../components/SyncBadge'
 import { checkAi, type AiCheck } from '../lib/aiCheck'
+import { AiMonth } from '../components/AiMonth'
 
 /** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
 export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices, onHelp }: {
@@ -71,6 +72,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         <div className="hint">Add your office and site staff so they see the same jobs.</div>
         <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
 
+        {m && <AiMonth />}
         <AiSetup />
 
         {m && <>
@@ -169,7 +171,7 @@ function AiSetup() {
   return (
     <>
       <h3 className="label bracket sec">AI setup</h3>
-      <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Uses one of today’s reads.</div>
+      <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Counts as one everyday question.</div>
       <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setOut(null); try { setOut(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
       {res && <div className="stack" role="status">
         {res.map(c => <div key={c.name}><Plate kind={c.ok ? 'ok' : 'stop'}>{c.name}</Plate><div className="hint" style={{ marginTop: 2 }}>{c.detail}</div></div>)}

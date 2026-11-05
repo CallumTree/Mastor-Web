@@ -26,7 +26,7 @@ const PLANS = [
   { n: 'II', name: 'Minerva', line: 'With Clerk and the AI readers.', month: 69, year: 690, seats: 5, extra: true, lead: true,
     adds: ['Everything in Mercury', 'Clerk, the assistant on every job', 'Reads VO tickets, works orders and whole client packs', 'Reads the site diary and lines up what’s done for you to approve', 'Costs and margin on every job', 'A rate check against your schedule of rates', 'An AI allowance that covers a typical firm, and never a surprise bill'] },
   { n: 'III', name: 'Jupiter', line: 'High use, more people, set-up help.', month: 149, year: 1490, seats: 12, extra: true, lead: false,
-    adds: ['Everything in Minerva', 'A bigger AI allowance that slows down rather than stops', 'Help moving your rate books and live jobs in', 'Same-day support'] },
+    adds: ['Everything in Minerva', 'A bigger AI allowance, and site reading that carries on past it', 'Help moving your rate books and live jobs in', 'Same-day support'] },
 ]
 const pounds = (n: number) => `£${n.toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`
 

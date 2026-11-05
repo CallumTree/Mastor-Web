@@ -392,6 +392,10 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 ### Photo Mark-up
 - An Ink Navy toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
 
+### AI this month (Settings)
+- The plan's name and the share used (figure in mono) on one line, a plain 8px rule under it filled drafting white to that share on Slate Edge; then site days left at the firm's own rate and today's Clerk questions, in Slate Note. Never credits, tokens or prices. A closing line says AI pauses and records carry on, and nothing is ever charged.
+- Vals → From site says plainly when captures are with the reader ("2 site captures are with the reader. What they show arrives here, usually within the hour."), so a quiet panel never reads as nothing happening.
+
 ### How Mastor works (help)
 - One sheet, the month as six ruled steps, each led by its Roman numeral in cyan (`.ref-roman`) like a valuation: the step's name in white, two or three lines of plain how-to in Ink 2. No screenshots, no tooltips, no tour.
 

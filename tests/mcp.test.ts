@@ -72,6 +72,7 @@ const BOOK = [
 // ---------- fake Supabase + Gemini (everything else goes to the real network: the test's own server) ----------
 const realFetch = globalThis.fetch
 const hits: string[] = []
+const spentAi: any[] = []
 let patched: any = null
 const upserts: { table: string; rows: any[] }[] = []
 let copied: any = null
@@ -83,7 +84,8 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
     return user ? new Response(JSON.stringify(user)) : new Response('{"msg":"bad jwt"}', { status: 401 })
   }
   if (url.startsWith(SB + '/rest/v1/memberships')) return new Response(JSON.stringify([{ company_id: 'c1', role: url.includes('u2') ? 'operative' : 'director', companies: { name: 'Example Builders' } }]))
-  if (url.startsWith(SB + '/rest/v1/rpc/use_ai')) { hits.push('use_ai'); return new Response('1') }
+  if (url.startsWith(SB + '/rest/v1/rpc/ai_check')) { hits.push('use_ai'); return new Response(JSON.stringify({ company: 'c1', plan: 'pilot', lane: 'normal' })) }
+  if (url.startsWith(SB + '/rest/v1/rpc/ai_spend')) { spentAi.push(JSON.parse(String(init?.body))); return new Response(null, { status: 204 }) }
   if (url.startsWith(SB + '/rest/v1/') && init.method === 'POST' && url.includes('on_conflict=id')) {   // a save: upsert into the fake tables
     const table = url.slice((SB + '/rest/v1/').length).split('?')[0], rows = JSON.parse(init.body), store = TABLES[table]() as any[]
     upserts.push({ table, rows })

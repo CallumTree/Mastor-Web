@@ -325,3 +325,167 @@ end $$;
 revoke all on function public.claim_founding_place(text, text, text, text, text, text, text, text) from public;
 grant execute on function public.founding_places_taken() to anon, authenticated;
 grant execute on function public.claim_founding_place(text, text, text, text, text, text, text, text) to anon, authenticated;
+
+-- =====================================================================
+-- v8: AI metered at its real cost. Replaces the flat 60 uses a day, which counted a 0.3p Clerk
+-- question the same as a 44p site read.
+--  - Every AI call is written to ai_ledger with what it really cost, in credits: 1 credit = 1p of
+--    Mastor's AI cost at the suppliers' list prices (worked out on the server, api/_cost.js).
+--  - Heavy reads (site captures, the client's pack, BoQ and VO readers, Clerk reading a document,
+--    voice and video through the Claude connector) draw on the plan's monthly allowance, with a
+--    daily guard so a fault can't burn a month in an afternoon.
+--  - Everyday Clerk questions sit outside the allowance, under a daily fair-use count.
+--  - Running out pauses the AI, never the records, and never charges a card.
+-- Each firm is on the founding pilot until billing sets its plan (Jupiter's allowance as a hard cap).
+-- Safe to run before or after the app update: the app falls back to use_ai() until this has run.
+-- =====================================================================
+create table if not exists public.plan_limits (
+  plan text primary key,
+  monthly_credits int not null,         -- heavy reads a month, in credits (1p of AI each)
+  first_month_credits int not null,     -- a new firm's first month, while it moves its jobs in
+  daily_credits int not null,           -- most heavy reading in one day
+  daily_questions int not null,         -- everyday Clerk questions a day (fair use, outside the allowance)
+  monthly_reads int,                    -- Mercury: document reads a month instead of credits (null = credits)
+  first_month_reads int,
+  economy_credits int not null default 0, -- Jupiter: site reading carries on past the allowance, up to this many more
+  kinds text[] not null                 -- the AI this plan includes
+);
+insert into public.plan_limits (plan, monthly_credits, first_month_credits, daily_credits, daily_questions, monthly_reads, first_month_reads, economy_credits, kinds) values
+  ('pilot',   4000, 4000, 800, 100, null, null,    0, '{site,pack,boq,vo,ask,ask_doc,media,check}'),
+  ('mercury',    0,    0, 300,  10,    5,   20,    0, '{pack,boq,check}'),   -- no Clerk: its 10 a day are for the setup check
+  ('minerva', 1500, 3000, 300,  50, null, null,    0, '{site,pack,boq,vo,ask,ask_doc,media,check}'),
+  ('jupiter', 4000, 8000, 800, 100, null, null, 4000, '{site,pack,boq,vo,ask,ask_doc,media,check}')
+on conflict (plan) do update set monthly_credits = excluded.monthly_credits, first_month_credits = excluded.first_month_credits,
+  daily_credits = excluded.daily_credits, daily_questions = excluded.daily_questions, monthly_reads = excluded.monthly_reads,
+  first_month_reads = excluded.first_month_reads, economy_credits = excluded.economy_credits, kinds = excluded.kinds;
+alter table public.plan_limits enable row level security;
+drop policy if exists plan_limits_read on public.plan_limits;
+create policy plan_limits_read on public.plan_limits for select to authenticated using (true);
+
+-- the firm's plan: set by billing (the service key), never by the firm itself (companies has no update policy)
+alter table public.companies add column if not exists plan text not null default 'pilot' references public.plan_limits(plan);
+
+create table if not exists public.ai_ledger (
+  id bigserial primary key,
+  company_id uuid not null references public.companies(id) on delete cascade,
+  at timestamptz not null default now(),
+  kind text not null,
+  model text not null default '',
+  credits numeric(10,3) not null check (credits >= 0),
+  ref text,                              -- a batch's id: collecting it twice never counts it twice
+  unique (company_id, ref)
+);
+create index if not exists ai_ledger_company_at on public.ai_ledger (company_id, at);
+alter table public.ai_ledger enable row level security;   -- members read their own; only the functions write
+drop policy if exists ai_ledger_member_read on public.ai_ledger;
+create policy ai_ledger_member_read on public.ai_ledger for select to authenticated using (public.is_member(company_id));
+
+-- The caller's company (their first membership), or an error the readers turn into plain words.
+create or replace function public.ai_company() returns uuid
+language plpgsql security definer stable set search_path = public as $$
+declare c uuid;
+begin
+  if auth.uid() is null then raise exception 'not signed in' using errcode = '28000'; end if;
+  select m.company_id into c from public.memberships m where m.user_id = auth.uid() order by m.created_at limit 1;
+  if c is null then raise exception 'no company' using errcode = '28000'; end if;
+  return c;
+end $$;
+
+-- Before any AI call: may this firm's plan do this now? Counts the use and returns the firm, its plan and its lane.
+-- Kinds: site, pack, boq, vo, ask_doc, media = heavy (the allowance); ask, check = everyday (fair use);
+-- collect = picking up a site read already paid for (sign-in only).
+create or replace function public.ai_check(p_kind text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  c uuid := public.ai_company();
+  k text := left(coalesce(p_kind, 'other'), 20);
+  today date := (now() at time zone 'Europe/London')::date;
+  day_start timestamptz := (today::timestamp) at time zone 'Europe/London';
+  month_day date := date_trunc('month', today::timestamp)::date;
+  month_start timestamptz := (month_day::timestamp) at time zone 'Europe/London';
+  co public.companies; p public.plan_limits;
+  first boolean; allowance int; used numeric; n int; lane text := 'normal';
+begin
+  if k = 'collect' then return jsonb_build_object('company', c, 'lane', lane); end if;
+  select * into co from public.companies where id = c;
+  select * into p from public.plan_limits where plan = co.plan;
+  if not found or not (k = any(p.kinds)) then raise exception 'ai_plan' using errcode = 'P0001', hint = coalesce(co.plan, ''); end if;
+  first := co.created_at > now() - interval '1 month';
+  if k in ('ask', 'check') then
+    select coalesce(sum(count), 0) into n from public.ai_usage where company_id = c and day = today and kind in ('ask', 'check');
+    if n >= p.daily_questions then raise exception 'ai_daily_questions' using errcode = 'P0001', hint = p.daily_questions::text; end if;
+  else
+    if p.monthly_reads is not null then
+      allowance := case when first then p.first_month_reads else p.monthly_reads end;
+      select coalesce(sum(count), 0) into n from public.ai_usage
+        where company_id = c and day >= month_day and kind not in ('ask', 'check', 'collect');
+      if n >= allowance then raise exception 'ai_month_reads' using errcode = 'P0001', hint = allowance::text; end if;
+    else
+      allowance := case when first then p.first_month_credits else p.monthly_credits end;
+      select coalesce(sum(credits), 0) into used from public.ai_ledger where company_id = c and at >= month_start and kind not in ('ask', 'check');
+      if used >= allowance then
+        if k = 'site' and used < allowance + p.economy_credits then lane := 'economy';
+        else raise exception 'ai_month' using errcode = 'P0001', hint = allowance::text; end if;
+      end if;
+    end if;
+    select coalesce(sum(credits), 0) into used from public.ai_ledger where company_id = c and at >= day_start and kind not in ('ask', 'check');
+    if used >= p.daily_credits then raise exception 'ai_daily_credits' using errcode = 'P0001', hint = p.daily_credits::text; end if;
+  end if;
+  insert into public.ai_usage (company_id, day, kind, count) values (c, today, k, 1)
+    on conflict (company_id, day, kind) do update set count = public.ai_usage.count + 1;
+  return jsonb_build_object('company', c, 'plan', co.plan, 'lane', lane);
+end $$;
+
+-- After an AI call: what it really cost. One call can't be recorded as more than £100 or less than nothing.
+create or replace function public.ai_spend(p_kind text, p_model text, p_credits numeric, p_ref text default null) returns void
+language plpgsql security definer set search_path = public as $$
+declare c uuid := public.ai_company();
+begin
+  if p_credits is null or p_credits < 0 or p_credits > 10000 then raise exception 'ai_spend_invalid' using errcode = 'P0001'; end if;
+  insert into public.ai_ledger (company_id, kind, model, credits, ref)
+    values (c, left(coalesce(p_kind, 'other'), 20), left(coalesce(p_model, ''), 60), round(p_credits, 3), nullif(left(coalesce(p_ref, ''), 120), ''))
+    on conflict (company_id, ref) do nothing;
+end $$;
+
+-- This month for the firm: its plan, the allowance and what's been used (for Settings → AI this month).
+create or replace function public.ai_month() returns jsonb
+language plpgsql security definer stable set search_path = public as $$
+declare
+  c uuid := public.ai_company();
+  today date := (now() at time zone 'Europe/London')::date;
+  month_day date := date_trunc('month', today::timestamp)::date;
+  month_start timestamptz := (month_day::timestamp) at time zone 'Europe/London';
+  co public.companies; p public.plan_limits; first boolean;
+begin
+  select * into co from public.companies where id = c;
+  select * into p from public.plan_limits where plan = co.plan;
+  first := co.created_at > now() - interval '1 month';
+  return jsonb_build_object(
+    'plan', co.plan,
+    'allowance', case when first then p.first_month_credits else p.monthly_credits end,
+    'reads_allowed', case when first then p.first_month_reads else p.monthly_reads end,
+    'economy', p.economy_credits,
+    'used', (select coalesce(sum(credits), 0) from public.ai_ledger where company_id = c and at >= month_start and kind not in ('ask', 'check')),
+    'reads', (select coalesce(sum(count), 0) from public.ai_usage where company_id = c and day >= month_day and kind not in ('ask', 'check', 'collect')),
+    'site_reads', (select count(*) from public.ai_ledger where company_id = c and at >= month_start and kind = 'site' and ref is not null),
+    'site_credits', (select coalesce(sum(credits), 0) from public.ai_ledger where company_id = c and at >= month_start and kind = 'site'),
+    'questions_today', (select coalesce(sum(count), 0) from public.ai_usage where company_id = c and day = today and kind in ('ask', 'check')),
+    'questions_allowed', p.daily_questions
+  );
+end $$;
+
+-- The old check, kept for any copy of the app still calling it: now the same metered check.
+create or replace function public.use_ai(p_kind text) returns integer
+language plpgsql security definer set search_path = public as $$
+begin
+  perform public.ai_check(p_kind);
+  return 0;
+end $$;
+
+revoke all on function public.ai_company() from public;
+revoke all on function public.ai_check(text) from public;
+revoke all on function public.ai_spend(text, text, numeric, text) from public;
+revoke all on function public.ai_month() from public;
+grant execute on function public.ai_check(text) to authenticated;
+grant execute on function public.ai_spend(text, text, numeric, text) to authenticated;
+grant execute on function public.ai_month() to authenticated;

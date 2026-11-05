@@ -150,7 +150,12 @@ export interface DiaryEntry {
 }
 
 /** One site capture read against the job's scope. Suggestions wait for a person in Vals. */
-export interface SiteRead { at: number; suggestions: SiteSuggestion[] }
+export interface SiteRead {
+  at: number
+  suggestions: SiteSuggestion[]
+  /** sent to the reader at half price and not back yet: the batch's id (src/lib/autoRead.ts collects it) */
+  pending?: string
+}
 export interface SiteSuggestion {
   id: string
   kind: 'complete' | 'vo' | 'note'

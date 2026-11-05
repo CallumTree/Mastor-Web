@@ -1825,12 +1825,12 @@ var require_code2 = __commonJS({
       });
     }
     exports.checkReportMissingProp = checkReportMissingProp;
-    function checkMissingProp({ gen, data, it: { opts } }, properties, missing) {
-      return (0, codegen_1.or)(...properties.map((prop) => (0, codegen_1.and)(noPropertyInData(gen, data, prop, opts.ownProperties), (0, codegen_1._)`${missing} = ${prop}`)));
+    function checkMissingProp({ gen, data, it: { opts } }, properties, missing2) {
+      return (0, codegen_1.or)(...properties.map((prop) => (0, codegen_1.and)(noPropertyInData(gen, data, prop, opts.ownProperties), (0, codegen_1._)`${missing2} = ${prop}`)));
     }
     exports.checkMissingProp = checkMissingProp;
-    function reportMissingProp(cxt, missing) {
-      cxt.setParams({ missingProperty: missing }, true);
+    function reportMissingProp(cxt, missing2) {
+      cxt.setParams({ missingProperty: missing2 }, true);
       cxt.error();
     }
     exports.reportMissingProp = reportMissingProp;
@@ -5392,14 +5392,14 @@ var require_required = __commonJS({
           }
         }
         function exitOnErrorMode() {
-          const missing = gen.let("missing");
+          const missing2 = gen.let("missing");
           if (useLoop || $data) {
             const valid = gen.let("valid", true);
-            cxt.block$data(valid, () => loopUntilMissing(missing, valid));
+            cxt.block$data(valid, () => loopUntilMissing(missing2, valid));
             cxt.ok(valid);
           } else {
-            gen.if((0, code_1.checkMissingProp)(cxt, schema, missing));
-            (0, code_1.reportMissingProp)(cxt, missing);
+            gen.if((0, code_1.checkMissingProp)(cxt, schema, missing2));
+            (0, code_1.reportMissingProp)(cxt, missing2);
             gen.else();
           }
         }
@@ -5409,10 +5409,10 @@ var require_required = __commonJS({
             gen.if((0, code_1.noPropertyInData)(gen, data, prop, opts.ownProperties), () => cxt.error());
           });
         }
-        function loopUntilMissing(missing, valid) {
-          cxt.setParams({ missingProperty: missing });
-          gen.forOf(missing, schemaCode, () => {
-            gen.assign(valid, (0, code_1.propertyInData)(gen, data, missing, opts.ownProperties));
+        function loopUntilMissing(missing2, valid) {
+          cxt.setParams({ missingProperty: missing2 });
+          gen.forOf(missing2, schemaCode, () => {
+            gen.assign(valid, (0, code_1.propertyInData)(gen, data, missing2, opts.ownProperties));
             gen.if((0, codegen_1.not)(valid), () => {
               cxt.error();
               gen.break();
@@ -5950,7 +5950,7 @@ var require_dependencies = __commonJS({
       const { gen, data, it } = cxt;
       if (Object.keys(propertyDeps).length === 0)
         return;
-      const missing = gen.let("missing");
+      const missing2 = gen.let("missing");
       for (const prop in propertyDeps) {
         const deps = propertyDeps[prop];
         if (deps.length === 0)
@@ -5968,8 +5968,8 @@ var require_dependencies = __commonJS({
             }
           });
         } else {
-          gen.if((0, codegen_1._)`${hasProperty} && (${(0, code_1.checkMissingProp)(cxt, deps, missing)})`);
-          (0, code_1.reportMissingProp)(cxt, missing);
+          gen.if((0, codegen_1._)`${hasProperty} && (${(0, code_1.checkMissingProp)(cxt, deps, missing2)})`);
+          (0, code_1.reportMissingProp)(cxt, missing2);
           gen.else();
         }
       }
@@ -31042,6 +31042,59 @@ var envKey = (name) => (process.env[name] || "").trim().replace(/^["']|["']$/g, 
 var geminiKey = () => envKey("GEMINI_API_KEY");
 var CLERK_MODEL = process.env.ANTHROPIC_AGENT_MODEL || "claude-haiku-5-5";
 var CLERK_DOC_MODEL = process.env.ANTHROPIC_AGENT_DOC_MODEL || "claude-opus-5-5";
+var FEATURE = { site: "Reading site captures", vo: "The VO ticket reader", ask: "Clerk", ask_doc: "Clerk", media: "Voice and video through the Claude connector", pack: "Reading the client\u2019s pack", boq: "Reading scanned schedules" };
+var rpc = (fn, token, body) => fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+  method: "POST",
+  headers: { apikey: SB_KEY, authorization: `Bearer ${token}`, "content-type": "application/json" },
+  body: JSON.stringify(body ?? {})
+});
+var missing = (r, e) => r.status === 404 || e?.code === "PGRST202";
+async function aiCheck(token, kind) {
+  if (!token) return { ok: false, status: 401, error: "Sign in to Mastor to use document reading." };
+  let r, e;
+  try {
+    r = await rpc("ai_check", token, { p_kind: kind });
+    if (r.ok) {
+      const d = await r.json().catch(() => ({}));
+      return { ok: true, company: d?.company ?? null, plan: d?.plan ?? null, lane: d?.lane ?? "normal" };
+    }
+    e = await r.json().catch(() => ({}));
+    if (missing(r, e)) {
+      if (kind === "collect") return { ok: true, company: null, plan: null, lane: "normal" };
+      r = await rpc("use_ai", token, { p_kind: kind });
+      if (r.ok) return { ok: true, company: null, plan: null, lane: "normal" };
+      e = await r.json().catch(() => ({}));
+    }
+  } catch {
+    return { ok: false, status: 503, error: "Couldn\u2019t check your sign-in. Check signal and try again." };
+  }
+  const msg = String(e?.message || ""), hint = /^\d+$/.test(String(e?.hint)) ? String(e.hint) : "";
+  if (r.status === 401 || /jwt|not signed in/i.test(msg)) return { ok: false, status: 401, error: "Your sign-in has expired \u2014 sign in again and retry." };
+  if (/no company/.test(msg)) return { ok: false, status: 403, error: "Set up or join a company before reading documents." };
+  if (/ai_plan/.test(msg)) return { ok: false, status: 403, error: `${FEATURE[kind] ?? "This"} isn\u2019t on your plan. It comes with Minerva and Jupiter.` };
+  if (/ai_month_reads/.test(msg)) return { ok: false, status: 429, error: `Your company has used this month\u2019s ${hint || ""} document reads. They start again on the 1st, or enter the lines by hand.`.replace("  ", " ") };
+  if (/ai_month/.test(msg)) return { ok: false, status: 429, error: "Your company has used this month\u2019s AI allowance. AI reading starts again on the 1st; everything else carries on as normal." };
+  if (/ai_daily_credits/.test(msg)) return { ok: false, status: 429, error: "Your company has done the most AI reading for one day. It starts again at midnight; everything else carries on as normal." };
+  if (/ai_daily_questions/.test(msg)) return { ok: false, status: 429, error: `Your company has asked Clerk ${hint || "the most"} questions today, the most for one day. Clerk is back at midnight.` };
+  if (/ai_daily_limit/.test(msg)) {
+    const n = hint ? `all ${hint} of today\u2019s` : "today\u2019s";
+    return { ok: false, status: 429, error: `Your company has used ${n} document reads. It resets at midnight \u2014 or enter the lines by hand.` };
+  }
+  if (missing(r, e)) {
+    return { ok: false, status: 503, error: "Document reading is switched off until the database update is run (supabase/schema.sql)." };
+  }
+  return { ok: false, status: 503, error: "Couldn\u2019t check your sign-in right now. Try again in a minute." };
+}
+async function spend(token, kind, model, credits, ref) {
+  if (!token || !(credits > 0)) return;
+  try {
+    const r = await rpc("ai_spend", token, { p_kind: kind, p_model: String(model || ""), p_credits: Math.min(credits, 1e4), p_ref: ref ?? null });
+    if (!r.ok && r.status !== 404) console.warn("ai_spend", r.status, await r.text().catch(() => ""));
+  } catch (e) {
+    console.warn("ai_spend", e?.message);
+  }
+  console.info(JSON.stringify({ ai: { kind, model, credits, ...ref ? { ref } : {} } }));
+}
 
 // server/mcp/data.ts
 var headers = (token, extra = {}) => ({ apikey: SB_KEY, authorization: `Bearer ${token}`, ...extra });
@@ -31109,10 +31162,9 @@ async function media(ctx, mediaId) {
   return { bytes: Buffer.from(await r.arrayBuffer()), type: (r.headers.get("content-type") || "").split(";")[0] };
 }
 async function useAi(ctx, kind) {
-  const r = await fetch(`${SB_URL}/rest/v1/rpc/use_ai`, { method: "POST", headers: headers(ctx.token, { "content-type": "application/json" }), body: JSON.stringify({ p_kind: kind }) });
-  if (r.ok) return;
-  const e = await r.json().catch(() => ({}));
-  if (/ai_daily_limit/.test(e.message ?? "")) throw new Error("Your company has used today\u2019s AI reads. Voice notes and videos can be read again after midnight.");
+  const c = await aiCheck(ctx.token, kind);
+  if (c.ok) return;
+  if (c.status === 429 || c.status === 403) throw new Error(c.error);
   throw new Error("Couldn\u2019t start a transcription just now \u2014 try again in a minute.");
 }
 async function saveTranscript(ctx, entry, transcript) {
@@ -39921,6 +39973,16 @@ ${f.bytes.toString("utf8").slice(0, MAX_CHARS)}` }];
 Mastor can\u2019t read this kind of file (${type || "unknown type"}). Open it in the app, or add it as a PDF.` }];
 }
 
+// api/_cost.js
+var usdToGbp = () => Number(envKey("AI_USD_TO_GBP")) || 0.8;
+function geminiCredits(meta3) {
+  const m = meta3 || {};
+  const pin = Number(envKey("GEMINI_PRICE_IN")) || 1, pout = Number(envKey("GEMINI_PRICE_OUT")) || 2.5;
+  const usd = ((m.promptTokenCount || 0) * pin + ((m.candidatesTokenCount || 0) + (m.thoughtsTokenCount || 0)) * pout) / 1e6;
+  return toCredits(usd);
+}
+var toCredits = (usd) => Math.round(usd * usdToGbp() * 100 * 1e3) / 1e3;
+
 // api/read-site.js
 var CLAUDE_MODEL = process.env.ANTHROPIC_SITE_MODEL || "claude-opus-5-5";
 var GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
@@ -39949,7 +40011,7 @@ async function transcribe(bytes, mime, key) {
   const r = await fetch(`${GEMINI}/v1beta/models/${GEMINI_MODEL}:generateContent`, { method: "POST", headers: { "x-goog-api-key": key, "content-type": "application/json" }, body: JSON.stringify({ contents: [{ role: "user", parts: [part, { text: TRANSCRIBE }] }], generationConfig: { temperature: 0 } }) });
   const d = await r.json();
   if (!r.ok) throw new Error(d?.error?.message || `transcription failed (${r.status})`);
-  return (d.candidates?.[0]?.content?.parts ?? []).map((p) => p.text || "").join("").trim();
+  return { text: (d.candidates?.[0]?.content?.parts ?? []).map((p) => p.text || "").join("").trim(), credits: geminiCredits(d.usageMetadata) };
 }
 
 // server/mcp/media.ts
@@ -39987,9 +40049,11 @@ What was said: ${e.transcript}` });
       continue;
     }
     try {
-      await useAi(ctx, "site");
+      await useAi(ctx, "media");
       const mime = e.type === "voice" ? "audio/wav" : f.type.startsWith("video/") ? f.type : "video/mp4";
-      const t = String(await transcribe(f.bytes, mime, key)).trim();
+      const heard = await transcribe(f.bytes, mime, key);
+      await spend(ctx.token, "media", GEMINI_MODEL, heard.credits);
+      const t = String(heard.text).trim();
       await saveTranscript(ctx, e, t);
       out.push({ type: "text", text: `${head(e)}
 What was said: ${t}` });
@@ -40472,12 +40536,12 @@ ${added}` } : {},
     if (valuation && !vals.length) throw new Error(`No ${valuation} on ${job.name}.`);
     const rate = s?.vatRate ?? 20;
     const allVals = s ? await records(ctx, "valuations") : [];
-    const missing = missingForInvoice(s ?? void 0);
+    const missing2 = missingForInvoice(s ?? void 0);
     return text({
       job: job.name,
       po: job.poNumber || "none, so the invoice will go out without a PO and may be rejected",
       ...s ? { nextInvoiceNumber: allocateInvoiceNo(s, allVals).number } : {},
-      ...missing.length ? { missingForAVatInvoice: missing } : {},
+      ...missing2.length ? { missingForAVatInvoice: missing2 } : {},
       valuations: vals.map((v) => {
         if (v.status === "Open") return { ref: valRef(v.number), invoice: "not issued yet, so it can\u2019t be invoiced until a person issues it in the app" };
         if (v.invoiceNumber) {

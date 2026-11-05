@@ -6,9 +6,9 @@
 import type { DiaryEntry } from '../../src/lib/types'
 import { media, saveTranscript, useAi, type Ctx } from './data'
 // @ts-expect-error plain JS modules shared with the other /api functions
-import { transcribe } from '../../api/read-site.js'
+import { transcribe, GEMINI_MODEL } from '../../api/read-site.js'
 // @ts-expect-error plain JS module
-import { geminiKey } from '../../api/_guard.js'
+import { geminiKey, spend } from '../../api/_guard.js'
 
 type Content = { type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }
 
@@ -31,9 +31,11 @@ export async function siteMedia(ctx: Ctx, diary: DiaryEntry[], ids: string[]): P
     const f = await media(ctx, e.mediaId)
     if (!f) { out.push({ type: 'text', text: `${head(e)}: not uploaded from the phone yet (it syncs when the phone has signal).` }); continue }
     try {
-      await useAi(ctx, 'site')
+      await useAi(ctx, 'media')
       const mime = e.type === 'voice' ? 'audio/wav' : (f.type.startsWith('video/') ? f.type : 'video/mp4')
-      const t = String(await transcribe(f.bytes, mime, key)).trim()
+      const heard = await transcribe(f.bytes, mime, key) as { text: string; credits: number }
+      await spend(ctx.token, 'media', GEMINI_MODEL, heard.credits)
+      const t = String(heard.text).trim()
       await saveTranscript(ctx, e, t)
       out.push({ type: 'text', text: `${head(e)}\nWhat was said: ${t}` })
     } catch (x) {

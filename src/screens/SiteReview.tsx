@@ -1,8 +1,11 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { DiaryEntry, ScopeItem, SiteSuggestion } from '../lib/types'
-import { openSuggestions, unread } from '../lib/siteRead'
+import { openSuggestions, STALE_MS, unread } from '../lib/siteRead'
 
 const unreadCount = (diary: DiaryEntry[]) => [...new Set(diary.map(e => e.date))].reduce((t, d) => t + unread(diary, d).length, 0)
+/** Captures sent to the reader and not back yet (half price, usually within the hour). */
+const withReader = (diary: DiaryEntry[]) => diary.filter(e => e.read?.pending && Date.now() - e.read.at < STALE_MS).length
+const readerLine = (n: number) => `${n} site capture${n === 1 ? ' is' : 's are'} with the reader. What ${n === 1 ? 'it shows' : 'they show'} arrives here, usually within the hour.`
 import { usePhotoThumb } from '../lib/photos'
 import { money } from '../lib/format'
 import { lineValue } from '../lib/valuation'
@@ -35,6 +38,7 @@ export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
   const [busy, setBusy] = useState<string | null>(null)
   const list = openSuggestions(diary)
   const waiting = unreadCount(diary)
+  const reading = withReader(diary)
   // a decided row confirms, folds shut, then goes; the count ticks down as it folds
   const [leaving, setLeaving] = useState<Record<string, 'approved' | 'rejected'>>({})
   // suggestions that arrive while you're looking (the automatic read just finished) come in one after another,
@@ -52,7 +56,8 @@ export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
     const t = setTimeout(() => setArrived(null), 2600)
     return () => clearTimeout(t)
   }, [ids])   // eslint-disable-line react-hooks/exhaustive-deps
-  if (!list.length) return note && waiting ? <div className="hint site-note">Site captures aren’t being read just now: {note}</div> : null
+  if (!list.length) return note && waiting ? <div className="hint site-note">Site captures aren’t being read just now: {note}</div>
+    : reading ? <div className="hint site-note">{readerLine(reading)}</div> : null
   const act = async (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => {
     setBusy(s.id); setLeaving(l => ({ ...l, [s.id]: state }))
     try {
@@ -69,6 +74,7 @@ export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
       <Plate kind="do">From site · <Roll text={String(left)} /> to review</Plate>
       <div className="hint">Read from the site’s photos, video and voice notes. Check each one: nothing is claimed or raised until you approve it.</div>
       {note && waiting > 0 && <div className="hint">{waiting} more capture{waiting === 1 ? '' : 's'} not read yet: {note}</div>}
+      {reading > 0 && <div className="hint">{readerLine(reading)}</div>}
       <div className="site-wrap">{arrived && <span key={arrived.k} className="site-marks" aria-hidden="true" />}<div className="panel flush clip">
         {list.map(({ entry: e, s }, n) => {
           const lines = scope.filter(i => s.lineIds.includes(i.id))

@@ -8,7 +8,8 @@
  *
  * The API key lives only in Vercel's environment (ANTHROPIC_API_KEY) — never in the app.
  */
-import { guard, anthropicKey } from './_guard.js'
+import { guard, spend, bearer, anthropicKey } from './_guard.js'
+import { claudeCredits } from './_cost.js'
 
 export const config = { maxDuration: 300 }
 
@@ -94,6 +95,7 @@ export default async function handler(req, res) {
       }),
     })
     const data = await r.json()
+    if (data?.usage) await spend(bearer(req), 'pack', data.model, claudeCredits(data.model, data.usage))
     if (!r.ok) return res.status(502).json({ error: data?.error?.message || `AI request failed (${r.status})` })
     if (data.stop_reason === 'refusal') return res.status(502).json({ error: 'The reader declined these documents. Add the facts to the job notes by hand.' })
     if (data.stop_reason === 'max_tokens') return res.status(502).json({ error: 'The documents gave more than the reader could return in one go. Try fewer documents at a time.' })

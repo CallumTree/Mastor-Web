@@ -5,15 +5,18 @@
  * claimed or raised on its own (siteRead.ts checks every suggestion first and drops the weak ones).
  *
  * Office devices only, so the read happens once (operatives' phones just upload), one job-day at a time,
- * within the company's daily AI limit. A day whose captures haven't uploaded yet is tried again later;
+ * within the company's AI allowance. Each day goes to the reader at half price (a batch) and its answer is
+ * collected on a later pass, usually within the hour; a capture waiting at the reader isn't sent again. A day whose captures haven't uploaded yet is tried again later;
  * when reading can't go on today (not set up, signed out, the limit reached) it stops until the next open.
  */
-import { db } from './db'
+import { db, meta } from './db'
 import { dayKey } from './dates'
 import { currentCompany, settle } from './sync'
-import { dueToRead, readSite } from './siteRead'
+import { collectSite, dueToRead, readSite, STALE_MS, type PendingRead } from './siteRead'
 
 const RETRY_MS = 30 * 60_000
+/** Reads waiting at the reader, kept on this device only (meta store): the device that sent a read collects it. */
+const PENDING = 'siteReads'
 let running = false
 let stopped: string | null = null
 const tried = new Map<string, number>()
@@ -29,6 +32,20 @@ export async function autoRead(onRead: () => Promise<void> | void, now: () => nu
   running = true
   let n = 0
   try {
+    // first, the reads sent earlier at half price: each answer is checked and lands in Vals like any other
+    const sent = (await meta.get<PendingRead[]>(PENDING)) ?? []
+    let left = sent.filter(p => now() - p.at < STALE_MS)     // older ones are read afresh (siteRead.ts unread)
+    for (const p of [...left]) {
+      const r = await collectSite(p, await db.diary(p.jobId), await db.scope(p.jobId))
+      if (r.state === 'waiting') continue
+      if (r.state === 'stop') { stopped = r.error; await onRead(); break }
+      left = left.filter(x => x.batch !== p.batch)
+      for (const e of r.updated) await db.putDiary(e)
+      if (r.updated.length) { n++; await onRead() }
+    }
+    if (left.length !== sent.length) await meta.set(PENDING, left)
+    if (stopped) return n
+
     for (let guard = 0; guard < 24; guard++) {
       const jobs = (await db.jobs()).filter(j => j.status !== 'Complete')
       const entries = (await Promise.all(jobs.map(j => db.diary(j.id)))).flat()
@@ -39,6 +56,7 @@ export async function autoRead(onRead: () => Promise<void> | void, now: () => nu
       tried.set(`${d.jobId}|${d.items[0].id}`, now())
       await settle()   // what this device captured goes up first
       const r = await readSite(company, d.items, await db.scope(d.jobId), await db.variations(d.jobId))
+      if (r.pending) await meta.set(PENDING, [...((await meta.get<PendingRead[]>(PENDING)) ?? []), r.pending])
       for (const e of r.updated) await db.putDiary(e)
       if (r.updated.length) { n++; await onRead() }
       if (r.stop) { stopped = r.error ?? 'Site reading is off for now.'; await onRead(); break }

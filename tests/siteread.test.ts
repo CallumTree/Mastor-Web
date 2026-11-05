@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto'
 import read from '../api/read-site.js'
 import { encodeWav } from '../src/lib/voice'
-import { buildRequest, verifySuggestions, voFromSuggestion, unread, openSuggestions, decide, dueToRead } from '../src/lib/siteRead'
+import { buildRequest, verifySuggestions, voFromSuggestion, unread, openSuggestions, decide, dueToRead, collectSite, STALE_MS, type PendingRead } from '../src/lib/siteRead'
 import type { DiaryEntry, ScopeItem } from '../src/lib/types'
 let pass = 0, fail = 0
 const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log((c ? '  ✓ ' : '  ✗ ') + m) }
@@ -63,24 +63,35 @@ ok(dueIds([day('a', '2026-10-17', T - 50 * MIN), day('b', '2026-10-17', T - 5 * 
 ok(dueIds([day('y', '2026-10-16', T - 30 * MIN)]) === 'j|2026-10-16|y', 'yesterday is over: read')
 ok(dueIds([day('o', '2026-10-05', 1)]) === '', 'older than a week: left as it was')
 ok(dueIds([day('r', '2026-10-16', 1, { read: { at: 1, suggestions: [] } })]) === '', 'already read: never again')
+ok(dueIds([day('w', '2026-10-16', 1, { read: { at: T - 2 * 3600_000, suggestions: [], pending: 'msgbatch_x' } })]) === '', 'with the reader: not sent again')
+ok(dueIds([day('w', '2026-10-16', 1, { read: { at: T - STALE_MS - MIN, suggestions: [], pending: 'msgbatch_x' } })]) === 'j|2026-10-16|w', 'with the reader for a day and a half (its answer lost): read afresh')
 ok(dueIds([day('b2', '2026-10-16', 9), day('b1', '2026-10-16', 3), { ...day('x', '2026-10-15', 1), jobId: 'k' }]) === 'k|2026-10-15|x j|2026-10-16|b1+b2', 'oldest day first, captures in the order made, per job')
 
 // ---- the endpoint
 process.env.ANTHROPIC_API_KEY = 'k'
 const calls: string[] = []
-let claude: any = null, gemini: any = null, storageAuth = ''
+let claude: any = null, gemini: any = null, storageAuth = '', batchReq: any = null
+let firm: any = { company: 'c1', plan: 'pilot', lane: 'normal' }
+let batch: { status: string; result: any } = { status: 'in_progress', result: null }
+const spent: any[] = []
+const answer = { model: 'claude-opus-5-5', stop_reason: 'end_turn', usage: { input_tokens: 20_000, output_tokens: 1_000 }, content: [{ type: 'text', text: JSON.stringify({ suggestions: [{ item: 'M2', kind: 'complete', lines: ['L1'], text: 'Done', property: '4', room: '', qty: null, unit: '', code: '', quote: 'number four front is painted', basis: 'said' }] }) }] }
 const files: Record<string, { body: Uint8Array; type: string }> = { 'm-p1': { body: new Uint8Array([255, 216, 255]), type: 'image/jpeg' }, 'm-v1': { body: new Uint8Array(wav.size), type: 'audio/wav' } }
 globalThis.fetch = (async (url: string, init: any) => {
   url = String(url)
-  if (url.includes('/rpc/use_ai')) { calls.push('guard'); return new Response('1', { status: 200 }) }
+  if (url.includes('/rpc/ai_check')) { calls.push('guard'); return new Response(JSON.stringify(firm), { status: 200 }) }
+  if (url.includes('/rpc/ai_spend')) { spent.push(JSON.parse(init.body)); return new Response(null, { status: 204 }) }
+  if (url.endsWith('/v1/messages/batches')) { calls.push('batch'); batchReq = JSON.parse(init.body); return new Response(JSON.stringify({ id: 'msgbatch_abc123', processing_status: 'in_progress' }), { status: 200 }) }
+  if (url.endsWith('/v1/messages/batches/msgbatch_abc123')) { calls.push('status'); return new Response(JSON.stringify({ id: 'msgbatch_abc123', processing_status: batch.status }), { status: 200 }) }
+  if (url.endsWith('/v1/messages/batches/msgbatch_gone99')) return new Response(JSON.stringify({ error: { message: 'not found' } }), { status: 404 })
+  if (url.endsWith('/v1/messages/batches/msgbatch_abc123/results')) { calls.push('results'); return new Response(['{"custom_id":"site-c9","result":{"type":"succeeded"}}', JSON.stringify({ custom_id: 'site-c1', result: batch.result })].join('\n'), { status: 200 }) }
   if (url.includes('/storage/v1/object/photos/c1/')) {
     calls.push('storage'); storageAuth = init.headers.authorization
     const id = decodeURIComponent(url.split('/').pop()!.replace('.jpg', '')); const f = files[id]
     return f ? new Response(f.body, { status: 200, headers: { 'content-type': f.type } }) : new Response('nope', { status: 404 })
   }
-  if (url.includes('generativelanguage')) { calls.push('gemini'); gemini = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Number four front is painted.' }] } }] }), { status: 200 }) }
+  if (url.includes('generativelanguage')) { calls.push('gemini'); gemini = JSON.parse(init.body); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Number four front is painted.' }] } }], usageMetadata: { promptTokenCount: 2000, candidatesTokenCount: 200 } }), { status: 200 }) }
   calls.push('claude'); claude = JSON.parse(init.body)
-  return new Response(JSON.stringify({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify({ suggestions: [{ item: 'M2', kind: 'complete', lines: ['L1'], text: 'Done', property: '4', room: '', qty: null, unit: '', code: '', quote: 'number four front is painted', basis: 'said' }] }) }] }), { status: 200 })
+  return new Response(JSON.stringify(answer), { status: 200 })
 }) as typeof fetch
 const call = async (body: unknown) => {
   const out = { status: 0, json: null as any }
@@ -91,6 +102,7 @@ const call = async (body: unknown) => {
 let r = await call(req)
 ok(r.status === 503 && /GEMINI_API_KEY/.test(r.json.error) && !calls.length, 'voice/video without a Gemini key: says what to set up, reads nothing')
 process.env.GEMINI_API_KEY = 'g'
+process.env.SITE_READ_NOW = '1'
 r = await call(req)
 ok(r.status === 200 && calls.join() === 'guard,storage,storage,gemini,claude', 'guard first, media from storage, voice to Gemini, then Claude')
 ok(storageAuth === 'Bearer tok', 'media fetched with the caller’s own sign-in (company storage rules apply)')
@@ -103,6 +115,68 @@ files['m-v1'] = undefined as never
 calls.length = 0
 r = await call(req)
 ok(r.status === 200 && /hasn’t finished uploading/.test(r.json.failed.M2) && !calls.includes('gemini'), 'media not uploaded yet: that capture stays unread, the rest are read')
+files['m-v1'] = { body: new Uint8Array(wav.size), type: 'audio/wav' }
+
+// ---- half price: the day goes as a batch, and is collected later
+delete process.env.SITE_READ_NOW
+calls.length = 0; spent.length = 0
+r = await call(req)
+ok(r.status === 200 && r.json.pending === 'msgbatch_abc123' && !r.json.suggestions && calls.join() === 'guard,storage,storage,gemini,batch', 'read as a batch: the app gets an id to collect, not an answer')
+const sentReq = batchReq.requests[0]
+ok(sentReq.custom_id === 'site-c1' && sentReq.params.model === 'claude-opus-5-5' && sentReq.params.output_config.effort === 'high' && !('fallbacks' in sentReq.params), 'the batch is marked with the firm, so only that firm can collect it')
+ok(r.json.transcripts.M2 === 'Number four front is painted.', 'the transcripts come back at once')
+// Gemini: 2,000 in at $1 + 200 out at $2.50 = $0.0025 → 0.2p
+ok(spent.length === 1 && spent[0].p_kind === 'site' && Math.abs(spent[0].p_credits - 0.2) < 0.001 && !spent[0].p_ref, 'the transcription’s real cost is written at once')
+calls.length = 0; spent.length = 0
+r = await call({ collect: 'msgbatch_abc123' })
+ok(r.status === 200 && r.json.pending === 'msgbatch_abc123' && calls.join() === 'guard,status', 'collected too soon: still pending, nothing charged')
+batch = { status: 'ended', result: { type: 'succeeded', message: answer } }
+r = await call({ collect: 'msgbatch_abc123' })
+ok(r.status === 200 && r.json.suggestions.length === 1, 'collected once read: the suggestions')
+// Opus at half price: 20,000 × $4 + 1,000 × $20 = $0.10 → $0.05 → 4p
+ok(spent.length === 1 && spent[0].p_ref === 'msgbatch_abc123' && Math.abs(spent[0].p_credits - 4) < 0.001, 'charged at half price, once per batch (its id is the ledger’s ref)')
+firm = { company: 'c2', plan: 'pilot', lane: 'normal' }
+r = await call({ collect: 'msgbatch_abc123' })
+ok(r.status === 404, 'another firm can’t collect it')
+firm = { company: 'c1', plan: 'pilot', lane: 'normal' }
+r = await call({ collect: '../../v1/files' })
+ok(r.status === 400, 'only a batch id is accepted')
+r = await call({ collect: 'msgbatch_gone99' })
+ok(r.status === 200 && r.json.again, 'a batch that’s gone: read the captures again')
+batch = { status: 'ended', result: { type: 'expired' } }
+r = await call({ collect: 'msgbatch_abc123' })
+ok(r.json.again === true, 'a read that expired: read the captures again')
+batch = { status: 'ended', result: { type: 'succeeded', message: { ...answer, stop_reason: 'refusal', content: [] } } }
+r = await call({ collect: 'msgbatch_abc123' })
+ok(/declined/.test(r.json.error) && !r.json.again, 'a declined read is said once, not tried again and again')
+firm = { company: 'c1', plan: 'jupiter', lane: 'economy' }
+r = await call(req)
+ok(batchReq.requests[0].params.output_config.effort === 'medium', 'Jupiter’s economy lane, past the allowance: read more lightly')
+firm = { company: 'c1', plan: 'pilot', lane: 'normal' }
+
+// ---- the app collects it: checked against the scope as it is now
+const pend: PendingRead = { batch: 'msgbatch_abc123', jobId: 'j', at: 5, items: { M1: 'p1', M2: 'v1' }, lines: { L1: 's1', L2: 's2' } }
+const waitingRead = (e: DiaryEntry) => ({ ...e, read: { at: 5, suggestions: [], pending: 'msgbatch_abc123' } })
+const sent = [waitingRead(diary[0]), waitingRead({ ...diary[1], transcript: 'Number four front is painted.' })]
+let reply: { status: number; body: any } = { status: 200, body: { pending: 'msgbatch_abc123' } }
+let asked: any = null
+globalThis.fetch = (async (_u: string, init: any) => { asked = JSON.parse(init.body); return new Response(JSON.stringify(reply.body), { status: reply.status }) }) as typeof fetch
+let got = await collectSite(pend, sent, scope)
+ok(asked.collect === 'msgbatch_abc123' && got.state === 'waiting', 'not back yet: wait')
+reply = { status: 200, body: { suggestions: answer.content.length ? JSON.parse(answer.content[0].text).suggestions : [] } }
+got = await collectSite(pend, sent, scope)
+ok(got.state === 'done' && got.suggestions === 1 && got.updated.length === 2 && got.updated.every(e => !e.read?.pending) && got.updated[1].read!.suggestions[0].lineIds.join() === 's1', 'back: checked with the words said, waiting in Vals')
+got = await collectSite(pend, sent, [S('s1', '4', '4360BD', 'val2'), S('s2', '4', '4350AA')])
+ok(got.state === 'done' && got.suggestions === 0, 'a line claimed while it was being read isn’t suggested again')
+reply = { status: 200, body: { again: true } }
+got = await collectSite(pend, sent, scope)
+ok(got.state === 'done' && got.updated.every(e => e.read === undefined), 'lost or expired: the captures go back to be read again')
+reply = { status: 401, body: { error: 'Your sign-in has expired — sign in again and retry.' } }
+got = await collectSite(pend, sent, scope)
+ok(got.state === 'stop' && /expired/.test((got as { error: string }).error), 'signed out: stop until the next open, keep it')
+reply = { status: 502, body: { error: 'Could not reach the AI service.' } }
+got = await collectSite(pend, sent, scope)
+ok(got.state === 'waiting', 'no answer from the server: try again later')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 if (fail) process.exit(1)
