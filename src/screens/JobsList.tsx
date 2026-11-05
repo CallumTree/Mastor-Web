@@ -7,13 +7,14 @@ import { SyncBadge } from '../components/SyncBadge'
 import { Plate } from '../components/Sign'
 import { WeekLine } from './Plan'
 import { useAccess } from '../lib/access'
+import { SetupList, type SetupStep } from '../components/Setup'
 
 /**
  * Jobs — the site board. Black head with the wordmark; every job a row with what it needs shown as
  * signs (red = blocks invoicing, yellow = needs doing). Same list on a phone and a laptop: rows on a
  * phone, a ruled schedule with columns from 1024px.
  */
-export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOpen, onOpenLine, onToggle, onNew, onDashboard, onSettings }: {
+export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setup, onOpen, onOpenLine, onToggle, onNew, onDashboard, onSettings }: {
   jobs: Job[]; vos: Variation[]; orders?: WorkOrder[]; diary?: DiaryEntry[]; onOpen: (j: Job) => void
   /** Mastor's own urgent items per job, for the week (office only) */
   alerts?: { jobId: string; text: string; hint: string }[]
@@ -21,6 +22,8 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
   onToggle?: (e: DiaryEntry) => void
   /** open a job on its line of days (from the week across all jobs) */
   onOpenLine?: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
+  /** a new firm's first steps (office only), until they're done */
+  setup?: SetupStep[]
 }) {
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
   const active = sorted.filter(j => j.status === 'Active').length
@@ -42,6 +45,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], onOp
       </header>
 
       <div className="cover-body">
+        {m && setup && <SetupList steps={setup} />}
         {sorted.length > 0 && <WeekLine jobs={jobs} entries={diary} alerts={alerts} onToggle={onToggle} onOpen={id => { const j = jobs.find(x => x.id === id); if (j) (onOpenLine ?? onOpen)(j) }} />}
         {sorted.length > 0 ? (
           <section className="jobs" aria-label="Jobs">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { markSetup } from '../components/Setup'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { Plate } from '../components/Sign'
 import { ROLES, canManage, inviteMessage, roleLabel, team, type Role, type TeamRow } from '../lib/team'
@@ -100,6 +101,7 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
                 const em = email.trim()
                 void act(async () => {
                   await team.invite(em, role)
+                  void markSetup({ team: true }).catch(() => {})   // the jobs screen's setup step ticks itself off; never holds up the invite
                   setEmail('')
                   const fresh = await team.list(); setRows(fresh)
                   setShareFor(fresh.find(r => r.kind === 'invite' && r.email.toLowerCase() === em.toLowerCase()) ?? null); setCopied(false)

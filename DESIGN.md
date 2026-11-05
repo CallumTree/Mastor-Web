@@ -323,6 +323,10 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - **Border:** 1px Hairline, plus the bounding box 3px outside.
 - **Internal Padding:** 14px; registers carry their own 12–14px row padding.
 
+### First run
+- **Getting set up** sits at the top of the jobs screen for a new firm: a ruled list (2px head and foot, hairlines between), each step a 60px row with a 20px square that fills drafting white with a tick when the app sees it done, the step's name in white and one line of why in Slate Note; a step that may not apply carries a quiet link to set it aside. No progress bar, no percentages: "2 of 4" in the heading. Gone when done or hidden.
+- **Sign-in's two modes are tabs, not blocks:** white type over the dock's 2px cyan marker, so the white button below stays the only thing that says press me.
+
 ### Figures: the ledger
 - The money is read like a statement (`SumStrip`, `.ledger`): each label and its note on the left, its figure on the right, so the amounts stand in one column and compare at a glance. Head and foot rules at 2px Hairline, 1px Hairline between rows. No box, no fill, no corner marks: nothing about it says tap. The key figure (the one the screen is about) is set heavier and larger, and nothing else. A row that opens something (Margin on the job home) is a button with a chevron, the only row that looks like one. From 560px the rows run in two columns.
 - **Certified means agreed.** A valuation sent for review is "with client", not certified, until the client agrees it (or it's invoiced or paid); `isCertified` / `isWithClient` decide it for every screen and for Clerk. Each ledger names its basis once: Scope at base rates (its caption), Home and Vals with uplifts and without VAT; a VAT figure is only ever an invoice's own. Margin is "so far": costs so far against the job's value.

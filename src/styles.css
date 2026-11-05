@@ -930,6 +930,30 @@ body { background-image: linear-gradient(var(--grid) 1px, transparent 1px), line
 .panel > .pl-item + .pl-item { border-top: 1px solid var(--rule); }
 .panel > .pl-item .pl-t small { display: block; font-weight: 450; }
 /* a two-way switch (To-do / Key date) */
+/* a new firm's first steps on the jobs screen: a ruled list of what's left, each step a row you tap, its square
+   ticked white when the app sees it done. Gone once every step is done (or hidden). */
+.setup { margin-bottom: 22px; }
+.setup-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.setup-h .linkish { font-size: 14px; min-height: 44px; }
+.setup-list { list-style: none; margin: 6px 0 0; padding: 0; border-top: 2px solid var(--rule); border-bottom: 2px solid var(--rule); }
+.setup-row + .setup-row { border-top: 1px solid var(--rule); }
+.setup-go { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 2px; border: 0; background: none; color: var(--white); font: inherit; text-align: left; cursor: pointer; }
+.setup-go:hover { background: var(--slate-2); }
+.setup-box { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--rule-ctl); border-radius: var(--r-sm); }
+.setup-row.done .setup-box { background: var(--white); border-color: var(--white); color: var(--on-signal); }
+.setup-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.setup-t b { font-weight: 650; font-size: 16px; }
+.setup-t small { font-size: 13px; line-height: 1.35; color: var(--meta); }
+.setup-row.done .setup-t b { color: var(--ink-2); font-weight: 550; }
+.setup-row.done .setup-t small { display: none; }
+.setup-chev { flex: none; color: var(--meta); display: grid; }
+.setup-skip { display: block; margin: -10px 0 4px 34px; min-height: 44px; font-size: 14px; color: var(--ink-2); }
+/* the sign-in form's two modes: tabs, not blocks. The selected one is white type over the dock's 2px cyan marker,
+   so the white block below stays the only thing that says press me */
+.mode-switch { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--rule); }
+.mode-switch button { position: relative; min-height: 48px; border: 0; background: none; color: var(--meta); font: inherit; font-weight: 650; }
+.mode-switch button.on { color: var(--white); }
+.mode-switch button.on::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: -1px; height: 2px; background: var(--cyan); }
 .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule-ctl); border-radius: var(--r-md); overflow: hidden; }
 .seg button { min-height: 44px; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-weight: 650; }
 .seg button + button { border-left: 1px solid var(--rule-ctl); }

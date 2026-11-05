@@ -63,19 +63,30 @@ export function Gate({ children }: { children: ReactNode }) {
   )
 }
 
+/** The sign-in service's messages, said the way a person would, with what to do next. */
+export function plainAuth(raw: string): string {
+  if (/invalid login credentials/i.test(raw)) return 'That email and password don’t match an account. Check them, or tap “I’m new” to create one. Forgotten it? “Forgot password” below.'
+  if (/already registered|already exists/i.test(raw)) return 'There’s already an account with that email. Tap “I have an account” and sign in (or reset the password).'
+  if (/password should be|at least \d+ characters|weak password/i.test(raw)) return 'That password is too short or too easy to guess. Use at least 8 characters.'
+  if (/rate limit|only request this after|too many/i.test(raw)) return 'Too many tries in a short time. Wait a minute, then try again.'
+  if (/failed to fetch|network/i.test(raw)) return 'No signal reached the server. Try again once you have signal.'
+  if (/invalid.*email|email.*invalid/i.test(raw)) return 'That doesn’t look like a full email address. Check it and try again.'
+  return raw
+}
+
 function SignIn() {
   const [mode, setMode] = useState<'in' | 'up'>('in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
-  const [unconfirmed, setUnconfirmed] = useState(false)
+  const [unconfirmed, setUnconfirmed] = useState(false)   // resend only makes sense once an account exists: after signing up, or an unconfirmed sign-in
   const resend = async () => {
     if (!email.includes('@')) { setMsg({ ok: false, text: 'Enter your email first.' }); return }
     setBusy(true)
     const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: `${location.origin}/app` } })
     setBusy(false)
-    setMsg(error ? { ok: false, text: error.message } : { ok: true, text: 'New confirmation email sent — tap the link in it, then sign in here.' })
+    setMsg(error ? { ok: false, text: plainAuth(error.message) } : { ok: true, text: 'New confirmation email sent — tap the link in it, then sign in here.' })
   }
   const go = async () => {
     setBusy(true); setMsg(null)
@@ -84,14 +95,15 @@ function SignIn() {
       : await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: `${location.origin}/app` } })
     setBusy(false)
     if (r.error && /not confirmed/i.test(r.error.message)) { setUnconfirmed(true); setMsg({ ok: false, text: 'Your email isn’t confirmed yet. Tap “Resend confirmation email” and use the link in the new email.' }) }
-    else if (r.error) setMsg({ ok: false, text: r.error.message })
-    else if (mode === 'up' && !r.data.session) setMsg({ ok: true, text: 'Check your email and tap the link to confirm — then sign in here.' })
+    else if (r.error) setMsg({ ok: false, text: plainAuth(r.error.message) })
+    else if (mode === 'up' && !r.data.session) { setUnconfirmed(true); setMsg({ ok: true, text: 'Check your email and tap the link to confirm — then sign in here.' }) }
   }
   return (
     <div className="panel stack">
-      <div className="chips">
-        <button className={'chip' + (mode === 'in' ? ' on' : '')} onClick={() => setMode('in')}>Sign in</button>
-        <button className={'chip' + (mode === 'up' ? ' on' : '')} onClick={() => setMode('up')}>Create account</button>
+      {/* which form this is, not a button: the white block below is the one thing to press */}
+      <div className="mode-switch" role="tablist" aria-label="Sign in or create an account">
+        <button role="tab" aria-selected={mode === 'in'} className={mode === 'in' ? 'on' : ''} onClick={() => { setMode('in'); setMsg(null) }}>I have an account</button>
+        <button role="tab" aria-selected={mode === 'up'} className={mode === 'up' ? 'on' : ''} onClick={() => { setMode('up'); setMsg(null) }}>I’m new</button>
       </div>
       <Field label="Email"><input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></Field>
       <Field label="Password" hint={mode === 'up' ? 'At least 8 characters' : undefined}><input type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} /></Field>
@@ -99,11 +111,11 @@ function SignIn() {
       <button className="btn btn-primary" disabled={busy || !email.includes('@') || password.length < (mode === 'up' ? 8 : 1)} onClick={go}>
         {busy ? '…' : mode === 'in' ? 'Sign in' : 'Create account'}
       </button>
-      {(unconfirmed || mode === 'up') && <button className="btn btn-secondary" disabled={busy} onClick={resend}>Resend confirmation email</button>}
+      {unconfirmed && <button className="btn btn-secondary" disabled={busy} onClick={resend}>Resend confirmation email</button>}
       {mode === 'in' && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={async () => {
         if (!email.includes('@')) { setMsg({ ok: false, text: 'Enter your email first.' }); return }
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/app` })
-        setMsg(error ? { ok: false, text: error.message } : { ok: true, text: 'Password reset email sent.' })
+        setMsg(error ? { ok: false, text: plainAuth(error.message) } : { ok: true, text: 'Password reset email sent.' })
       }}>Forgotten password</button>}
     </div>
   )
