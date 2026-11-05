@@ -237,6 +237,14 @@ export function JobView(p: {
   const [capture, setCapture] = useState(false)
   const [capLeaving, setCapLeaving] = useState(false)
   // the menu drops back behind the +, a little quicker than it rose (reduced motion: a short fade)
+  // the raised capture key sinks into the dock while the page scrolls and rises once it stops (styles: .nav.sinking)
+  const [sinking, setSinking] = useState(false)
+  useEffect(() => {
+    let t: number | undefined
+    const on = () => { setSinking(true); window.clearTimeout(t); t = window.setTimeout(() => setSinking(false), 450) }
+    window.addEventListener('scroll', on, { passive: true })
+    return () => { window.removeEventListener('scroll', on); window.clearTimeout(t) }
+  }, [])
   const closeCapture = () => { setCapLeaving(true); setTimeout(() => { setCapture(false); setCapLeaving(false) }, reducedMotion() ? 150 : 200) }
   const [focusNote, setFocusNote] = useState(false)
   const [capErr, setCapErr] = useState<string | null>(null)
@@ -272,7 +280,7 @@ export function JobView(p: {
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
       </main>
       {/* the tabs share the dock evenly; the capture key is raised above its centre, in front of the page (on the rail it heads the column) */}
-      <nav className="nav" style={{ '--dock-cols': `repeat(${nav.length}, minmax(0, 1fr))`, '--n': nav.length } as React.CSSProperties}>
+      <nav className={'nav' + (sinking ? ' sinking' : '')} style={{ '--dock-cols': `repeat(${nav.length}, minmax(0, 1fr))`, '--n': nav.length } as React.CSSProperties}>
         {tab !== 'ask' && <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={28} /></span></button>}
         {nav.map(({ tab: t, label: navLabel, Icon }) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
           <button key={t} className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); if (t === 'diary') setDiaryView('line'); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button>

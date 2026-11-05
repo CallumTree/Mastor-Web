@@ -423,6 +423,11 @@ label.row { cursor: pointer; }
 .nav .nav-capture span { width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center; color: var(--on-signal); background: var(--cyan);
   box-shadow: 0 0 0 4px var(--void); transition: transform .12s ease-out, background .12s; }
 .nav .nav-capture span svg { width: 28px; height: 28px; stroke-width: 2.4; }
+/* while the page scrolls the key sinks into the dock's top edge, small, so it never sits on a row you're reading;
+   it rises again a moment after the scroll stops. Under reduced motion it moves without the glide. */
+.nav .nav-capture { transition: transform .34s var(--ease-out, ease-out); }
+.nav.sinking .nav-capture { transform: translateY(calc(var(--cap) * .64)) scale(.7); transition-duration: .2s; }
+@media (prefers-reduced-motion: reduce) { .nav .nav-capture { transition: none; } }
 .nav .nav-capture:hover span { background: var(--cyan-press); }
 .nav .nav-capture:active span { transform: scale(.94); }
 .nav .nav-capture:focus-visible { outline: none; }
@@ -639,6 +644,7 @@ body { background-image: linear-gradient(var(--grid) 1px, transparent 1px), line
   .nav button { flex: 0 0 76px; width: 100%; }
   .nav button.on::before { top: 14px; bottom: 14px; left: 0; width: 2px; height: auto; margin-left: 0; }
   .nav .nav-capture { position: static; order: -1; flex: 0 0 auto; align-self: center; margin: 4px 0 16px; }
+  .nav.sinking .nav-capture { transform: none; }   /* on the side rail it's in its own place: nothing to sink from */
   .page.with-rail { padding-bottom: 64px; }
   .banner { padding-left: calc(var(--rail-w) + 10px); }
   .update-bar { bottom: 16px; }

@@ -365,6 +365,7 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 - **Figures roll:** a money total that changes rolls only the characters that changed, the rightmost first (380ms each, 28ms apart); a rise rolls up, a fall rolls down. Reduced motion: the new figure lit cyan for a moment.
 - **From site:** a decided suggestion's button confirms in cyan, then the row folds shut (300ms) as the count rolls down; suggestions that arrive while you look come in 70ms apart under the corner marks, which close in, hold and fade.
 - **A capture's upload:** a new photo develops in like a print (750ms); a 1.5px cyan line runs round its tile while it uploads (dashed and still with no signal), then closes solid and fades once it's up.
+- **The capture key gets out of the way:** while the page scrolls it sinks into the dock's top edge at 70% (200ms), so it never sits on a row you're reading, and rises a moment after the scroll stops (340ms, ease-out). Reduced motion: it moves without the glide.
 - **Paid:** the white tick square stamps in (180ms), its tick draws (200ms) and the row settles from Raised Steel.
 
 ### The Job Line (Diary) and the Week Line
