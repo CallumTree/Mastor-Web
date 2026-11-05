@@ -223,6 +223,7 @@ label.btn { cursor: pointer; }
 .jrail-tick { position: absolute; top: -4px; width: 1px; height: 11px; background: var(--white); animation: tick-in .9s cubic-bezier(.16, 1, .3, 1) .1s both; }
 .jrail-done { background: var(--emerald); transform-origin: left; animation: rail-in .9s cubic-bezier(.16, 1, .3, 1) .1s both; }
 .jrail-next { background: repeating-linear-gradient(90deg, var(--cyan) 0 4px, transparent 4px 7px); }   /* the open valuation: not certified yet */
+.jrail-sent { background: repeating-linear-gradient(90deg, var(--white) 0 4px, transparent 4px 7px); }   /* sent, with the client: white like certified, dashed because it isn't yet */
 .jrail-label { flex: none; font-family: var(--mono); font-size: 13px; color: var(--meta); font-variant-numeric: tabular-nums; }
 .jbar.compact .jrail-label { color: var(--white); }
 @keyframes rail-in { from { transform: scaleX(0); } to { transform: none; } }
@@ -278,17 +279,18 @@ label.btn { cursor: pointer; }
   .ledger[data-n="1"] .lg-rows { grid-template-columns: minmax(0, 1fr); }
 }
 /* the split bar: one whole end to end, each part the fill of its row's swatch, a 2px gap of ground between parts.
-   Paid is drafting white (done); certified and waiting, white hatching; the open valuation, cyan (as on the job's
-   line); still to claim, the empty track. Never orange: gold is for what needs you. */
+   The more settled, the more filled: paid, solid drafting white; certified and unpaid, white hatching; with the
+   client, a white outline (drawn, not yet signed); the open valuation, cyan (as on the job's line); still to claim,
+   the empty track. Never orange: gold is for what needs you. */
 .split { display: flex; gap: 2px; height: 12px; margin: 2px 2px 0; }
 .split > i { display: block; flex: 1 1 0; min-width: 3px; }
 .lg-name { display: inline-flex; align-items: center; gap: 8px; }
 .lg-sw { flex: none; width: 12px; height: 12px; }
 .sw-paid { background: var(--white); }
 .sw-due { background: repeating-linear-gradient(135deg, var(--white) 0 2px, transparent 2px 5px); box-shadow: inset 0 0 0 1px var(--white); }
+.sw-sent { background: none; box-shadow: inset 0 0 0 1px var(--white); }   /* with the client: drawn, not yet signed */
 .sw-open { background: var(--cyan); }
 .sw-left { background: var(--rule); }
-.lg-sw.sw-left { background: none; box-shadow: inset 0 0 0 1px var(--meta); }
 .sum-caption { font-size: 13px; color: var(--meta); margin-top: 6px; }
 .val-build { margin: 10px 2px 18px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .val-build b { color: var(--white); font-family: var(--mono); font-weight: 520; }

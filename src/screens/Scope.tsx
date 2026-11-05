@@ -159,8 +159,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
       </div>
 
       {filter === 'vos' ? (vos.length > 0 && <VoSummary job={job} vos={vos} vals={vals} />)
-        : !empty && <SumStrip label="Work summary" cells={[
-        { label: 'Scope total', value: money(total), note: unpricedLines ? `base rates · + ${unpricedLines} unpriced` : 'base rates', nil: !scope.length },
+        : !empty && <SumStrip label="Work summary" caption="At base rates. Uplifts are added in the valuation." cells={[
+        { label: 'Scope total', value: money(total), note: unpricedLines ? `+ ${unpricedLines} unpriced` : `${scope.length} line${scope.length === 1 ? '' : 's'}`, nil: !scope.length },
         { label: 'Variations', value: money(voTotal), note: [`${vos.filter(counts).length} VO${vos.filter(counts).length === 1 ? '' : 's'}`, voUnpriced ? `+ ${voUnpriced} unpriced` : ''].filter(Boolean).join(' · '), nil: !voTotal },   // unpriced is never £0
         { label: 'Claimed', value: money(claimed + voClaimed), note: `${total + voTotal ? Math.round(((claimed + voClaimed) / (total + voTotal)) * 100) : 0}% of the work`, hot: true, nil: !(claimed + voClaimed) },
         { label: 'Still to do', value: money(total - claimed + voTotal - voClaimed), note: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'}${voLive.length ? ` · ${voLive.length} VO${voLive.length === 1 ? '' : 's'}` : ''}`, nil: !unclaimed.length && !voLive.length },

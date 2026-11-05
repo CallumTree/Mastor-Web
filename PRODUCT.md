@@ -24,6 +24,8 @@ People who only see the outputs:
 
 Membership roles: owner, director, qs, site_manager, operative. Owners and directors manage the team; operatives see no money, and the office's screens (new job and the pack reader, imports, job setup, scope lines, costs, rates) are closed to them at the app's root, not just hidden behind a button.
 
+Figures reconcile: certified means agreed by the client (`isCertified`); a valuation sent for review is "with client" until then, on the job's line, in Vals' split bar and to Clerk. What a job is worth is one function (`jobWorth`: the contract, or the scope with uplifts, plus live priced VOs with uplifts, each to the penny the way a valuation is), used by Home, Vals, the job's line, the Dashboard, Costs and Clerk. Each ledger states its basis once (Scope at base rates; Home and Vals with uplifts, excl. VAT); "incl. VAT" is only ever an invoice's figure; the VOs view adds up at base rates with the total with uplifts as its note; margin is "so far".
+
 Money is never recorded by a stray tap: "Agreed — create invoice" opens the invoice and records the client's agreement only when the invoice is made (or "agreed, invoice it later" is chosen); a payment's white button is the amount typed ("Save £10,000.00 received"), "Paid in full" stepping back once an amount is in; one white button per screen on Vals. When the PDF after sending or invoicing fails, the problem bar says what's saved and where the PDF is.
 
 ## Product Purpose

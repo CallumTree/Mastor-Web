@@ -3,8 +3,8 @@ import type { DiaryEntry, Job, ScopeItem, SiteSuggestion, Valuation, Variation }
 import { SiteReview } from './SiteReview'
 import { IconChevron, IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
-import { money, qtyText, ukDate, upliftFactor, voRef } from '../lib/format'
-import { amending, askChanges, issuePlan, lineValue, reviewStage, valRef, valTotals } from '../lib/valuation'
+import { money, qtyText, ukDate, voRef } from '../lib/format'
+import { amending, askChanges, isCertified, isWithClient, issuePlan, jobWorth, lineValue, reviewStage, valRef, valTotals } from '../lib/valuation'
 import { valRhythm, waitAMonth, weekText, VAL_MIN_DAYS } from '../lib/rhythm'
 import { shortDay } from '../lib/plan'
 import { dayKey } from '../lib/dates'
@@ -70,18 +70,20 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   const issued = sorted.filter(v => v.status === 'Issued')
   const sent = issued.filter(v => v !== fixing)
   const rhythm = valRhythm(job, vals, { diary })
-  const certified = issued.reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
+  // every valuation sent so far (what the next one builds on), and of those, what the client has agreed
+  const valued = issued.reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
+  const certified = issued.filter(isCertified).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
+  const withClient = issued.filter(isWithClient)
   const current = open ? valTotals(job, open.id, scope, vos) : null
-  const f = upliftFactor(job.uplift1, job.uplift2)
-  const pricedVos = vos.filter(v => v.status !== 'Rejected').reduce((t, v) => t + lineValue(v.qty, v.rate), 0) * f
-  const target = (job.contractValue || scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) * f) + pricedVos
+  const worth = jobWorth(job, scope, vos)
+  const pricedVos = worth.vos, target = worth.total
   const nextNo = vals.reduce((m, v) => Math.max(m, v.number), 0) + 1
   const expanded = expandedPick === undefined ? sent[0]?.id ?? null : expandedPick
   const courts = new Map(issued.map(v => [v.id, valCourt(v, job, scope, vos)]))
   const paid = issued.reduce((t, v) => t + (v.paidAmount ?? 0), 0)
   const owed = issued.reduce((t, v) => t + (courts.get(v.id)?.owed ?? 0), 0)
   const overdue = issued.filter(v => courts.get(v.id)?.tone === 'late' && !courts.get(v.id)?.review).length
-  const pct = target > 0 ? Math.round(((certified + (current?.gross ?? 0)) / target) * 100) : 0
+  const pct = target > 0 ? Math.round(((valued + (current?.gross ?? 0)) / target) * 100) : 0
   // where the money is, all without VAT so the parts add up to the contract + VOs: a payment received against a VAT
   // invoice is put back on the same footing (less its VAT), and never counts for more than the valuation it paid
   const pence = (x: number) => Math.round(x * 100) / 100
@@ -89,9 +91,10 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
     const got = v.paidAmount ?? 0, net = valTotals(job, v.id, scope, vos).gross
     return t + Math.min(net, Math.max(0, v.invoiceNumber ? got / (1 + (v.invoiceVatRate ?? 20) / 100) : got))
   }, 0))
-  const split = { paid: paidNet, due: Math.max(0, pence(certified - paidNet)), open: pence(current?.gross ?? 0), left: Math.max(0, pence(target - certified - (current?.gross ?? 0))),
-    vat: issued.some(v => v.invoiceNumber && (courts.get(v.id)?.owed ?? 0) > 0) }
-
+  const sentNet = pence(valued - certified)
+  const split = { paid: paidNet, due: Math.max(0, pence(certified - paidNet)), sent: sentNet, open: pence(current?.gross ?? 0), left: Math.max(0, pence(target - valued - (current?.gross ?? 0))) }
+  // owed with VAT is only ever an invoice's figure: built from invoiced valuations alone, never added to one without VAT
+  const owedOnInvoice = pence(issued.filter(v => v.invoiceNumber).reduce((t, v) => t + (courts.get(v.id)?.owed ?? 0), 0))
   return (
     <div className="stack">
       <TabHead label="Valuations" menu={<TabMenu title="Valuations" actions={[
@@ -104,8 +107,10 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         // the parts only once there's something to split: before the first valuation the whole is all still to claim
         ...(!issued.length && !open ? [] : [
           { label: 'Paid', swatch: 'paid' as const, amount: split.paid, value: money(split.paid), nil: split.paid < 0.005, note: paid - split.paid > 0.005 ? `${money(paid)} incl. VAT` : paid ? 'as received' : 'nothing yet' },
-          { label: 'Certified, unpaid', swatch: 'due' as const, amount: split.due, value: money(split.due), nil: split.due < 0.005, hot: owed > 0 && !open && !fixing,
-            note: [split.vat ? `${money(owed)} incl. VAT` : issued.length ? `${issued.length} valuation${issued.length === 1 ? '' : 's'} sent` : 'none sent yet', overdue ? `${overdue} overdue` : ''].filter(Boolean).join(' · ') },
+            { label: 'Certified, unpaid', swatch: 'due' as const, amount: split.due, value: money(split.due), nil: split.due < 0.005, hot: owed > 0 && !open && !fixing,
+            note: [owedOnInvoice ? `${money(owedOnInvoice)} on invoice incl. VAT` : certified ? 'agreed by the client' : 'none agreed yet', overdue ? `${overdue} overdue` : ''].filter(Boolean).join(' · ') },
+          ...(withClient.length ? [{ label: 'With client', swatch: 'sent' as const, amount: split.sent, value: money(split.sent), nil: split.sent < 0.005,
+            note: withClient.length === 1 ? `${valRef(withClient[0].number)}, ${fixing === withClient[0] ? 'changes asked' : 'for review'}` : `${withClient.length} valuations for review` }] : []),
           ...(open ? [{ label: `${valRef(open.number)}, open`, swatch: 'open' as const, amount: split.open, value: money(split.open), nil: split.open < 0.005, note: 'not sent yet' }] : []),
           { label: 'Still to claim', swatch: 'left' as const, amount: split.left, value: money(split.left), nil: split.left < 0.005, note: target ? `${Math.max(0, 100 - pct)}% left` : undefined },
         ]),
@@ -113,7 +118,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
 
       {rhythm && <ValWeek rhythm={rhythm} onWait={() => onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />}
 
-      {fixing && <Working job={job} val={fixing} scope={scope} vos={vos} certified={certified - valTotals(job, fixing.id, scope, vos).gross} hot
+      {fixing && <Working job={job} val={fixing} scope={scope} vos={vos} certified={valued - valTotals(job, fixing.id, scope, vos).gross} hot
         onSend={() => setIssuing(fixing)} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />}
 
       {onDecideSite && <SiteReview diary={diary} scope={scope} valLabel={valRef(open?.number ?? nextNo)} onDecide={onDecideSite} note={readNote} />}
@@ -127,7 +132,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
           </div>
           <SumStrip label={`${valRef(open.number)} figures`} cells={[
             { label: 'This valuation', value: money(current.gross), note: 'incl. uplifts, excl. VAT', hot: !fixing },
-            { label: 'Cumulative', value: money(certified + current.gross), note: `${money(certified)} previously certified` },
+            { label: 'Cumulative', value: money(valued + current.gross), note: `${money(valued)} in earlier valuations` },
           ]} />
           {current.lines > 0 && <div className="val-build">
             {current.voBase ? <>{fig(money(current.scopeBase))} scope + {fig(money(current.voBase))} VOs = <b>{money(current.base)}</b> at base rates</> : <><b>{money(current.base)}</b> scope at base rates</>}
@@ -270,7 +275,7 @@ function IssueSheet({ job, val, vals, scope, vos, onIssue, onCertificate, onClos
             {p.u1 !== 0 && <div className="row"><span className="grow">Uplift 1 · {job.uplift1}%</span><span className="amt">{money(p.u1)}</span></div>}
             {p.u2 !== 0 && <div className="row"><span className="grow">Uplift 2 · {job.uplift2}%</span><span className="amt">{money(p.u2)}</span></div>}
             <div className="row" style={{ fontWeight: 700 }}><span className="grow">This valuation</span><span className="amt">{money(p.totals.gross)}</span></div>
-            <div className="row muted"><span className="grow">Previously certified</span><span className="amt">{money(p.previous)}</span></div>
+            <div className="row muted"><span className="grow">Earlier valuations</span><span className="amt">{money(p.previous)}</span></div>
             <div className="row t-strong"><span className="grow">Cumulative{p.pct != null ? ` · ${p.pct}% of contract + VOs` : ''}</span><span className="amt">{money(p.cumulative)}</span></div>
           </div>
         </div>

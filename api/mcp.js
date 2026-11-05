@@ -39154,7 +39154,6 @@ function roman(n) {
 var voRef = (n) => `VO ${roman(n)}`;
 var ukDate = (t) => new Date(t).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 var qtyText = (q) => Number.isInteger(q) ? String(q) : q.toFixed(2);
-var upliftFactor = (u1, u2) => (1 + u1 / 100) * (1 + u2 / 100);
 
 // src/lib/valuation.ts
 var valRef = (n) => `VAL ${roman(n)}`;
@@ -39222,6 +39221,14 @@ function upliftAmounts(base, u1pct, u2pct) {
   const u1 = pennies(base * (u1pct || 0) / 100);
   const u2 = pennies(gross - base - u1);
   return { u1, u2, gross };
+}
+var isCertified = (v) => v.status === "Issued" && reviewStage(v) === "agreed";
+var isWithClient = (v) => v.status === "Issued" && reviewStage(v) !== "agreed";
+function jobWorth(job, scope, vos) {
+  const fromScope = !(job.contractValue > 0);
+  const contract = fromScope ? upliftAmounts(pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), job.uplift1, job.uplift2).gross : pennies(job.contractValue);
+  const voGross = upliftAmounts(pennies(vos.filter((v) => v.status !== "Rejected").reduce((t, v) => t + lineValue(v.qty, v.rate), 0)), job.uplift1, job.uplift2).gross;
+  return { contract, vos: voGross, total: pennies(contract + voGross), fromScope };
 }
 function valTotals(job, valId, scope, vos) {
   const s = scope.filter((x) => x.valuationId === valId);
@@ -39377,24 +39384,25 @@ function registerSummary(job, vos, vals, now = Date.now()) {
 // src/lib/portfolio.ts
 function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
   const figures = jobs.map((job) => {
-    const f = upliftFactor(job.uplift1, job.uplift2);
     const js = scope.filter((s) => s.jobId === job.id);
     const jv = vos.filter((v) => v.jobId === job.id);
     const jvals = vals.filter((v) => v.jobId === job.id);
-    const target = job.contractValue > 0 ? job.contractValue : js.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) * f;
-    const variations = jv.filter((v) => v.status !== "Rejected").reduce((t, v) => t + lineValue(v.qty, v.rate), 0) * f;
-    const certified = jvals.filter((v) => v.status === "Issued").reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0);
+    const worth = jobWorth(job, js, jv);
+    const target = worth.contract, variations = worth.vos;
+    const sum2 = (vs) => vs.reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0);
+    const certified = sum2(jvals.filter(isCertified)), withClient = sum2(jvals.filter(isWithClient));
     const open2 = jvals.find((v) => v.status === "Open");
     const inValuation = open2 ? valTotals(job, open2.id, scope, vos).gross : 0;
-    const revised = target + variations;
+    const revised = worth.total;
     return {
       job,
       target,
       variations,
       revised,
       certified,
+      withClient,
       inValuation,
-      remaining: Math.max(0, revised - certified - inValuation),
+      remaining: Math.max(0, revised - certified - withClient - inValuation),
       unpricedVos: registerSummary(job, jv, jvals, now.getTime()).unpriced
     };
   });
@@ -39403,8 +39411,10 @@ function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
   const year = now.getFullYear();
   const months = Array.from({ length: now.getMonth() + 1 }, (_, m) => ({ label: new Date(year, m, 1).toLocaleDateString("en-GB", { month: "short" }), value: 0 }));
   for (const v of vals) {
-    if (v.status !== "Issued" || !v.issuedAt) continue;
-    const d = new Date(v.issuedAt);
+    if (!isCertified(v)) continue;
+    const at = v.review?.agreedAt ?? v.invoiceDate ?? v.issuedAt;
+    if (!at) continue;
+    const d = new Date(at);
     if (d.getFullYear() !== year) continue;
     const job = jobs.find((j) => j.id === v.jobId);
     if (!job) continue;
@@ -39442,6 +39452,7 @@ function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
     active: activeFigs.length,
     revised: sum(activeFigs, "revised"),
     certified: sum(figures, "certified"),
+    withClient: sum(figures, "withClient"),
     inValuation: sum(figures, "inValuation"),
     pipeline: sum(activeFigs, "remaining"),
     variations: sum(figures, "variations"),
@@ -39550,8 +39561,10 @@ function labourDays(diary) {
 }
 function jobMargin(job, scope, vos, costs, diary, dayRate, dayworksValue = 0) {
   const live = vos.filter((v) => v.status !== "Rejected");
-  const base = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) + live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0) + dayworksValue);
-  const value = upliftAmounts(base, job.uplift1, job.uplift2).gross;
+  const scopeBase = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), voBase = pennies(live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0));
+  const base = pennies(scopeBase + voBase + dayworksValue);
+  const up = (x) => upliftAmounts(x, job.uplift1, job.uplift2).gross;
+  const value = pennies(up(scopeBase) + up(voBase) + (dayworksValue ? up(pennies(dayworksValue)) : 0));
   const unpriced = scope.filter((i) => !isPriced(i)).length + live.filter((v) => !isPriced(v)).length;
   const counted = costs.filter((c) => c.status !== "quote");
   const committed = pennies(counted.filter((c) => c.status === "committed").reduce((t, c) => t + (c.amount ?? 0), 0));
@@ -40024,13 +40037,13 @@ function registerWrites(server, ctx) {
     const lines = [], vos = [];
     for (const { q: id, i } of picked.lines) {
       const locked = i && lockedIn(i, d.vals);
-      const why = !i ? "no scope line with this id on this job" : locked ? `certified in ${valRef(locked.number)}, so it\u2019s locked` : i.valuationId ? "already in the open valuation" : i.rate == null ? "no rate, so price it in the app first" : i.qty == null ? "no quantity, so measure it first" : null;
+      const why = !i ? "no scope line with this id on this job" : locked ? `sent in ${valRef(locked.number)}, so it\u2019s locked` : i.valuationId ? "already in the open valuation" : i.rate == null ? "no rate, so price it in the app first" : i.qty == null ? "no quantity, so measure it first" : null;
       if (why) skipped.push(`${i ? lineLabel(i) : id}: ${why}`);
       else lines.push(i);
     }
     for (const { q: ref, v } of picked.vos) {
       const locked = v && lockedIn(v, d.vals);
-      const why = !v ? "no such VO on this job" : locked ? `certified in ${valRef(locked.number)}, so it\u2019s locked` : v.valuationId ? "already in the open valuation" : v.status === "Rejected" ? "rejected by the client" : !isPriced(v) ? "not priced yet (needs a quantity and a rate; use update_variation)" : null;
+      const why = !v ? "no such VO on this job" : locked ? `sent in ${valRef(locked.number)}, so it\u2019s locked` : v.valuationId ? "already in the open valuation" : v.status === "Rejected" ? "rejected by the client" : !isPriced(v) ? "not priced yet (needs a quantity and a rate; use update_variation)" : null;
       if (why) skipped.push(`${v ? voRef(v.number) : ref}: ${why}`);
       else vos.push(v);
     }
@@ -40070,7 +40083,7 @@ function registerWrites(server, ctx) {
     const picked = pick2(d, scope_line_ids, voQs), skipped = [];
     const why = (x) => {
       const locked = x && lockedIn(x, d.vals);
-      return !x ? "not found on this job" : locked ? `certified in ${valRef(locked.number)}, so it\u2019s locked` : !x.valuationId ? "not in a valuation" : null;
+      return !x ? "not found on this job" : locked ? `sent in ${valRef(locked.number)}, so it\u2019s locked` : !x.valuationId ? "not in a valuation" : null;
     };
     const lines = picked.lines.filter(({ q: id, i }) => {
       const w = why(i);
@@ -40175,7 +40188,7 @@ function registerWrites(server, ctx) {
     const v = findVo(d.vos, a.vo);
     if (!v) throw new Error(`No ${a.vo} on ${job.name}. VOs: ${[...d.vos].sort((x, y) => x.number - y.number).map((x) => voRef(x.number)).join(", ") || "none yet"}.`);
     const locked = lockedIn(v, d.vals);
-    if (locked) throw new Error(`${voRef(v.number)} is certified in ${valRef(locked.number)}, so it\u2019s locked and can\u2019t be changed.`);
+    if (locked) throw new Error(`${voRef(v.number)} was sent in ${valRef(locked.number)}, so it\u2019s locked and can\u2019t be changed.`);
     const next = {
       ...v,
       ...a.description !== void 0 ? { description: a.description.trim() } : {},
@@ -40467,7 +40480,7 @@ function mastorServer(ctx) {
         const { alerts } = jobAlerts(j, js, jv, jvals, orders.filter((o) => o.jobId === j.id));
         return {
           ...jobRef(j),
-          ...f ? { figures: { contract: money(f.target), variations: money(f.variations), certified: money(f.certified), inOpenValuation: money(f.inValuation), stillToClaim: money(f.remaining) } } : {},
+          ...f ? { figures: { contract: money(f.target), variations: money(f.variations), certifiedAgreed: money(f.certified), withClientNotAgreed: money(f.withClient), inOpenValuation: money(f.inValuation), stillToClaim: money(f.remaining) } } : {},
           actionNeeded: alerts.filter((a) => ctx.money || a.site).map((a) => `${a.kind === "stop" ? "URGENT" : a.kind === "do" ? "NEXT" : "TO DO"}: ${a.text} \u2014 ${a.hint}`)
         };
       })
@@ -40485,7 +40498,9 @@ function mastorServer(ctx) {
     const rhythm = ctx.money ? valRhythm(job, d.vals, { diary: d.diary, today: ukToday() }) : null;
     const notes = d.diary.filter((e) => e.type === "note" && (ctx.money || e.category !== "Commercial")).sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.createdAt - a.createdAt).slice(0, 40);
     const s = ctx.money ? await settings(ctx) : null;
-    const certified = d.vals.filter((v) => v.status === "Issued").reduce((t, v) => t + valTotals(job, v.id, d.scope, d.vos).gross, 0);
+    const sumOf = (vs) => vs.reduce((t, v) => t + valTotals(job, v.id, d.scope, d.vos).gross, 0);
+    const certified = sumOf(d.vals.filter(isCertified)), withClient = sumOf(d.vals.filter(isWithClient));
+    const worth = jobWorth(job, d.scope, d.vos);
     const m = ctx.money ? jobMargin(job, d.scope, d.vos, d.costs, d.diary, s?.labourDayRate) : null;
     return text({
       ...jobRef(job),
@@ -40494,8 +40509,10 @@ function mastorServer(ctx) {
         paymentTermsDays: job.paymentTermsDays || 30,
         uplifts: `${job.uplift1}% + ${job.uplift2}%`,
         figures: {
-          contract: job.contractValue ? money(job.contractValue) : "not set",
-          certified: money(certified),
+          contract: job.contractValue ? money(job.contractValue) : `not set (the scope with uplifts is ${money(worth.contract)})`,
+          contractPlusVos: money(worth.total),
+          certifiedAgreed: money(certified),
+          withClientNotAgreed: money(withClient),
           margin: m && (m.costs || m.labourEstimate != null) ? `${money(m.margin)}${m.pct != null ? ` (${m.pct}%)` : ""}${m.provisional.length ? " \u2014 provisional" : ""}` : "no costs entered"
         },
         poCheck: poNote ?? null,
@@ -40564,7 +40581,7 @@ function mastorServer(ctx) {
     const state = (i) => {
       if (!i.valuationId) return "to do";
       const v = d.vals.find((x) => x.id === i.valuationId);
-      return v ? `${v.status === "Issued" ? "certified in" : "claimed in"} ${valRef(v.number)}` : "claimed";
+      return v ? `${isCertified(v) ? "certified in" : isWithClient(v) ? "sent to the client in" : "claimed in"} ${valRef(v.number)}` : "claimed";
     };
     const filtered = show !== "all" || !!property || !!s;
     return text({

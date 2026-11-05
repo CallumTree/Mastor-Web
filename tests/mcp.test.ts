@@ -208,7 +208,7 @@ ok(/operative/.test(err(await call('op', 'add_to_valuation', { job: 'j1', scope_
 
 let w = json(await call('office', 'add_to_valuation', { job: 'j1', scope_line_ids: ['s3', 's1', 's2', 'nope'], vos: ['VO I', 'VO IX'] }))
 ok(w.valuation === 'VAL II' && w.added.length === 1 && w.added[0].includes(money(30 * 5.62)) && w.addedAtBaseRates === money(30 * 5.62), 'add_to_valuation: the priced to-do line goes into the open VAL II, valued by Mastor')
-ok(w.notAdded.some((x: string) => /certified in VAL I, so it’s locked/.test(x)) && w.notAdded.some((x: string) => /already in the open valuation/.test(x)) && w.notAdded.some((x: string) => /^nope: no scope line/.test(x))
+ok(w.notAdded.some((x: string) => /sent in VAL I, so it’s locked/.test(x)) && w.notAdded.some((x: string) => /already in the open valuation/.test(x)) && w.notAdded.some((x: string) => /^nope: no scope line/.test(x))
   && w.notAdded.some((x: string) => /^VO I: not priced yet/.test(x)) && w.notAdded.some((x: string) => /^VO IX: no such VO/.test(x)), 'locked, already-claimed, unknown and unpriced lines are left, each with its reason')
 const s3 = saved('scope_items', 's3')
 ok(s3 && s3.company_id === 'c1' && s3.job_id === 'j1' && s3.deleted === false && s3.data.valuationId === 'vb' && typeof s3.data.byClaude === 'number', 'saved as the person, into VAL II, marked by Claude')

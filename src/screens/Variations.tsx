@@ -193,16 +193,21 @@ export function VoRow({ v, vals, idx, onToggle, onEdit }: { v: Variation; vals: 
   )
 }
 
-/** The variation register at a glance (the Scope tab's VOs view): only the stages that hold VOs, then the total. */
+/** The variation register at a glance (the Scope tab's VOs view): the total first, then only the stages that hold VOs,
+ *  all at base rates so the stages add up to the total exactly; the total with uplifts is its note. Rejected VOs are
+ *  left out of the sum and said so underneath. */
 export function VoSummary({ job, vos, vals }: { job: Job; vos: Variation[]; vals: Valuation[] }) {
   const sum = registerSummary(job, vos, vals)
-  const none = sum.rows.filter(r => !r.count)
+  const live = sum.rows.filter(r => r.key !== 'rejected')
+  const rejected = sum.rows.find(r => r.key === 'rejected')
+  const none = live.filter(r => !r.count)
   return <SumStrip label="Variation summary" caption={[
+      'At base rates.',
       none.length ? `None ${none.map(r => VO_GROUP_SHORT[r.key].toLowerCase()).join(', ').replace(/, ([^,]*)$/, ' or $1')}.` : '',
-      'Groups at base rates; the total includes uplifts and excludes rejected.'].filter(Boolean).join(' ')} cells={[
-    ...sum.rows.filter(r => r.count).map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced),
+      rejected?.count ? `${rejected.count} rejected, not counted.` : ''].filter(Boolean).join(' ')} cells={[
+    { label: 'Variations', whole: true, value: money(sum.base), nil: !sum.base, note: [sum.base ? `${money(sum.gross)} with uplifts` : '', sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · ') },
+    ...live.filter(r => r.count).map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced),
       note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
-    { label: 'Total incl. uplifts', value: money(sum.gross), note: [`${money(sum.base)} base`, sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · '), hot: true },
   ]} />
 }
 

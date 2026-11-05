@@ -8,7 +8,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { DiaryEntry, Job, JobDocument, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
 import { money, qtyText, voRef } from '../../src/lib/format'
-import { isPriced, issuePlan, lineValue, lockedIn, pennies, reviewStage, upliftAmounts, valRef, valTotals } from '../../src/lib/valuation'
+import { isCertified, isPriced, isWithClient, issuePlan, jobWorth, lineValue, lockedIn, pennies, reviewStage, upliftAmounts, valRef, valTotals } from '../../src/lib/valuation'
 import { lastText, valRhythm, weekText, type Rhythm } from '../../src/lib/rhythm'
 
 /** The valuation week, in words Claude can quote. */
@@ -71,7 +71,7 @@ export function mastorServer(ctx: Ctx) {
         const { alerts } = jobAlerts(j, js, jv, jvals, orders.filter(o => o.jobId === j.id))
         return {
           ...jobRef(j),
-          ...(f ? { figures: { contract: money(f.target), variations: money(f.variations), certified: money(f.certified), inOpenValuation: money(f.inValuation), stillToClaim: money(f.remaining) } } : {}),
+          ...(f ? { figures: { contract: money(f.target), variations: money(f.variations), certifiedAgreed: money(f.certified), withClientNotAgreed: money(f.withClient), inOpenValuation: money(f.inValuation), stillToClaim: money(f.remaining) } } : {}),
           actionNeeded: alerts.filter(a => ctx.money || a.site).map(a => `${a.kind === 'stop' ? 'URGENT' : a.kind === 'do' ? 'NEXT' : 'TO DO'}: ${a.text} — ${a.hint}`),
         }
       }),
@@ -91,13 +91,16 @@ export function mastorServer(ctx: Ctx) {
     const notes = d.diary.filter(e => e.type === 'note' && (ctx.money || e.category !== 'Commercial'))
       .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.createdAt - a.createdAt).slice(0, 40)
     const s = ctx.money ? await settings(ctx) : null
-    const certified = d.vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, d.scope, d.vos).gross, 0)
+    // the same rules as the app: certified = agreed by the client; worth = jobWorth (contract, else the scope, + VOs, with uplifts)
+    const sumOf = (vs: Valuation[]) => vs.reduce((t, v) => t + valTotals(job, v.id, d.scope, d.vos).gross, 0)
+    const certified = sumOf(d.vals.filter(isCertified)), withClient = sumOf(d.vals.filter(isWithClient))
+    const worth = jobWorth(job, d.scope, d.vos)
     const m = ctx.money ? jobMargin(job, d.scope, d.vos, d.costs, d.diary, s?.labourDayRate) : null
     return text({
       ...jobRef(job),
       ...(ctx.money ? {
         po: job.poNumber || 'none — invoices will be rejected without one', paymentTermsDays: job.paymentTermsDays || 30, uplifts: `${job.uplift1}% + ${job.uplift2}%`,
-        figures: { contract: job.contractValue ? money(job.contractValue) : 'not set', certified: money(certified),
+        figures: { contract: job.contractValue ? money(job.contractValue) : `not set (the scope with uplifts is ${money(worth.contract)})`, contractPlusVos: money(worth.total), certifiedAgreed: money(certified), withClientNotAgreed: money(withClient),
           margin: m && (m.costs || m.labourEstimate != null) ? `${money(m.margin)}${m.pct != null ? ` (${m.pct}%)` : ''}${m.provisional.length ? ' — provisional' : ''}` : 'no costs entered' },
         poCheck: poNote ?? null,
         valuationWeek: rhythm ? rhythmFacts(rhythm) : 'job complete: no monthly valuation',
@@ -158,7 +161,7 @@ export function mastorServer(ctx: Ctx) {
     const state = (i: typeof lines[number]) => {
       if (!i.valuationId) return 'to do'
       const v = d.vals.find(x => x.id === i.valuationId)
-      return v ? `${v.status === 'Issued' ? 'certified in' : 'claimed in'} ${valRef(v.number)}` : 'claimed'
+      return v ? `${isCertified(v) ? 'certified in' : isWithClient(v) ? 'sent to the client in' : 'claimed in'} ${valRef(v.number)}` : 'claimed'
     }
     const filtered = show !== 'all' || !!property || !!s
     return text({

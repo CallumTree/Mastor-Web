@@ -60,7 +60,7 @@ export async function buildCertificate({ job, val, vals, scope, vos, company }: 
   doc.text('THIS VALUATION (INCL. UPLIFTS, EXCL. VAT)', M, y + 6); doc.setCharSpace(0)
   doc.setFont('courier', 'normal'); doc.setFontSize(22); doc.setTextColor(...COPPER); doc.text(money(t.gross), M, y + 17)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...MUTED)
-  doc.text(`Cumulative to date ${money(prev + t.gross)}  ·  previously certified ${money(prev)}`, M, y + 24)
+  doc.text(`Cumulative to date ${money(prev + t.gross)}  ·  previous valuations ${money(prev)}`, M, y + 24)
   y += rowH * 4 + 8
 
   // ---- schedule of lines
@@ -103,7 +103,7 @@ export async function buildCertificate({ job, val, vals, scope, vos, company }: 
   const rows: [string, string, boolean?][] = [
     ['Contract scope', money(t.scopeBase)], ['Variations', money(t.voBase)], ['Base total', money(t.base), true],
     [`Uplift 1 (${job.uplift1}%)`, money(up.u1)], [`Uplift 2 (${job.uplift2}%)`, money(up.u2)],
-    ['This valuation', money(t.gross), true], ['Previously certified', money(prev)], ['Cumulative to date', money(prev + t.gross), true],
+    ['This valuation', money(t.gross), true], ['Previous valuations', money(prev)], ['Cumulative to date', money(prev + t.gross), true],
   ]
   const tx = 118, tw = W - M - tx
   doc.setDrawColor(...INK); doc.setLineWidth(0.25); doc.rect(tx, y, tw, rows.length * 6.4)

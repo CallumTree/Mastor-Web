@@ -4,8 +4,7 @@ import { jobMargin, type Margin } from '../lib/margin'
 import { WORK_LABEL, type Cost, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder, type SiteSuggestion } from '../lib/types'
 import { OrdersTab } from './Orders'
 import { DocumentsPanel } from './Documents'
-import { lineValue } from '../lib/valuation'
-import { money, upliftFactor } from '../lib/format'
+import { money } from '../lib/format'
 import { Trace } from '../components/Trace'
 import { placeParam, setPlace } from '../lib/place'
 import { IconBack, IconCamera, IconChevron, IconDiary, IconFlag, IconHome, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
@@ -20,7 +19,7 @@ import { ByClaude, SignMark, SIGN_WORD, type SignKind } from '../components/Sign
 import { currentCompany } from '../lib/sync'
 import { ValuationsTab } from './Valuations'
 import { AskTab } from './Ask'
-import { valRef, valTotals } from '../lib/valuation'
+import { isCertified, isWithClient, jobWorth, valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
 import { SumStrip } from '../components/Register'
 import { reducedMotion } from '../lib/motion'
@@ -28,26 +27,28 @@ import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
 import { figs } from '../components/Figs'
 
-/** whole pounds, rounded (never cut off): £2,972.97 → £2,973 */
-const pounds = (n: number) => money(Math.round(n)).replace(/\.00$/, '')
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals' | 'ask'
 
-export interface Rail { done: number; next: number; label: string; short: string }
+export interface Rail { done: number; sent: number; next: number; label: string; short: string }
 
-/** How far the job has got, the same line on every tab: certified to date (and the open valuation) against the
- *  contract for people who see money; lines done for everyone else. */
+/** How far the job has got, the same line on every tab, for people who see money: certified (agreed) to date, then
+ *  what's with the client, then the open valuation, against what the job is worth (jobWorth, the figure Vals shows).
+ *  Lines done for everyone else. */
 function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation[], money: boolean): Rail | null {
-  if (money && job.contractValue > 0) {
-    const done = vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0) / job.contractValue
+  const worth = jobWorth(job, scope, vos).total
+  if (money && worth > 0) {
+    const sum = (vs: Valuation[]) => vs.reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0) / worth
+    const done = sum(vals.filter(isCertified)), sent = sum(vals.filter(isWithClient))
     const open = vals.find(v => v.status === 'Open')
-    const next = open ? valTotals(job, open.id, scope, vos).gross / job.contractValue : 0
+    const next = open ? valTotals(job, open.id, scope, vos).gross / worth : 0
     const pct = (x: number) => `${Math.round(x * 100)}%`
-    return { done, next, label: `${pct(done)} certified${next > 0.004 ? ` · ${valRef(open!.number)} ${pct(next)} more` : ''}`, short: pct(done) }
+    return { done, sent, next, short: pct(done),
+      label: [`${pct(done)} certified`, sent > 0.004 ? `${pct(sent)} with client` : '', next > 0.004 ? `${valRef(open!.number)} ${pct(next)} more` : ''].filter(Boolean).join(' · ') }
   }
   if (!scope.length) return null
   const n = scope.filter(i => i.valuationId).length
-  return { done: n / scope.length, next: 0, label: `${n} of ${scope.length} lines done`, short: `${n}/${scope.length}` }
+  return { done: n / scope.length, sent: 0, next: 0, label: `${n} of ${scope.length} lines done`, short: `${n}/${scope.length}` }
 }
 
 /** The open valuation's dashed piece of the job's line. It spans everything not yet certified and is clipped to
@@ -95,7 +96,8 @@ function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: 
         <div className="jrail-in">
           <div className="jrail" role="img" aria-label={rail.label}>
             <i className="jrail-done" style={{ width: `${Math.min(100, rail.done * 100)}%`, minWidth: rail.done > 0 ? 6 : 0 }} />
-            <RailNext done={rail.done} next={rail.next} />
+            {rail.sent > 0 && <i className="jrail-sent" style={{ width: `${Math.min(100 - rail.done * 100, rail.sent * 100)}%` }} />}
+            <RailNext done={rail.done + rail.sent} next={rail.next} />
             <b className="jrail-tick" style={{ left: `max(6px, ${Math.min(100, rail.done * 100)}%)` }} />
           </div>
           <span className="jrail-label" aria-hidden="true">{compact ? rail.short : rail.label}</span>
@@ -113,13 +115,12 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const days = diary.filter(d => d.type === 'day' && d.note.trim())
   const open = vals.find(v => v.status === 'Open')
   const openTotals = open ? valTotals(job, open.id, scope, vos) : null
-  const certified = vals.filter(v => v.status === 'Issued').reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
+  const certified = vals.filter(isCertified).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
+  const withClient = vals.filter(isWithClient).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
+  const worth = jobWorth(job, scope, vos)
   const live = vos.filter(v => v.status !== 'Rejected')
-  const priced = live.filter(v => v.qty != null && v.rate != null)
   const unpriced = live.filter(v => v.rate == null).length
   const unmeasured = live.filter(v => v.qty == null).length
-  const voBase = priced.reduce((s, v) => s + lineValue(v.qty, v.rate), 0)
-  const voGross = voBase * upliftFactor(job.uplift1, job.uplift2)
 
   const { money: seesMoney } = useAccess()
   const [gapOpen, setGapOpen] = useState(false)
@@ -129,15 +130,15 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const actions = alerts.filter(a => seesMoney || a.site).map(a => ({ ...a, onClick: placeAction(a.place) }))
   const liveAt = actions.findIndex(a => a.kind === 'do')   // one live thing: the first next step
   // the margin row's note: provisional, its share and costs, or a nudge to add costs (set in the mono by the ledger)
-  const marginNote = !(margin.costs || margin.labourEstimate != null) ? { note: 'Add costs' } : margin.provisional.length ? { warn: 'Provisional' } : margin.pct != null ? { note: `${margin.pct}% · costs ${pounds(margin.costs)}` } : {}
+  const marginNote = !(margin.costs || margin.labourEstimate != null) ? { note: 'Add costs' } : margin.provisional.length ? { warn: 'Provisional' } : { note: `costs so far ${money(margin.costs)}${margin.pct != null ? ` · ${margin.pct}%` : ''}` }
 
   return (
     <div>
-      {seesMoney && <SumStrip label="Job figures" cells={[
-        { label: 'Contract', value: pounds(job.contractValue), nil: !job.contractValue },
-        { label: 'Certified', value: pounds(certified), nil: !certified },
-        { label: 'Variations', value: pounds(voGross), nil: !voGross, warn: (unpriced || unmeasured) > 0 ? `+ ${Math.max(unpriced, unmeasured)} not priced` : undefined },
-        { label: 'Margin', value: pounds(margin.margin), nil: !(margin.costs || margin.labourEstimate != null), neg: margin.margin < 0, onClick: onCosts, action: `Margin ${pounds(margin.margin)} — costs and margin`,
+      {seesMoney && <SumStrip label="Job figures" caption="With uplifts, excl. VAT: the same figures as Vals." cells={[
+        { label: 'Contract', value: money(worth.contract), nil: !worth.contract, note: worth.fromScope && worth.contract ? 'the scope at its rates; no contract value yet' : undefined },
+        { label: 'Certified', value: money(certified), nil: !certified, note: withClient ? `agreed · + ${money(withClient)} with client` : certified ? 'agreed by the client' : undefined },
+        { label: 'Variations', value: money(worth.vos), nil: !worth.vos, warn: (unpriced || unmeasured) > 0 ? `+ ${Math.max(unpriced, unmeasured)} not priced` : undefined },
+        { label: 'Margin so far', value: money(margin.margin), nil: !(margin.costs || margin.labourEstimate != null), neg: margin.margin < 0, onClick: onCosts, action: `Margin so far ${money(margin.margin)} — costs and margin`,
           ...marginNote },
       ]} />}
       <h2 className="sec-h">{actions.length ? `Action needed · ${actions.length}` : 'All clear'}</h2>

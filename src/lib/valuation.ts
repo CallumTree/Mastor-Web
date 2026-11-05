@@ -156,6 +156,21 @@ export function upliftAmounts(base: number, u1pct: number, u2pct: number) {
   return { u1, u2, gross }
 }
 
+/** Certified means the client agreed it (an invoice or a payment says so too), or it was valued before reviews
+ *  existed. One sent and still with them, or sent back for changes, is claimed but not certified. */
+export const isCertified = (v: Valuation) => v.status === 'Issued' && reviewStage(v) === 'agreed'
+export const isWithClient = (v: Valuation) => v.status === 'Issued' && reviewStage(v) !== 'agreed'
+
+/** What a job is worth, with uplifts and without VAT, worked out once for every screen: the contract value (or,
+ *  without one, the scope at its rates with uplifts) plus every priced VO that isn't rejected, with uplifts. Each part
+ *  is to the penny the way a valuation is (base summed, then uplifted), so the screens agree to the penny. */
+export function jobWorth(job: Job, scope: ScopeItem[], vos: Variation[]): { contract: number; vos: number; total: number; fromScope: boolean } {
+  const fromScope = !(job.contractValue > 0)
+  const contract = fromScope ? upliftAmounts(pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), job.uplift1, job.uplift2).gross : pennies(job.contractValue)
+  const voGross = upliftAmounts(pennies(vos.filter(v => v.status !== 'Rejected').reduce((t, v) => t + lineValue(v.qty, v.rate), 0)), job.uplift1, job.uplift2).gross
+  return { contract, vos: voGross, total: pennies(contract + voGross), fromScope }
+}
+
 export interface ValTotals { scopeBase: number; voBase: number; base: number; gross: number; lines: number }
 export function valTotals(job: Job, valId: string, scope: ScopeItem[], vos: Variation[]): ValTotals {
   const s = scope.filter(x => x.valuationId === valId)

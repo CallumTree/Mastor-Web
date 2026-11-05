@@ -36,7 +36,7 @@ export interface SumCell {
   /** one part of that whole: its swatch keys the row to its piece of the bar, sized by `amount` */
   swatch?: Swatch; amount?: number
 }
-export type Swatch = 'paid' | 'due' | 'open' | 'left'
+export type Swatch = 'paid' | 'due' | 'sent' | 'open' | 'left'
 
 /** One whole split into its parts, end to end, each the same fill as its row's swatch. Text-free: the ledger rows
  *  beside it carry the names and figures, so nothing hides behind a tap. */

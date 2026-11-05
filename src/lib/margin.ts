@@ -24,8 +24,11 @@ export function labourDays(diary: DiaryEntry[]) {
 
 export function jobMargin(job: Job, scope: ScopeItem[], vos: Variation[], costs: Cost[], diary: DiaryEntry[], dayRate?: number | null, dayworksValue = 0): Margin {
   const live = vos.filter(v => v.status !== 'Rejected')
-  const base = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) + live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0) + dayworksValue)
-  const value = upliftAmounts(base, job.uplift1, job.uplift2).gross
+  const scopeBase = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), voBase = pennies(live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0))
+  const base = pennies(scopeBase + voBase + dayworksValue)
+  // each part uplifted on its own, the way jobWorth does it, so the job's value here and in Vals agree to the penny
+  const up = (x: number) => upliftAmounts(x, job.uplift1, job.uplift2).gross
+  const value = pennies(up(scopeBase) + up(voBase) + (dayworksValue ? up(pennies(dayworksValue)) : 0))
   const unpriced = scope.filter(i => !isPriced(i)).length + live.filter(v => !isPriced(v)).length
   const counted = costs.filter(c => c.status !== 'quote')
   const committed = pennies(counted.filter(c => c.status === 'committed').reduce((t, c) => t + (c.amount ?? 0), 0))
