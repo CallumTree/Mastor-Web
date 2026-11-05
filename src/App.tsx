@@ -257,7 +257,7 @@ export default function App() {
           setup={access.money ? [
             { key: 'company', label: 'Your company details', hint: 'Name, address, VAT number and bank details: they go on every invoice.', done: !missingForInvoice(settings).length, onClick: () => setSettingsOpen(true) },
             { key: 'rates', label: 'Your schedule of rates', hint: 'Import the SoR you price from, so lines and VOs are checked against it.', done: books.length > 0, onClick: () => setRatesOpen(true), skip: 'We don’t use one' },
-            ...(access.manage ? [{ key: 'team', label: 'Your team', hint: 'Office and site. Operatives never see money.', done: false, onClick: () => setTeamOpen(true), skip: 'Just me for now' }] : []),
+            ...(access.manage ? [{ key: 'team', label: 'Your team', hint: 'Directors, QSs, site managers and foremen: whoever runs the job.', done: false, onClick: () => setTeamOpen(true), skip: 'Just me for now' }] : []),
             { key: 'job', label: 'Your first job, from the client’s pack', hint: 'The schedule, works orders and surveys: every line read for you to check.', done: jobs.length > 0, onClick: () => setNewJob(true) },
           ] : undefined}
           alerts={weekAlerts(jobs, scope, vos, vals, orders, diary)}

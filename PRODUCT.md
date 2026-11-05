@@ -15,12 +15,24 @@ Mastor is for **UK contractors and their teams on schedule-of-rates work who don
 People who use it every day:
 
 - **Director / QS (office):** prices work from the SoR, builds valuations and monthly applications, raises VAT invoices, keeps the variation register, watches margin and chases payment. Laptop or desktop, long careful sessions where the figures must hold up.
-- **Site manager (on site):** site diary, photos, variations and dayworks as they are found, completes small works orders. Phone outdoors, often in glare and gloves, sometimes no signal.
-- **Operatives:** log work, hours and photos. Brief visits, no training. **Never see rates, values or margins.**
+- **Site manager or foreman (on site):** runs the job and needs the figures: site diary, photos, variations and dayworks as they are found, completes small works orders. Phone outdoors, often in glare and gloves, sometimes no signal.
+- **Operatives (V2, after launch):** log work, hours and photos; never see rates, values or margins. Mastor launches for the people who run the job and need the figures (directors, QSs, contracts and site managers, foremen); the operative role isn't offered to new invites yet (`OFFERED_ROLES`), but everything for it stays in the app and tested (money hidden, the site list with Done), ready for the operatives' version.
 
 People who only see the outputs:
 
 - **The client** (a council or housing association): never opens the app but receives its PDFs — Variation Register, valuation certificates, VAT invoices, dayworks sheets and completion evidence packs. These have to pass a client QS's scrutiny.
+
+## Plans (decided, not built yet)
+
+Priced per firm, never per head, so a growing team never pays more for each person. Each plan includes a number of seats (everyone with a seat sees the figures); prices are shown with VAT as well (the ASA requires it for firms that can't reclaim VAT). Full reasoning, competitor prices and the cost model: `reports/Mastor pricing and competitor analysis.md` (local, not committed).
+
+| Plan | Monthly + VAT | Annual + VAT (two months free) | Seats | What it adds |
+|---|---|---|---|---|
+| **Mercury I** · the full record, by hand | £29 | £290 | 2 | Jobs, scope by house, VOs and dayworks by hand, diary, valuations, VAT invoices, payments, exports; the scope reader, and 5 AI document reads a month |
+| **Minerva II** · with Clerk and the AI readers | £69 | £690 | 5 | Clerk, the VO ticket reader, automatic site reading, costs and margin, the rate check, the Claude connector; a monthly AI allowance |
+| **Jupiter III** · high use, more seats, set-up help | £149 | £1,490 | 12 | A bigger AI allowance with a slower "economy" lane instead of a hard stop; help moving rate books and live jobs in |
+
+Extra seats £10 a month on Minerva and Jupiter. Named after Roman gods (Mercury, trade and money; Minerva, wisdom; Jupiter, king of the gods) and numbered like the valuations; trade-mark check before launch. AI is metered at its real cost as credits (1 credit ≈ 1p of AI), everyday Clerk questions under a daily fair-use limit outside the allowance; running out pauses the readers, never the records, and never charges a card by itself. The founding fifty: free through the pilot, then half price for as long as they stay (terms to be written before anyone pays). Before charging: cost-weighted metering in place of the flat 60-a-day limit, and the automatic site reads on batch or a cheaper model.
 
 Membership roles: owner, director, qs, site_manager, operative. Owners and directors manage the team; operatives see no money, and the office's screens (new job and the pack reader, imports, job setup, scope lines, costs, rates) are closed to them at the app's root, not just hidden behind a button.
 

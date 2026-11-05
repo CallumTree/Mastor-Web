@@ -50,7 +50,7 @@ Still to do, owner's decisions and accounts first:
 5. **Keys and limits in Vercel:** ANTHROPIC_API_KEY (with a spend limit), the transcription key, RESEND_API_KEY and SIGNUP_NOTIFY_TO, SIGNUP_FROM on the Mastor domain.
 6. **Company deletion on request** (data export already exists: Settings → Backup).
 7. **Front-page photos:** the two Unsplash photos are hotlinked stock; swap for your own when you have them.
-8. Pricing after the pilot (the page promises half price for founding places, no figure shown yet).
+8. **Plans and billing** (decided: Mercury I £29, Minerva II £69, Jupiter III £149 a month + VAT per firm; see PRODUCT.md → Plans): Stripe subscriptions, cost-weighted AI credits in place of the 60-a-day limit, site reads on batch, the pricing page, written founding terms, a trade-mark check on the names.
 9. Restyle the PDFs to the signage language (they're print-white and clear today; optional).
 
 ## Parked

@@ -9,9 +9,13 @@ export const ROLES: { role: Role; label: string; hint: string }[] = [
   { role: 'owner', label: 'Owner', hint: 'Runs the account. Can add and remove anyone.' },
   { role: 'director', label: 'Director', hint: 'Can add and remove people.' },
   { role: 'qs', label: 'QS', hint: 'Valuations, variations and invoices.' },
-  { role: 'site_manager', label: 'Site manager', hint: 'Diary, photos and variations on site.' },
+  { role: 'site_manager', label: 'Site manager or foreman', hint: 'Runs the job on site: diary, photos, variations and the figures.' },
   { role: 'operative', label: 'Operative', hint: 'Logs work and photos.' },
 ]
+/** The roles a firm can give someone now. Mastor launches for the people who run the job and need the figures; the
+ *  operatives' version (money hidden, the site list with Done) is V2, so the role isn't offered yet. Anyone who
+ *  already has it keeps it, and everything for it stays in the app. */
+export const OFFERED_ROLES = ROLES.filter(r => r.role !== 'operative')
 export const roleLabel = (r: string) => ROLES.find(x => x.role === r)?.label ?? r
 export const canManage = (r?: string) => r === 'owner' || r === 'director'
 
