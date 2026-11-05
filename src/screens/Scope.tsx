@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useAccess } from '../lib/access'
 import type { RateBook } from '../lib/types'
 import { RateLookup } from './Rates'
-import type { Job, ScopeItem, Valuation, Variation } from '../lib/types'
+import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { money, qtyText } from '../lib/format'
 import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
 import { IconCheck, IconChevron, IconDoc, IconPlus } from '../components/Icons'
+import { doneMarks, undecided } from '../lib/siteDone'
 import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
 import { TradeList, TradeMark } from '../components/Trade'
@@ -25,6 +26,8 @@ type Filter = 'all' | 'live' | 'claimed' | 'vos'
 export interface VoProps {
   vos: Variation[]; onToggleVo: (v: Variation) => void; onEditVo: (v: Variation) => void; onLogVo: () => void
   onImportVo?: () => void; onRegister?: () => void; onDayworks?: () => void
+  /** the operative's "done" marks (siteDone.ts): the diary they're kept in, and making or taking one back */
+  diary?: DiaryEntry[]; onMarkDone?: (i: ScopeItem) => void; onUndoDone?: (e: DiaryEntry) => void
 }
 const sortHouses = (a: string, b: string) => (a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b, 'en', { numeric: true }))
 const houseOf = (v: Variation) => voHouse(v) || '—'
@@ -35,40 +38,78 @@ type ScopeProps = Parameters<typeof OfficeScope>[0]
 /** Office staff get the priced, claimable work; operatives get the work list: no rates, values or ticks. Both list a
  *  house's variations with its scope, so nothing at a house is missed (a gutter VO before the scaffold comes down). */
 export function ScopeTab(p: ScopeProps) {
-  return useAccess().money ? <OfficeScope {...p} /> : <SiteScope job={p.job} scope={p.scope} vos={p.vos} vals={p.vals} onEditVo={p.onEditVo} onToggleVo={p.onToggleVo} onLogVo={p.onLogVo} />
+  return useAccess().money ? <OfficeScope {...p} /> : <SiteScope job={p.job} scope={p.scope} vos={p.vos} vals={p.vals} diary={p.diary} onEditVo={p.onEditVo} onToggleVo={p.onToggleVo} onLogVo={p.onLogVo} onMarkDone={p.onMarkDone} onUndoDone={p.onUndoDone} />
 }
 
-/** The work as a list: what, where, how much, house by house, its VOs with it. */
-function SiteScope({ job, scope, vos, vals, onEditVo, onToggleVo, onLogVo }: { job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]; onEditVo: (v: Variation) => void; onToggleVo: (v: Variation) => void; onLogVo: () => void }) {
+/** The operative's site list: their work house by house, folded so a 30-house scheme is 30 rows, not 300; the trade
+ *  they're on picked once and remembered on this phone; each line a big "Done" they tap when it's finished. Done is a
+ *  mark for the office to approve (siteDone.ts), never an edit to the line. No rates, values or valuations. */
+function SiteScope({ job, scope, vos, vals, diary = [], onEditVo, onToggleVo, onLogVo, onMarkDone, onUndoDone }: {
+  job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]; diary?: DiaryEntry[]
+  onEditVo: (v: Variation) => void; onToggleVo: (v: Variation) => void; onLogVo: () => void
+  onMarkDone?: (i: ScopeItem) => void; onUndoDone?: (e: DiaryEntry) => void
+}) {
   const houses = [...new Set([...scope.map(i => i.property || '—'), ...vos.map(houseOf)])].sort(sortHouses)
   const many = houses.filter(h => h !== '—').length > 1 || (houses.length > 1 && houses.includes('—'))
-  const name = (h: string) => h === '—' ? (many ? 'Whole job' : '') : job.properties?.[h]?.split(',')[0] || `No. ${h}`
+  const name = (h: string) => h === '—' ? (many ? 'Whole job' : 'The work') : job.properties?.[h]?.split(',')[0] || `No. ${h}`
   const groupOf = (i: ScopeItem) => i.workstream || i.room || 'General'
+  const trades = [...new Set(scope.map(i => i.workstream).filter((x): x is string => !!x))].sort()
+  const [trade, setTradeState] = useState<string>(() => { try { const t = localStorage.getItem('mastor.myTrade') ?? ''; return trades.includes(t) ? t : '' } catch { return '' } })
+  const setTrade = (t: string) => { setTradeState(t); try { localStorage.setItem('mastor.myTrade', t) } catch { /* private window: just for now */ } }
+  const [open, setOpen] = useState<Set<string>>(() => new Set(many ? [] : houses))
+  const marks = doneMarks(diary)
+  const isDone = (i: ScopeItem) => !!i.valuationId || marks.has(i.id)
+  const mine = (i: ScopeItem) => !trade || i.workstream === trade
   return (
     <div className="stack">
       <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? '' : 's'}${vos.length ? ` · ${vos.length} VO${vos.length === 1 ? '' : 's'}` : ''}`} />
       <div className="tab-actions"><button className="btn btn-sm btn-primary" onClick={onLogVo}><IconPlus /> Add VO</button></div>
       {scope.length === 0 && vos.length === 0 && <div className="card empty">No scope on this job yet. Spot extra work? Add it as a VO, at its house.</div>}
+      {trades.length > 1 && (
+        <div className="chips" role="group" aria-label="Your trade">
+          <button className={'chip' + (!trade ? ' on' : '')} aria-pressed={!trade} onClick={() => setTrade('')}>All trades</button>
+          {trades.map(t => <button key={t} className={'chip' + (trade === t ? ' on' : '')} aria-pressed={trade === t} onClick={() => setTrade(t)}>{t}</button>)}
+        </div>
+      )}
       {houses.map(h => {
-        const lines = scope.filter(i => (i.property || '—') === h)
+        const lines = scope.filter(i => (i.property || '—') === h && mine(i))
         const hv = vos.filter(v => houseOf(v) === h).sort((a, b) => a.number - b.number)
+        if (!lines.length && !hv.length) return null
+        const done = lines.filter(isDone).length
+        const isOpen = open.has(h)
+        const toggle = () => setOpen(s => { const n = new Set(s); if (n.has(h)) n.delete(h); else n.add(h); return n })
         return (
-          <section key={h} className="stack" style={{ gap: 8 }}>
-            {name(h) && <h2 className="sec-h">{name(h)}</h2>}
-            {hv.length > 0 && <div className="panel flush clip">{hv.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggleVo} onEdit={onEditVo} />)}</div>}
-            {[...new Set(lines.map(groupOf))].map(g => (
-              <div key={g}>
-                <h3 className="label" style={{ margin: '6px 0' }}>{g}</h3>
-                <div className="panel chk">
-                  {lines.filter(i => groupOf(i) === g).map(i => (
-                    <div key={i.id} className="chk-row">
-                      <span className="mono">{i.code || '—'}</span>
-                      <span className="grow">{i.description}<small>{figs(i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated')}{i.room && i.workstream ? ` · ${i.room}` : ''}</small></span>
-                    </div>
-                  ))}
+          <section key={h} className="site-house">
+            <button className="site-house-h" aria-expanded={isOpen} onClick={toggle}>
+              <span className="grow"><b>{name(h)}</b><small>{lines.length} line{lines.length === 1 ? '' : 's'}{lines.length ? ` · ${done} done` : ''}{hv.length ? ` · ${hv.length} VO${hv.length === 1 ? '' : 's'}` : ''}</small></span>
+              {lines.length > 0 && done === lines.length && <span className="site-all" aria-hidden="true"><IconCheck size={14} /></span>}
+              <span className="prop-chev" aria-hidden="true" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}><IconChevron size={16} /></span>
+            </button>
+            {isOpen && <div className="stack" style={{ gap: 8, marginTop: 8 }}>
+              {hv.length > 0 && <div className="panel flush clip">{hv.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggleVo} onEdit={onEditVo} />)}</div>}
+              {[...new Set(lines.map(groupOf))].map(g => (
+                <div key={g}>
+                  <h3 className="label" style={{ margin: '6px 0' }}>{g}</h3>
+                  <div className="panel chk">
+                    {lines.filter(i => groupOf(i) === g).map(i => {
+                      const mark = marks.get(i.id), signed = !!i.valuationId, on = signed || !!mark
+                      const canUndo = !signed && !!mark && undecided(mark)
+                      return (
+                        <div key={i.id} className={'chk-row' + (on ? ' is-done' : '')}>
+                          <span className="mono">{i.code || '—'}</span>
+                          <span className="grow">{i.description}<small>{figs(i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated')}{i.room && i.workstream ? ` · ${i.room}` : ''}{signed ? ' · signed off' : mark ? ' · with the office' : ''}</small></span>
+                          {onMarkDone && <button className={'done-btn' + (on ? ' on' : '')} aria-pressed={on} disabled={on && !canUndo}
+                            aria-label={`${on ? 'Done' : 'Mark done'}: ${i.code ? i.code + ' ' : ''}${i.description}${canUndo ? ' (tap to take it back)' : ''}`}
+                            onClick={() => { if (!on) onMarkDone(i); else if (mark && canUndo) onUndoDone?.(mark) }}>
+                            <span className="done-box" aria-hidden="true">{on && <IconCheck size={14} />}</span>Done
+                          </button>}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>}
           </section>
         )
       })}

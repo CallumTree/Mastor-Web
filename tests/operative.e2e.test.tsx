@@ -45,6 +45,18 @@ describe('operative', () => {
     expect(screen.queryByRole('button', { name: /add to valuation/i })).toBeNull()
     noMoney()
 
+    // done on site: a mark for the office to approve (a 'complete' suggestion), never an edit to the line itself
+    click(screen.getByRole('button', { name: 'Mark done: 0171AD Renew fence' }))
+    await waitFor(async () => {
+      const [m] = (await db.diary('j1')).filter(e => e.type === 'done')
+      expect(m).toMatchObject({ lineId: 's1' }); expect(m.read?.suggestions[0]).toMatchObject({ kind: 'complete', lineIds: ['s1'], state: 'open' })
+    })
+    expect((await db.scope('j1'))[0].valuationId).toBeNull()   // the line itself is untouched
+    expect(await screen.findByText(/with the office/)).toBeTruthy()
+    // tapped by mistake: taken back while the office hasn't decided
+    click(screen.getByRole('button', { name: /^Done: 0171AD Renew fence/ }))
+    await waitFor(async () => expect((await db.diary('j1')).filter(e => e.type === 'done')).toHaveLength(0))
+
     nav('scope')
     await screen.findByText('Extra post')
     noMoney()

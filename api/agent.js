@@ -66094,6 +66094,15 @@ function jobAlerts(job, scope, vos, vals, orders, now = Date.now(), diary) {
     if (ready) alerts.push({ kind: "warn", place: "scope", text: `${ready} completed order${ready === 1 ? "" : "s"} not claimed`, hint: "Claim them into this month\u2019s valuation" });
     if (!orders.length) alerts.push({ kind: "warn", place: "scope", site: true, text: "No orders yet", hint: "Add each works order as it comes in" });
   } else if (scope.length === 0) alerts.push({ kind: "warn", place: "scope", site: true, text: "No scope yet", hint: "Add the works order items" });
+  const today = dayKey(new Date(now));
+  const lateTodos = (diary ?? []).filter((e) => e.type === "todo" && !e.doneAt && !!e.date && e.date < today).sort((a, b) => a.date.localeCompare(b.date));
+  if (lateTodos.length) alerts.push({
+    kind: "stop",
+    place: "diary",
+    site: true,
+    text: `${lateTodos.length} to-do${lateTodos.length === 1 ? "" : "s"} late`,
+    hint: lateTodos.slice(0, 2).map((e) => e.note).join(" \xB7 ") + (lateTodos.length > 2 ? ` \xB7 + ${lateTodos.length - 2} more` : "")
+  });
   return { alerts, gap, poNote };
 }
 

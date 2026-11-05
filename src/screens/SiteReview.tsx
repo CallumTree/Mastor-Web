@@ -22,7 +22,7 @@ const KIND: Record<SiteSuggestion['kind'], { badge: string; cls: string }> = {
 function Capture({ e }: { e: DiaryEntry }) {
   const url = usePhotoThumb(e.type === 'photo' ? e.mediaId : null)
   if (url) return <img src={url} alt={e.note || 'Site photo'} decoding="async" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--r-sm)', flex: 'none', border: '1px solid var(--line)' }} />
-  return <span className="badge b-slate" style={{ flex: 'none' }}>{e.type === 'voice' ? 'Voice' : e.type === 'video' ? 'Video' : 'Note'}</span>
+  return <span className="badge b-slate" style={{ flex: 'none' }}>{e.type === 'voice' ? 'Voice' : e.type === 'video' ? 'Video' : e.type === 'done' ? 'Site' : 'Note'}</span>
 }
 
 /** Vals → From site: what the day's captures suggest, for a person to approve or reject one by one. */

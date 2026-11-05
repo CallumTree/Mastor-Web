@@ -22,6 +22,7 @@ import { AskTab } from './Ask'
 import { isCertified, isWithClient, jobWorth, valRef, valTotals } from '../lib/valuation'
 import { Field } from '../components/Ui'
 import { SumStrip } from '../components/Register'
+import { doneMark, doneMarks } from '../lib/siteDone'
 import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
@@ -35,7 +36,7 @@ export interface Rail { done: number; sent: number; next: number; label: string;
 /** How far the job has got, the same line on every tab, for people who see money: certified (agreed) to date, then
  *  what's with the client, then the open valuation, against what the job is worth (jobWorth, the figure Vals shows).
  *  Lines done for everyone else. */
-function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation[], money: boolean): Rail | null {
+function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation[], money: boolean, diary: DiaryEntry[] = []): Rail | null {
   const worth = jobWorth(job, scope, vos).total
   if (money && worth > 0) {
     const sum = (vs: Valuation[]) => vs.reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0) / worth
@@ -47,7 +48,9 @@ function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation
       label: [`${pct(done)} certified`, sent > 0.004 ? `${pct(sent)} with client` : '', next > 0.004 ? `${valRef(open!.number)} ${pct(next)} more` : ''].filter(Boolean).join(' · ') }
   }
   if (!scope.length) return null
-  const n = scope.filter(i => i.valuationId).length
+  // done on site: marked done from the phone, or already signed off in a valuation
+  const marks = doneMarks(diary)
+  const n = scope.filter(i => i.valuationId || marks.has(i.id)).length
   return { done: n / scope.length, sent: 0, next: 0, label: `${n} of ${scope.length} lines done`, short: `${n}/${scope.length}` }
 }
 
@@ -247,7 +250,7 @@ export function JobView(p: {
   return (
     <>
       <main className="page with-rail">
-        <Hero job={job} compact={tab !== 'home'} rail={jobRail(job, scope, vals, vos, access.money)} onBack={onBack} onSetup={onSetup} onClerk={() => setTab('ask')} inClerk={tab === 'ask'} />
+        <Hero job={job} compact={tab !== 'home'} rail={jobRail(job, scope, vals, vos, access.money, p.diary)} onBack={onBack} onSetup={onSetup} onClerk={() => setTab('ask')} inClerk={tab === 'ask'} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
           margin={jobMargin(job, scope, vos, p.costs, p.diary, p.dayRate)} onCosts={p.onCosts} orders={p.orders}
           documents={<DocumentsPanel docs={p.docs} onAdd={p.onAddDoc} onOpen={p.onOpenDoc} onDelete={p.onDeleteDoc} onAsk={currentCompany() ? askClerk : undefined} />}
@@ -262,7 +265,8 @@ export function JobView(p: {
         {tab === 'scope' && job.kind === 'orders' && <><OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />
           <VoList vos={vos} vals={vals} onToggle={p.onToggleVo} onEdit={onEditVariation} onLog={onLogVariation} /></>}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence}
-          vos={vos} onToggleVo={p.onToggleVo} onEditVo={onEditVariation} onLogVo={onLogVariation} onImportVo={access.money ? p.onImportVo : undefined} onRegister={access.money ? p.onVoRegister : undefined} onDayworks={() => p.onDayworks(false)} />}
+          vos={vos} onToggleVo={p.onToggleVo} onEditVo={onEditVariation} onLogVo={onLogVariation} onImportVo={access.money ? p.onImportVo : undefined} onRegister={access.money ? p.onVoRegister : undefined} onDayworks={() => p.onDayworks(false)}
+          diary={p.diary} onMarkDone={i => p.onSaveDiary(doneMark(job, i))} onUndoDone={p.onDeleteDiary} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} readNote={p.readNote} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
@@ -283,9 +287,10 @@ export function JobView(p: {
         <Sheet className={'capture-sheet' + (capLeaving ? ' leaving' : '')} onClose={closeCapture}>
           <div className="stack">
             <h2 className="label bracket">Capture · {job.name}</h2>
+            {/* a photo is what site reaches for nine times in ten: it leads, the one white block; the rest sit under it */}
+            <label className="btn btn-primary cap-lead"><IconCamera /> Photo
+              <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <label className="btn btn-secondary"><IconCamera /> Photo
-                <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
               <label className="btn btn-secondary"><IconVideo /> Video
                 <input type="file" className="sr-only" accept="video/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickVoice(true) }}><IconMic /> Voice note</button>
