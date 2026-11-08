@@ -366,6 +366,31 @@ label.btn { cursor: pointer; }
 .core-bundle { display: inline-flex; gap: 3px; margin-right: 8px; vertical-align: 0.14em; }
 .core-bundle .core { margin-right: 0; vertical-align: top; }
 .prop-meta { font-size: 14px; color: var(--meta); margin-top: 3px; overflow-wrap: anywhere; }   /* every trade in full: they wrap rather than cut off */
+/* a house on one line: its number, how many lines, its value; under it the trade bar and how much is claimed */
+.prop-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.prop-main .prop-meta { margin-top: 0; font-size: 14px; }
+.prop-foot { display: flex; align-items: center; gap: 10px; margin: -4px 14px 12px; }
+.prop-pct { flex: none; min-width: 40px; text-align: right; font-size: 13px; color: var(--meta); }
+.prop-pct.all { color: var(--green); }
+.prop-pct svg { vertical-align: -2px; margin-right: 2px; }
+.tbar { flex: 1; display: flex; gap: 2px; height: 6px; min-width: 0; }
+.tbar > i { position: relative; display: block; flex-basis: 0; min-width: 4px; background: var(--rule); }
+.tbar > i::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--c); }
+.tbar > i > b { position: absolute; top: 0; bottom: 0; left: 0; background: var(--c); }
+/* the house sheet: the house and its value, the bar, then every trade open under a heading that stays in view */
+.house-h { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 12px; padding-bottom: 12px; border-bottom: 2px solid var(--rule); }
+.house-name { margin: 0; font-family: var(--sans); font-stretch: 87.5%; font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: .04em; }
+.house-amt { font-size: 20px; font-weight: 520; letter-spacing: -.02em; }
+.house-h .prop-foot { grid-column: 1 / -1; margin: 6px 0 0; }
+.house-h .hint { grid-column: 1 / -1; }
+.house-all { padding: 12px 0 4px; }
+.trade-jump { margin: 8px 0 4px; }
+.chip.sm { min-height: 36px; padding: 0 11px; font-size: 14px; }
+.chip.sm .core { margin-right: 6px; }
+.hs-trade { margin-top: 6px; }
+.trade-h { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 0; border-bottom: 1px solid var(--rule-ctl); font-weight: 650; font-size: 15px; }
+.trade-h .hint { font-weight: 400; }
+.house.in-sheet .trade-h { position: sticky; top: 32px; z-index: 2; background: var(--slate); scroll-margin-top: 32px; }
 .prop-amt { text-align: right; flex: none; }
 .prop-amt .mono { font-weight: 520; font-size: 17px; letter-spacing: -.02em; }
 .prop-amt small svg { vertical-align: -2px; margin-right: 2px; }

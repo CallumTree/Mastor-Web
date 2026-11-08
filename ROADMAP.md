@@ -47,13 +47,19 @@ Follow-ups from batch 1: **xlsx** (spreadsheet reading) has a known high-severit
 Still to do, owner's decisions and accounts first:
 1. **Privacy notice and terms.** The front page collects names, emails and phone numbers and the app holds clients' job data: a privacy notice (who Mastor is, what's kept, why, how long, rights, contact) linked from the form and the sign-up, and terms for the pilot. ICO data-protection fee if it applies.
 2. **A contact for help.** No support email or "Report a problem" reaches anyone yet; the app's problem bar is on the device only.
-3. **Supabase for production:** Pro plan (the free plan pauses an idle project and has no backups), daily backups, and its own email sender (custom SMTP, e.g. Resend): the built-in sender only sends a few sign-up emails an hour.
+3. **Supabase:** its own email sender (custom SMTP through Resend's free plan): the built-in sender only sends a few sign-up emails an hour. The Pro plan (daily backups, never pauses, about $25 a month) waits for the first paying firm (decided 6 Nov); until then every office device keeps a full copy and the help guide asks pilot firms for a weekly backup from Settings.
 4. **Domain:** a Mastor domain instead of mastor-web.vercel.app, added to Supabase Auth's redirect URLs, the sign-up emails and the Claude connector.
 5. **Keys and limits in Vercel:** ANTHROPIC_API_KEY (with a spend limit), the transcription key, RESEND_API_KEY and SIGNUP_NOTIFY_TO, SIGNUP_FROM on the Mastor domain.
 6. **Company deletion on request** (data export already exists: Settings → Backup).
 7. **Front-page photos:** the two Unsplash photos are hotlinked stock; swap for your own when you have them.
-8. **Plans and billing** (decided: Mercury I £29, Minerva II £69, Jupiter III £149 a month + VAT per firm; see PRODUCT.md → Plans): Stripe subscriptions setting `companies.plan`, written founding terms, a trade-mark check on the names. Done 5 Nov: AI metered at real cost per plan, site reads on batch at half price, Clerk back on Haiku after a document, AI this month in Settings, the pricing on the front page. **To switch it on: run `supabase/schema.sql` (v8) in Supabase** after this is deployed (the app counts 60 a day until then). Optional in Vercel: `AI_USD_TO_GBP`, `GEMINI_PRICE_IN`/`GEMINI_PRICE_OUT`, `SITE_READ_NOW=1`.
+8. **Plans and billing** (decided: Mercury I £29, Minerva II £69, Jupiter III £149 a month per firm, no VAT while Mastor isn't registered; see PRODUCT.md → Plans): Stripe subscriptions setting `companies.plan`, written founding terms, a trade-mark check on the names. Done 5 Nov: AI metered at real cost per plan, site reads on batch at half price, Clerk back on Haiku after a document, AI this month in Settings, the pricing on the front page. **To switch it on: run `supabase/schema.sql` (v8) in Supabase** after this is deployed (the app counts 60 a day until then). Optional in Vercel: `AI_USD_TO_GBP`, `GEMINI_PRICE_IN`/`GEMINI_PRICE_OUT`, `SITE_READ_NOW=1`.
 9. Restyle the PDFs to the signage language (they're print-white and clear today; optional).
+
+### Spending (decided 6 Nov): nothing until it's needed to run, or the law asks
+- **Now** (about £60–80 a year, plus AI as used): the domain, the ICO fee, Anthropic pay as you go with a monthly limit. Free: Resend, Stripe (a cut of each payment only), a support inbox forwarded to Gmail, error and uptime alerts, a business bank account, a second free Supabase project for testing.
+- **When the first firm pays:** register Mastor Ltd (about £50), Supabase Pro, Vercel Pro (its free plan is non-commercial), PI and cyber insurance (quotes now), a solicitor's check of the terms.
+- **Later:** Xero and an accountant (a spreadsheet till then), the trade-mark filing (the search is free now), Direct Debit.
+- **Not now:** VAT registration (not until turnover needs it); the photo date stamp and private-work quotes (parked: no new features before launch).
 
 ## Parked
 

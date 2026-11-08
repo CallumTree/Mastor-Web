@@ -24,7 +24,7 @@ export function HelpSheet({ onClose }: { onClose: () => void }) {
             <li key={n}><span className="ref-roman help-n" aria-hidden="true">{n}</span><div><b>{t}</b><p>{d}</p></div></li>
           ))}
         </ol>
-        <div className="hint">Your data is yours: Settings → Backup saves everything to one file at any time.</div>
+        <div className="hint">Your data is yours: Settings → Backup saves everything to one file at any time. Take one each week and keep it somewhere safe.</div>
         {SUPPORT_EMAIL && <div className="t-note">Stuck? Email <b className="mono">{SUPPORT_EMAIL}</b> and we’ll reply by the next working day.</div>}
       </div>
     </Sheet>

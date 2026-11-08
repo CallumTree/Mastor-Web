@@ -17,9 +17,10 @@ const WORK = ['Planned programmes', 'Repairs and maintenance', 'Empty properties
 
 type Claimed = { place: number | null; already: boolean; listed?: boolean }
 
-/** The plans (PRODUCT.md → Plans): per firm, never per head. Prices are ex VAT; with VAT_REGISTERED the VAT-inclusive
- *  figure sits beside each (the ASA wants both where some buyers can't reclaim VAT). Founding firms pay half. */
-const VAT_REGISTERED = true
+/** The plans (PRODUCT.md → Plans): per firm, never per head. Mastor isn't VAT-registered (decided 6 Nov: not until its
+ *  turnover needs it), so prices are what you pay. Once registered, set this: prices show + VAT with the VAT-inclusive
+ *  figure beside each (the ASA wants both where some buyers can't reclaim VAT). Founding firms pay half. */
+const VAT_REGISTERED = false
 const PLANS = [
   { n: 'I', name: 'Mercury', line: 'The full record, by hand.', month: 29, year: 290, seats: 2, extra: false, lead: false,
     adds: ['Jobs, works orders and scope, house by house', 'Variations and dayworks', 'Site diary: photos, video and voice notes', 'Monthly valuations, the client’s review and VAT invoices', 'Payments, and exports to Xero and QuickBooks', 'Reads your spreadsheets and PDFs, plus five AI reads of messy documents a month'] },
