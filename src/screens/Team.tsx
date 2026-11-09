@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { markSetup } from '../components/Setup'
 import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 import { Plate } from '../components/Sign'
-import { ROLES, canManage, inviteMessage, roleLabel, team, type Role, type TeamRow } from '../lib/team'
+import { OFFERED_ROLES, canManage, inviteMessage, roleLabel, team, type Role, type TeamRow } from '../lib/team'
 import { ukDate } from '../lib/format'
 import { meta } from '../lib/db'
 
@@ -55,7 +56,8 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
                     <div className="person-ctl">
                       <label className="field"><span className="sr-only">Role for {m.email}</span>
                         <select value={m.role} disabled={busy} onChange={e => act(() => team.setRole(m.id, e.target.value as Role))}>
-                          {ROLES.map(r => <option key={r.role} value={r.role}>{r.label}</option>)}
+                          {OFFERED_ROLES.map(r => <option key={r.role} value={r.role}>{r.label}</option>)}
+                          {!OFFERED_ROLES.some(r => r.role === m.role) && <option value={m.role}>{roleLabel(m.role)}</option>}
                         </select>
                       </label>
                       <ConfirmDelete label="Remove…" confirmLabel="Remove from team" note={`${m.email} will lose access to your jobs.`} onConfirm={() => act(() => team.remove(m.id))} />
@@ -100,6 +102,7 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
                 const em = email.trim()
                 void act(async () => {
                   await team.invite(em, role)
+                  void markSetup({ team: true }).catch(() => {})   // the jobs screen's setup step ticks itself off; never holds up the invite
                   setEmail('')
                   const fresh = await team.list(); setRows(fresh)
                   setShareFor(fresh.find(r => r.kind === 'invite' && r.email.toLowerCase() === em.toLowerCase()) ?? null); setCopied(false)
@@ -109,7 +112,7 @@ export function TeamSheet({ company, onClose }: { company: string; onClose: () =
                 <Field label="Their email"><input type="email" inputMode="email" autoComplete="off" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@company.co.uk" /></Field>
                 <fieldset className="roles">
                   <legend>Role</legend>
-                  {ROLES.map(r => (
+                  {OFFERED_ROLES.map(r => (
                     <label key={r.role} className={'role' + (role === r.role ? ' on' : '')}>
                       <input type="radio" name="role" value={r.role} checked={role === r.role} onChange={() => setRole(r.role)} />
                       <span><b>{r.label}</b><small>{r.hint}</small></span>

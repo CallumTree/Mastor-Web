@@ -21,21 +21,34 @@ import { signIn, type Ctx } from '../mcp/data'
 import { mastorServer } from '../mcp/tools'
 import { ukToday } from '../mcp/shared'
 // @ts-expect-error plain JS module shared with the other /api functions
-import { guard, anthropicKey, MAX_BODY_CHARS, CLERK_MODEL, CLERK_DOC_MODEL } from '../../api/_guard.js'
+import { guard, aiCheck, spend, anthropicKey, MAX_BODY_CHARS, CLERK_MODEL, CLERK_DOC_MODEL } from '../../api/_guard.js'
+// @ts-expect-error plain JS module shared with the other /api functions
+import { claudeCredits } from '../../api/_cost.js'
 
 type Req = IncomingMessage & { body?: unknown }
 type Res = ServerResponse & { status: (n: number) => Res; json: (b: unknown) => void }
 type Msg = Anthropic.Beta.BetaMessageParam
 type ToolUse = Anthropic.Beta.BetaToolUseBlock
 
+/** The turns since the person last asked something: their question, then the tool calls and results answering it. */
+export function sinceQuestion(messages: Msg[]): Msg[] {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.role === 'user' && (typeof m.content === 'string' || m.content.some(b => b.type !== 'tool_result'))) return messages.slice(i)
+  }
+  return messages
+}
+
 /**
  * Which model answers. Everyday questions go to the fast, low-cost model: Mastor works out every figure
- * and Clerk only reads and quotes them. Once the conversation has opened a document (a purchase order,
- * the client's pack), the rest of it goes to the most capable model, which reads the low-cost model's
- * reasoning so far. Anything the low-cost model declines is tried once on the capable one.
+ * and Clerk only reads and quotes them. While a question is answered from a document Clerk opened for it
+ * (a purchase order, the client's pack), the most capable model reads it. The next question goes back to
+ * the low-cost one, which can open the document again if it needs to. The conversation is never edited
+ * (that would cost more, and the models' reasoning is bound to it). Anything the low-cost model declines
+ * is tried once on the capable one.
  */
 export const modelFor = (messages: Msg[]): string =>
-  messages.some(m => m.role === 'assistant' && Array.isArray(m.content) && m.content.some(b => b.type === 'tool_use' && b.name === 'read_document'))
+  sinceQuestion(messages).some(m => m.role === 'assistant' && Array.isArray(m.content) && m.content.some(b => b.type === 'tool_use' && b.name === 'read_document'))
     ? CLERK_DOC_MODEL as string : CLERK_MODEL as string
 const lowCost = (model: string) => /haiku/i.test(model)
 export const config = { maxDuration: 300 }
@@ -142,14 +155,17 @@ export default async function handler(req: Req, res: Res) {
   }
 
   const anthropic = new Anthropic({ apiKey: key })
-  // what the question used, by model, as one line in the function log: real costs, not estimates
-  const used: Record<string, { calls: number; input: number; cacheWrite: number; cacheRead: number; output: number }> = {}
+  // what the question used, by model: real costs, written to the firm's AI ledger and one line in the function log
+  const used: Record<string, { calls: number; input: number; cacheWrite: number; cacheRead: number; output: number; credits: number }> = {}
   const tally = (model: string, u?: Anthropic.Beta.BetaUsage) => {
-    const t = used[model] ??= { calls: 0, input: 0, cacheWrite: 0, cacheRead: 0, output: 0 }
+    const t = used[model] ??= { calls: 0, input: 0, cacheWrite: 0, cacheRead: 0, output: 0, credits: 0 }
     t.calls++
     t.input += u?.input_tokens ?? 0; t.cacheWrite += u?.cache_creation_input_tokens ?? 0
     t.cacheRead += u?.cache_read_input_tokens ?? 0; t.output += u?.output_tokens ?? 0
+    t.credits += claudeCredits(model, u) as number
   }
+  // reading a document draws on the plan's AI allowance (checked once, the first time it happens in this request)
+  let readingDoc = false
   let mcp: Awaited<ReturnType<typeof connect>> | null = null
   try {
     mcp = await connect(ctx)
@@ -188,6 +204,11 @@ export default async function handler(req: Req, res: Res) {
     for (let call = 0; call < MAX_CALLS; call++) {
       send({ type: 'status', text: call ? 'Thinking' : body.decision ? 'Carrying on' : 'Reading your question' })
       let model = modelFor(messages)
+      if (model === CLERK_DOC_MODEL && !readingDoc) {
+        const c = await aiCheck(token, 'ask_doc') as { ok: boolean; error?: string }
+        if (!c.ok) return send({ type: 'error', error: c.error ?? 'Clerk can’t read documents just now.', messages })
+        readingDoc = true
+      }
       let r = await ask(model)
       tally(model, r.usage)
       if (r.stop_reason === 'refusal' && model !== CLERK_DOC_MODEL) { model = CLERK_DOC_MODEL as string; r = await ask(model); tally(model, r.usage) }
@@ -211,6 +232,8 @@ export default async function handler(req: Req, res: Res) {
     send({ type: 'error', error: msg, ...(messages.length > body.messages.length || body.decision ? { messages } : {}) })
   } finally {
     if (Object.keys(used).length) console.info(JSON.stringify({ clerk: used }))
+    // the capable model's share counts against the allowance when it read a document; everyday questions are fair use
+    for (const [model, t] of Object.entries(used)) await spend(token, readingDoc && model === CLERK_DOC_MODEL ? 'ask_doc' : 'ask', model, t.credits)
     await mcp?.close().catch(() => {})
     res.end()
   }

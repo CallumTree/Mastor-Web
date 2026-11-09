@@ -75,7 +75,7 @@ export function valCourt(val: Valuation, job: Job, scope: ScopeItem[], vos: Vari
   if (r && !val.invoiceNumber && !val.paidAt && !r.agreedAt) {
     if (r.changesAt) return { who: 'us', text: 'Changes asked · amend it and send it again', tone: 'due', owed, review: true }
     const d = daysSince(r.sentAt, now)
-    return { who: 'client', text: `For review · ${d} day${d === 1 ? '' : 's'}${r.rounds > 1 ? ` · sent ${ordinal(r.rounds)} time` : ''}`, days: d, owed, review: true,
+    return { who: 'client', text: `For review · ${d ? `${d} day${d === 1 ? '' : 's'}` : 'sent today'}${r.rounds > 1 ? ` · sent ${ordinal(r.rounds)} time` : ''}`, days: d, owed, review: true,
       tone: d >= REVIEW_CHASE_RED ? 'late' : d >= REVIEW_CHASE_AMBER ? 'due' : 'ok' }
   }
   const due = dueAt(val, job)

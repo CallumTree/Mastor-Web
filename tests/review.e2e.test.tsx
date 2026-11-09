@@ -32,8 +32,8 @@ describe('the client’s review', () => {
     click(await screen.findByRole('button', { name: /^send val i for £7,000\.00/i }))
     // sending hands over the certificate and closes: no second sheet to dismiss
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    await screen.findAllByText(/^With client · For review · 0 days/)
-    expect(within(screen.getByLabelText('Valuation week')).getByText(/^VAL I · /)).toBeTruthy()   // when the last one went
+    await screen.findAllByText(/^With client · For review · sent today/)
+    expect([...screen.getByLabelText('Valuation week').querySelectorAll('.val-week-n')].some(n => /^VAL I · /.test(n.textContent ?? ''))).toBe(true)   // when the last one went
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()
 
     // the client wants changes: say what, and it opens to amend
@@ -54,12 +54,12 @@ describe('the client’s review', () => {
     click(screen.getByRole('button', { name: 'Send VAL I again' }))
     click(await screen.findByRole('button', { name: /^send val i for £4,000\.00/i }))
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    await screen.findAllByText(/^With client · For review · 0 days · sent 2nd time/)
+    await screen.findAllByText(/^With client · For review · sent today · sent 2nd time/)
 
-    // agreed: one tap on the row marks it agreed and starts the invoice
+    // agreed: the row opens the invoice; with no company details yet, agreement is recorded on its own, on purpose
     click(screen.getByRole('button', { name: 'Agreed — create invoice' }))
     await screen.findByText(/before your first invoice/i)
-    fireEvent.click(document.querySelector('.sheet-bg')!)
+    click(screen.getByRole('button', { name: /^record val i agreed, invoice it later$/i }))
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findByText(/^Agreed .* · create the invoice$/)
     expect(screen.getByRole('button', { name: 'Create invoice' })).toBeTruthy()

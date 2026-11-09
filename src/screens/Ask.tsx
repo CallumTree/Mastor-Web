@@ -11,8 +11,14 @@ import { IconMic, IconSend } from '../components/Icons'
 type Rec = { lang: string; interimResults: boolean; continuous: boolean; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null }
 const Speech = (typeof window !== 'undefined' && ((window as unknown as { SpeechRecognition?: new () => Rec }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: new () => Rec }).webkitSpeechRecognition)) || null
 
-const EXAMPLES_MONEY = ['What’s still to claim at No. 6?', 'Tick the finished kitchen lines into the open val', 'Log a VO for a wet room at No. 18, priced like the last one', 'Does the PO match the job’s value and uplifts?']
-const EXAMPLES_SITE = ['What’s left to do at No. 4?', 'Log a VO: cracked lintel over the back door, 1.2 m', 'Today: dry, 5 on site, scaffold struck at No. 2', 'What does the client’s pack say about asbestos?']
+/** Starter questions that fit this job: its own houses (never a house it doesn't have), else the job as a whole. */
+function examples(job: Job, money: boolean): string[] {
+  const nos = Object.keys(job.properties ?? {}).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+  const at = (i: number) => (nos.length ? ` at No. ${nos[Math.min(i, nos.length - 1)]}` : '')
+  return money
+    ? [`What’s still to claim${at(0)}?`, 'Tick the finished kitchen lines into the open val', `Log a VO for a wet room${at(1)}, priced like the last one`, 'Does the PO match the job’s value and uplifts?']
+    : [`What’s left to do${at(0)}?`, 'Log a VO: cracked lintel over the back door, 1.2 m', `Today: dry, 5 on site, scaffold struck${at(1)}`, 'What does the client’s pack say about asbestos?']
+}
 
 /**
  * Clerk: Mastor's assistant for this job (named after a clerk of works). Type or speak; it reads the job with the app's own figures and
@@ -88,7 +94,7 @@ export function AskTab({ job, seed, onSeeded }: { job: Job; seed?: string | null
         <div className="ask-intro">
           <p>Ask Clerk about {job.name}, or tell it what to change. It reads the job the way the app does, reads the job’s documents as filed, finds rates from your schedule and past work, and nothing changes until you tap <b>Do it</b>.</p>
           <div className="ask-try">
-            {(access.money ? EXAMPLES_MONEY : EXAMPLES_SITE).map(x => <button key={x} className="chip" onClick={() => { setText(x); box.current?.focus() }}>{x}</button>)}
+            {examples(job, access.money).map(x => <button key={x} className="chip" onClick={() => { setText(x); box.current?.focus() }}>{x}</button>)}
           </div>
         </div>
       )}

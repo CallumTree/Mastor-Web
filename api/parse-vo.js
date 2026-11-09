@@ -5,7 +5,8 @@
  */
 export const config = { maxDuration: 120 }
 
-import { guard, anthropicKey } from './_guard.js'
+import { guard, spend, bearer, anthropicKey } from './_guard.js'
+import { claudeCredits } from './_cost.js'
 
 const PROMPT = `This is a UK local-authority variation instruction / works order / site instruction sent to a building contractor.
 It may be handwritten, scanned, photographed or a screenshot. Read it carefully.
@@ -42,6 +43,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5', max_tokens: 4000, messages: [{ role: 'user', content: [doc, { type: 'text', text: PROMPT }] }] }),
     })
     const data = await r.json()
+    if (data?.usage) await spend(bearer(req), 'vo', data.model, claudeCredits(data.model, data.usage))
     if (!r.ok) return res.status(502).json({ error: data?.error?.message || `AI request failed (${r.status})` })
     return res.status(200).json({ text: (data.content || []).filter(x => x.type === 'text').map(x => x.text).join('\n') })
   } catch { return res.status(502).json({ error: 'Could not reach the AI service. Check signal and try again.' }) }

@@ -6,11 +6,13 @@ import { Field, Sheet } from '../components/Ui'
 import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
 import { SignOutButton } from '../components/SyncBadge'
 import { checkAi, type AiCheck } from '../lib/aiCheck'
+import { AiMonth } from '../components/AiMonth'
 
 /** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
-export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices }: {
+export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices, onHelp }: {
   settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
   onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void; onRates: () => void; onTeam: () => void
+  onHelp?: () => void
   onExportInvoices?: (format: 'xero' | 'quickbooks', period: 'thisMonth' | 'lastMonth' | 'all', code: string) => Promise<number>
 }) {
   const { money: m } = useAccess()
@@ -61,10 +63,16 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 
         </>}
 
+        {onHelp && <>
+          <h3 className="label bracket sec">Help</h3>
+          <button className="btn btn-secondary" onClick={onHelp}>How Mastor works</button>
+        </>}
+
         <h3 className="label bracket sec">Team</h3>
         <div className="hint">Add your office and site staff so they see the same jobs.</div>
         <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
 
+        {m && <AiMonth />}
         <AiSetup />
 
         {m && <>
@@ -110,11 +118,14 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
 }
 
 /** Confirm before a number is used — invoice numbers can't be taken back. */
-export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, jobMissing = [], onCreate, onSettings, onJobSetup, onClose }: {
+export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, jobMissing = [], onCreate, onSettings, onJobSetup, onClose, agreeing, onAgreeOnly }: {
   number: string; net: string; vat: string; total: string; rate: number; missing: string[]
   /** what the job itself still needs (who the invoice is to) */
   jobMissing?: string[]
   onCreate: (date: number) => void; onSettings: () => void; onJobSetup?: () => void; onClose: () => void
+  /** the valuation is still with the client: creating the invoice records their agreement; closing records nothing.
+   *  `onAgreeOnly` records the agreement alone, for when the invoice can't be made yet or will be made later. */
+  agreeing?: string; onAgreeOnly?: () => void
 }) {
   const d = new Date(); const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const [date, setDate] = useState(key)
@@ -122,6 +133,7 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, job
     <Sheet onClose={onClose}>
       <div className="stack">
         <h2 className="label bracket">Create VAT invoice</h2>
+        {agreeing && <div className="t-note">The client agreed {agreeing}. Creating the invoice records that; closing this records nothing.</div>}
         {missing.length ? (
           <>
             <div className="t-note">Before your first invoice, add your company details: <b>{missing.join(', ')}</b>.</div>
@@ -145,6 +157,7 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, job
             <button className="btn btn-primary" disabled={!date} onClick={() => { const [y, m, dd] = date.split('-').map(Number); onCreate(new Date(y, m - 1, dd, 12).getTime()) }}>Create invoice {number}</button>
           </>
         )}
+        {agreeing && onAgreeOnly && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onAgreeOnly}>Record {agreeing} agreed, invoice it later</button>}
       </div>
     </Sheet>
   )
@@ -158,7 +171,7 @@ function AiSetup() {
   return (
     <>
       <h3 className="label bracket sec">AI setup</h3>
-      <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Uses one of today’s reads.</div>
+      <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Counts as one everyday question.</div>
       <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setOut(null); try { setOut(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
       {res && <div className="stack" role="status">
         {res.map(c => <div key={c.name}><Plate kind={c.ok ? 'ok' : 'stop'}>{c.name}</Plate><div className="hint" style={{ marginTop: 2 }}>{c.detail}</div></div>)}

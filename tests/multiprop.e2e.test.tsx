@@ -37,18 +37,21 @@ describe('multi-property scheme', () => {
     expect(heads.map(h => h.getAttribute('aria-label'))).toEqual(['Property 1', 'Property 2', 'Property 13'])
     expect(screen.queryByText(/masonry paint/i)).toBeNull()
 
-    // open No. 1 → workstream groups (collapsed), then lines inside
+    // one tap on No. 1 → a sheet with every line, already open, under its trades (no second tap per trade)
     click(heads[0])
-    expect(screen.queryByText(/masonry paint/i)).toBeNull()
-    click(screen.getByRole('button', { name: 'No. 1 PPR Paint' }))
-    expect(screen.getAllByText(/masonry paint/i).length).toBe(1)
-    expect(screen.getByRole('button', { name: 'No. 1 Scaffold' })).toBeTruthy()
+    const sheet = await screen.findByRole('dialog', { name: 'No. 1' })
+    expect(within(sheet).getAllByText(/masonry paint/i).length).toBe(1)
+    expect(within(sheet).getByRole('region', { name: 'PPR Paint' })).toBeTruthy()
+    expect(within(sheet).getByRole('region', { name: 'Scaffold' })).toBeTruthy()
+    expect(within(sheet).queryByText(/^Property$/)).toBeNull()                        // a whole-house line doesn't say "Property"
 
     // tick all remaining in No. 1 → VAL I, 100%
-    click(screen.getByRole('button', { name: /tick all remaining lines \(3\)/i }))
-    click(screen.getByRole('button', { name: 'Yes' }))
-    await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))   // property header (+ open group)
-    expect(screen.getAllByText('VAL I').length).toBe(2)                                // the open PPR Paint group's lines
+    click(within(sheet).getByRole('button', { name: /tick all remaining lines \(3\)/i }))
+    click(within(sheet).getByRole('button', { name: 'Yes' }))
+    await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))   // the sheet's bar and the house row
+    expect(within(screen.getByRole('dialog', { name: 'No. 1' })).getAllByText('VAL I').length).toBe(3)   // every line, all open
+    click(within(screen.getByRole('dialog', { name: 'No. 1' })).getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 
     // valuation shows the lines under a "Scope · No. 1" heading
     nav('vals')
@@ -67,7 +70,7 @@ describe('multi-property scheme', () => {
     nav('vals')
     click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
     click(await screen.findByRole('button', { name: /^send val i for £/i }))
-    await screen.findAllByText(/^With client · For review · 0 days/)
+    await screen.findAllByText(/^With client · For review · sent today/)
     nav('scope')
     click(await screen.findByRole('button', { name: 'Scope options' })); click(screen.getByRole('button', { name: /^add a scope line/i }))
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Wrong spec line' } })

@@ -10,7 +10,8 @@ let guardStatus = 200, anthropic = 200, geminiModel = 200, geminiGen = 200
 const hits: string[] = []
 globalThis.fetch = (async (url: string, init: any = {}) => {
   url = String(url)
-  if (url.includes('/rpc/use_ai')) { hits.push('guard'); return guardStatus === 200 ? new Response('3', { status: 200 }) : new Response(JSON.stringify({ code: 'PGRST202', message: 'Could not find the function' }), { status: 404 }) }
+  if (url.includes('/rpc/ai_spend')) return new Response(null, { status: 204 })
+  if (url.includes('/rpc/ai_check') || url.includes('/rpc/use_ai')) { if (url.includes('ai_check')) hits.push('guard'); return guardStatus === 200 ? new Response(JSON.stringify({ company: 'c1', plan: 'pilot', lane: 'normal' }), { status: 200 }) : new Response(JSON.stringify({ code: 'PGRST202', message: 'Could not find the function' }), { status: 404 }) }
   if (url.includes('api.anthropic.com/v1/models/')) { sentKey = init.headers['x-api-key']; hits.push('claude:' + decodeURIComponent(url.split('/').pop()!)); return new Response(JSON.stringify(anthropic === 200 ? { id: 'x' } : { error: { message: 'nope' } }), { status: anthropic }) }
   if (url.includes(':generateContent') && slowGen) return new Promise<Response>(() => {})
   if (url.includes(':generateContent')) { hits.push('gemini:gen'); return new Response(JSON.stringify(geminiGen === 200 ? { candidates: [{ content: { parts: [{ text: '(no speech)' }] } }] } : { error: { message: 'audio not supported' } }), { status: geminiGen }) }

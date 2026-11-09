@@ -5,7 +5,7 @@
  */
 import type { CompanySettings, Cost, DiaryEntry, Job, JobDocument, RateItem, ScopeItem, Valuation, Variation, WorkOrder } from '../../src/lib/types'
 // @ts-expect-error plain JS module shared with the other /api functions
-import { SB_URL, SB_KEY } from '../../api/_guard.js'
+import { SB_URL, SB_KEY, aiCheck } from '../../api/_guard.js'
 
 export interface Ctx {
   token: string
@@ -88,12 +88,11 @@ export async function media(ctx: Ctx, mediaId: string): Promise<{ bytes: Buffer;
   return { bytes: Buffer.from(await r.arrayBuffer()), type: (r.headers.get('content-type') || '').split(';')[0] }
 }
 
-/** Count one AI read against the company's daily limit (as the in-app readers do). Throws a plain message when it can't. */
+/** Check one AI use against the company's plan (as the in-app readers do). Throws a plain message when it can't. */
 export async function useAi(ctx: Ctx, kind: string) {
-  const r = await fetch(`${SB_URL}/rest/v1/rpc/use_ai`, { method: 'POST', headers: headers(ctx.token, { 'content-type': 'application/json' }), body: JSON.stringify({ p_kind: kind }) })
-  if (r.ok) return
-  const e = await r.json().catch(() => ({})) as { message?: string; hint?: string }
-  if (/ai_daily_limit/.test(e.message ?? '')) throw new Error('Your company has used today’s AI reads. Voice notes and videos can be read again after midnight.')
+  const c = await aiCheck(ctx.token, kind) as { ok: boolean; status?: number; error?: string }
+  if (c.ok) return
+  if (c.status === 429 || c.status === 403) throw new Error(c.error)
   throw new Error('Couldn’t start a transcription just now — try again in a minute.')
 }
 

@@ -123,7 +123,8 @@ export interface DiaryEntry {
   jobId: string
   date: string                 // YYYY-MM-DD (UK local day)
   /** todo and event are the plan on the job's line: a to-do (dated or not) and a key date ("Kitchen refit starts") */
-  type: 'day' | 'photo' | 'video' | 'voice' | 'note' | 'todo' | 'event'
+  /** done: an operative's mark that a scope line is finished (lineId), a 'complete' suggestion for the office to tick */
+  type: 'day' | 'photo' | 'video' | 'voice' | 'note' | 'todo' | 'event' | 'done'
   note: string                 // day note, or the photo/video caption; a to-do's or date's words
   labour: number | null        // day only — operatives on site
   weather: string              // day only
@@ -141,6 +142,7 @@ export interface DiaryEntry {
   trade?: string               // plan: the workstream it's for (Kitchen, Roofing…), shown by its trade core
   doneAt?: number | null       // to-do: when it was ticked off
   linkId?: string | null       // to-do: the key date it leads up to (an event on the same job)
+  lineId?: string | null       // done: the scope line marked finished on site
   office?: boolean             // plan: office only, never shown to operatives (money, chasing, valuations)
   /** last changed by Claude through the connector (time) — shown as “by Claude” until a person saves it */
   byClaude?: number | null
@@ -148,7 +150,12 @@ export interface DiaryEntry {
 }
 
 /** One site capture read against the job's scope. Suggestions wait for a person in Vals. */
-export interface SiteRead { at: number; suggestions: SiteSuggestion[] }
+export interface SiteRead {
+  at: number
+  suggestions: SiteSuggestion[]
+  /** sent to the reader at half price and not back yet: the batch's id (src/lib/autoRead.ts collects it) */
+  pending?: string
+}
 export interface SiteSuggestion {
   id: string
   kind: 'complete' | 'vo' | 'note'

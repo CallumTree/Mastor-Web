@@ -38,10 +38,10 @@ export function CostsSheet({ job, scope, vos, diary, costs, dayRate, onSave, onD
     <Sheet onClose={onClose} label="Costs and margin">
       <div className="stack">
         <h2 className="label bracket">Costs &amp; margin · {job.name}</h2>
-        <SumStrip label="Margin" cols={3} cells={[
-          { label: 'Job value', value: money(m.value), note: m.unpriced ? `incl. uplifts · + ${m.unpriced} unpriced` : 'incl. uplifts' },
-          { label: 'Costs', value: money(m.costs), note: [m.labourEstimate != null ? 'incl. labour estimate' : '', m.unknownCosts ? `+ ${m.unknownCosts} without an amount` : '', m.quotes ? `${m.quotes} quote${m.quotes === 1 ? '' : 's'} not counted` : ''].filter(Boolean).join(' · ') || 'agreed + paid', nil: !m.costs },
-          { label: 'Margin', value: signed(m.margin), note: m.provisional.length ? 'provisional' : m.pct != null ? `${m.pct}% of value` : '—', hot: true },
+        <SumStrip label="Margin" cells={[
+          { label: 'Job value', value: money(m.value), note: m.unpriced ? `the scope and VOs, with uplifts · + ${m.unpriced} unpriced` : 'the scope and VOs, with uplifts' },
+          { label: 'Costs so far', value: money(m.costs), note: [m.labourEstimate != null ? 'incl. labour estimate' : '', m.unknownCosts ? `+ ${m.unknownCosts} without an amount` : '', m.quotes ? `${m.quotes} quote${m.quotes === 1 ? '' : 's'} not counted` : ''].filter(Boolean).join(' · ') || 'agreed + paid', nil: !m.costs },
+          { label: 'Margin so far', value: signed(m.margin), note: m.provisional.length ? 'provisional: more costs may come' : m.pct != null ? `${m.pct}% of value, if nothing else costs` : '—', hot: true },
         ]} />
         {m.margin < 0 && <Plate kind="stop">Costs are more than the job is worth</Plate>}
         {m.provisional.length > 0 && <Plate kind="warn">Provisional: {m.provisional.join(' · ')}</Plate>}

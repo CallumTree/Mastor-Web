@@ -53,7 +53,7 @@ export function jobLine(entries: DiaryEntry[], today: string, opts: { money: boo
     notes: entries.filter(e => e.date === d && noteFor(e, opts.money)).length,
   })
   // a day with anything written or captured on it is a site day (notes live on their day now)
-  const siteDays = [...new Set(entries.filter(e => e.date && e.date < today && !isPlan(e) && (e.type !== 'note' || noteFor(e, opts.money))).map(e => e.date))]
+  const siteDays = [...new Set(entries.filter(e => e.date && e.date < today && !isPlan(e) && e.type !== 'done' && (e.type !== 'note' || noteFor(e, opts.money))).map(e => e.date))]
   const planDaysBefore = [...new Set(plan.filter(e => e.date && e.date < today && !isOpen(e)).map(e => e.date))]
   const before = [...new Set([...siteDays, ...planDaysBefore])].sort().reverse().slice(0, opts.behind ?? 2).reverse()
     .map(d => at(d, e => !isOpen(e)))   // what happened then; anything still open is late, at today

@@ -86,13 +86,13 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     const lines: ScopeItem[] = [], vos: Variation[] = []
     for (const { q: id, i } of picked.lines) {
       const locked = i && lockedIn(i, d.vals)
-      const why = !i ? 'no scope line with this id on this job' : locked ? `certified in ${valRef(locked.number)}, so it’s locked` : i.valuationId ? 'already in the open valuation'
+      const why = !i ? 'no scope line with this id on this job' : locked ? `sent in ${valRef(locked.number)}, so it’s locked` : i.valuationId ? 'already in the open valuation'
         : i.rate == null ? 'no rate, so price it in the app first' : i.qty == null ? 'no quantity, so measure it first' : null
       if (why) skipped.push(`${i ? lineLabel(i) : id}: ${why}`); else lines.push(i!)
     }
     for (const { q: ref, v } of picked.vos) {
       const locked = v && lockedIn(v, d.vals)
-      const why = !v ? 'no such VO on this job' : locked ? `certified in ${valRef(locked.number)}, so it’s locked` : v.valuationId ? 'already in the open valuation'
+      const why = !v ? 'no such VO on this job' : locked ? `sent in ${valRef(locked.number)}, so it’s locked` : v.valuationId ? 'already in the open valuation'
         : v.status === 'Rejected' ? 'rejected by the client' : !isPriced(v) ? 'not priced yet (needs a quantity and a rate; use update_variation)' : null
       if (why) skipped.push(`${v ? voRef(v.number) : ref}: ${why}`); else vos.push(v!)
     }
@@ -130,7 +130,7 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     const picked = pick(d, scope_line_ids, voQs), skipped: string[] = []
     const why = (x: ScopeItem | Variation | undefined | null) => {
       const locked = x && lockedIn(x, d.vals)
-      return !x ? 'not found on this job' : locked ? `certified in ${valRef(locked.number)}, so it’s locked` : !x.valuationId ? 'not in a valuation' : null
+      return !x ? 'not found on this job' : locked ? `sent in ${valRef(locked.number)}, so it’s locked` : !x.valuationId ? 'not in a valuation' : null
     }
     const lines = picked.lines.filter(({ q: id, i }) => { const w = why(i); if (w) skipped.push(`${i ? lineLabel(i) : id}: ${w}`); return !w }).map(x => x.i!)
     const vos = picked.vos.filter(({ q: ref, v }) => { const w = why(v); if (w) skipped.push(`${v ? voRef(v.number) : ref}: ${w}`); return !w }).map(x => x.v!)
@@ -212,7 +212,7 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     const v = findVo(d.vos, a.vo)
     if (!v) throw new Error(`No ${a.vo} on ${job.name}. VOs: ${[...d.vos].sort((x, y) => x.number - y.number).map(x => voRef(x.number)).join(', ') || 'none yet'}.`)
     const locked = lockedIn(v, d.vals)
-    if (locked) throw new Error(`${voRef(v.number)} is certified in ${valRef(locked.number)}, so it’s locked and can’t be changed.`)
+    if (locked) throw new Error(`${voRef(v.number)} was sent in ${valRef(locked.number)}, so it’s locked and can’t be changed.`)
     const next: Variation = {
       ...v,
       ...(a.description !== undefined ? { description: a.description.trim() } : {}), ...(a.where !== undefined ? { room: a.where.trim() } : {}),

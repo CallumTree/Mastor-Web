@@ -19,11 +19,13 @@ export function TabMenu({ title, actions, button }: { title: string; actions: Me
       </button>}
       {open && (
         <Sheet onClose={() => { setOpen(false); setConfirming(null) }}>
-          <h2 className="label bracket" style={{ marginBottom: 8 }}>{button ? title : `${title} options`}</h2>
+          {/* inside a stack, so the title is drawn like every other sheet's (cyan, ruled) */}
+          <div className="stack">
+          <h2 className="label bracket">{button ? title : `${title} options`}</h2>
           <div className="panel flush">
             {actions.map((a, i) => (
               <div key={a.label} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                <button disabled={a.disabled} onClick={() => run(a)} className="tabmenu-item" style={{ color: a.danger ? 'var(--red)' : 'var(--ink)', opacity: a.disabled ? .45 : 1 }}>
+                <button disabled={a.disabled} onClick={() => run(a)} className="tabmenu-item" style={{ color: a.disabled ? 'var(--meta)' : a.danger ? 'var(--red)' : 'var(--ink)' }}>
                   <span>{a.label}</span>
                   {a.hint && <span className="hint" style={{ fontWeight: 400 }}>{a.hint}</span>}
                 </button>
@@ -38,6 +40,7 @@ export function TabMenu({ title, actions, button }: { title: string; actions: Me
                 )}
               </div>
             ))}
+          </div>
           </div>
         </Sheet>
       )}

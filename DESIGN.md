@@ -219,7 +219,7 @@ The user chose this world in November 2026 from three dark directions, after the
 - Two signals: cyan for the selection, gold for what needs you; done is white
 - Tabular mono for every figure, code, ref, quantity and date number
 - Uppercase micro-labels tracked at 0.08em; section heads are cyan title lines over a hairline
-- The one live thing on a screen is marked at its corners in cyan, like a selection in a drawing program
+- The one live thing on a screen, always something you can act on, is marked at its corners in cyan, like a selection in a drawing program. A figure is a reading and is never marked
 
 ## Colors
 
@@ -252,7 +252,7 @@ A drafting sheet with two signals; every neutral leans blue.
 
 **The Shape Carries It Rule.** Overdue and to-do are both gold, so they are never told apart by colour: overdue is a disc with a bar, to-do a triangle, the next step a cyan disc with an arrow, done a white square with a tick. Every sign also has its word for screen readers.
 
-**The Drawn Twice Rule.** A data block (figure grid, summary strip, panel, action row, job list, title block) carries a 1px Hairline bounding box 3px outside its own edge. A block inside a sheet or inside another block is drawn once.
+**The Drawn Twice Rule.** A block you work in (panel, action row, job list, title block) carries a 1px Hairline bounding box 3px outside its own edge. A block inside a sheet or inside another block is drawn once. The money ledger is never boxed: it's a reading, not a window.
 
 **The Drafting Sheet Rule.** The app and the front page are dark only (`color-scheme: only dark`) and drawn on the grid; the front page carries the same tokens in `src/landing/landing.css` (its brief: `.impeccable/surfaces/src-landing-landing-tsx.md`). The client's PDFs stay print-white.
 
@@ -267,7 +267,7 @@ A drafting sheet with two signals; every neutral leans blue.
 ### Hierarchy
 - **Headline figure** (Mono 560, clamp(32px, 10vw, 44px), -0.04em): the dashboard's owed figure.
 - **Job name / Tab title** (Archivo 720, 26–28px, 1.05–1.08, -0.02em): the one heavy line on a screen.
-- **Figure** (Mono 520, clamp(22px, 6.4vw, 28px), -0.03em): figure grids and summary strips, fitted to their cell.
+- **Figure** (Mono 520, 19px; the key figure 600 at 26px; -0.02em): the money ledger's column, shrunk to fit beside its label (down to 15px) rather than cut off.
 - **Title** (Archivo 700, 16px, 1.25, -0.01em): an action row's title, a sheet's question, a property.
 - **Body** (Archivo 450, 16px, 1.45): reading text; Clerk's answers to 62ch.
 - **Section head** (Archivo 87.5% 700, 13px, 0.1em, uppercase, cyan, over a 1px Hairline): ACTION NEEDED, PINNED NOTES.
@@ -323,8 +323,28 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - **Border:** 1px Hairline, plus the bounding box 3px outside.
 - **Internal Padding:** 14px; registers carry their own 12–14px row padding.
 
-### Figures and Summary Strips
-- Ruled grids of mono figures over uppercase labels; the hot cell sits on Steel Raised, marked at its corners. The bar under a strip is 3px: cyan on Hairline.
+### The operative's site list
+- Houses fold to a 60px row (name in white, "10 lines · 6 done · 1 VO" in Slate Note, a filled white tick square when the house is all done). Inside, each line ends in a Done button at least 48px tall: an outlined 20px square and the word; marked, the square fills drafting white with a tick and the edge turns white. Signed off is the same, greyed and fixed. Gloves and glare: nothing under 44px, the word always beside the mark.
+- The capture sheet leads with Photo as the one white block (64px); video, voice, variation, dayworks and note sit under it, outlined, two across.
+
+### Small rules the polish pass settled
+- Every money figure on every screen is in pence, the same as Vals: no "£12.5k" anywhere in the app (the Dashboard's figures are a ledger now, like the job's).
+- Radio choices are drafted squares (an outlined square, a smaller white square inside when chosen), never round.
+- A disabled menu item is said in Slate Note, never faded with opacity.
+- Valuation and VO refs are set as Roman markings (`.ref-roman`) even inside a mono line.
+- VO units are the client's schedule units (IT, NO, LM, SM, M3). "0 days" is "sent today".
+- Every sheet's title is the cyan ruled title, menus included.
+- The job header's icon buttons carry a word under the icon (Clerk, Setup): an unlabelled icon in the header was guessed at.
+
+### First run
+- **Getting set up** sits at the top of the jobs screen for a new firm: a ruled list (2px head and foot, hairlines between), each step a 60px row with a 20px square that fills drafting white with a tick when the app sees it done, the step's name in white and one line of why in Slate Note; a step that may not apply carries a quiet link to set it aside. No progress bar, no percentages: "2 of 4" in the heading. Gone when done or hidden.
+- **Sign-in's two modes are tabs, not blocks:** white type over the dock's 2px cyan marker, so the white button below stays the only thing that says press me.
+
+### Figures: the ledger
+- The money is read like a statement (`SumStrip`, `.ledger`): each label and its note on the left, its figure on the right, so the amounts stand in one column and compare at a glance. Head and foot rules at 2px Hairline, 1px Hairline between rows. No box, no fill, no corner marks: nothing about it says tap. The key figure (the one the screen is about) is set heavier and larger, and nothing else. A row that opens something (Margin on the job home) is a button with a chevron, the only row that looks like one. From 560px the rows run in two columns.
+- **Certified means agreed.** A valuation sent for review is "with client", not certified, until the client agrees it (or it's invoiced or paid); `isCertified` / `isWithClient` decide it for every screen and for Clerk. Each ledger names its basis once: Scope at base rates (its caption), Home and Vals with uplifts and without VAT; a VAT figure is only ever an invoice's own. Margin is "so far": costs so far against the job's value.
+- **Where the money is (Valuations):** the ledger's whole, Contract + VOs, carries a 12px split bar of its parts, end to end with 2px of ground between them, the more settled the more filled: Paid in solid drafting white, Certified and unpaid in white hatching, With client (sent, not agreed) as a white outline (drawn, not yet signed), the open valuation in cyan (as on the job's line), Still to claim the empty track. Each part's row carries its swatch, so the ledger is the key and every figure is on the page, never behind a tap. All without VAT so the parts add up to the whole exactly: a payment against a VAT invoice counts less its VAT, its note gives what landed. Before the first valuation only the whole shows. Never orange: gold is for what needs you. No pie: the figures overlap (Certified holds Paid, Owed adds VAT) and lengths compare where angles don't.
+- **One chart per screen: the job's line.** Progress is charted once, on the job's line under the header (solid white certified, i.e. agreed by the client; dashed white with the client; dashed cyan the open valuation), against the same worth as Vals (`jobWorth`), which keeps its length on a phone and drops its label underneath. A ledger never repeats progress as a bar along its foot: that reads as a scrollbar. The split bar answers a different question (where the money sits) and sits under its whole, keyed to its rows.
 
 ### Inputs / Fields
 - **Style:** Ink Navy field, 1px Slate Edge, 1px corners, 50px tall; numbers and dates in Mono. Labels above in uppercase Ink 2.
@@ -335,17 +355,18 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - 0px corners, Slate Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Slate Edge rule.
 
 ### Navigation
-- **Phone:** a Milled Steel dock with a Slate Edge border, 2px corners, at the foot of the page. Its four tabs, Home, Diary, Scope and Vals (three for operatives), share it evenly (variations live in Scope, at their house); they are Slate Note markings and the current one is white with a 22×2px cyan bar on the dock's bottom edge (the top edge of the middle tab is under the capture disc). The bar is one marker that slides to the tab you tap (240ms). The capture key is not a tab: it is a 60px Blueprint Cyan disc with an ink plus, standing on the dock's top edge over its centre, cut out of the page by a 4px Ink Navy ring, with no shadow. It is the one round control, by the owner's choice (confirmed again on 4 Nov 2026 against the guardrails), so capture reads as the single thing you can always do. When it opens the capture menu, the menu rises behind it and the plus turns a quarter and a half into an × (300ms) that closes the menu where the thumb already is; the ring turns Milled Steel against the sheet. Clerk sits in the job's header beside Job setup, not in the dock.
+- **Phone (360px and up): the scooped dock.** A Milled Steel dock edged in Slate Edge, flat, square-cornered, its outline drawn as one path (`src/components/Dock.tsx`) so the scoops are part of its edge. Its four tabs, Home, Diary, Scope and Vals (three for operatives), share it around a middle column of their own for the capture key. The capture key is a 60px Blueprint Cyan disc with an ink plus, sitting in a scoop cut into the dock's top edge that follows its circle with a 5px gap and rounded shoulders: the one thing you can always do. The open tab rises into a second, smaller scoop: its icon in a 44px Milled Steel disc ringed 2px in cyan, its label white below; inactive tabs are Slate Note icon and label. Tap a tab and its scoop slides across (280ms, eased out, frame by frame); side by side, the two scoops run into one edge. While the page scrolls the + sinks and its scoop closes flat, both returning when it stops; with Clerk open there's no + and no open tab, so the dock is a plain bar. Reduced motion: everything jumps to place. No shadow anywhere (the round shapes are the capture key and the open-tab disc, by the owner's choice: the look of the 8 Nov reference). Under 360px, and as the desktop rail, the dock is the plain bar: tabs evenly spaced, a 22×2px cyan marker sliding along its bottom edge, the + key standing on its top edge. When the + opens the capture menu, the menu rises behind it and the plus turns a quarter and a half into an × (300ms) that closes the menu where the thumb already is. Clerk sits in the job's header beside Job setup, not in the dock.
 - **Desktop:** the same as a 104px Milled Steel rail with a Hairline edge; the current tab carries a 2px cyan bar on its left, which slides down the rail. The capture disc heads the rail; its menu keeps its own ×.
 
 ### The Job Header and Certified Rail (signature)
 - Solid Ink Navy, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
 
 ### The Selection (signature)
-- The one live thing on a screen (the next step on the job home, the hot figure in a strip, the change waiting for Do it in Clerk) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
+- The one live thing on a screen (the next step on the job home, the change waiting for Do it in Clerk: always something you act on, never a figure) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
 
 ### Variations in the Scope
-- A VO is a row of the house's work, above its scope lines and never folded away: the VO's number as a cyan outlined badge (no dot: the dot marks the open valuation), its code, where, the description, quantity and rate in mono, the client's court plate, and the same tick once priced. A house's row carries a "2 VOs" badge beside its trades, so a folded house still says it has extra work. Unpriced reads "unpriced", never £0.
+- **A house is one line, one tap** (office Scope): its number in white, "22 lines · 1 VO" in Slate Note on the same line, its value in mono on the right, and under it a 6px trade bar: each trade's share of the house's work in its trade core, a 2px line of that colour along the foot so every trade shows, filling solid as its lines are claimed, with the % claimed in mono at the end. One tap opens the house sheet: the house and value, the same bar, Tick all remaining, trade chips to jump (more than two trades), then every line already open under a trade heading that stays in view as you scroll (core, name, count, subtotal, Tick all). No second tap per trade. A location reads only when it says something: never "Property", never the trade again.
+- A VO is a row of the house's work, above its scope lines and never folded away: the VO's number as a cyan outlined badge (no dot: the dot marks the open valuation), its code, where, the description, quantity and rate in mono, the client's court plate, and the same tick once priced. A house's row says "1 VO" beside its line count, so the house list still says it has extra work. Unpriced reads "unpriced", never £0.
 - **A tab's ways in sit under its heading, never at the foot of a long list:** compact 44px buttons, left-aligned (`.tab-actions`, `.btn-sm`), the white block first. Scope has two: Add VO, and Import (one question: the scope or VOs). With no scope yet, Import takes the white block. Anything rarer goes in the ⋯ menu.
 
 ### Motion: what just happened
@@ -354,6 +375,7 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 - **Figures roll:** a money total that changes rolls only the characters that changed, the rightmost first (380ms each, 28ms apart); a rise rolls up, a fall rolls down. Reduced motion: the new figure lit cyan for a moment.
 - **From site:** a decided suggestion's button confirms in cyan, then the row folds shut (300ms) as the count rolls down; suggestions that arrive while you look come in 70ms apart under the corner marks, which close in, hold and fade.
 - **A capture's upload:** a new photo develops in like a print (750ms); a 1.5px cyan line runs round its tile while it uploads (dashed and still with no signal), then closes solid and fades once it's up.
+- **The capture key gets out of the way:** while the page scrolls it sinks into the dock's top edge at 70% (200ms), so it never sits on a row you're reading, and rises a moment after the scroll stops (340ms, ease-out). Reduced motion: it moves without the glide.
 - **Paid:** the white tick square stamps in (180ms), its tick draws (200ms) and the row settles from Raised Steel.
 
 ### The Job Line (Diary) and the Week Line
@@ -370,6 +392,16 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 
 ### Photo Mark-up
 - An Ink Navy toolbar over the photo. Swatches are the drawing colours themselves (red, yellow, blue, white, black, kept for drawing on photos), ringed white when chosen.
+
+### AI this month (Settings)
+- The plan's name and the share used (figure in mono) on one line, a plain 8px rule under it filled drafting white to that share on Slate Edge; then site days left at the firm's own rate and today's Clerk questions, in Slate Note. Never credits, tokens or prices. A closing line says AI pauses and records carry on, and nothing is ever charged.
+- Vals → From site says plainly when captures are with the reader ("2 site captures are with the reader. What they show arrives here, usually within the hour."), so a quiet panel never reads as nothing happening.
+
+### How Mastor works (help)
+- One sheet, the month as six ruled steps, each led by its Roman numeral in cyan (`.ref-roman`) like a valuation: the step's name in white, two or three lines of plain how-to in Ink 2. No screenshots, no tooltips, no tour.
+
+### Plans and questions (front page)
+- The three plans are ruled columns, not cards: Minerva carries the 2px cyan top rule and "Most firms choose this"; each plan's price is mono, with VAT and yearly underneath as a ruled list. Questions are plain details rows with a + that turns to − when open, answers in Ink 2.
 
 ### The Street Print (front page)
 - Behind the header and headline, a real photograph of a terraced street printed like a cyanotype: its light in Prussian blue (#1B4A80, luminosity blend), printed dark enough on its own (no scrim, no fade) under the drafting grid, and cut off on a 1px Slate Edge rule just under the offer. Decorative and credited; measured over a pure white sky, the lede holds 6.8:1 and white type 9.7:1.

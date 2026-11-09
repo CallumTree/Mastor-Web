@@ -40,18 +40,26 @@ Aim: replace the SoR framework contractor's spreadsheet stack (master schedule, 
 
 A new firm was walked through the whole app (sign-up → company → job from a schedule → scope → VO → diary photo → valuation sent, agreed, invoiced and paid → dashboard) on a phone and a desktop: it runs end to end with no errors, the figures agree from tick to paid, and no screen fails an accessibility scan or scrolls sideways at 320px. Two bugs were found and fixed (a schedule's house headings read as unpriced lines; a VAT invoice could go out with no client name or address).
 
-Done: `supabase/schema.sql` run (v7, founding sign-ups).
+Done: `supabase/schema.sql` run (v7, founding sign-ups). Launch route batch 1 (5 Nov): the job header's Clerk and Setup buttons are labelled; long trade names wrap; security headers on every route (HSTS, nosniff, frame deny, referrer and permissions policies); the founding sign-up turns away bots (too fast, too many from one connection); dompurify and fast-uri patched; robots.txt; a link-preview card (`public/og.png`); backups carry settings, rate books and VO attachments; the front page has the plans and common questions; Settings → How Mastor works.
+
+Follow-ups from batch 1: **xlsx** (spreadsheet reading) has a known high-severity advisory with no fix on npm; upgrade to 0.20.3 from the SheetJS CDN (blocked from this build machine). **sitemap.xml** needs the domain first. **The support address** goes in `SUPPORT_EMAIL` (`src/screens/Help.tsx`) and on the front page once chosen.
 
 Still to do, owner's decisions and accounts first:
 1. **Privacy notice and terms.** The front page collects names, emails and phone numbers and the app holds clients' job data: a privacy notice (who Mastor is, what's kept, why, how long, rights, contact) linked from the form and the sign-up, and terms for the pilot. ICO data-protection fee if it applies.
 2. **A contact for help.** No support email or "Report a problem" reaches anyone yet; the app's problem bar is on the device only.
-3. **Supabase for production:** Pro plan (the free plan pauses an idle project and has no backups), daily backups, and its own email sender (custom SMTP, e.g. Resend): the built-in sender only sends a few sign-up emails an hour.
+3. **Supabase:** its own email sender (custom SMTP through Resend's free plan): the built-in sender only sends a few sign-up emails an hour. The Pro plan (daily backups, never pauses, about $25 a month) waits for the first paying firm (decided 6 Nov); until then every office device keeps a full copy and the help guide asks pilot firms for a weekly backup from Settings.
 4. **Domain:** a Mastor domain instead of mastor-web.vercel.app, added to Supabase Auth's redirect URLs, the sign-up emails and the Claude connector.
 5. **Keys and limits in Vercel:** ANTHROPIC_API_KEY (with a spend limit), the transcription key, RESEND_API_KEY and SIGNUP_NOTIFY_TO, SIGNUP_FROM on the Mastor domain.
 6. **Company deletion on request** (data export already exists: Settings → Backup).
 7. **Front-page photos:** the two Unsplash photos are hotlinked stock; swap for your own when you have them.
-8. Pricing after the pilot (the page promises half price for founding places, no figure shown yet).
+8. **Plans and billing** (decided: Mercury I £29, Minerva II £69, Jupiter III £149 a month per firm, no VAT while Mastor isn't registered; see PRODUCT.md → Plans): Stripe subscriptions setting `companies.plan`, written founding terms, a trade-mark check on the names. Done 5 Nov: AI metered at real cost per plan, site reads on batch at half price, Clerk back on Haiku after a document, AI this month in Settings, the pricing on the front page. **To switch it on: run `supabase/schema.sql` (v8) in Supabase** after this is deployed (the app counts 60 a day until then). Optional in Vercel: `AI_USD_TO_GBP`, `GEMINI_PRICE_IN`/`GEMINI_PRICE_OUT`, `SITE_READ_NOW=1`.
 9. Restyle the PDFs to the signage language (they're print-white and clear today; optional).
+
+### Spending (decided 6 Nov): nothing until it's needed to run, or the law asks
+- **Now** (about £60–80 a year, plus AI as used): the domain, the ICO fee, Anthropic pay as you go with a monthly limit. Free: Resend, Stripe (a cut of each payment only), a support inbox forwarded to Gmail, error and uptime alerts, a business bank account, a second free Supabase project for testing.
+- **When the first firm pays:** register Mastor Ltd (about £50), Supabase Pro, Vercel Pro (its free plan is non-commercial), PI and cyber insurance (quotes now), a solicitor's check of the terms.
+- **Later:** Xero and an accountant (a spreadsheet till then), the trade-mark filing (the search is free now), Direct Debit.
+- **Not now:** VAT registration (not until turnover needs it); the photo date stamp and private-work quotes (parked: no new features before launch).
 
 ## Parked
 

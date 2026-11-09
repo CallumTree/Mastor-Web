@@ -48,7 +48,7 @@ export function NoteEditor({ job, note, onSave, onDelete, onClose }: {
       <div className="stack">
         <h2 className="label bracket">{note ? 'Note' : 'New note'} · {job.name}</h2>
         <div className="chips">{NOTE_CATEGORIES.map(c => <button key={c} className={'chip' + (cat === c ? ' on' : '')} onClick={() => setCat(c)}>{c}</button>)}</div>
-        <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate"><textarea rows={5} autoFocus value={text} onChange={e => setText(e.target.value)} placeholder="e.g. Dylan agreed the airing-cupboard partition can be claimed — email 2 Oct" /></Field>
+        <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate"><textarea rows={5} autoFocus value={text} onChange={e => setText(e.target.value)} placeholder="e.g. The officer agreed the airing-cupboard partition can be claimed — email 2 Oct" /></Field>
         <label className="check-row t-note flush" style={{ alignItems: 'center' }}><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} /> Pin to the top of the job</label>
         <button className="btn btn-primary" disabled={!text.trim()} onClick={() => onSave({ ...base, note: text.trim(), category: cat, pinned })}>{note ? 'Save' : 'Add note'}</button>
         {onDelete && <ConfirmDelete label="Delete…" confirmLabel={<>Delete this note</>} onConfirm={onDelete} />}
@@ -78,7 +78,7 @@ export function NotesSheet({ job, notes, days = [], onSave, onDelete, onOpenDay,
       <div className="stack">
         <div className="row"><h2 className="label bracket grow">All notes · {job.name}</h2><span className="hint mono">{all.length}</span></div>
         <div className="chips">{(['All', ...NOTE_CATEGORIES] as const).map(c => <button key={c} className={'chip' + (filter === c ? ' on' : '')} onClick={() => setFilter(c)}>{c}</button>)}</div>
-        {all.length > 4 && <Field label="Search notes"><input value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. partition, Dylan, asbestos" /></Field>}
+        {all.length > 4 && <Field label="Search notes"><input value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. partition, officer, asbestos" /></Field>}
         <div className="panel" style={{ padding: '0 14px' }}>
           {shown.length === 0 && <div className="muted" style={{ padding: '14px 0' }}>{all.length ? 'Nothing matches.' : 'No notes yet. Write them on the day, in the diary.'}</div>}
           {shown.map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>

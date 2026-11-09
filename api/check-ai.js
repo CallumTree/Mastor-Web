@@ -1,6 +1,6 @@
 /**
  * POST /api/check-ai — Settings → "Check AI setup". One plain line per service, green or red:
- *  - sign-in and the company's daily AI limit (the database update) — counts as one read,
+ *  - sign-in and the company's AI allowance (the database update) — counts as one everyday use,
  *  - the Anthropic key, and that each model Mastor uses exists (free: a model lookup, no tokens),
  *  - the Gemini key and model (free lookup), then a half-second silent clip transcribed (a fraction of a penny),
  *    which proves audio really goes through.
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   const capture = { status(s) { blocked = { status: s }; return capture }, json(j) { blocked = { ...blocked, ...j }; return capture } }
   const ok = await Promise.race([guard(req, capture, 'check'), new Promise(r => setTimeout(() => { blocked = { status: 504, error: 'The database took too long to answer — try again in a minute.' }; r(false) }, limitMs()))])
   if (!ok && blocked?.status === 401) return res.status(401).json({ error: blocked.error })
-  const checks = [{ name: 'Sign-in and daily AI limit', ok, detail: ok ? 'Working — reads are counted against your company’s daily limit.' : blocked?.error || 'Couldn’t check.' }]
+  const checks = [{ name: 'Sign-in and AI allowance', ok: !!ok, detail: ok ? (ok.company ? 'Working — AI use is metered at its real cost against your company’s plan.' : 'Working — reads are counted against your company’s daily limit. Run the database update (supabase/schema.sql v8) to meter AI at its real cost.') : blocked?.error || 'Couldn’t check.' }]
   if (!ok) return res.status(200).json({ checks, build: buildInfo() })
 
   // every service checked at the same time, each with its own time limit — one slow service can't sink the rest

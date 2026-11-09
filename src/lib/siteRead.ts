@@ -18,12 +18,17 @@ import { uid } from './db'
 
 export const MAX_ITEMS = 12
 
+/** A read sent off and never collected (the device that sent it went quiet) is read afresh after this long. */
+export const STALE_MS = 36 * 3600_000
+/** Not read yet, or sent to the reader so long ago that its answer was lost. */
+const notRead = (e: DiaryEntry, now: number) => !e.read || (!!e.read.pending && now - e.read.at > STALE_MS)
+
 /**
  * Captures on this day not yet read: photos, video, voice and the day's own written note. Filed notes (client,
  * commercial, H&S, and the site notes this reader itself saves) are records, not progress, and are never re-read.
  */
-export function unread(entries: DiaryEntry[], date: string) {
-  return entries.filter(e => e.date === date && !e.read && ((e.type === 'photo' || e.type === 'video' || e.type === 'voice') ? !!e.mediaId : e.type === 'day' && e.note.trim().length > 8))
+export function unread(entries: DiaryEntry[], date: string, now = Date.now()) {
+  return entries.filter(e => e.date === date && notRead(e, now) && ((e.type === 'photo' || e.type === 'video' || e.type === 'voice') ? !!e.mediaId : e.type === 'day' && e.note.trim().length > 8))
 }
 
 /** A day is read once it has gone quiet (nothing new for this long), or once it's over. */
@@ -38,7 +43,7 @@ export function dueToRead(entries: DiaryEntry[], today: string, now: number) {
   const keys = [...new Set(entries.filter(e => e.date && e.date >= earliest && e.date <= today).map(e => `${e.jobId}|${e.date}`))].sort((a, b) => a.split('|')[1].localeCompare(b.split('|')[1]))
   return keys.flatMap(k => {
     const [jobId, date] = k.split('|')
-    const items = unread(entries.filter(e => e.jobId === jobId), date).sort((a, b) => a.createdAt - b.createdAt)
+    const items = unread(entries.filter(e => e.jobId === jobId), date, now).sort((a, b) => a.createdAt - b.createdAt)
     if (!items.length) return []
     const last = Math.max(...entries.filter(e => e.jobId === jobId && e.date === date).map(e => e.createdAt))
     return date < today || now - last >= QUIET_MS ? [{ jobId, date, items }] : []
@@ -104,24 +109,71 @@ export function verifySuggestions(raw: RawSuggestion[], transcripts: Record<stri
   return out
 }
 
-/** `stop`: reading can't go on today (not set up, signed out, the day's AI reads used up) — don't keep asking. */
-export interface ReadResult { updated: DiaryEntry[]; suggestions: number; error?: string; skipped: number; stop?: boolean }
+/** A read sent to the reader and not back yet, kept on the device that sent it: the keys it was sent with, to check the answer. */
+export interface PendingRead { batch: string; jobId: string; at: number; items: Record<string, string>; lines: Record<string, string> }
+
+/** `stop`: reading can't go on today (not set up, signed out, the day's AI reads used up) — don't keep asking.
+ *  `pending`: the day went to the reader at half price; collectSite() picks the answer up. */
+export interface ReadResult { updated: DiaryEntry[]; suggestions: number; error?: string; skipped: number; stop?: boolean; pending?: PendingRead }
 
 /** Reads up to MAX_ITEMS captures; returns the diary entries with their transcripts and suggestions attached. */
 export async function readSite(companyId: string, items: DiaryEntry[], scope: ScopeItem[], vos: Variation[]): Promise<ReadResult> {
   const batch = items.slice(0, MAX_ITEMS)
   const { req, itemKey, lineKey } = buildRequest(companyId, batch, scope, vos)
-  let data: { transcripts?: Record<string, string>; suggestions?: RawSuggestion[]; failed?: Record<string, string>; error?: string } = {}
+  let data: { transcripts?: Record<string, string>; suggestions?: RawSuggestion[]; failed?: Record<string, string>; error?: string; pending?: string } = {}
   try {
     const r = await fetch('/api/read-site', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) }, body: JSON.stringify(req) })
     try { data = await r.json() } catch { /* below */ }
-    if (!r.ok || data.error) return { updated: [], suggestions: 0, skipped: 0, stop: [401, 403, 404, 429, 503].includes(r.status), error: data.error || (r.status === 404 ? 'Site reading isn’t deployed yet.' : `Couldn’t read the site captures (${r.status}).`) }
+    if (!r.ok || data.error) return { updated: [], suggestions: 0, skipped: 0, stop: [401, 403, 404, 429, 503].includes(r.status), error: data.error || (r.status === 404 ? 'the reader isn’t answering. They’re kept and read once it is.' : `the reader answered ${r.status}. They’re kept and read on the next try.`) }
   } catch { return { updated: [], suggestions: 0, skipped: 0, error: 'Couldn’t reach the reader — check signal. The captures are safe; try again later.' } }
   const transcripts = data.transcripts ?? {}
-  const found = verifySuggestions(data.suggestions ?? [], transcripts, itemKey, lineKey)
   const failed = data.failed ?? {}
+  if (data.pending) {
+    const at = Date.now()
+    const sent = [...itemKey].filter(([k]) => !failed[k])
+    return {
+      updated: sent.map(([k, e]) => ({ ...e, transcript: transcripts[k] ?? e.transcript, read: { at, suggestions: [], pending: data.pending } })),
+      suggestions: 0, skipped: items.length - batch.length + Object.keys(failed).length, error: Object.keys(failed).length ? Object.values(failed)[0] : undefined,
+      pending: { batch: data.pending, jobId: batch[0].jobId, at, items: Object.fromEntries(sent.map(([k, e]) => [k, e.id])), lines: Object.fromEntries([...lineKey].map(([k, s]) => [k, s.id])) },
+    }
+  }
+  const found = verifySuggestions(data.suggestions ?? [], transcripts, itemKey, lineKey)
   const updated = [...itemKey].filter(([k]) => !failed[k]).map(([k, e]) => ({ ...e, transcript: transcripts[k] ?? e.transcript, read: { at: Date.now(), suggestions: found.get(e.id) ?? [] } }))
   return { updated, suggestions: [...found.values()].reduce((t, s) => t + s.length, 0), skipped: items.length - batch.length + Object.keys(failed).length, error: Object.keys(failed).length ? Object.values(failed)[0] : undefined }
+}
+
+export type Collected =
+  | { state: 'waiting' }                                       // still being read, or no signal: ask again later
+  | { state: 'stop'; error: string }                           // signed out or not allowed: leave it until the next open
+  | { state: 'done'; updated: DiaryEntry[]; suggestions: number; error?: string }
+
+/**
+ * Picks up a read sent earlier and checks its answer exactly as one read at once: against the scope as it is
+ * now (a line claimed since isn't suggested again). A read that was lost hands its captures back to be read afresh.
+ */
+export async function collectSite(p: PendingRead, entries: DiaryEntry[], scope: ScopeItem[]): Promise<Collected> {
+  let data: { pending?: string; again?: boolean; suggestions?: RawSuggestion[]; error?: string } = {}
+  let status = 0
+  try {
+    const r = await fetch('/api/read-site', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeader()) }, body: JSON.stringify({ collect: p.batch }) })
+    status = r.status
+    try { data = await r.json() } catch { /* below */ }
+  } catch { return { state: 'waiting' } }
+  if (status === 401 || status === 403) return { state: 'stop', error: data.error || 'Sign in again to collect site reads.' }
+  if (status !== 404 && (status >= 500 || data.pending)) return { state: 'waiting' }
+  const sent = entries.filter(e => e.read?.pending === p.batch)
+  // lost, refused as not ours, or an answer that can't be used: the captures go back to be read again
+  if (status === 404 || data.again || (status >= 400 && !data.suggestions)) return { state: 'done', updated: sent.map(e => ({ ...e, read: undefined })), suggestions: 0 }
+  const byId = new Map(sent.map(e => [e.id, e]))
+  const itemKey = new Map(Object.entries(p.items).flatMap(([k, id]) => (byId.has(id) ? [[k, byId.get(id)!] as [string, DiaryEntry]] : [])))
+  const lines = new Map(scope.map(s => [s.id, s]))
+  const lineKey = new Map(Object.entries(p.lines).flatMap(([k, id]) => (lines.has(id) ? [[k, lines.get(id)!] as [string, ScopeItem]] : [])))
+  const found = verifySuggestions(data.suggestions ?? [], {}, itemKey, lineKey)
+  const at = Date.now()
+  return {
+    state: 'done', updated: sent.map(e => ({ ...e, read: { at, suggestions: found.get(e.id) ?? [] } })),
+    suggestions: [...found.values()].reduce((t, s) => t + s.length, 0), error: data.error,
+  }
 }
 
 /** Every suggestion still waiting, newest capture first. */

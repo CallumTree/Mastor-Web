@@ -20,7 +20,7 @@ describe('costs and margin', () => {
     click(await screen.findByRole('button', { name: /9 Quay Street/ }))
     click(await screen.findByRole('button', { name: /costs and margin/i }))
     await screen.findByText(/Costs & margin/)
-    expect(screen.getAllByText('£3,300.00').length).toBe(2)      // value (2,000 + 1,000) × 1.10, and margin with no costs yet
+    expect(within(document.querySelector('.sheet') as HTMLElement).getAllByText('£3,300.00').length).toBe(2)      // value (2,000 + 1,000) × 1.10, and margin with no costs yet (Home behind shows the same contract)
 
     for (const [who, amt] of [['Haven Scaffolding', '1500'], ['Cleddau Access', '1250']]) {
       click(screen.getByRole('button', { name: '+ Add a quote for Scaffold' }))
@@ -34,7 +34,7 @@ describe('costs and margin', () => {
     expect(within(scaff).getByText('£950.00')).toBeTruthy()  // 2,200 − 1,250
     click(within(scaff).getAllByRole('button', { name: 'Accept…' })[0])
     click(within(scaff).getByRole('button', { name: 'Accept quote' }))   // asks once: accepting changes the margin
-    await waitFor(() => expect(screen.getByText('£2,050.00')).toBeTruthy())   // margin 3,300 − 1,250
-    expect(screen.getByText(text('62.1% of value'))).toBeTruthy()
+    await waitFor(() => expect(within(document.querySelector('.sheet') as HTMLElement).getByText('£2,050.00')).toBeTruthy())   // margin 3,300 − 1,250 (Home's margin so far behind agrees)
+    expect(screen.getByText(text('62.1% of value, if nothing else costs'))).toBeTruthy()
   })
 })

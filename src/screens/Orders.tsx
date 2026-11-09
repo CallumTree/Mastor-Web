@@ -43,7 +43,7 @@ export function OrdersTab({ job, orders, scope, vals, onNew, onOpen, onClaim }: 
   return (
     <div className="stack">
       <TabHead label="Orders" meta={`${open.length} open`} />
-      {m && live.length > 0 && <SumStrip label="Orders summary" cols={3} caption="At base rates — uplifts are added in the valuation" cells={[
+      {m && live.length > 0 && <SumStrip label="Orders summary" caption="At base rates — uplifts are added in the valuation" cells={[
         { label: 'Open', value: String(open.length), note: `${open.filter(o => isOverdue(o)).length} overdue · ${money(value(open.flatMap(o => orderLines(o, scope))))}`, nil: !open.length },
         { label: 'Done, not claimed', value: money(value(claimable)), note: `${claimableOrders} order${claimableOrders === 1 ? '' : 's'}${unpricedDone ? ` · + ${unpricedDone} unpriced line${unpricedDone === 1 ? '' : 's'}` : ''}`, hot: true, nil: !claimable.length },
         { label: 'Claimed', value: money(value(claimed)), note: `${new Set(claimed.map(i => i.orderId)).size} orders`, nil: !claimed.length },

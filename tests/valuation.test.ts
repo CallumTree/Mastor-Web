@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto'
 import { db, uid } from '../src/lib/db'
-import { toggleScope, toggleVariation, issueValuation, deleteOpenValuation, valTotals, lockedIn } from '../src/lib/valuation'
+import { toggleScope, toggleVariation, issueValuation, deleteOpenValuation, valTotals, lockedIn, isCertified, isWithClient, jobWorth } from '../src/lib/valuation'
+import type { Valuation } from '../src/lib/types'
 import type { Job, ScopeItem, Variation } from '../src/lib/types'
 
 let pass = 0, fail = 0
@@ -64,6 +65,21 @@ const get = async () => ({ scope: await db.scope('j1'), vals: await db.valuation
   ok(d.scope.find(s => s.id === 's1')!.valuationId === d.vals[0].id, 'VAL I untouched')
   await deleteOpenValuation(d.vals[0], d.scope, d.vos); d = await get()
   ok(d.vals.length === 1, 'issued valuation cannot be deleted')
+
+  // certified means agreed: sent for review is with the client, not certified; an invoice, a payment or the agreement
+  // itself certifies it; a valuation from before reviews counts as certified
+  const v0: Valuation = { id: 'x', jobId: 'j1', number: 1, status: 'Issued', createdAt: 1, issuedAt: 1 } as Valuation
+  const sent = { ...v0, review: { sentAt: 1, rounds: 1 } }
+  ok(isWithClient(sent) && !isCertified(sent), 'sent for review: with the client, not certified')
+  ok(isWithClient({ ...sent, review: { ...sent.review, changesAt: 2 } }), 'changes asked: still not certified')
+  ok(isCertified({ ...sent, review: { ...sent.review, agreedAt: 3 } }) && isCertified({ ...sent, invoiceNumber: 'T-1' }) && isCertified({ ...sent, paidAt: 4 }), 'agreed, invoiced or paid: certified')
+  ok(isCertified(v0) && !isCertified({ ...v0, status: 'Open' }) && !isWithClient({ ...v0, status: 'Open' }), 'no review record (older): certified; open: neither')
+
+  // what the job is worth, one figure for every screen: the contract (or the scope with uplifts) + live priced VOs with uplifts
+  const w = jobWorth({ ...job, contractValue: 1000, uplift1: 10, uplift2: 0 }, [], [{ qty: 1, rate: 33.33, status: 'Instructed' }, { qty: 1, rate: 500, status: 'Rejected' }] as Variation[])
+  ok(w.contract === 1000 && w.vos === 36.66 && w.total === 1036.66 && !w.fromScope, `contract + VOs with uplifts, rejected left out (${w.total})`)
+  const ws = jobWorth({ ...job, contractValue: 0, uplift1: 10, uplift2: 0 }, [item(9, 3, 33.33)], [])
+  ok(ws.fromScope && ws.contract === 109.99 && ws.total === 109.99, `no contract value: the scope at its rates with uplifts, to the penny like a valuation (${ws.contract})`)
 
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
 })()

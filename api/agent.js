@@ -9991,7 +9991,7 @@ function platformSupported() {
   return O_NOFOLLOW !== 0;
 }
 async function makeDirAndAncestors(dir) {
-  const missing = [];
+  const missing2 = [];
   let current = dir;
   for (; ; ) {
     try {
@@ -10002,13 +10002,13 @@ async function makeDirAndAncestors(dir) {
       if (code !== "ENOENT" && code !== "ENOTDIR" && code !== "ELOOP")
         throw e;
     }
-    missing.push(current);
+    missing2.push(current);
     const parent = path.dirname(current);
     if (parent === current)
       break;
     current = parent;
   }
-  for (const directory of missing.reverse()) {
+  for (const directory of missing2.reverse()) {
     try {
       await fsp.mkdir(directory, { mode: OWNER_ONLY_DIR_MODE });
     } catch (e) {
@@ -29730,12 +29730,12 @@ var require_code2 = __commonJS({
       });
     }
     exports.checkReportMissingProp = checkReportMissingProp;
-    function checkMissingProp({ gen, data, it: { opts } }, properties, missing) {
-      return (0, codegen_1.or)(...properties.map((prop) => (0, codegen_1.and)(noPropertyInData(gen, data, prop, opts.ownProperties), (0, codegen_1._)`${missing} = ${prop}`)));
+    function checkMissingProp({ gen, data, it: { opts } }, properties, missing2) {
+      return (0, codegen_1.or)(...properties.map((prop) => (0, codegen_1.and)(noPropertyInData(gen, data, prop, opts.ownProperties), (0, codegen_1._)`${missing2} = ${prop}`)));
     }
     exports.checkMissingProp = checkMissingProp;
-    function reportMissingProp(cxt, missing) {
-      cxt.setParams({ missingProperty: missing }, true);
+    function reportMissingProp(cxt, missing2) {
+      cxt.setParams({ missingProperty: missing2 }, true);
       cxt.error();
     }
     exports.reportMissingProp = reportMissingProp;
@@ -31343,6 +31343,37 @@ var require_utils = __commonJS({
       }
       return output2.join("");
     }
+    function removeDotSegmentsRelative(path4) {
+      if (path4 === "" || path4[0] === "/") {
+        return removeDotSegments(path4);
+      }
+      const segments = path4.split("/");
+      const last = segments.length - 1;
+      const output2 = [];
+      let trailingDirectory = false;
+      for (let i = 0; i <= last; i++) {
+        const segment = segments[i];
+        if (segment === "." || segment === "..") {
+          if (segment === "..") {
+            if (output2.length !== 0 && output2[output2.length - 1] !== "..") {
+              output2.pop();
+            } else {
+              output2.push("..");
+            }
+          }
+          trailingDirectory = i === last;
+        } else {
+          output2.push(segment);
+        }
+      }
+      if (trailingDirectory && output2[output2.length - 1] !== "..") {
+        output2.push("");
+      }
+      if (output2.length === 0 || output2[0] === "" || output2[0].includes(":")) {
+        output2.unshift(".");
+      }
+      return output2.join("/");
+    }
     var HOST_DELIMS = { "@": "%40", "/": "%2F", "?": "%3F", "#": "%23", ":": "%3A" };
     var HOST_DELIM_RE = /[@/?#:]/g;
     var HOST_DELIM_NO_COLON_RE = /[@/?#]/g;
@@ -31603,6 +31634,7 @@ var require_utils = __commonJS({
       encodeFragment,
       escapePreservingEscapes,
       removeDotSegments,
+      removeDotSegmentsRelative,
       isIPv4,
       isUUID,
       normalizeIPv6,
@@ -31826,16 +31858,18 @@ var require_schemes = __commonJS({
 var require_fast_uri = __commonJS({
   "node_modules/fast-uri/index.js"(exports, module) {
     "use strict";
-    var { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, serializePathEncoding, normalizeQueryFragmentEncoding, encodeQuery, encodeFragment, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = require_utils();
+    var { normalizeIPv6, removeDotSegments, removeDotSegmentsRelative, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, serializePathEncoding, normalizeQueryFragmentEncoding, encodeQuery, encodeFragment, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = require_utils();
     var { SCHEMES, getSchemeHandler } = require_schemes();
     var VALID_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*$/u;
     var MALFORMED_SCHEME_ERROR = "URI scheme is malformed.";
-    function decodeValidScheme(scheme) {
-      const decodedScheme = unescape(String(scheme));
-      if (!VALID_SCHEME.test(decodedScheme)) {
+    var MALFORMED_HOST_ERROR = "URI host is malformed.";
+    var FORBIDDEN_DOMAIN_HOST_CHARACTER = /[\0-\x20"#/:<>?@[\\\]^`{|}\x7F]/u;
+    function validateScheme(scheme) {
+      const stringScheme = String(scheme);
+      if (!VALID_SCHEME.test(stringScheme)) {
         throw new TypeError(MALFORMED_SCHEME_ERROR);
       }
-      return decodedScheme;
+      return stringScheme;
     }
     function normalize(uri, options) {
       if (typeof uri === "string") {
@@ -31872,6 +31906,9 @@ var require_fast_uri = __commonJS({
       const resolvedSchemeHandler = getSchemeHandler(options && options.scheme || resolved.scheme);
       const resolvedHost = resolved.host;
       const resolvedHostIsIP = resolvedHost !== void 0 && resolvedHost !== "" && (isIPv4(resolvedHost) || normalizeIPv6(resolvedHost).isIPV6);
+      if (hasForbiddenDomainHost(resolved, options || {}, resolvedSchemeHandler, resolvedHostIsIP)) {
+        throw new Error(MALFORMED_HOST_ERROR);
+      }
       canonicalizeHost(resolved, options || {}, resolvedSchemeHandler, resolvedHostIsIP);
       const encodedASCIIHost = resolvedHost && resolvedHost.indexOf("%") !== -1 && !new RegExp("\\P{ASCII}", "u").test(resolvedHost);
       if (resolved.error && !encodedASCIIHost) {
@@ -31913,14 +31950,15 @@ var require_fast_uri = __commonJS({
             if (relative.path[0] === "/") {
               target.path = removeDotSegments(relative.path);
             } else {
-              if ((base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0) && !base.path) {
+              const baseHasAuthority = base.userinfo !== void 0 || base.host !== void 0 || base.port !== void 0;
+              if (baseHasAuthority && !base.path) {
                 target.path = "/" + relative.path;
               } else if (!base.path) {
                 target.path = relative.path;
               } else {
                 target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative.path;
               }
-              target.path = removeDotSegments(target.path);
+              target.path = base.scheme === void 0 && !baseHasAuthority && target.path[0] !== "/" ? removeDotSegmentsRelative(target.path) : removeDotSegments(target.path);
             }
             target.query = relative.query;
           }
@@ -31958,12 +31996,13 @@ var require_fast_uri = __commonJS({
       const options = Object.assign({}, opts);
       const uriTokens = [];
       if (component.scheme) {
-        component.scheme = decodeValidScheme(component.scheme);
+        component.scheme = validateScheme(component.scheme);
       }
       const schemeHandler = getSchemeHandler(options.scheme || component.scheme);
       if (schemeHandler && schemeHandler.serialize) schemeHandler.serialize(component, options);
       const hasAuthority = component.userinfo !== void 0 || component.host !== void 0 || component.port !== void 0;
-      const pathNoScheme = !options.skipEscape && component.scheme === void 0 && !hasAuthority;
+      const schemelessReference = (component.scheme === void 0 || options.reference === "suffix") && !hasAuthority;
+      const pathNoScheme = !options.skipEscape && schemelessReference;
       if (component.path !== void 0) {
         if (!options.skipEscape) {
           component.path = serializePathEncoding(component.path, pathNoScheme);
@@ -31972,7 +32011,7 @@ var require_fast_uri = __commonJS({
         }
       }
       if (options.reference !== "suffix" && component.scheme) {
-        component.scheme = decodeValidScheme(component.scheme);
+        component.scheme = validateScheme(component.scheme);
         uriTokens.push(component.scheme, ":");
       }
       const authority = recomposeAuthority(component);
@@ -31988,9 +32027,9 @@ var require_fast_uri = __commonJS({
       if (component.path !== void 0) {
         let s = component.path;
         if (!options.absolutePath && (!schemeHandler || !schemeHandler.absolutePath)) {
-          s = removeDotSegments(s);
+          s = schemelessReference && s[0] !== "/" ? removeDotSegmentsRelative(s) : removeDotSegments(s);
         }
-        if (pathNoScheme) {
+        if (schemelessReference) {
           s = serializePathEncoding(s, true);
         }
         if (authority === void 0 && s[0] === "/" && s[1] === "/") {
@@ -32037,15 +32076,33 @@ var require_fast_uri = __commonJS({
       return hasMalformedPercentEncoding(matches[3]) || host !== void 0 && !isIPLiteral(host) && hasMalformedPercentEncoding(host) || hasMalformedPercentEncoding(matches[6]) || hasMalformedPercentEncoding(matches[7]) || hasMalformedPercentEncoding(matches[8]);
     }
     function canonicalizeHost(parsed, options, schemeHandler, isIP) {
+      if (hasForbiddenDomainHost(parsed, options, schemeHandler, isIP)) {
+        parsed.error = parsed.error || MALFORMED_HOST_ERROR;
+        return true;
+      }
       if (!options.unicodeSupport && (!schemeHandler || !schemeHandler.unicodeSupport) && parsed.host && !isIPLiteral(parsed.host) && (options.domainHost || schemeHandler && schemeHandler.domainHost) && isIP === false && nonSimpleDomain(parsed.host)) {
+        let url2;
         try {
-          parsed.host = new URL("http://" + parsed.host).hostname;
+          url2 = new URL("http://" + parsed.host);
         } catch (e) {
           parsed.error = parsed.error || "Host's domain name can not be converted to ASCII: " + e;
           return true;
         }
+        if (!isHostOnlyURL(url2)) {
+          parsed.error = parsed.error || MALFORMED_HOST_ERROR;
+          return true;
+        }
+        parsed.host = url2.hostname;
       }
       return false;
+    }
+    function hasForbiddenDomainHost(parsed, options, schemeHandler, isIP) {
+      return Boolean(
+        parsed.host && isIP === false && !isIPLiteral(parsed.host) && (options.domainHost || schemeHandler && schemeHandler.domainHost) && FORBIDDEN_DOMAIN_HOST_CHARACTER.test(parsed.host)
+      );
+    }
+    function isHostOnlyURL(url2) {
+      return url2.username === "" && url2.password === "" && url2.port === "" && url2.pathname === "/" && url2.search === "" && url2.hash === "" && url2.hostname !== "";
     }
     function parseWithStatus(uri, opts) {
       const options = Object.assign({}, opts);
@@ -32101,9 +32158,8 @@ var require_fast_uri = __commonJS({
         parsed.query = matches[7];
         parsed.fragment = matches[8];
         if (parsed.scheme !== void 0) {
-          const decodedScheme = unescape(parsed.scheme);
-          if (VALID_SCHEME.test(decodedScheme)) {
-            parsed.scheme = decodedScheme.toLowerCase();
+          if (VALID_SCHEME.test(parsed.scheme)) {
+            parsed.scheme = parsed.scheme.toLowerCase();
           } else {
             parsed.error = parsed.error || MALFORMED_SCHEME_ERROR;
             malformedScheme = true;
@@ -32131,7 +32187,7 @@ var require_fast_uri = __commonJS({
             malformedIPLiteral = hasIPLiteralBracket && (!bracketedIPLiteral || ipv6result.error === true);
             parsed.host = isIP ? ipv6result.host : ipv6result.host.toLowerCase();
             if (malformedIPLiteral) {
-              parsed.error = parsed.error || "URI host is malformed.";
+              parsed.error = parsed.error || MALFORMED_HOST_ERROR;
               malformedAuthorityOrPort = true;
             }
           } else {
@@ -32159,7 +32215,7 @@ var require_fast_uri = __commonJS({
           if (!isIP) {
             host = normalizePercentEncoding(host.toLowerCase());
           }
-          parsed.host = reescapeHostDelimiters(host, isIP);
+          parsed.host = isIP || options.scheme !== "null" ? reescapeHostDelimiters(host, isIP) : host;
         }
         if (!schemeHandler || schemeHandler && !schemeHandler.skipNormalize) {
           if (parsed.path) {
@@ -33241,14 +33297,14 @@ var require_required = __commonJS({
           }
         }
         function exitOnErrorMode() {
-          const missing = gen.let("missing");
+          const missing2 = gen.let("missing");
           if (useLoop || $data) {
             const valid = gen.let("valid", true);
-            cxt.block$data(valid, () => loopUntilMissing(missing, valid));
+            cxt.block$data(valid, () => loopUntilMissing(missing2, valid));
             cxt.ok(valid);
           } else {
-            gen.if((0, code_1.checkMissingProp)(cxt, schema, missing));
-            (0, code_1.reportMissingProp)(cxt, missing);
+            gen.if((0, code_1.checkMissingProp)(cxt, schema, missing2));
+            (0, code_1.reportMissingProp)(cxt, missing2);
             gen.else();
           }
         }
@@ -33258,10 +33314,10 @@ var require_required = __commonJS({
             gen.if((0, code_1.noPropertyInData)(gen, data, prop, opts.ownProperties), () => cxt.error());
           });
         }
-        function loopUntilMissing(missing, valid) {
-          cxt.setParams({ missingProperty: missing });
-          gen.forOf(missing, schemaCode, () => {
-            gen.assign(valid, (0, code_1.propertyInData)(gen, data, missing, opts.ownProperties));
+        function loopUntilMissing(missing2, valid) {
+          cxt.setParams({ missingProperty: missing2 });
+          gen.forOf(missing2, schemaCode, () => {
+            gen.assign(valid, (0, code_1.propertyInData)(gen, data, missing2, opts.ownProperties));
             gen.if((0, codegen_1.not)(valid), () => {
               cxt.error();
               gen.break();
@@ -33799,7 +33855,7 @@ var require_dependencies = __commonJS({
       const { gen, data, it } = cxt;
       if (Object.keys(propertyDeps).length === 0)
         return;
-      const missing = gen.let("missing");
+      const missing2 = gen.let("missing");
       for (const prop in propertyDeps) {
         const deps = propertyDeps[prop];
         if (deps.length === 0)
@@ -33817,8 +33873,8 @@ var require_dependencies = __commonJS({
             }
           });
         } else {
-          gen.if((0, codegen_1._)`${hasProperty} && (${(0, code_1.checkMissingProp)(cxt, deps, missing)})`);
-          (0, code_1.reportMissingProp)(cxt, missing);
+          gen.if((0, codegen_1._)`${hasProperty} && (${(0, code_1.checkMissingProp)(cxt, deps, missing2)})`);
+          (0, code_1.reportMissingProp)(cxt, missing2);
           gen.else();
         }
       }
@@ -64015,9 +64071,55 @@ var geminiKey = () => envKey("GEMINI_API_KEY");
 var CLERK_MODEL = process.env.ANTHROPIC_AGENT_MODEL || "claude-haiku-5-5";
 var CLERK_DOC_MODEL = process.env.ANTHROPIC_AGENT_DOC_MODEL || "claude-opus-5-5";
 var MAX_BODY_CHARS = 44e5;
+var FEATURE = { site: "Reading site captures", vo: "The VO ticket reader", ask: "Clerk", ask_doc: "Clerk", media: "Voice and video through the Claude connector", pack: "Reading the client\u2019s pack", boq: "Reading scanned schedules" };
+var rpc = (fn, token, body) => fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+  method: "POST",
+  headers: { apikey: SB_KEY, authorization: `Bearer ${token}`, "content-type": "application/json" },
+  body: JSON.stringify(body ?? {})
+});
+var missing = (r, e) => r.status === 404 || e?.code === "PGRST202";
+async function aiCheck(token, kind) {
+  if (!token) return { ok: false, status: 401, error: "Sign in to Mastor to use document reading." };
+  let r, e;
+  try {
+    r = await rpc("ai_check", token, { p_kind: kind });
+    if (r.ok) {
+      const d = await r.json().catch(() => ({}));
+      return { ok: true, company: d?.company ?? null, plan: d?.plan ?? null, lane: d?.lane ?? "normal" };
+    }
+    e = await r.json().catch(() => ({}));
+    if (missing(r, e)) {
+      if (kind === "collect") return { ok: true, company: null, plan: null, lane: "normal" };
+      r = await rpc("use_ai", token, { p_kind: kind });
+      if (r.ok) return { ok: true, company: null, plan: null, lane: "normal" };
+      e = await r.json().catch(() => ({}));
+    }
+  } catch {
+    return { ok: false, status: 503, error: "Couldn\u2019t check your sign-in. Check signal and try again." };
+  }
+  const msg = String(e?.message || ""), hint = /^\d+$/.test(String(e?.hint)) ? String(e.hint) : "";
+  if (r.status === 401 || /jwt|not signed in/i.test(msg)) return { ok: false, status: 401, error: "Your sign-in has expired \u2014 sign in again and retry." };
+  if (/no company/.test(msg)) return { ok: false, status: 403, error: "Set up or join a company before reading documents." };
+  if (/ai_plan/.test(msg)) return { ok: false, status: 403, error: `${FEATURE[kind] ?? "This"} isn\u2019t on your plan. It comes with Minerva and Jupiter.` };
+  if (/ai_month_reads/.test(msg)) return { ok: false, status: 429, error: `Your company has used this month\u2019s ${hint || ""} document reads. They start again on the 1st, or enter the lines by hand.`.replace("  ", " ") };
+  if (/ai_month/.test(msg)) return { ok: false, status: 429, error: "Your company has used this month\u2019s AI allowance. AI reading starts again on the 1st; everything else carries on as normal." };
+  if (/ai_daily_credits/.test(msg)) return { ok: false, status: 429, error: "Your company has done the most AI reading for one day. It starts again at midnight; everything else carries on as normal." };
+  if (/ai_daily_questions/.test(msg)) return { ok: false, status: 429, error: `Your company has asked Clerk ${hint || "the most"} questions today, the most for one day. Clerk is back at midnight.` };
+  if (/ai_daily_limit/.test(msg)) {
+    const n = hint ? `all ${hint} of today\u2019s` : "today\u2019s";
+    return { ok: false, status: 429, error: `Your company has used ${n} document reads. It resets at midnight \u2014 or enter the lines by hand.` };
+  }
+  if (missing(r, e)) {
+    return { ok: false, status: 503, error: "Document reading is switched off until the database update is run (supabase/schema.sql)." };
+  }
+  return { ok: false, status: 503, error: "Couldn\u2019t check your sign-in right now. Try again in a minute." };
+}
+var bearer = (req) => {
+  const a = String(req.headers?.authorization || "");
+  return a.startsWith("Bearer ") ? a.slice(7).trim() : "";
+};
 async function guard(req, res, kind) {
-  const auth = String(req.headers?.authorization || "");
-  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  const token = bearer(req);
   if (!token) {
     res.status(401).json({ error: "Sign in to Mastor to use document reading." });
     return false;
@@ -64027,39 +64129,22 @@ async function guard(req, res, kind) {
     res.status(413).json({ error: "That file is too big to read \u2014 try a smaller copy (under 3MB)." });
     return false;
   }
-  let r;
+  const c = await aiCheck(token, kind);
+  if (!c.ok) {
+    res.status(c.status).json({ error: c.error });
+    return false;
+  }
+  return c;
+}
+async function spend(token, kind, model, credits, ref) {
+  if (!token || !(credits > 0)) return;
   try {
-    r = await fetch(`${SB_URL}/rest/v1/rpc/use_ai`, {
-      method: "POST",
-      headers: { apikey: SB_KEY, authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ p_kind: kind })
-    });
-  } catch {
-    res.status(503).json({ error: "Couldn\u2019t check your sign-in. Check signal and try again." });
-    return false;
+    const r = await rpc("ai_spend", token, { p_kind: kind, p_model: String(model || ""), p_credits: Math.min(credits, 1e4), p_ref: ref ?? null });
+    if (!r.ok && r.status !== 404) console.warn("ai_spend", r.status, await r.text().catch(() => ""));
+  } catch (e) {
+    console.warn("ai_spend", e?.message);
   }
-  if (r.ok) return true;
-  const e = await r.json().catch(() => ({}));
-  const msg = String(e?.message || "");
-  if (r.status === 401 || /jwt|not signed in/i.test(msg)) {
-    res.status(401).json({ error: "Your sign-in has expired \u2014 sign in again and retry." });
-    return false;
-  }
-  if (/no company/.test(msg)) {
-    res.status(403).json({ error: "Set up or join a company before reading documents." });
-    return false;
-  }
-  if (/ai_daily_limit/.test(msg)) {
-    const n = /^\d+$/.test(String(e?.hint)) ? `all ${e.hint} of today\u2019s` : "today\u2019s";
-    res.status(429).json({ error: `Your company has used ${n} document reads. It resets at midnight \u2014 or enter the lines by hand.` });
-    return false;
-  }
-  if (r.status === 404 || e?.code === "PGRST202") {
-    res.status(503).json({ error: "Document reading is switched off until the database update is run (supabase/schema.sql)." });
-    return false;
-  }
-  res.status(503).json({ error: "Couldn\u2019t check your sign-in right now. Try again in a minute." });
-  return false;
+  console.info(JSON.stringify({ ai: { kind, model, credits, ...ref ? { ref } : {} } }));
 }
 
 // server/mcp/data.ts
@@ -64128,10 +64213,9 @@ async function media(ctx, mediaId) {
   return { bytes: Buffer.from(await r.arrayBuffer()), type: (r.headers.get("content-type") || "").split(";")[0] };
 }
 async function useAi(ctx, kind) {
-  const r = await fetch(`${SB_URL}/rest/v1/rpc/use_ai`, { method: "POST", headers: headers(ctx.token, { "content-type": "application/json" }), body: JSON.stringify({ p_kind: kind }) });
-  if (r.ok) return;
-  const e = await r.json().catch(() => ({}));
-  if (/ai_daily_limit/.test(e.message ?? "")) throw new Error("Your company has used today\u2019s AI reads. Voice notes and videos can be read again after midnight.");
+  const c = await aiCheck(ctx.token, kind);
+  if (c.ok) return;
+  if (c.status === 429 || c.status === 403) throw new Error(c.error);
   throw new Error("Couldn\u2019t start a transcription just now \u2014 try again in a minute.");
 }
 async function saveTranscript(ctx, entry, transcript) {
@@ -65696,7 +65780,6 @@ function roman(n) {
 var voRef = (n) => `VO ${roman(n)}`;
 var ukDate = (t) => new Date(t).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 var qtyText = (q) => Number.isInteger(q) ? String(q) : q.toFixed(2);
-var upliftFactor = (u1, u2) => (1 + u1 / 100) * (1 + u2 / 100);
 
 // src/lib/valuation.ts
 var valRef = (n) => `VAL ${roman(n)}`;
@@ -65764,6 +65847,14 @@ function upliftAmounts(base, u1pct, u2pct) {
   const u1 = pennies(base * (u1pct || 0) / 100);
   const u2 = pennies(gross - base - u1);
   return { u1, u2, gross };
+}
+var isCertified = (v) => v.status === "Issued" && reviewStage(v) === "agreed";
+var isWithClient = (v) => v.status === "Issued" && reviewStage(v) !== "agreed";
+function jobWorth(job, scope, vos) {
+  const fromScope = !(job.contractValue > 0);
+  const contract = fromScope ? upliftAmounts(pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), job.uplift1, job.uplift2).gross : pennies(job.contractValue);
+  const voGross = upliftAmounts(pennies(vos.filter((v) => v.status !== "Rejected").reduce((t, v) => t + lineValue(v.qty, v.rate), 0)), job.uplift1, job.uplift2).gross;
+  return { contract, vos: voGross, total: pennies(contract + voGross), fromScope };
 }
 function valTotals(job, valId, scope, vos) {
   const s = scope.filter((x) => x.valuationId === valId);
@@ -65875,7 +65966,7 @@ function valCourt(val, job, scope, vos, now = Date.now()) {
     const d = daysSince(r.sentAt, now);
     return {
       who: "client",
-      text: `For review \xB7 ${d} day${d === 1 ? "" : "s"}${r.rounds > 1 ? ` \xB7 sent ${ordinal(r.rounds)} time` : ""}`,
+      text: `For review \xB7 ${d ? `${d} day${d === 1 ? "" : "s"}` : "sent today"}${r.rounds > 1 ? ` \xB7 sent ${ordinal(r.rounds)} time` : ""}`,
       days: d,
       owed,
       review: true,
@@ -65919,24 +66010,25 @@ function registerSummary(job, vos, vals, now = Date.now()) {
 // src/lib/portfolio.ts
 function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
   const figures = jobs.map((job) => {
-    const f = upliftFactor(job.uplift1, job.uplift2);
     const js = scope.filter((s) => s.jobId === job.id);
     const jv = vos.filter((v) => v.jobId === job.id);
     const jvals = vals.filter((v) => v.jobId === job.id);
-    const target = job.contractValue > 0 ? job.contractValue : js.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) * f;
-    const variations = jv.filter((v) => v.status !== "Rejected").reduce((t, v) => t + lineValue(v.qty, v.rate), 0) * f;
-    const certified = jvals.filter((v) => v.status === "Issued").reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0);
+    const worth = jobWorth(job, js, jv);
+    const target = worth.contract, variations = worth.vos;
+    const sum2 = (vs) => vs.reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0);
+    const certified = sum2(jvals.filter(isCertified)), withClient = sum2(jvals.filter(isWithClient));
     const open2 = jvals.find((v) => v.status === "Open");
     const inValuation = open2 ? valTotals(job, open2.id, scope, vos).gross : 0;
-    const revised = target + variations;
+    const revised = worth.total;
     return {
       job,
       target,
       variations,
       revised,
       certified,
+      withClient,
       inValuation,
-      remaining: Math.max(0, revised - certified - inValuation),
+      remaining: Math.max(0, revised - certified - withClient - inValuation),
       unpricedVos: registerSummary(job, jv, jvals, now.getTime()).unpriced
     };
   });
@@ -65945,8 +66037,10 @@ function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
   const year = now.getFullYear();
   const months = Array.from({ length: now.getMonth() + 1 }, (_, m) => ({ label: new Date(year, m, 1).toLocaleDateString("en-GB", { month: "short" }), value: 0 }));
   for (const v of vals) {
-    if (v.status !== "Issued" || !v.issuedAt) continue;
-    const d = new Date(v.issuedAt);
+    if (!isCertified(v)) continue;
+    const at = v.review?.agreedAt ?? v.invoiceDate ?? v.issuedAt;
+    if (!at) continue;
+    const d = new Date(at);
     if (d.getFullYear() !== year) continue;
     const job = jobs.find((j) => j.id === v.jobId);
     if (!job) continue;
@@ -65984,6 +66078,7 @@ function portfolio(jobs, scope, vos, vals, now = /* @__PURE__ */ new Date()) {
     active: activeFigs.length,
     revised: sum(activeFigs, "revised"),
     certified: sum(figures, "certified"),
+    withClient: sum(figures, "withClient"),
     inValuation: sum(figures, "inValuation"),
     pipeline: sum(activeFigs, "remaining"),
     variations: sum(figures, "variations"),
@@ -66083,6 +66178,15 @@ function jobAlerts(job, scope, vos, vals, orders, now = Date.now(), diary) {
     if (ready) alerts.push({ kind: "warn", place: "scope", text: `${ready} completed order${ready === 1 ? "" : "s"} not claimed`, hint: "Claim them into this month\u2019s valuation" });
     if (!orders.length) alerts.push({ kind: "warn", place: "scope", site: true, text: "No orders yet", hint: "Add each works order as it comes in" });
   } else if (scope.length === 0) alerts.push({ kind: "warn", place: "scope", site: true, text: "No scope yet", hint: "Add the works order items" });
+  const today = dayKey(new Date(now));
+  const lateTodos = (diary ?? []).filter((e) => e.type === "todo" && !e.doneAt && !!e.date && e.date < today).sort((a, b) => a.date.localeCompare(b.date));
+  if (lateTodos.length) alerts.push({
+    kind: "stop",
+    place: "diary",
+    site: true,
+    text: `${lateTodos.length} to-do${lateTodos.length === 1 ? "" : "s"} late`,
+    hint: lateTodos.slice(0, 2).map((e) => e.note).join(" \xB7 ") + (lateTodos.length > 2 ? ` \xB7 + ${lateTodos.length - 2} more` : "")
+  });
   return { alerts, gap, poNote };
 }
 
@@ -66092,8 +66196,10 @@ function labourDays(diary) {
 }
 function jobMargin(job, scope, vos, costs, diary, dayRate, dayworksValue = 0) {
   const live = vos.filter((v) => v.status !== "Rejected");
-  const base = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) + live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0) + dayworksValue);
-  const value = upliftAmounts(base, job.uplift1, job.uplift2).gross;
+  const scopeBase = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)), voBase = pennies(live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0));
+  const base = pennies(scopeBase + voBase + dayworksValue);
+  const up = (x) => upliftAmounts(x, job.uplift1, job.uplift2).gross;
+  const value = pennies(up(scopeBase) + up(voBase) + (dayworksValue ? up(pennies(dayworksValue)) : 0));
   const unpriced = scope.filter((i) => !isPriced(i)).length + live.filter((v) => !isPriced(v)).length;
   const counted = costs.filter((c) => c.status !== "quote");
   const committed = pennies(counted.filter((c) => c.status === "committed").reduce((t, c) => t + (c.amount ?? 0), 0));
@@ -66385,6 +66491,31 @@ ${f.bytes.toString("utf8").slice(0, MAX_CHARS)}` }];
 Mastor can\u2019t read this kind of file (${type || "unknown type"}). Open it in the app, or add it as a PDF.` }];
 }
 
+// api/_cost.js
+var usdToGbp = () => Number(envKey("AI_USD_TO_GBP")) || 0.8;
+var CLAUDE = [
+  [/opus/i, { input: 4, output: 20, cacheRead: 0.2 }],
+  [/sonnet/i, { input: 2, output: 10, cacheRead: 0.2 }],
+  [/haiku/i, { input: 0.1, output: 0.5, cacheRead: 0.01, over100k: 5 }]
+  // five times the price once a prompt passes 100K tokens
+];
+var priceOf = (model) => (CLAUDE.find(([re2]) => re2.test(String(model || ""))) ?? CLAUDE[0])[1];
+function claudeCredits(model, usage, { batch = false } = {}) {
+  const u = usage || {};
+  const p = priceOf(model);
+  const input2 = u.input_tokens || 0, write = u.cache_creation_input_tokens || 0, read = u.cache_read_input_tokens || 0, output2 = u.output_tokens || 0;
+  const step = p.over100k && input2 + write + read > 1e5 ? p.over100k : 1;
+  const usd = step * (input2 * p.input + write * p.input * 1.25 + read * p.cacheRead + output2 * p.output) / 1e6;
+  return toCredits(usd * (batch ? 0.5 : 1));
+}
+function geminiCredits(meta3) {
+  const m = meta3 || {};
+  const pin = Number(envKey("GEMINI_PRICE_IN")) || 1, pout = Number(envKey("GEMINI_PRICE_OUT")) || 2.5;
+  const usd = ((m.promptTokenCount || 0) * pin + ((m.candidatesTokenCount || 0) + (m.thoughtsTokenCount || 0)) * pout) / 1e6;
+  return toCredits(usd);
+}
+var toCredits = (usd) => Math.round(usd * usdToGbp() * 100 * 1e3) / 1e3;
+
 // api/read-site.js
 var CLAUDE_MODEL = process.env.ANTHROPIC_SITE_MODEL || "claude-opus-5-5";
 var GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
@@ -66413,7 +66544,7 @@ async function transcribe(bytes, mime, key) {
   const r = await fetch(`${GEMINI}/v1beta/models/${GEMINI_MODEL}:generateContent`, { method: "POST", headers: { "x-goog-api-key": key, "content-type": "application/json" }, body: JSON.stringify({ contents: [{ role: "user", parts: [part, { text: TRANSCRIBE }] }], generationConfig: { temperature: 0 } }) });
   const d = await r.json();
   if (!r.ok) throw new Error(d?.error?.message || `transcription failed (${r.status})`);
-  return (d.candidates?.[0]?.content?.parts ?? []).map((p) => p.text || "").join("").trim();
+  return { text: (d.candidates?.[0]?.content?.parts ?? []).map((p) => p.text || "").join("").trim(), credits: geminiCredits(d.usageMetadata) };
 }
 
 // server/mcp/media.ts
@@ -66451,9 +66582,11 @@ What was said: ${e.transcript}` });
       continue;
     }
     try {
-      await useAi(ctx, "site");
+      await useAi(ctx, "media");
       const mime = e.type === "voice" ? "audio/wav" : f.type.startsWith("video/") ? f.type : "video/mp4";
-      const t = String(await transcribe(f.bytes, mime, key)).trim();
+      const heard = await transcribe(f.bytes, mime, key);
+      await spend(ctx.token, "media", GEMINI_MODEL, heard.credits);
+      const t = String(heard.text).trim();
       await saveTranscript(ctx, e, t);
       out.push({ type: "text", text: `${head(e)}
 What was said: ${t}` });
@@ -66566,13 +66699,13 @@ function registerWrites(server, ctx) {
     const lines = [], vos = [];
     for (const { q: id, i } of picked.lines) {
       const locked = i && lockedIn(i, d.vals);
-      const why = !i ? "no scope line with this id on this job" : locked ? `certified in ${valRef(locked.number)}, so it\u2019s locked` : i.valuationId ? "already in the open valuation" : i.rate == null ? "no rate, so price it in the app first" : i.qty == null ? "no quantity, so measure it first" : null;
+      const why = !i ? "no scope line with this id on this job" : locked ? `sent in ${valRef(locked.number)}, so it\u2019s locked` : i.valuationId ? "already in the open valuation" : i.rate == null ? "no rate, so price it in the app first" : i.qty == null ? "no quantity, so measure it first" : null;
       if (why) skipped.push(`${i ? lineLabel(i) : id}: ${why}`);
       else lines.push(i);
     }
     for (const { q: ref, v } of picked.vos) {
       const locked = v && lockedIn(v, d.vals);
-      const why = !v ? "no such VO on this job" : locked ? `certified in ${valRef(locked.number)}, so it\u2019s locked` : v.valuationId ? "already in the open valuation" : v.status === "Rejected" ? "rejected by the client" : !isPriced(v) ? "not priced yet (needs a quantity and a rate; use update_variation)" : null;
+      const why = !v ? "no such VO on this job" : locked ? `sent in ${valRef(locked.number)}, so it\u2019s locked` : v.valuationId ? "already in the open valuation" : v.status === "Rejected" ? "rejected by the client" : !isPriced(v) ? "not priced yet (needs a quantity and a rate; use update_variation)" : null;
       if (why) skipped.push(`${v ? voRef(v.number) : ref}: ${why}`);
       else vos.push(v);
     }
@@ -66612,7 +66745,7 @@ function registerWrites(server, ctx) {
     const picked = pick2(d, scope_line_ids, voQs), skipped = [];
     const why = (x) => {
       const locked = x && lockedIn(x, d.vals);
-      return !x ? "not found on this job" : locked ? `certified in ${valRef(locked.number)}, so it\u2019s locked` : !x.valuationId ? "not in a valuation" : null;
+      return !x ? "not found on this job" : locked ? `sent in ${valRef(locked.number)}, so it\u2019s locked` : !x.valuationId ? "not in a valuation" : null;
     };
     const lines = picked.lines.filter(({ q: id, i }) => {
       const w = why(i);
@@ -66717,7 +66850,7 @@ function registerWrites(server, ctx) {
     const v = findVo(d.vos, a.vo);
     if (!v) throw new Error(`No ${a.vo} on ${job.name}. VOs: ${[...d.vos].sort((x, y) => x.number - y.number).map((x) => voRef(x.number)).join(", ") || "none yet"}.`);
     const locked = lockedIn(v, d.vals);
-    if (locked) throw new Error(`${voRef(v.number)} is certified in ${valRef(locked.number)}, so it\u2019s locked and can\u2019t be changed.`);
+    if (locked) throw new Error(`${voRef(v.number)} was sent in ${valRef(locked.number)}, so it\u2019s locked and can\u2019t be changed.`);
     const next = {
       ...v,
       ...a.description !== void 0 ? { description: a.description.trim() } : {},
@@ -66936,12 +67069,12 @@ ${added}` } : {},
     if (valuation && !vals.length) throw new Error(`No ${valuation} on ${job.name}.`);
     const rate = s?.vatRate ?? 20;
     const allVals = s ? await records(ctx, "valuations") : [];
-    const missing = missingForInvoice(s ?? void 0);
+    const missing2 = missingForInvoice(s ?? void 0);
     return text({
       job: job.name,
       po: job.poNumber || "none, so the invoice will go out without a PO and may be rejected",
       ...s ? { nextInvoiceNumber: allocateInvoiceNo(s, allVals).number } : {},
-      ...missing.length ? { missingForAVatInvoice: missing } : {},
+      ...missing2.length ? { missingForAVatInvoice: missing2 } : {},
       valuations: vals.map((v) => {
         if (v.status === "Open") return { ref: valRef(v.number), invoice: "not issued yet, so it can\u2019t be invoiced until a person issues it in the app" };
         if (v.invoiceNumber) {
@@ -67009,7 +67142,7 @@ function mastorServer(ctx) {
         const { alerts } = jobAlerts(j, js, jv, jvals, orders.filter((o) => o.jobId === j.id));
         return {
           ...jobRef(j),
-          ...f ? { figures: { contract: money(f.target), variations: money(f.variations), certified: money(f.certified), inOpenValuation: money(f.inValuation), stillToClaim: money(f.remaining) } } : {},
+          ...f ? { figures: { contract: money(f.target), variations: money(f.variations), certifiedAgreed: money(f.certified), withClientNotAgreed: money(f.withClient), inOpenValuation: money(f.inValuation), stillToClaim: money(f.remaining) } } : {},
           actionNeeded: alerts.filter((a) => ctx.money || a.site).map((a) => `${a.kind === "stop" ? "URGENT" : a.kind === "do" ? "NEXT" : "TO DO"}: ${a.text} \u2014 ${a.hint}`)
         };
       })
@@ -67027,7 +67160,9 @@ function mastorServer(ctx) {
     const rhythm = ctx.money ? valRhythm(job, d.vals, { diary: d.diary, today: ukToday() }) : null;
     const notes = d.diary.filter((e) => e.type === "note" && (ctx.money || e.category !== "Commercial")).sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.createdAt - a.createdAt).slice(0, 40);
     const s = ctx.money ? await settings(ctx) : null;
-    const certified = d.vals.filter((v) => v.status === "Issued").reduce((t, v) => t + valTotals(job, v.id, d.scope, d.vos).gross, 0);
+    const sumOf = (vs) => vs.reduce((t, v) => t + valTotals(job, v.id, d.scope, d.vos).gross, 0);
+    const certified = sumOf(d.vals.filter(isCertified)), withClient = sumOf(d.vals.filter(isWithClient));
+    const worth = jobWorth(job, d.scope, d.vos);
     const m = ctx.money ? jobMargin(job, d.scope, d.vos, d.costs, d.diary, s?.labourDayRate) : null;
     return text({
       ...jobRef(job),
@@ -67036,8 +67171,10 @@ function mastorServer(ctx) {
         paymentTermsDays: job.paymentTermsDays || 30,
         uplifts: `${job.uplift1}% + ${job.uplift2}%`,
         figures: {
-          contract: job.contractValue ? money(job.contractValue) : "not set",
-          certified: money(certified),
+          contract: job.contractValue ? money(job.contractValue) : `not set (the scope with uplifts is ${money(worth.contract)})`,
+          contractPlusVos: money(worth.total),
+          certifiedAgreed: money(certified),
+          withClientNotAgreed: money(withClient),
           margin: m && (m.costs || m.labourEstimate != null) ? `${money(m.margin)}${m.pct != null ? ` (${m.pct}%)` : ""}${m.provisional.length ? " \u2014 provisional" : ""}` : "no costs entered"
         },
         poCheck: poNote ?? null,
@@ -67106,7 +67243,7 @@ function mastorServer(ctx) {
     const state = (i) => {
       if (!i.valuationId) return "to do";
       const v = d.vals.find((x) => x.id === i.valuationId);
-      return v ? `${v.status === "Issued" ? "certified in" : "claimed in"} ${valRef(v.number)}` : "claimed";
+      return v ? `${isCertified(v) ? "certified in" : isWithClient(v) ? "sent to the client in" : "claimed in"} ${valRef(v.number)}` : "claimed";
     };
     const filtered = show !== "all" || !!property || !!s;
     return text({
@@ -67296,7 +67433,14 @@ function mastorServer(ctx) {
 }
 
 // server/agent/handler.ts
-var modelFor = (messages) => messages.some((m) => m.role === "assistant" && Array.isArray(m.content) && m.content.some((b) => b.type === "tool_use" && b.name === "read_document")) ? CLERK_DOC_MODEL : CLERK_MODEL;
+function sinceQuestion(messages) {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.role === "user" && (typeof m.content === "string" || m.content.some((b) => b.type !== "tool_result"))) return messages.slice(i);
+  }
+  return messages;
+}
+var modelFor = (messages) => sinceQuestion(messages).some((m) => m.role === "assistant" && Array.isArray(m.content) && m.content.some((b) => b.type === "tool_use" && b.name === "read_document")) ? CLERK_DOC_MODEL : CLERK_MODEL;
 var lowCost = (model) => /haiku/i.test(model);
 var config2 = { maxDuration: 300 };
 var MAX_CALLS = 12;
@@ -67395,13 +67539,15 @@ async function handler(req, res) {
   const anthropic = new Anthropic({ apiKey: key });
   const used = {};
   const tally = (model, u) => {
-    const t = used[model] ??= { calls: 0, input: 0, cacheWrite: 0, cacheRead: 0, output: 0 };
+    const t = used[model] ??= { calls: 0, input: 0, cacheWrite: 0, cacheRead: 0, output: 0, credits: 0 };
     t.calls++;
     t.input += u?.input_tokens ?? 0;
     t.cacheWrite += u?.cache_creation_input_tokens ?? 0;
     t.cacheRead += u?.cache_read_input_tokens ?? 0;
     t.output += u?.output_tokens ?? 0;
+    t.credits += claudeCredits(model, u);
   };
+  let readingDoc = false;
   let mcp = null;
   try {
     mcp = await connect(ctx);
@@ -67441,6 +67587,11 @@ async function handler(req, res) {
     for (let call = 0; call < MAX_CALLS; call++) {
       send({ type: "status", text: call ? "Thinking" : body.decision ? "Carrying on" : "Reading your question" });
       let model = modelFor(messages);
+      if (model === CLERK_DOC_MODEL && !readingDoc) {
+        const c = await aiCheck(token, "ask_doc");
+        if (!c.ok) return send({ type: "error", error: c.error ?? "Clerk can\u2019t read documents just now.", messages });
+        readingDoc = true;
+      }
       let r = await ask(model);
       tally(model, r.usage);
       if (r.stop_reason === "refusal" && model !== CLERK_DOC_MODEL) {
@@ -67466,6 +67617,7 @@ async function handler(req, res) {
     send({ type: "error", error: msg, ...messages.length > body.messages.length || body.decision ? { messages } : {} });
   } finally {
     if (Object.keys(used).length) console.info(JSON.stringify({ clerk: used }));
+    for (const [model, t] of Object.entries(used)) await spend(token, readingDoc && model === CLERK_DOC_MODEL ? "ask_doc" : "ask", model, t.credits);
     await mcp?.close().catch(() => {
     });
     res.end();
@@ -67476,5 +67628,6 @@ export {
   checkBody,
   config2 as config,
   handler as default,
-  modelFor
+  modelFor,
+  sinceQuestion
 };

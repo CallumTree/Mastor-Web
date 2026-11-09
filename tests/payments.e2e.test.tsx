@@ -40,10 +40,14 @@ describe('payments and chasing', () => {
     click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
     click(await screen.findByRole('button', { name: /^send val i for £/i }))
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
-    await screen.findAllByText(/^With client · For review · 0 days/)
+    await screen.findAllByText(/^With client · For review · sent today/)
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()   // nothing to pay until it's agreed
     click(screen.getByRole('button', { name: 'Agreed — create invoice' }))
-    fireEvent.click(document.querySelector('.sheet-bg')!)                     // not invoicing it here
+    fireEvent.click(document.querySelector('.sheet-bg')!)                     // closing records nothing: a mis-tap commits no agreement
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
+    expect(screen.getByRole('button', { name: 'Agreed — create invoice' })).toBeTruthy()
+    click(screen.getByRole('button', { name: 'Agreed — create invoice' }))
+    click(await screen.findByRole('button', { name: /^record val i agreed, invoice it later$/i }))   // agreed on purpose, invoiced later
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findByText(/^Agreed .* · create the invoice$/)
 
@@ -51,17 +55,20 @@ describe('payments and chasing', () => {
     click(screen.getByRole('button', { name: /mark as paid/i }))
     type(/amount received/i, '60')
     await screen.findByText(/will still show as owed/i)
-    click(screen.getByRole('button', { name: /save payment/i }))
+    // the typed amount is the white block; "paid in full" steps back so a hurried tap can't record money that didn't land
+    expect(screen.getByRole('button', { name: 'Save £60.00 received' }).className).toContain('btn-primary')
+    expect(screen.getByRole('button', { name: /^paid in full/i }).className).toContain('btn-secondary')
+    click(screen.getByRole('button', { name: 'Save £60.00 received' }))
     await screen.findByText(/part paid · £40\.00 outstanding/i)
     click(screen.getByRole('button', { name: /edit payment/i }))
     type(/amount received/i, '100')
-    click(screen.getByRole('button', { name: /save payment/i }))
+    click(screen.getByRole('button', { name: 'Save £100.00 received' }))
     await screen.findByText(/^Paid /)
 
     // dashboard
     click(screen.getByRole('button', { name: 'Jobs' }))
     click(await screen.findByRole('button', { name: /money across all jobs/i }))
     await screen.findByText('Paid this year')
-    await waitFor(() => expect(screen.getAllByText('£100').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('£100.00').length).toBeGreaterThan(0))   // in pence, like every other screen
   })
 })

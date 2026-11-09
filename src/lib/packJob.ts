@@ -45,12 +45,20 @@ export function jobFromPack(pack: PackResult): PackJob {
     name = address.split(',')[0].trim()
     if (name) from.name = from.address = `${n} properties in the works orders`
   }
+  // the site named on the schedule itself ("SITE: ELM ROW") before the file's name; a reference code isn't a name
+  const site = (pack.ref ?? '').trim()
+  if (!name && site && /[a-z]{3,}/i.test(site) && !/\d{3,}|[/\\]/.test(site)) {
+    name = site === site.toUpperCase() ? site.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase()) : site
+    from.name = 'the schedule'
+  }
   if (!name) {
     const sched = pack.files.find(f => f.as.role === 'spec' || f.as.role === 'ai' || f.as.role === 'order')
     name = sched ? nameFromFile(sched.file.name) : ''
+    // a file called "pack" or "scan" says nothing about the job: leave the name for a person to type
+    if (/^(client )?(pack|documents?|docs|files?|scan(ned)?|attachments?|new|untitled|download|image|img|document)\s*\d*$/i.test(name)) name = ''
     if (name) from.name = 'the file name'
   }
-  const contractRef = pack.ref ?? ''
+  const contractRef = from.name === 'the schedule' ? '' : pack.ref ?? ''   // a site's name isn't a contract reference
   if (contractRef) from.contractRef = pack.orders.length ? 'the works orders' : 'the schedule'
   // the works orders print a contract value each; only when every one does is their sum the job's
   const values = pack.orders.map(o => o.contractValue)

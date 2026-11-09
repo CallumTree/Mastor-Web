@@ -38,6 +38,17 @@ async function notify(s, place) {
 
 const clean = (v, n) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, n)
 
+// Robots can't take all fifty places: a few tries an hour from one connection (per server instance, best effort;
+// the database still gives one place per email), and a form sent faster than a person could fill it is asked again.
+const WINDOW_MS = 60 * 60_000, PER_WINDOW = 6, MIN_FILL_MS = 1500
+const seen = new Map()
+export function tooMany(ip, now = Date.now()) {
+  const hits = (seen.get(ip) ?? []).filter(t => now - t < WINDOW_MS)
+  hits.push(now); seen.set(ip, hits)
+  if (seen.size > 5000) for (const [k, v] of seen) if (!v.some(t => now - t < WINDOW_MS)) seen.delete(k)
+  return hits.length > PER_WINDOW
+}
+
 export default async function handler(req, res) {
   res.setHeader('cache-control', 'no-store')
   if (req.method === 'GET') {
@@ -51,6 +62,9 @@ export default async function handler(req, res) {
   const b = typeof req.body === 'string' ? (() => { try { return JSON.parse(req.body) } catch { return {} } })() : (req.body ?? {})
   // a field people can't see: only form-filling robots put anything in it
   if (clean(b.website, 200)) return res.status(200).json({ ok: true, place: null, already: false })
+  const ip = String(req.headers?.['x-forwarded-for'] ?? '').split(',')[0].trim()   // always set on Vercel
+  if (ip && tooMany(ip)) return res.status(429).json({ error: 'Lots of sign-ups from this connection in the last hour. Try again later, or email us.' })
+  if (typeof b.took === 'number' && b.took < MIN_FILL_MS) return res.status(400).json({ error: 'That went through very quickly. Check your details and send it again.' })
   const s = Object.fromEntries(Object.entries(LIMITS).map(([k, n]) => [k, k === 'note' ? String(b[k] ?? '').trim().slice(0, n) : clean(b[k], n)]))
   s.email = s.email.toLowerCase()
   const missing = [!s.name && 'your name', !s.firm && 'your firm', !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.email) && 'an email address that works'].filter(Boolean)

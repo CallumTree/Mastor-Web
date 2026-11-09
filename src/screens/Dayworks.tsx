@@ -106,7 +106,7 @@ function DayworksEditor({ job, d: initial, isNew, vo, books, onSave, onDelete, o
           <div style={{ width: 170 }}><Field label="Date"><input type="date" value={d.date} onChange={e => setD({ ...d, date: e.target.value })} /></Field></div>
           <div className="grow" />
         </div>
-        <Field label="Work done, and why it’s dayworks"><textarea rows={2} value={d.description} onChange={e => setD({ ...d, description: e.target.value })} placeholder="e.g. Clear flooded cellar before survey — instructed by Dylan on site" /></Field>
+        <Field label="Work done, and why it’s dayworks"><textarea rows={2} value={d.description} onChange={e => setD({ ...d, description: e.target.value })} placeholder="e.g. Clear flooded cellar before survey — instructed by the client’s officer on site" /></Field>
 
         <h3 className="sec-h" style={{ margin: '8px 0 0' }}>Labour</h3>
         {d.labour.map((l, i) => (

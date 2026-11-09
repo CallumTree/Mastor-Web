@@ -9,11 +9,20 @@ export function describeProblem(err: unknown): string | null {
   const e = err as { name?: string; message?: string } | null
   const name = e?.name ?? '', msg = String(e?.message ?? err ?? '')
   if (name === 'AbortError') return null   // a share or file picker the person closed themselves
+  if (name === 'Told') return msg          // a message already written for the person (see tell())
   if (name === 'QuotaExceededError' || /quota|storage.*full|no space/i.test(msg))
     return 'This phone is out of storage space, so that wasn’t saved. Free up some space (old videos and photos in the phone’s gallery are the quickest) and try again.'
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg))
     return 'No signal reached the server, so that didn’t go through. It will work once you have signal — try again then.'
   return `That didn’t work${msg ? ` (${msg.slice(0, 160)})` : ''}. Nothing you saved before is affected — try again.`
+}
+
+/** Say something went wrong after the main thing worked (the PDF after an invoice is made, say), in words written
+ *  for the person; it comes up in the problem bar. A share they closed themselves (AbortError) says nothing. */
+export function tell(err: unknown, text: string) {
+  if ((err as { name?: string } | null)?.name === 'AbortError') return
+  console.warn(err)
+  void Promise.reject(Object.assign(new Error(text), { name: 'Told' }))
 }
 
 /** A failed action anywhere in the app (an unhandled promise) comes up here instead of failing silently. */

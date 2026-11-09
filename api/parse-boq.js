@@ -6,7 +6,8 @@
  *
  * The API key lives only in Vercel's environment (ANTHROPIC_API_KEY) — never in the app.
  */
-import { guard, anthropicKey } from './_guard.js'
+import { guard, spend, bearer, anthropicKey } from './_guard.js'
+import { claudeCredits } from './_cost.js'
 
 export const config = { maxDuration: 300 }
 
@@ -80,6 +81,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5', max_tokens: 32000, messages: [{ role: 'user', content }] }),
     })
     const data = await r.json()
+    if (data?.usage) await spend(bearer(req), 'boq', data.model, claudeCredits(data.model, data.usage))
     if (!r.ok) return res.status(502).json({ error: data?.error?.message || `AI request failed (${r.status})` })
     const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n')
     const truncated = data.stop_reason === 'max_tokens'

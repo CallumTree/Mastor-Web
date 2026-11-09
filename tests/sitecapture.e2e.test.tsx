@@ -2,7 +2,8 @@
 import { describe, it, expect, afterAll, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import App from '../src/App'
-import { db, wipeLocal } from '../src/lib/db'
+import { db, meta, wipeLocal } from '../src/lib/db'
+import { resetAutoRead } from '../src/lib/autoRead'
 import type { Job } from '../src/lib/types'
 
 vi.mock('../src/lib/sync', async orig => ({ ...(await orig<typeof import('../src/lib/sync')>()), currentCompany: () => 'c1', settle: async () => {} }))
@@ -61,5 +62,47 @@ describe('site capture', () => {
     const read = (await db.diary('js')).find(d => d.id === 'voice1')!
     expect(read.transcript).toMatch(/^Number four front elevation/)
     expect(read.read!.suggestions.map(s => s.state)).toEqual(['approved', 'approved', 'rejected'])
+  })
+
+  it('read at half price: Vals says the capture is with the reader, and the next pass collects what it found', async () => {
+    cleanup(); await wipeLocal(); resetAutoRead()
+    let ready = false, sends = 0, collects = 0
+    const json = (b: unknown) => new Response(JSON.stringify(b), { status: 200 })
+    vi.stubGlobal('fetch', vi.fn(async (u: string, init: any) => {
+      if (!String(u).includes('read-site')) return new Response('{}', { status: 404 })
+      const b = JSON.parse(init.body)
+      if (b.collect) {
+        collects++
+        expect(b.collect).toBe('msgbatch_e2e001')
+        return json(ready ? { suggestions: [{ item: 'M1', kind: 'complete', lines: ['L1'], text: 'No. 7 gutters cleared', property: '7', room: '', qty: null, unit: '', code: '', quote: 'gutters at number seven are cleared', basis: 'said' }] } : { pending: b.collect })
+      }
+      sends++
+      return json({ transcripts: { M1: 'The gutters at number seven are cleared.' }, failed: {}, pending: 'msgbatch_e2e001' })
+    }))
+    await db.putJob({ id: 'jb', name: 'Mill Lane', client: 'Example Council', address: '', contractRef: '', poNumber: 'PO7', contractValue: 0, uplift1: 0, uplift2: 0, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 })
+    await db.putScope({ id: 'g1', jobId: 'jb', code: '3010GU', description: 'Clear gutters', room: 'Roof', qty: 12, unit: 'LM', rate: 4.5, valuationId: null, order: 1, property: '7', workstream: 'Roofing', createdAt: 1 })
+    const today = new Date(); const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    await db.putDiary({ id: 'voice7', jobId: 'jb', date, type: 'voice', note: '', labour: null, weather: '', mediaId: 'wav7', originalMediaId: null, room: '', voId: null, createdAt: 5 })
+
+    render(<App />)
+    click(await screen.findByRole('button', { name: /Mill Lane/ }))
+    nav('vals')
+    expect(await screen.findByText('1 site capture is with the reader. What it shows arrives here, usually within the hour.')).toBeTruthy()
+    const sent = (await db.diary('jb')).find(d => d.id === 'voice7')!
+    expect(sent.read?.pending).toBe('msgbatch_e2e001')
+    expect(sent.transcript).toMatch(/gutters at number seven/)       // the words come back at once
+    expect((await meta.get<{ batch: string }[]>('siteReads'))?.[0].batch).toBe('msgbatch_e2e001')
+
+    // the next pass (the app comes back to the front): collected, checked, waiting for a person
+    ready = true
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(await screen.findByText('From site · 1 to review')).toBeTruthy()
+    expect(sends).toBe(1)                                             // sent once, never again while it was with the reader
+    expect(collects).toBeGreaterThan(0)
+    expect(await meta.get('siteReads')).toEqual([])
+    expect(screen.queryByText(/with the reader/)).toBeNull()
+    click(screen.getByRole('button', { name: 'Add it to VAL I' }))
+    await waitFor(async () => expect((await db.scope('jb'))[0].valuationId).toBeTruthy())
   })
 })
