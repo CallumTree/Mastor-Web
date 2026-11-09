@@ -1178,3 +1178,24 @@ input[type=radio]:focus-visible { outline: 2px solid var(--cyan); outline-offset
 .btn.btn-sm svg { width: 18px; height: 18px; }
 /* a house picked for a VO */
 .house-chips .chip { min-width: 52px; }
+
+/* ---------- the scooped dock (phones 360px and up; Dock.tsx): the + key in a scoop at the centre, the open tab raised
+   into a ringed disc in a second scoop that slides to the tab you tap. Flat and shadowless like everything else: the
+   dock's outline is drawn as one path (fill Milled Steel, edge Slate Edge) so the scoops are part of its edge. ---------- */
+.nav-shape, .nav-disc { display: none; }
+.nav-slot { display: block; pointer-events: none; }
+.nav-probe { position: absolute; width: 0; height: 0; pointer-events: none; }
+@media (min-width: 360px) and (max-width: 1023px) {
+  .nav { background: none; border: 0; }
+  .nav-shape { display: block; position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: -1; }
+  .nav-shape path { fill: var(--slate); stroke: var(--rule-ctl); stroke-width: 1; }
+  .nav-disc { display: grid; place-items: center; position: absolute; z-index: 1; width: 44px; height: 44px; border-radius: 50%; background: var(--slate); border: 2px solid var(--cyan); color: var(--cyan); pointer-events: none; }
+  .nav-disc svg { width: 22px; height: 22px; }
+  .nav button.on > svg { visibility: hidden; }   /* its icon is up in the disc */
+  .nav-mark { display: none; }
+  .nav .nav-capture { left: var(--cap-x, 50%); bottom: calc(100% - 24px); }
+  .nav .nav-capture span { box-shadow: none; }
+  .nav .nav-capture:focus-visible span { box-shadow: 0 0 0 3px var(--void), 0 0 0 5px var(--white); }
+  .cap-close { bottom: calc(10px + env(safe-area-inset-bottom) + var(--dock-h) - 24px); }
+}
+@media (max-width: 359px), (min-width: 1024px) { .nav-slot { display: none; } }

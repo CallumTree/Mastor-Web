@@ -27,6 +27,7 @@ import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
 import { fig, figs } from '../components/Figs'
+import { DockShape, captureSlot } from '../components/Dock'
 
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals' | 'ask'
@@ -279,15 +280,26 @@ export function JobView(p: {
           onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} readNote={p.readNote} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
       </main>
-      {/* the tabs share the dock evenly; the capture key is raised above its centre, in front of the page (on the rail it heads the column) */}
-      <nav className={'nav' + (sinking ? ' sinking' : '')} style={{ '--dock-cols': `repeat(${nav.length}, minmax(0, 1fr))`, '--n': nav.length } as React.CSSProperties}>
-        {tab !== 'ask' && <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={28} /></span></button>}
-        {nav.map(({ tab: t, label: navLabel, Icon }) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
+      {/* the tabs share the dock evenly around a middle column for the + key, which sits in a scoop cut into the dock's
+          top edge; the open tab rises into a second, smaller scoop that slides to whichever tab you tap (Dock.tsx).
+          On the narrowest phones and the desktop rail the dock is a plain bar and the slot and scoops aren't shown. */}
+      {(() => {
+        const slot = captureSlot(nav.length)
+        const at = nav.findIndex(n => n.tab === tab)
+        const cells = nav.map(({ tab: t, label: navLabel, Icon }) => { const label = t === 'scope' && job.kind === 'orders' ? 'Orders' : navLabel; return (
           <button key={t} className={tab === t ? 'on' : ''} aria-current={tab === t ? 'page' : undefined} onClick={() => { setFocusNote(false); if (t === 'diary') setDiaryView('line'); setTab(t) }}><Icon /><span className="nav-l">{label}</span></button>
-        ) })}
-        {/* the tab marker: one bar that slides to the tab you tap, on the dock's bottom edge where the + never covers it */}
-        {nav.some(n => n.tab === tab) && <span className="nav-mark" aria-hidden="true" style={{ '--i': nav.findIndex(n => n.tab === tab) } as React.CSSProperties} />}
-      </nav>
+        ) })
+        cells.splice(slot, 0, <span key="slot" className="nav-slot" aria-hidden="true" />)
+        return (
+          <nav className={'nav' + (sinking ? ' sinking' : '')} style={{ '--dock-cols': `repeat(${nav.length + 1}, minmax(0, 1fr))`, '--n': nav.length, '--cap-x': `calc(4px + (100% - 8px) * ${(slot + 0.5) / (nav.length + 1)})` } as React.CSSProperties}>
+            <DockShape tabs={nav.length} active={at} Icon={at >= 0 ? nav[at].Icon : undefined} capture={tab !== 'ask'} sinking={sinking} />
+            {tab !== 'ask' && <button className="nav-capture" aria-label="Capture" onClick={() => { setCapErr(null); setCapture(true) }}><span><IconPlus size={28} /></span></button>}
+            {cells}
+            {/* the tab marker on the plain bar (narrow phones, the desktop rail): one bar that slides to the tab you tap */}
+            {at >= 0 && <span className="nav-mark" aria-hidden="true" style={{ '--i': at } as React.CSSProperties} />}
+          </nav>
+        )
+      })()}
       {/* over the open capture menu the + turns into its close button, where the thumb already is (phones; the menu keeps its own × for screen readers and the desktop) */}
       {capture && <button className={'cap-close' + (capLeaving ? ' leaving' : '')} aria-hidden="true" tabIndex={-1} onClick={closeCapture}><span><IconPlus size={28} /></span></button>}
       {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); openDay(d) }} />}

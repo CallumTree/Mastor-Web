@@ -64,7 +64,7 @@ const looseTsx = TSX.filter(f => !INK_FILES.has(f)).flatMap(f => read(f).split('
 ok(!looseTsx.length, 'no hex or rgba colours written into the screens', looseTsx)
 
 // ---- 3 · corners 4px at most; the capture key is the one round control
-const ROUND_OK = /\.nav-capture span|\.cap-close span/
+const ROUND_OK = /\.nav-capture span|\.cap-close span|\.nav-disc/
 const tokenRadius = new Map(rules.filter(isTokenRule).flatMap(r => decls(r).filter(([p]) => /^--r(-|$)/.test(p))))
 ok([...tokenRadius.values()].every(v => px(v) <= 4), 'the radius tokens are 4px at most', [...tokenRadius].map(([k, v]) => `${k}: ${v}`))
 const radius = (v: string) => v.split(/\s+/).every(x => px(x) <= 4 || (/^var\(--r(-[a-z]+)?\)$/.test(x) && px(tokenRadius.get(x.slice(4, -1)) ?? '0') <= 4) || x === 'inherit')
