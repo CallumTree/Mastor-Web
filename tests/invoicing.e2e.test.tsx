@@ -41,11 +41,12 @@ describe('VAT invoicing', () => {
     type('VAT number *', 'GB123456789'); type('Sort code *', '12-34-56'); type('Account no. *', '12345678')
     type('Prefix', 'TS-'); type(/next invoice number/i, '1042')
     await screen.findByText('TS-1042')
-    click(screen.getByRole('button', { name: 'Save' })); await closed()
+    click(screen.getByRole('button', { name: 'Save' }))
 
-    // nothing was recorded when the details were missing: the row still asks for agreement, and creating the invoice records it
-    click(await screen.findByRole('button', { name: 'Agreed — create invoice' }))
+    // saving the details brings you straight back to the invoice (no starting again); nothing was recorded meanwhile,
+    // and creating it is what records the client's agreement
     await screen.findByText('£200.00')                                  // VAT @ 20% on £1,000
+    expect(screen.getByRole('button', { name: 'Create invoice TS-1042' })).toBeTruthy()
     click(screen.getByRole('button', { name: 'Create invoice TS-1042' })); await closed()
     await screen.findByText('TS-1042')
     expect(screen.getAllByText(text(/£1,200\.00 incl\. VAT/)).some(el => !el.closest('.ledger'))).toBe(true)   // on the valuation (the ledger also says what's owed)

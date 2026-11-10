@@ -38,25 +38,34 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
         <h3 className="label sec">Company</h3>
         {T('name', 'Company name *', { placeholder: 'As it appears on your invoices' })}
         <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
-        <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
-        <div className="row pair"><div className="grow">{T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}</div><div className="grow">{T('companyNumber', 'Company no.')}</div></div>
+        {T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}
 
         <h3 className="label sec">Bank details (printed on invoices)</h3>
-        <div className="row pair"><div className="grow">{T('accountName', 'Account name')}</div><div className="grow">{T('bankName', 'Bank')}</div></div>
         <div className="row pair"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
 
+        {/* the number carries on from the firm's own sequence, so it's asked before the first invoice, never folded away */}
         <h3 className="label sec">Invoices</h3>
         <div className="row pair">
           <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. INV- (or blank)' })}</div>
           <div className="grow"><Field label="Next invoice number" hint="Carry on from your current sequence"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
         </div>
-        <div className="row pair">
-          <div className="grow"><Field label="Digits" hint="e.g. 4 → 0042"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} /></Field></div>
-          <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>
-        </div>
-        <Field label="Labour day rate (£)" hint="Your cost of one operative-day. Lets each job’s margin include the labour recorded in the diary, shown as an estimate. Leave blank to leave it out.">
-          <input inputMode="decimal" value={s.labourDayRate != null ? String(s.labourDayRate) : ''} onChange={e => { const v = parseFloat(e.target.value.replace(/[£,]/g, '')); set('labourDayRate', isFinite(v) && v > 0 ? v : null) }} placeholder="e.g. 180" />
-        </Field>
+
+        {/* everything an invoice doesn't need first: there when wanted, out of the way when not */}
+        <details className="more" open={!!(s.phone || s.email || s.companyNumber || s.accountName || s.bankName || s.labourDayRate)}>
+          <summary className="more-h">More details<small>Phone, email, company no., bank name, VAT rate, labour rate</small></summary>
+          <div className="stack" style={{ marginTop: 10 }}>
+            <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
+            <div className="row pair"><div className="grow">{T('companyNumber', 'Company no.')}</div><div className="grow">{T('accountName', 'Account name')}</div></div>
+            {T('bankName', 'Bank')}
+            <div className="row pair">
+              <div className="grow"><Field label="Digits" hint="e.g. 4 → 0042"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} /></Field></div>
+              <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>
+            </div>
+            <Field label="Labour day rate (£)" hint="Your cost of one operative-day. Lets each job’s margin include the labour recorded in the diary, shown as an estimate. Leave blank to leave it out.">
+              <input inputMode="decimal" value={s.labourDayRate != null ? String(s.labourDayRate) : ''} onChange={e => { const v = parseFloat(e.target.value.replace(/[£,]/g, '')); set('labourDayRate', isFinite(v) && v > 0 ? v : null) }} placeholder="e.g. 180" />
+            </Field>
+          </div>
+        </details>
         <div className="panel t-small" style={{ padding: '10px 14px' }}>Your next invoice will be <b className="mono slate">{formatInvoiceNo(preview, nextN)}</b></div>
         {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
         <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>

@@ -120,6 +120,9 @@ export default function App() {
   const [checking, setChecking] = useState(false)
   const [access, setAccess] = useState(accessFor(null))
   const [invoicing, setInvoicing] = useState<Valuation | null>(null)
+  // the invoice that sent you to fill in missing details: saving them brings you back to it
+  const [resumeInvoice, setResumeInvoice] = useState<Valuation | null>(null)
+  const [companyName, setCompanyName] = useState('')
   const [voImport, setVoImport] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   // the open job is kept in the address, so a reload comes back to it (src/lib/place.ts)
@@ -150,11 +153,11 @@ export default function App() {
       Promise.all(js.map(j => db.list('costs', j.id))), Promise.all(js.map(j => db.list('orders', j.id))),
       Promise.all(js.map(j => db.list('dayworks', j.id))), Promise.all(js.map(j => db.list('docs', j.id))),
     ])
-    const [st, co] = await Promise.all([db.settings(), meta.get<{ role?: string }>('company')])
+    const [st, co] = await Promise.all([db.settings(), meta.get<{ role?: string; name?: string }>('company')])
     // every state set together after the last await, so the screen updates in one go
     setJobs(js); setVos(v.flat()); setScope(s.flat()); setVals(va.flat()); setDiary(di.flat()); setSettings(st)
     setCosts(co_.flat()); setOrders(or_.flat()); setDayworks(dw_.flat()); setDocs(dc_.flat())
-    setAccess(a => (a.role === (co?.role ?? null) ? a : accessFor(co?.role))); setReady(true)
+    setAccess(a => (a.role === (co?.role ?? null) ? a : accessFor(co?.role))); setCompanyName(co?.name ?? ''); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
 
@@ -379,7 +382,8 @@ export default function App() {
           }
           setVoImport(false); await reload()
         }} />}
-      {settingsOpen && <SettingsSheet settings={settings} onClose={() => setSettingsOpen(false)} onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload() }}
+      {settingsOpen && <SettingsSheet settings={settings ?? (companyName ? { ...blankSettings(), name: companyName } : undefined)} onClose={() => { setSettingsOpen(false); setResumeInvoice(null) }}
+        onSave={async s => { await db.putSettings(s); setSettingsOpen(false); await reload(); if (resumeInvoice) { setInvoicing(resumeInvoice); setResumeInvoice(null) } }}
         onBackup={async () => downloadBackup(await makeBackup())}
         onRestore={async text => { const r = await restoreBackup(text); await reload(); return r.jobs }}
         onPlayIntro={() => { setSettingsOpen(false); setIntro(true) }} onRates={() => { setSettingsOpen(false); setRatesOpen(true) }} onTeam={() => { setSettingsOpen(false); setTeamOpen(true) }}
@@ -443,7 +447,7 @@ export default function App() {
         const a = invoiceAmounts(job, invoicing, jobScope, jobVos, rate)
         const alloc = settings ? allocateInvoiceNo(settings, vals) : { number: '—', next: 1 }
         return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)} jobMissing={jobMissingForInvoice(job)}
-          onClose={() => setInvoicing(null)} onSettings={() => { setInvoicing(null); setSettingsOpen(true) }} onJobSetup={() => { setInvoicing(null); setJobForm('edit') }}
+          onClose={() => setInvoicing(null)} onSettings={() => { setResumeInvoice(invoicing); setInvoicing(null); setSettingsOpen(true) }} onJobSetup={() => { setResumeInvoice(invoicing); setInvoicing(null); setJobForm('edit') }}
           agreeing={reviewStage(invoicing) === 'review' ? valRef(invoicing.number) : undefined}
           onAgreeOnly={async () => { await db.putValuation(markAgreed(invoicing)); setInvoicing(null); await reload() }}
           onCreate={async date => {
@@ -464,8 +468,8 @@ export default function App() {
       {newJob && access.money && <NewJob books={books} onClose={() => setNewJob(false)} onByHand={() => { setNewJob(false); setJobForm('new') }}
         onCreate={async (j, lines, pack) => { await db.putJob(j); await savePack(j, [], lines, pack); setNewJob(false); await reload(); setOpenId(j.id) }} />}
       {jobForm && access.money && (
-        <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} onClose={() => setJobForm(null)}
-          onSave={async j => { await db.putJob({ ...j, byClaude: null }); setJobForm(null); await reload(); setOpenId(j.id) }}
+        <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} onClose={() => { setJobForm(null); setResumeInvoice(null) }}
+          onSave={async j => { await db.putJob({ ...j, byClaude: null }); setJobForm(null); await reload(); setOpenId(j.id); if (resumeInvoice) { setInvoicing(resumeInvoice); setResumeInvoice(null) } }}
           onDelete={jobForm === 'edit' && job ? async () => { await db.deleteJob(job.id); setJobForm(null); setOpenId(null); await reload() } : undefined} />
       )}
       {logging && job && (
