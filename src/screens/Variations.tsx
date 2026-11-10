@@ -72,15 +72,12 @@ export function LogVariation({ onSave, onClose, initial, houses = [] }: { onSave
     <Sheet onClose={onClose}>
       <div className="stack">
         <h2 className="label bracket">Log variation</h2>
-        <div className="hint" style={{ marginTop: 2 }}>Capture it now — price it later.</div>
         <Field label="What's the extra work? *"><textarea rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="e.g. Replace rotten joists under bath" /></Field>
         <HousePick houses={houses} value={house} onChange={setHouse} />
         <Field label="Where"><input value={room} onChange={e => setRoom(e.target.value)} placeholder="e.g. Bathroom" /></Field>
-        <div className="row">
-          <div className="grow"><Field label="Qty (if known)"><input inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} /></Field></div>
-          <div className="grow"><Field label="Unit"><input value={unit} onChange={e => setUnit(e.target.value)} /></Field></div>
-        </div>
-        <div className="chips">{UNITS.map(u => <button key={u} className={'chip' + (unit === u ? ' on' : '')} onClick={() => setUnit(u)}>{u}</button>)}</div>
+        <Field label="Qty (if known)"><input inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)} /></Field>
+        {/* the client's units, one tap; none picked is an item */}
+        <div className="chips" role="group" aria-label="Unit">{UNITS.map(u => <button key={u} className={'chip' + (unit === u ? ' on' : '')} aria-pressed={unit === u} onClick={() => setUnit(unit === u ? '' : u)}>{u}</button>)}</div>
         <Field label="Why / who asked"><input value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Found when bath removed" /></Field>
         <div>
           <div className="thumbs" style={{ marginBottom: 8 }}>

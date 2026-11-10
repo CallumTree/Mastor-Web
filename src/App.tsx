@@ -129,6 +129,7 @@ export default function App() {
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
   const [newJob, setNewJob] = useState(false)
   const [logging, setLogging] = useState(false)
+  const [logHouse, setLogHouse] = useState<string | null>(null)   // Add VO from inside a house: that house, already picked
   const [editing, setEditing] = useState<Variation | null>(null)
   const [scopeForm, setScopeForm] = useState<ScopeItem | 'new' | null>(null)
   const [importing, setImporting] = useState(false)
@@ -260,7 +261,7 @@ export default function App() {
       ) : job ? (
         <JobView job={job} vos={jobVos} scope={jobScope} vals={jobVals}
           onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')} onUpdateJob={j => { void act(j.id, ['jobs'], () => db.putJob(j), () => setJobs(js => js.map(x => (x.id === j.id ? j : x)))) }}
-          onLogVariation={() => setLogging(true)} onEditVariation={setEditing}
+          onLogVariation={h => { setLogHouse(h ?? null); setLogging(true) }} onEditVariation={setEditing}
           onToggleVo={v => { void act(job.id, ['vos', 'vals'], () => toggleVariation(v, jobVals), () => {
             // the tick shows at once when it's known where it goes; the first tick of a month opens the valuation first
             if (lockedIn(v, jobVals)) return
@@ -468,8 +469,8 @@ export default function App() {
           onDelete={jobForm === 'edit' && job ? async () => { await db.deleteJob(job.id); setJobForm(null); setOpenId(null); await reload() } : undefined} />
       )}
       {logging && job && (
-        <LogVariation houses={houses} onClose={() => { setLogging(false); setLogFrom(null) }}
-          initial={logFrom ? { description: logFrom.note, room: logFrom.room, photoIds: logFrom.mediaId ? [logFrom.mediaId] : [] } : undefined}
+        <LogVariation houses={houses} onClose={() => { setLogging(false); setLogFrom(null); setLogHouse(null) }}
+          initial={logFrom ? { description: logFrom.note, room: logFrom.room, photoIds: logFrom.mediaId ? [logFrom.mediaId] : [] } : logHouse ? { property: logHouse } : undefined}
           onSave={async data => {
             const id = uid()
             // The VO keeps its OWN copy of the diary photo — deleting one must never delete the other's evidence
@@ -479,7 +480,7 @@ export default function App() {
             }
             await db.putVariation({ ...data, id, jobId: job.id, number: await nextVoNumber(job.id), valuationId: null })
             if (logFrom) await db.putDiary({ ...logFrom, voId: id })   // the photo now shows it's evidence for this VO
-            await reload(); setLogging(false); setLogFrom(null)   // close once the new VO is on screen
+            await refresh(job.id, ['vos', 'diary']); setLogging(false); setLogFrom(null); setLogHouse(null)   // close once the new VO is on screen
           }} />
       )}
       {editing && (

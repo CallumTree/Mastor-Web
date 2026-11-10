@@ -80,7 +80,7 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
           : <img src={showOriginal && originalUrl ? originalUrl : url} alt={caption || 'Site photo'} style={{ width: '100%', maxHeight: '52vh', objectFit: 'contain', background: 'var(--ground)', borderRadius: 'var(--r-sm)' }} />)}
         {e.transcript && <div className="panel t-note"><div className="label">What was said</div>{e.transcript}</div>}
         {e.originalMediaId && <button className="chip" onClick={() => setShowOriginal(!showOriginal)}>{showOriginal ? 'Showing original — tap for marked-up' : 'Show original'}</button>}
-        <Field label="Caption" hint="Tip: tap the mic on your keyboard to dictate"><input value={caption} onChange={x => setCaption(x.target.value)} placeholder="What does this show?" /></Field>
+        <Field label="Caption"><input value={caption} onChange={x => setCaption(x.target.value)} placeholder="What does this show?" /></Field>
         <Field label="Room / area"><input value={room} onChange={x => setRoom(x.target.value)} list="diary-rooms" /></Field>
         <datalist id="diary-rooms">{rooms.map(r => <option key={r} value={r} />)}</datalist>
         {e.type === 'photo' && <button className="btn btn-secondary" onClick={() => setMarking(true)}><IconMarkup /> {e.originalMediaId ? 'Mark up again' : 'Mark up'}</button>}

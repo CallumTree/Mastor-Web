@@ -383,7 +383,10 @@ label.btn { cursor: pointer; }
 .house-amt { font-size: 20px; font-weight: 520; letter-spacing: -.02em; }
 .house-h .prop-foot { grid-column: 1 / -1; margin: 6px 0 0; }
 .house-h .hint { grid-column: 1 / -1; }
-.house-all { padding: 12px 0 4px; }
+.house-all { padding: 12px 0 4px; gap: 8px; }
+.house-all > .btn { width: auto; }
+.house-all > .btn.grow { flex: 1 1 0; min-width: 0; }
+.house-all > .house-vo { flex: none; padding: 0 14px; }
 .trade-jump { margin: 8px 0 4px; }
 .chip.sm { min-height: 36px; padding: 0 11px; font-size: 14px; }
 .chip.sm .core { margin-right: 6px; }

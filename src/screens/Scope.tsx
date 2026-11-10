@@ -25,7 +25,7 @@ type Filter = 'all' | 'live' | 'claimed' | 'vos'
 
 /** What the Scope tab needs for the job's variations: they're work at a house like any line, so they live here too. */
 export interface VoProps {
-  vos: Variation[]; onToggleVo: (v: Variation) => void; onEditVo: (v: Variation) => void; onLogVo: () => void
+  vos: Variation[]; onToggleVo: (v: Variation) => void; onEditVo: (v: Variation) => void; onLogVo: (house?: string) => void
   onImportVo?: () => void; onRegister?: () => void; onDayworks?: () => void
   /** the operative's "done" marks (siteDone.ts): the diary they're kept in, and making or taking one back */
   diary?: DiaryEntry[]; onMarkDone?: (i: ScopeItem) => void; onUndoDone?: (e: DiaryEntry) => void
@@ -86,7 +86,7 @@ function SiteScope({ job, scope, vos, vals, diary = [], onEditVo, onToggleVo, on
   return (
     <div className="stack">
       <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? '' : 's'}${vos.length ? ` · ${vos.length} VO${vos.length === 1 ? '' : 's'}` : ''}`} />
-      <div className="tab-actions"><button className="btn btn-sm btn-primary" onClick={onLogVo}><IconPlus /> Add VO</button></div>
+      <div className="tab-actions"><button className="btn btn-sm btn-primary" onClick={() => onLogVo()}><IconPlus /> Add VO</button></div>
       {scope.length === 0 && vos.length === 0 && <div className="card empty">No scope on this job yet. Spot extra work? Add it as a VO, at its house.</div>}
       {trades.length > 1 && (
         <div className="chips" role="group" aria-label="Your trade">
@@ -214,10 +214,12 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           <div className="prop-foot"><TradeBar items={all} label={`${pct}% claimed`} /><span className={'prop-pct' + (pct === 100 ? ' all' : '')}>{pct === 100 && <IconCheck size={13} />}{fig(`${pct}%`)}</span></div>
           {p !== '—' && job.properties?.[p] && <div className="hint">{job.properties[p]}</div>}
         </div>}
-        {inSheet && remaining.length > 0 && filter !== 'vos' && (
-          <div className="house-all">
+        {inSheet && (
+          <div className="house-all row">
             {/* acts on the tap; the Undo bar takes exactly these back */}
-            <button className="btn btn-secondary" onClick={() => onToggleMany(remaining)}>Tick all remaining lines ({remaining.length})</button>
+            {remaining.length > 0 && filter !== 'vos' && <button className="btn btn-secondary grow" aria-label={`Tick all remaining lines (${remaining.length})`} onClick={() => onToggleMany(remaining)}>{figs(`Tick all (${remaining.length})`)}</button>}
+            {/* extra work found here: the house is already known */}
+            <button className="btn btn-secondary house-vo" onClick={() => onLogVo(p === '—' ? undefined : p)}><IconPlus /> Add VO</button>
           </div>
         )}
         {inSheet && groups.length > 2 && (
@@ -267,20 +269,15 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
 
       {/* the two ways work comes in, under the heading: a VO as you spot it, or the client's documents */}
       <div className="tab-actions">
-        <button className={'btn btn-sm ' + (empty ? 'btn-secondary' : 'btn-primary')} onClick={onLogVo}><IconPlus /> Add VO</button>
+        <button className={'btn btn-sm ' + (empty ? 'btn-secondary' : 'btn-primary')} onClick={() => onLogVo()}><IconPlus /> Add VO</button>
         {onImportVo ? <TabMenu title="Import" button={{ label: <><IconDoc /> Import</>, className: 'btn btn-sm ' + (empty ? 'btn-primary' : 'btn-secondary') }} actions={[
           { label: 'Scope', hint: 'The schedule of works, BoQ, works orders, PCI or surveys: Excel, PDF or Word. Every line read for you to check.', onClick: onImport },
           { label: 'VOs', hint: 'The client’s VO ticket, site instruction or VO schedule: photo, scan, PDF, Word or Excel. A VO per line, at its house.', onClick: onImportVo },
         ]} /> : <button className={'btn btn-sm ' + (empty ? 'btn-primary' : 'btn-secondary')} onClick={onImport}><IconDoc /> Import scope</button>}
       </div>
 
-      {filter === 'vos' ? (vos.length > 0 && <VoSummary job={job} vos={vos} vals={vals} />)
-        : !empty && <SumStrip label="Work summary" caption="At base rates. Uplifts are added in the valuation." cells={[
-        { label: 'Scope total', value: money(total), note: unpricedLines ? `+ ${unpricedLines} unpriced` : `${scope.length} line${scope.length === 1 ? '' : 's'}`, nil: !scope.length },
-        { label: 'Variations', value: money(voTotal), note: [`${vos.filter(counts).length} VO${vos.filter(counts).length === 1 ? '' : 's'}`, voUnpriced ? `+ ${voUnpriced} unpriced` : ''].filter(Boolean).join(' · '), nil: !voTotal },   // unpriced is never £0
-        { label: 'Claimed', value: money(claimed + voClaimed), note: `${total + voTotal ? Math.round(((claimed + voClaimed) / (total + voTotal)) * 100) : 0}% of the work`, hot: true, nil: !(claimed + voClaimed) },
-        { label: 'Still to do', value: money(total - claimed + voTotal - voClaimed), note: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'}${voLive.length ? ` · ${voLive.length} VO${voLive.length === 1 ? '' : 's'}` : ''}`, nil: !unclaimed.length && !voLive.length },
-      ]} />}
+      {/* the money for the job is on Home and Vals; Scope is the work, house by house (each house shows its value) */}
+      {filter === 'vos' && vos.length > 0 && <VoSummary job={job} vos={vos} vals={vals} />}
 
       <div className="chips">
         {(['all', 'live', 'claimed', 'vos'] as Filter[]).map(f => (
@@ -318,7 +315,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
 
       {openHouse && <Sheet onClose={() => setOpenHouse(null)} label={houseName(openHouse)} className="house-sheet">{houseBody(openHouse, true)}</Sheet>}
 
-      {!empty && <div className="hint" style={{ textAlign: 'center' }}>Tick a line or a priced VO to put it in the open valuation. Untick to send it back.</div>}
     </div>
   )
 }

@@ -27,13 +27,13 @@ describe('motion', () => {
 
     click(tab('home'))
     click(await screen.findByRole('button', { name: 'Capture' }))
-    await screen.findByText(/everything here goes into today’s diary/i)
+    await screen.findByText(/^Capture · /)
     const close = container.querySelector('.cap-close')!
     expect(close).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy()   // the menu's own × stays for screen readers
     click(close)
     expect(container.querySelector('.capture-sheet.leaving')).toBeTruthy()   // drops away first…
-    await waitFor(() => expect(screen.queryByText(/everything here goes into today’s diary/i)).toBeNull())   // …then it's gone
+    await waitFor(() => expect(screen.queryByText(/^Capture · /)).toBeNull())   // …then it's gone
     expect(container.querySelector('.cap-close')).toBeNull()
   })
 })

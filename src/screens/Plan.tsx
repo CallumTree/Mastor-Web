@@ -170,7 +170,7 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
       {editing && <PlanSheet job={job} item={editing} entries={entries} properties={properties} trades={trades}
         onClose={() => setEditing(null)}
         onSave={e => { onSave({ ...e, byClaude: null }); setEditing(null) }}
-        onAddLinked={(event, todo) => { onSave({ ...event, byClaude: null }); onSave(todo); setEditing(todo) }}
+        onAddLinked={(event, todo) => { onSave({ ...event, byClaude: null }); setEditing(todo) }}   // the to-do is saved when it's added, never blank
         onDelete={e => { onDelete(e, todosFor(e, entries)); setEditing(null) }} />}
     </div>
   )
@@ -198,12 +198,6 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
     <Sheet onClose={onClose} label={isNew ? `New ${kind}` : `Change ${kind}`}>
       <div className="stack">
         <h2 className="label bracket">{isNew ? (e.type === 'event' ? 'Book a key date' : 'Add a to-do') : e.type === 'event' ? 'Key date' : 'To-do'}</h2>
-        {isNew && (
-          <div className="seg" role="group" aria-label="Kind">
-            <button className={e.type === 'todo' ? 'on' : ''} aria-pressed={e.type === 'todo'} onClick={() => set({ type: 'todo', time: e.time })}>To-do</button>
-            <button className={e.type === 'event' ? 'on' : ''} aria-pressed={e.type === 'event'} onClick={() => set({ type: 'event', linkId: null, date: e.date || addDays(today, 1) })}>Key date</button>
-          </div>
-        )}
         <Field label={e.type === 'event' ? 'What’s happening' : 'What needs doing'}>
           <textarea rows={2} value={e.note} autoFocus={isNew} onChange={x => set({ note: x.target.value })}
             placeholder={e.type === 'event' ? 'e.g. Kitchen refit starts' : 'e.g. Speak to the tenant about the start date'} />

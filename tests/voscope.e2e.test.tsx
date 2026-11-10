@@ -38,6 +38,13 @@ describe('VOs in Scope', () => {
 
     // No. 5's row says it has a VO; open it and the VO is there, with the house's lines
     const five = await screen.findByRole('button', { name: 'Property 5, 1 VO' })
+    // from inside No. 3, Add VO already knows the house: no house to pick
+    click(screen.getByRole('button', { name: 'Property 3' }))
+    click(within(await screen.findByRole('dialog', { name: '3 Elm Row' })).getByRole('button', { name: /^Add VO$/ }))
+    expect(screen.getAllByRole('button', { name: '3 Elm Row' }).at(-1)!.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(document.querySelectorAll('.sheet-bg')[1]!)
+    fireEvent.click(document.querySelector('.sheet-bg')!)
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     expect(screen.getByRole('button', { name: 'Property 3' })).toBeTruthy()   // No. 3 has none
     click(five)
     const vo = (await screen.findByText('Replace gutter at the back')).closest('.vo-line') as HTMLElement
