@@ -28,8 +28,8 @@ describe('the client’s review', () => {
     expect(within(week).getByText('None yet')).toBeTruthy()
 
     // send it: locked while the client reviews it
-    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
-    click(await screen.findByRole('button', { name: /^send val i for £7,000\.00/i }))
+    click(await screen.findByRole('button', { name: /^send val i for £7,000\.00/i }))   // one deliberate tap, no second screen
+    expect(document.querySelector('.sheet')).toBeNull()
     // sending hands over the certificate and closes: no second sheet to dismiss
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · sent today/)
@@ -51,8 +51,7 @@ describe('the client’s review', () => {
     expect((await db.diary('jr')).some(e => e.type === 'note' && e.category === 'Commercial' && e.note === 'VAL I: the client asked for changes — Wet room not finished — take it out')).toBe(true)
 
     // sent again for the new figure
-    click(screen.getByRole('button', { name: 'Send VAL I again' }))
-    click(await screen.findByRole('button', { name: /^send val i for £4,000\.00/i }))
+    click(await screen.findByRole('button', { name: /^send val i again for £4,000\.00/i }))
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · sent today · sent 2nd time/)
 

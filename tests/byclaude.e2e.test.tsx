@@ -28,10 +28,9 @@ describe('by Claude', () => {
     nav('vals')
     await screen.findByText('Masonry paint')
     expect(screen.getAllByText('by Claude').length).toBe(1)          // the line in VAL I
-    click(screen.getByRole('button', { name: 'Send VAL I for review' }))
+    // what the client would query sits on the valuation itself, above the one tap that sends it
     await screen.findByText(/Claude added 1 line \(marked “by Claude”\) — check it before you send it/)
-    fireEvent.click(document.querySelector('.sheet-bg')!)
-    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
+    expect(screen.getByRole('button', { name: /^Send VAL I for £/ })).toBeTruthy()
 
     nav('scope')
     await screen.findByText('Masonry paint')

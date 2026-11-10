@@ -112,10 +112,8 @@ export function issuePlan(job: Job, val: Valuation, vals: Valuation[], scope: Sc
   const { u1, u2 } = upliftAmounts(totals.base, job.uplift1, job.uplift2)
   const previous = pennies(vals.filter(v => v.status === 'Issued' && v.id !== val.id).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0))
   const cumulative = pennies(previous + totals.gross)
-  const live = vos.filter(v => v.status !== 'Rejected')
-  const f = (1 + (job.uplift1 || 0) / 100) * (1 + (job.uplift2 || 0) / 100)
-  const scopeGross = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) * f)
-  const target = pennies((job.contractValue || scopeGross) + live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0) * f)
+  // what the job is worth is worked out once, by the shared rule (jobWorth), never a second way here
+  const target = jobWorth(job, scope, vos).total
   const mine = scope.filter(i => i.valuationId === val.id), myVos = vos.filter(v => v.valuationId === val.id)
   const multi = new Set(scope.map(i => i.property).filter(Boolean)).size > 1
   const groupOf = (i: ScopeItem) => (multi ? (i.property ? `No. ${i.property}` : 'Unassigned') : i.workstream || i.room || 'General')

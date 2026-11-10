@@ -76,8 +76,7 @@ describe('multi-property scheme', () => {
 
     // wrong spec: delete entire scope → certified lines survive, everything else goes
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
-    click(await screen.findByRole('button', { name: /^send val i for £/i }))
+    click(await screen.findByRole('button', { name: /^send val i for £/i }))   // one deliberate tap: the figure is on the button
     await screen.findAllByText(/^With client · For review · sent today/)
     nav('scope')
     click(await screen.findByRole('button', { name: 'Scope options' })); click(screen.getByRole('button', { name: /^add a scope line/i }))

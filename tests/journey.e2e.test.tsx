@@ -73,8 +73,7 @@ describe('Park Road, end to end', () => {
 
     // --- issue VAL I → locked
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
-    click(await screen.findByRole('button', { name: /^send val i for £/i }))
+    click(await screen.findByRole('button', { name: /^send val i for £/i }))   // one deliberate tap: the figure is on the button
     await screen.findByText(lockedText('Sent'))
     nav('scope')
     const locked = await screen.findByText(lockedText('VAL I'))
@@ -100,7 +99,7 @@ describe('Park Road, end to end', () => {
     click(within(screen.getByText('Replace rotten joists under bath').closest('.vo-line') as HTMLElement).getByRole('button', { name: /add to valuation/i }))
     await waitFor(() => expect(screen.getAllByText('VAL II').length).toBeGreaterThan(0))
     nav('vals')
-    await screen.findByText(/VO I/)
+    expect((await screen.findAllByText(/VO I/)).length).toBeGreaterThan(0)   // its line in VAL II (and the check above the send button that it isn't instructed yet)
 
     // --- everything survives a full reload
     cleanup()

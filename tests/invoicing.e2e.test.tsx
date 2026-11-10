@@ -16,8 +16,7 @@ async function issueOne(desc: string, rate: string, valNo: number) {
   await waitFor(() => expect(screen.getByText(desc)).toBeTruthy())
   click((await screen.findAllByRole('button', { name: /add to valuation/i }))[0])
   nav('vals')
-  click(await screen.findByRole('button', { name: `Send VAL ${'I'.repeat(valNo)} for review` }))
-  click(await screen.findByRole('button', { name: new RegExp(`^send val ${'i'.repeat(valNo)} for £`, 'i') }))
+  click(await screen.findByRole('button', { name: new RegExp(`^send val ${'i'.repeat(valNo)} for £`, 'i') }))   // one deliberate tap: the figure is on the button
   // sent for review and locked; this client agreed it straight away, so the invoice is the next step on its row
   await closed()
   await screen.findAllByText(/^With client · For review/)
