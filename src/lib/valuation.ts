@@ -52,7 +52,7 @@ export async function claimMany(items: ScopeItem[]) {
   const live = items.filter(i => !i.valuationId && isPriced(i))
   if (!live.length) return
   const v = await ensureOpenValuation(live[0].jobId)
-  for (const i of live) await db.putScope({ ...i, valuationId: v.id })
+  await db.putScopeMany(live.map(i => ({ ...i, valuationId: v.id })))
 }
 
 export async function toggleVariation(vo: Variation, vals: Valuation[]) {
@@ -64,8 +64,9 @@ export async function toggleVariation(vo: Variation, vals: Valuation[]) {
 /** Deleting an open valuation returns everything in it to live. Issued ones can't be deleted. */
 export async function deleteOpenValuation(v: Valuation, scope: ScopeItem[], vos: Variation[]) {
   if (v.status !== 'Open') return
-  for (const s of scope.filter(s => s.valuationId === v.id)) await db.putScope({ ...s, valuationId: null })
-  for (const x of vos.filter(x => x.valuationId === v.id)) await db.putVariation({ ...x, valuationId: null })
+  const lines = scope.filter(s => s.valuationId === v.id), extras = vos.filter(x => x.valuationId === v.id)
+  if (lines.length) await db.putScopeMany(lines.map(s => ({ ...s, valuationId: null })))
+  if (extras.length) await db.putVariationMany(extras.map(x => ({ ...x, valuationId: null })))
   await db.deleteValuation(v.id)
 }
 

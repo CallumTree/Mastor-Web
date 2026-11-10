@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { blankSettings, type CompanySettings, type Cost, type Dayworks, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder } from './lib/types'
 import { placeParam, setPlace } from './lib/place'
 import { db, nextVoNumber, rates, uid } from './lib/db'
@@ -13,7 +13,7 @@ import { buildDayworksPdf, dayworksVariation, dwRef } from './lib/dayworks'
 import { accountsCsv, invoiceRows, periods } from './lib/accounts'
 import { buildEvidence, evidenceFileName, orderEvidence, schemeEvidence } from './lib/evidence'
 import { AccessContext, accessFor } from './lib/access'
-import { claimMany, deleteOpenValuation, ensureOpenValuation, isPriced, issueValuation, lockedIn, markAgreed, reviewStage, toggleScope, toggleVariation, valRef } from './lib/valuation'
+import { claimMany, claimTarget, deleteOpenValuation, ensureOpenValuation, isPriced, issueValuation, lockedIn, markAgreed, reviewStage, toggleScope, toggleVariation, valRef } from './lib/valuation'
 import { JobsList } from './screens/JobsList'
 import { newNote } from './screens/Notes'
 import { Dashboard } from './screens/Dashboard'
@@ -149,6 +149,39 @@ export default function App() {
     setAccess(a => (a.role === (co?.role ?? null) ? a : accessFor(co?.role))); setReady(true)
   }, [])
   useEffect(() => { reload(); keepStorage() }, [reload])
+
+  // ---- saving: the screen changes first, the device write follows, then only that job's records are re-read ----
+  type Part = 'jobs' | 'scope' | 'vos' | 'vals' | 'diary' | 'costs' | 'orders' | 'dayworks' | 'docs'
+  const refresh = useCallback(async (jobId: string, parts: Part[]) => {
+    const swap = <T extends { jobId: string }>(fresh: T[]) => (all: T[]) => [...all.filter(x => x.jobId !== jobId), ...fresh]
+    const got = await Promise.all(parts.map(async p => p === 'jobs' ? db.jobs() : p === 'scope' ? db.scope(jobId) : p === 'vos' ? db.variations(jobId) : p === 'vals' ? db.valuations(jobId)
+      : p === 'diary' ? db.diary(jobId) : db.list(p, jobId)))
+    parts.forEach((p, i) => {
+      const rows = got[i] as never[]
+      if (p === 'jobs') setJobs(rows); else if (p === 'scope') setScope(swap<ScopeItem>(rows)); else if (p === 'vos') setVos(swap<Variation>(rows)); else if (p === 'vals') setVals(swap<Valuation>(rows))
+      else if (p === 'diary') setDiary(swap<DiaryEntry>(rows)); else if (p === 'costs') setCosts(swap<Cost>(rows)); else if (p === 'orders') setOrders(swap<WorkOrder>(rows))
+      else if (p === 'dayworks') setDayworks(swap<Dayworks>(rows)); else setDocs(swap<JobDocument>(rows))
+    })
+  }, [])
+  // writes run one after another (two quick ticks never race to open two valuations); the re-read waits until the last
+  // one queued has landed, so a tick made meanwhile is never drawn back. A write that fails says so and the screen goes
+  // back to what the device really holds.
+  const queue = useRef({ chain: Promise.resolve() as Promise<unknown>, waiting: 0, dirty: new Map<string, Set<Part>>(), failed: false })
+  const act = useCallback(<T,>(jobId: string, parts: Part[], write: () => Promise<T>, patch?: () => void): Promise<T | undefined> => {
+    patch?.()
+    const q = queue.current
+    q.waiting++
+    const mine = (q.dirty.get(jobId) ?? new Set<Part>()); parts.forEach(p => mine.add(p)); q.dirty.set(jobId, mine)
+    const done = q.chain.then(write).then(r => r, e => { q.failed = true; tell(e, 'That didn’t save on this device. The screen shows what’s saved; try it again.'); return undefined })
+    q.chain = done.then(async () => {
+      if (--q.waiting) return
+      const dirty = q.dirty, failed = q.failed
+      q.dirty = new Map(); q.failed = false
+      if (failed) await reload()
+      else for (const [id, ps] of dirty) await refresh(id, [...ps])
+    })
+    return q.chain.then(() => done)
+  }, [reload, refresh])
   // a job opens at its top, however far down the jobs screen it was tapped
   useEffect(() => { const el = document.scrollingElement; if (el) el.scrollTop = 0 }, [openId])
   // changes made on another device arrive → refresh what's on screen
@@ -177,7 +210,12 @@ export default function App() {
   const jobOrders = job ? orders.filter(o => o.jobId === job.id) : []
   const jobDayworks = job ? dayworks.filter(d => d.jobId === job.id) : []
   const jobDocs = job ? docs.filter(d => d.jobId === job.id) : []
-  const run = (fn: () => Promise<unknown>) => async () => { await fn(); await reload() }
+  /** A batch of ticks shown at once, when the valuation they go into is already open. */
+  const tickNow = (items: ScopeItem[]) => () => {
+    const to = claimTarget(jobVals)?.id; if (!to) return
+    const ids = new Set(items.filter(i => !i.valuationId && isPriced(i)).map(i => i.id))
+    setScope(all => all.map(x => (ids.has(x.id) ? { ...x, valuationId: to } : x)))
+  }
 
   return (
     <AccessContext.Provider value={access}>
@@ -186,19 +224,28 @@ export default function App() {
         <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} costs={costs} diary={diary} orders={orders} dayRate={settings?.labourDayRate} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
       ) : job ? (
         <JobView job={job} vos={jobVos} scope={jobScope} vals={jobVals}
-          onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')} onUpdateJob={j => run(() => db.putJob(j))()}
+          onBack={() => setOpenId(null)} onSetup={() => setJobForm('edit')} onUpdateJob={j => { void act(j.id, ['jobs'], () => db.putJob(j), () => setJobs(js => js.map(x => (x.id === j.id ? j : x)))) }}
           onLogVariation={() => setLogging(true)} onEditVariation={setEditing}
-          onToggleVo={v => run(() => toggleVariation(v, jobVals))()}
-          onToggleScope={i => run(() => toggleScope(i, jobVals))()}
-          onClaimMany={items => run(() => claimMany(items))()}
-          onClearUnclaimed={items => run(async () => { for (const i of items) if (!i.valuationId) await db.deleteScope(i.id) })()}
-          onDeleteScope={items => run(async () => { for (const i of items) if (!lockedIn(i, jobVals)) await db.deleteScope(i.id) })()}
+          onToggleVo={v => { void act(job.id, ['vos', 'vals'], () => toggleVariation(v, jobVals), () => {
+            // the tick shows at once when it's known where it goes; the first tick of a month opens the valuation first
+            if (lockedIn(v, jobVals)) return
+            const to = v.valuationId ? null : isPriced(v) && v.status !== 'Rejected' ? claimTarget(jobVals)?.id : undefined
+            if (to !== undefined) setVos(all => all.map(x => (x.id === v.id ? { ...x, valuationId: to } : x)))
+          }) }}
+          onToggleScope={i => { void act(job.id, ['scope', 'vals'], () => toggleScope(i, jobVals), () => {
+            if (lockedIn(i, jobVals)) return
+            const to = i.valuationId ? null : isPriced(i) ? claimTarget(jobVals)?.id : undefined
+            if (to !== undefined) setScope(all => all.map(x => (x.id === i.id ? { ...x, valuationId: to } : x)))
+          }) }}
+          onClaimMany={items => { void act(job.id, ['scope', 'vals'], () => claimMany(items), tickNow(items)) }}
+          onClearUnclaimed={items => { const ids = new Set(items.filter(i => !i.valuationId).map(i => i.id)); void act(job.id, ['scope'], async () => { for (const id of ids) await db.deleteScope(id) }, () => setScope(all => all.filter(x => !ids.has(x.id)))) }}
+          onDeleteScope={items => { const ids = new Set(items.filter(i => !lockedIn(i, jobVals)).map(i => i.id)); void act(job.id, ['scope'], async () => { for (const id of ids) await db.deleteScope(id) }, () => setScope(all => all.filter(x => !ids.has(x.id)))) }}
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)} onCheckRates={books.length ? () => setChecking(true) : undefined}
           onEvidence={async () => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(schemeEvidence(job, jobScope, jobVals, jobDiary, company)), evidenceFileName(job, 'scheme')) }}
-          onIssue={async v => { const issued = await issueValuation(v); await reload(); return issued }}
-          onReview={(v, note) => run(async () => { await db.putValuation({ ...v, byClaude: null }); if (note) await db.putDiary(newNote(job, note, 'Commercial')) })()}
-          onDeleteOpenVal={v => run(() => deleteOpenValuation(v, jobScope, jobVos))()}
-          onPaid={v => run(() => db.putValuation(v))()}
+          onIssue={async v => (await act(job.id, ['vals', 'scope', 'vos'], () => issueValuation(v))) ?? v}
+          onReview={(v, note) => { void act(job.id, ['vals', 'diary'], async () => { await db.putValuation({ ...v, byClaude: null }); if (note) await db.putDiary(newNote(job, note, 'Commercial')) }) }}
+          onDeleteOpenVal={v => { void act(job.id, ['vals', 'scope', 'vos'], () => deleteOpenValuation(v, jobScope, jobVos)) }}
+          onPaid={v => { void act(job.id, ['vals'], () => db.putValuation(v), () => setVals(all => all.map(x => (x.id === v.id ? v : x)))) }}
           onImportVo={() => setVoImport(true)}
           onVoRegister={async () => {
             const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name
@@ -213,35 +260,36 @@ export default function App() {
           }}
           onDayworks={(fresh: boolean) => setDwOpen(fresh ? 'new' : 'list')}
           docs={jobDocs}
-          onAddDoc={async (file, kind, name) => { const fileId = uid(); await db.putPhoto(fileId, file); await db.put('docs', { id: uid(), jobId: job.id, name, kind, fileId, type: file.type || 'application/octet-stream', size: file.size, addedAt: Date.now() }); await reload() }}
+          onAddDoc={async (file, kind, name) => { const fileId = uid(); await db.putPhoto(fileId, file); await act(job.id, ['docs'], () => db.put('docs', { id: uid(), jobId: job.id, name, kind, fileId, type: file.type || 'application/octet-stream', size: file.size, addedAt: Date.now() })) }}
           onOpenDoc={async d => {
             const blob = (await db.photo(d.fileId)) ?? (await fetchPhoto(d.fileId))
             if (!blob) { alert('That document isn’t on this device yet and couldn’t be fetched — check signal and try again.'); return }
             const ext = d.type === 'application/pdf' ? '.pdf' : ''
             await shareOrDownload(new Blob([blob], { type: d.type }), d.name.replace(/[^A-Za-z0-9 _.-]+/g, '_') + ext)
           }}
-          onDeleteDoc={async d => { await db.remove('docs', d); await db.deletePhoto(d.fileId); await reload() }}
-          orders={jobOrders} onNewOrder={() => setOrderOpen('new')} onOpenOrder={setOrderOpen} onClaimOrders={lines => run(() => claimMany(lines))()}
+          onDeleteDoc={async d => { await act(job.id, ['docs'], async () => { await db.remove('docs', d); await db.deletePhoto(d.fileId) }, () => setDocs(all => all.filter(x => x.id !== d.id))) }}
+          orders={jobOrders} onNewOrder={() => setOrderOpen('new')} onOpenOrder={setOrderOpen} onClaimOrders={lines => { void act(job.id, ['scope', 'vals'], () => claimMany(lines), tickNow(lines)) }}
           diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate} onCosts={() => setCostsOpen(true)}
           onSaveDiary={async (e, markedUp) => {
             // mark-up saves a NEW image; the first original is always kept
             if (markedUp) { const id = await saveImageBlob(markedUp); e = { ...e, originalMediaId: e.originalMediaId ?? e.mediaId, mediaId: id } }
-            await db.putDiary(e); await reload()
+            const entry = e
+            await act(job.id, ['diary'], () => db.putDiary(entry), () => setDiary(all => (all.some(x => x.id === entry.id) ? all.map(x => (x.id === entry.id ? entry : x)) : [...all, entry])))
           }}
-          onDeleteDiary={async e => { await db.deleteDiary(e); await reload() }}
+          onDeleteDiary={async e => { await act(job.id, ['diary'], () => db.deleteDiary(e), () => setDiary(all => all.filter(x => x.id !== e.id))) }}
           onAddMedia={async (file, kind, date) => {
             const mediaId = kind === 'video' ? await saveVideo(file as File) : kind === 'voice' ? await saveVoice(file) : await savePhoto(file as File)
-            await db.putDiary({ id: uid(), jobId: job.id, date, type: kind, note: '', labour: null, weather: '', mediaId, originalMediaId: null, room: '', voId: null, createdAt: Date.now() })
-            await reload()
+            const entry: DiaryEntry = { id: uid(), jobId: job.id, date, type: kind, note: '', labour: null, weather: '', mediaId, originalMediaId: null, room: '', voId: null, createdAt: Date.now() }
+            await act(job.id, ['diary'], () => db.putDiary(entry), () => setDiary(all => [...all, entry]))
           }}
           onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }}
-          onDecideSite={async (e, s, state) => {
+          onDecideSite={(e, s, state) => act(job.id, ['scope', 'vals', 'vos', 'diary'], async () => {
             if (state === 'approved') {
               if (s.kind === 'complete') {
                 const lines = jobScope.filter(i => s.lineIds.includes(i.id) && !i.valuationId && isPriced(i))
                 if (lines.length) {
                   const v = await ensureOpenValuation(job.id)
-                  for (const i of lines) await db.putScope({ ...i, valuationId: v.id, evidence: [...new Set([...(i.evidence ?? []), e.id])] })
+                  await db.putScopeMany(lines.map(i => ({ ...i, valuationId: v.id, evidence: [...new Set([...(i.evidence ?? []), e.id])] })))
                 }
               } else if (s.kind === 'vo') {
                 const vo = voFromSuggestion(s, e, job.id, await nextVoNumber(job.id))
@@ -251,8 +299,8 @@ export default function App() {
                 await db.putDiary({ id: uid(), jobId: job.id, date: e.date, type: 'note', note: `${s.text}${s.quote ? `\n— on site: “${s.quote}”` : ''}`, labour: null, weather: '', mediaId: null, originalMediaId: null, room: s.room, voId: null, category: 'Site', createdAt: Date.now() })
               }
             }
-            await db.putDiary(decide(e, s.id, state)); await reload()
-          }}
+            await db.putDiary(decide(e, s.id, state))
+          }).then(() => {})}
           readNote={readNote} />
       ) : (
         <JobsList jobs={jobs} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
@@ -263,7 +311,7 @@ export default function App() {
             { key: 'job', label: 'Your first job, from the client’s pack', hint: 'The schedule, works orders and surveys: every line read for you to check.', done: jobs.length > 0, onClick: () => setNewJob(true) },
           ] : undefined}
           alerts={weekAlerts(jobs, scope, vos, vals, orders, diary)}
-          onToggle={async e => { await db.putDiary({ ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }); await reload() }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
+          onToggle={async e => { const t = { ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }; await act(e.jobId, ['diary'], () => db.putDiary(t), () => setDiary(all => all.map(x => (x.id === t.id ? t : x)))) }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
       {voImport && job && access.money && <VoImport job={job} vos={jobVos} houses={houses} onClose={() => setVoImport(false)}
