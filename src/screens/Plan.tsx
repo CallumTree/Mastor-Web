@@ -73,7 +73,7 @@ const MarkRow = ({ m }: { m: LineMark }) => (
 
 export function JobLine({ job, entries, properties, trades, onSave, onDelete, onOpenDay, marks = [] }: {
   job: Job; entries: DiaryEntry[]; properties: string[]; trades: string[]
-  onSave: (e: DiaryEntry) => void; onDelete: (e: DiaryEntry) => void; onOpenDay: (date: string) => void
+  onSave: (e: DiaryEntry) => void; onDelete: (e: DiaryEntry, linked?: DiaryEntry[]) => void; onOpenDay: (date: string) => void
   marks?: LineMark[]
 }) {
   const { money } = useAccess()
@@ -170,8 +170,8 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
       {editing && <PlanSheet job={job} item={editing} entries={entries} properties={properties} trades={trades}
         onClose={() => setEditing(null)}
         onSave={e => { onSave({ ...e, byClaude: null }); setEditing(null) }}
-        onAddLinked={(event, todo) => { onSave({ ...event, byClaude: null }); onSave(todo); setEditing(todo) }}
-        onDelete={e => { onDelete(e); for (const t of todosFor(e, entries)) onSave({ ...t, linkId: null }); setEditing(null) }} />}
+        onAddLinked={(event, todo) => { onSave({ ...event, byClaude: null }); setEditing(todo) }}   // the to-do is saved when it's added, never blank
+        onDelete={e => { onDelete(e, todosFor(e, entries)); setEditing(null) }} />}
     </div>
   )
 }
@@ -198,12 +198,6 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
     <Sheet onClose={onClose} label={isNew ? `New ${kind}` : `Change ${kind}`}>
       <div className="stack">
         <h2 className="label bracket">{isNew ? (e.type === 'event' ? 'Book a key date' : 'Add a to-do') : e.type === 'event' ? 'Key date' : 'To-do'}</h2>
-        {isNew && (
-          <div className="seg" role="group" aria-label="Kind">
-            <button className={e.type === 'todo' ? 'on' : ''} aria-pressed={e.type === 'todo'} onClick={() => set({ type: 'todo', time: e.time })}>To-do</button>
-            <button className={e.type === 'event' ? 'on' : ''} aria-pressed={e.type === 'event'} onClick={() => set({ type: 'event', linkId: null, date: e.date || addDays(today, 1) })}>Key date</button>
-          </div>
-        )}
         <Field label={e.type === 'event' ? 'What’s happening' : 'What needs doing'}>
           <textarea rows={2} value={e.note} autoFocus={isNew} onChange={x => set({ note: x.target.value })}
             placeholder={e.type === 'event' ? 'e.g. Kitchen refit starts' : 'e.g. Speak to the tenant about the start date'} />
@@ -275,7 +269,7 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
 
         <button className="btn btn-primary" disabled={!ok} onClick={() => onSave({ ...e, note: e.note.trim() })}>{isNew ? (e.type === 'event' ? 'Book it' : 'Add it') : 'Save'}</button>
         {!isNew && e.type === 'todo' && <button className="btn btn-secondary" onClick={() => onSave({ ...e, note: e.note.trim(), doneAt: e.doneAt ? null : Date.now() })}>{e.doneAt ? 'Not done after all' : 'Mark done'}</button>}
-        {!isNew && <ConfirmDelete label={`Delete this ${kind}…`} confirmLabel={`Delete ${kind}`} note={e.type === 'event' && todos.length ? 'Its to-dos stay, unlinked.' : undefined} onConfirm={() => onDelete(e)} />}
+        {!isNew && <ConfirmDelete instant confirmLabel={`Delete ${kind}`} onConfirm={() => onDelete(e)} />}
       </div>
     </Sheet>
   )
@@ -283,10 +277,11 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
 
 /** Every job's week on the jobs screen: late and today first, then the days ahead. Tapping an item opens its job's line. */
 /** Mastor's own deadline on the week: red plate (stop), yellow (warn) or none; dated ones sit on their day, the rest at today. */
-export interface WeekAlert { jobId: string; text: string; hint: string; kind?: 'stop' | 'warn' | 'do'; date?: string }
+/** `tab`: where in the job it's about (an overdue valuation opens Vals, a late VO opens Scope); else the job's line. */
+export interface WeekAlert { jobId: string; text: string; hint: string; kind?: 'stop' | 'warn' | 'do'; date?: string; tab?: string }
 
 export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
-  jobs: Job[]; entries: DiaryEntry[]; onOpen: (jobId: string) => void
+  jobs: Job[]; entries: DiaryEntry[]; onOpen: (jobId: string, tab?: string) => void
   /** Mastor's own items (overdue valuations, the valuation week…), office only, shown as "From Mastor" */
   alerts?: WeekAlert[]
   /** tick a to-do off from here, without opening the job */
@@ -322,7 +317,7 @@ export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
     const plate = a.kind === 'stop' || a.kind === 'warn'
     return (
       <div key={`m${i}`} className="pl-item wk-item">
-        <button className="pl-open grow" onClick={() => onOpen(a.jobId)} aria-describedby={`wk-m${i}`}>
+        <button className="pl-open grow" onClick={() => onOpen(a.jobId, a.tab)} aria-describedby={`wk-m${i}`}>
           <span className="pl-t">{a.text.replace(/ — /g, ' · ')}</span>
           <span className="pl-m" id={`wk-m${i}`} aria-hidden="true"><span className="pl-job">{name(a.jobId)}</span>
             {plate && <span className={'plate pl-late plate-' + a.kind}>{a.kind === 'stop' ? stop : <SignMark kind="warn" size={12} />}{fact}</span>}

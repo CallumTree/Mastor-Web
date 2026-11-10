@@ -1,6 +1,6 @@
 /** A new job from the client's pack: choose the files, the job's details come from them, type only the PO, create — lines, addresses and documents in one go. */
 import { describe, it, expect, afterAll, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'
 import * as XLSX from 'xlsx'
 import App from '../src/App'
 import { db, wipeLocal } from '../src/lib/db'
@@ -42,8 +42,7 @@ describe('new job from the client’s pack', () => {
       : new Response('{}', { status: 404 })))
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
-    fireEvent.change(await screen.findByLabelText(/choose the client’s files/i), { target: { files: [order, pci] } })
+    fireEvent.change(await screen.findByLabelText(/new job: choose the client’s files/i), { target: { files: [order, pci] } })
     await screen.findByText('New job · check it')
 
     expect((screen.getByLabelText(/^Job name \*/) as HTMLInputElement).value).toBe('Ash Grove')
@@ -71,12 +70,27 @@ describe('new job from the client’s pack', () => {
       ? new Response(JSON.stringify({ cut: [], facts: [], extras: [], client: { text: 'Bayside Council', document: 'PCI.txt', page: null, quote: 'Client: Bayside Council' } }), { status: 200 })
       : new Response('{}', { status: 404 })))
     cleanup(); render(<App />)
-    click(await screen.findByRole('button', { name: /new job/i }))
-    fireEvent.change(await screen.findByLabelText(/choose the client’s files/i), { target: { files: [order, pci] } })
+    fireEvent.change(await screen.findByLabelText(/new job: choose the client’s files/i), { target: { files: [order, pci] } })
     await screen.findByText('New job · check it')
     expect((screen.getByLabelText(/^Client(?!’s)/) as HTMLInputElement).value).toBe('')
     click(screen.getByRole('button', { name: /choose different files/i }))
-    click(await screen.findByRole('button', { name: /set it up by hand/i }))
+    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /set it up by hand/i }))
     expect(await screen.findByRole('button', { name: 'Create job' })).toBeTruthy()
+  })
+
+  it('a new job for a client you have worked for brings their invoice address and uplifts, said so; no "type of work"', async () => {
+    cleanup(); await wipeLocal()
+    await db.putJob({ id: 'old', name: 'Elm Row', client: 'Example Council', clientAddress: 'Finance, Civic Centre, Anytown', address: '', contractRef: '', poNumber: 'PO1', contractValue: 0, uplift1: 4.2, uplift2: 2.5, workType: 'PPR', status: 'Active', photoId: null, createdAt: 1 })
+    render(<App />)
+    click(await screen.findByRole('button', { name: /set it up by hand/i }))
+    expect(screen.queryByText('Type of work')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Job name *'), { target: { value: 'Ash Grove' } })
+    fireEvent.change(screen.getByLabelText(/^Client(?!’s)/), { target: { value: 'example  council' } })
+    expect((await screen.findByLabelText(/^Client’s invoice address/) as HTMLInputElement).value).toBe('Finance, Civic Centre, Anytown')
+    expect(screen.getByText('From your last job for Example Council: check it')).toBeTruthy()
+    expect((screen.getByLabelText(/^Uplift 1/) as HTMLInputElement).value).toBe('4.2')
+    expect((screen.getByLabelText(/^Uplift 2/) as HTMLInputElement).value).toBe('2.5')
+    click(screen.getByRole('button', { name: 'Create job' }))
+    await waitFor(async () => expect((await db.jobs()).find(j => j.name === 'Ash Grove')).toMatchObject({ clientAddress: 'Finance, Civic Centre, Anytown', uplift1: 4.2, uplift2: 2.5, workType: 'PPR' }))
   })
 })

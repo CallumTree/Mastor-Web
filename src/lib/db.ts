@@ -5,6 +5,7 @@
  */
 import type { CompanySettings, Cost, Dayworks, DiaryEntry, Job, JobDocument, RateItem, ScopeItem, Valuation, Variation, WorkOrder } from './types'
 import { clearThumbs } from './thumbs'
+import { forgetPlace } from './place'
 
 const DB_NAME = 'mastor'
 const VERSION = 7 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary · v5: company settings · v6: rate books · v7: costs, orders, dayworks, documents
@@ -68,6 +69,26 @@ async function enqueue(op: OutboxOp) {
   await tx('outbox', 'readwrite', s => s.add(op))
   onQueued?.()
 }
+
+/**
+ * A change and its place in the outbox, written in ONE transaction: both land or neither does. (Written apart, an app
+ * killed between the two would leave a change on this phone that never reaches the cloud.) `change` gets each store by
+ * name; `ops` are queued only while signed in with a company, as before. Sync is nudged once it has all committed.
+ */
+function save(stores: string[], change: (store: (name: string) => IDBObjectStore) => void, ops: OutboxOp[]): Promise<void> {
+  const q = queueing && ops.length > 0
+  return open().then(d => new Promise<void>((resolve, reject) => {
+    const t = d.transaction(q ? [...new Set([...stores, 'outbox'])] : stores, 'readwrite')
+    t.oncomplete = () => { if (q) onQueued?.(); resolve() }
+    t.onerror = () => reject(t.error)
+    t.onabort = () => reject(t.error ?? new Error('The change could not be saved on this device.'))
+    try {
+      change(name => t.objectStore(name))
+      if (q) { const out = t.objectStore('outbox'); for (const op of ops) out.add(op) }
+    } catch (e) { try { t.abort() } catch { /* already finished */ } reject(e) }   // a bad record takes the whole write with it: nothing half-saved
+  }))
+}
+const rec = (table: RecordTable, id: string, jobId: string | null, data: unknown | null): OutboxOp => ({ kind: 'record', table, id, jobId, data })
 export const outbox = {
   all: () => tx<OutboxOp[]>('outbox', 'readonly', s => s.getAll()),
   add: (op: OutboxOp) => tx('outbox', 'readwrite', s => s.add(op)),
@@ -91,43 +112,40 @@ export const local = {
 const byPerson = <T extends { byClaude?: number | null }>(r: T): T => { if (r.byClaude == null) return r; const { byClaude: _, ...rest } = r; return rest as T }
 export const db = {
   jobs: () => tx<Job[]>('jobs', 'readonly', s => s.getAll()),
-  putJob: async (j: Job) => { await tx('jobs', 'readwrite', s => s.put(j)); await enqueue({ kind: 'record', table: 'jobs', id: j.id, jobId: j.id, data: j }) },
+  putJob: (j: Job) => save(['jobs'], st => st('jobs').put(j), [rec('jobs', j.id, j.id, j)]),
   deleteJob: async (id: string) => {
     for (const v of await db.variations(id)) await db.deleteVariation(v)
     for (const s of await db.scope(id)) await db.deleteScope(s.id)
     for (const v of await db.valuations(id)) await db.deleteValuation(v.id)
     for (const d of await db.diary(id)) await db.deleteDiary(d)
     for (const st of JOB_STORES) for (const r of await db.list(st, id)) await db.remove(st, r)
-    await tx('jobs', 'readwrite', s => s.delete(id))
-    await enqueue({ kind: 'record', table: 'jobs', id, jobId: id, data: null })
+    await save(['jobs'], st => st('jobs').delete(id), [rec('jobs', id, id, null)])
   },
   scope: (jobId: string) => tx<ScopeItem[]>('scope', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putScope: async (item: ScopeItem) => { const i = byPerson(item); await tx('scope', 'readwrite', s => s.put(i)); await enqueue({ kind: 'record', table: 'scope', id: i.id, jobId: i.jobId, data: i }) },
-  deleteScope: async (id: string) => { await tx('scope', 'readwrite', s => s.delete(id)); await enqueue({ kind: 'record', table: 'scope', id, jobId: null, data: null }) },
+  putScope: (item: ScopeItem) => db.putScopeMany([item]),
+  /** Several lines in one write (Tick all on a 40-line house is one transaction, not 80). */
+  putScopeMany: (items: ScopeItem[]) => { const is = items.map(byPerson); return save(['scope'], st => { for (const i of is) st('scope').put(i) }, is.map(i => rec('scope', i.id, i.jobId, i))) },
+  deleteScope: (id: string) => save(['scope'], st => st('scope').delete(id), [rec('scope', id, null, null)]),
   valuations: (jobId: string) => tx<Valuation[]>('valuations', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putValuation: async (val: Valuation) => { const v = byPerson(val); await tx('valuations', 'readwrite', s => s.put(v)); await enqueue({ kind: 'record', table: 'valuations', id: v.id, jobId: v.jobId, data: v }) },
-  deleteValuation: async (id: string) => { await tx('valuations', 'readwrite', s => s.delete(id)); await enqueue({ kind: 'record', table: 'valuations', id, jobId: null, data: null }) },
+  putValuation: (val: Valuation) => { const v = byPerson(val); return save(['valuations'], st => st('valuations').put(v), [rec('valuations', v.id, v.jobId, v)]) },
+  deleteValuation: (id: string) => save(['valuations'], st => st('valuations').delete(id), [rec('valuations', id, null, null)]),
   variations: (jobId: string) => tx<Variation[]>('variations', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putVariation: async (vo: Variation) => { const v = byPerson(vo); await tx('variations', 'readwrite', s => s.put(v)); await enqueue({ kind: 'record', table: 'variations', id: v.id, jobId: v.jobId, data: v }) },
-  deleteVariation: async (v: Variation) => {
-    for (const p of v.photoIds) await tx('photos', 'readwrite', s => s.delete(p))
-    await tx('variations', 'readwrite', s => s.delete(v.id))
-    await enqueue({ kind: 'record', table: 'variations', id: v.id, jobId: v.jobId, data: null })
-  },
+  putVariation: (vo: Variation) => db.putVariationMany([vo]),
+  putVariationMany: (vos: Variation[]) => { const vs = vos.map(byPerson); return save(['variations'], st => { for (const v of vs) st('variations').put(v) }, vs.map(v => rec('variations', v.id, v.jobId, v))) },
+  /** `keepMedia`: the record goes now, its photos stay until the Undo offer closes (then dropMedia). */
+  deleteVariation: (v: Variation, keepMedia = false) => save(['variations', 'photos'], st => { if (!keepMedia) for (const p of v.photoIds) st('photos').delete(p); st('variations').delete(v.id) }, [rec('variations', v.id, v.jobId, null)]),
   diary: (jobId: string) => tx<DiaryEntry[]>('diary', 'readonly', s => s.index('jobId').getAll(jobId)),
-  putDiary: async (entry: DiaryEntry) => { const d = byPerson(entry); await tx('diary', 'readwrite', s => s.put(d)); await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: d }) },
-  deleteDiary: async (d: DiaryEntry) => {
-    for (const m of [d.mediaId, d.originalMediaId]) if (m) await tx('photos', 'readwrite', s => s.delete(m))
-    await tx('diary', 'readwrite', s => s.delete(d.id))
-    await enqueue({ kind: 'record', table: 'diary', id: d.id, jobId: d.jobId, data: null })
-  },
+  putDiary: (entry: DiaryEntry) => { const d = byPerson(entry); return save(['diary'], st => st('diary').put(d), [rec('diary', d.id, d.jobId, d)]) },
+  deleteDiary: (d: DiaryEntry, keepMedia = false) => save(['diary', 'photos'], st => { if (!keepMedia) for (const m of [d.mediaId, d.originalMediaId]) if (m) st('photos').delete(m); st('diary').delete(d.id) }, [rec('diary', d.id, d.jobId, null)]),
+  /** The files of records deleted a moment ago, once Undo is no longer on offer. */
+  dropMedia: (ids: string[]) => (ids.length ? save(['photos'], st => { for (const id of ids) st('photos').delete(id) }, []) : Promise.resolve()),
   /** costs, orders, dayworks, docs: list for a job, save, delete */
   list: <K extends JobStore>(store: K, jobId: string) => tx<JobRecord[K][]>(store, 'readonly', s => s.index('jobId').getAll(jobId)),
-  put: async <K extends JobStore>(store: K, r: JobRecord[K]) => { await tx(store, 'readwrite', s => s.put(r)); await enqueue({ kind: 'record', table: store, id: r.id, jobId: r.jobId, data: r }) },
-  remove: async <K extends JobStore>(store: K, r: JobRecord[K]) => { await tx(store, 'readwrite', s => s.delete(r.id)); await enqueue({ kind: 'record', table: store, id: r.id, jobId: r.jobId, data: null }) },
+  put: <K extends JobStore>(store: K, r: JobRecord[K]) => save([store], st => st(store).put(r), [rec(store, r.id, r.jobId, r)]),
+  remove: <K extends JobStore>(store: K, r: JobRecord[K]) => save([store], st => st(store).delete(r.id), [rec(store, r.id, r.jobId, null)]),
   settings: () => tx<CompanySettings | undefined>('settings', 'readonly', s => s.get('company')),
-  putSettings: async (c: CompanySettings) => { await tx('settings', 'readwrite', s => s.put(c)); await enqueue({ kind: 'record', table: 'settings', id: c.id, jobId: null, data: c }) },
-  putPhoto: async (id: string, blob: Blob) => { await tx('photos', 'readwrite', s => s.put(blob, id)); await enqueue({ kind: 'photo', id }) },
+  putSettings: (c: CompanySettings) => save(['settings'], st => st('settings').put(c), [rec('settings', c.id, null, c)]),
+  putPhoto: (id: string, blob: Blob) => save(['photos'], st => st('photos').put(blob, id), [{ kind: 'photo', id }]),
   photo: (id: string) => tx<Blob | undefined>('photos', 'readonly', s => s.get(id)),
   deletePhoto: (id: string) => tx('photos', 'readwrite', s => s.delete(id)),
 }
@@ -158,6 +176,7 @@ export const rates = {
 
 /** Sign-out: remove every local copy so the next person on this phone sees nothing of yours. */
 export async function wipeLocal() {
+  forgetPlace()
   for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'settings', 'photos', 'rates', ...JOB_STORES, 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
   rateCache = null
   await clearThumbs().catch(() => {})   // the thumbnail cache lives in its own database

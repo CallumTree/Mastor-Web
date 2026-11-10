@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { WORK_LABEL, type Job, type WorkType } from '../lib/types'
+import type { Job } from '../lib/types'
+import { lastJobFor } from '../lib/carry'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { uid } from '../lib/db'
 
-const TYPES: WorkType[] = ['PPR', 'Internal', 'External', 'Roofing', 'Commercial']
-
-export function JobForm({ job, onSave, onClose, onDelete }: {
-  job?: Job; onSave: (j: Job) => void; onClose: () => void; onDelete?: () => void
+export function JobForm({ job, jobs = [], onSave, onClose, onDelete }: {
+  job?: Job; jobs?: Job[]; onSave: (j: Job) => void; onClose: () => void; onDelete?: () => void
 }) {
   const [f, setF] = useState<Job>(job ?? {
     id: uid(), name: '', client: '', address: '', contractRef: '', poNumber: '',
@@ -17,6 +16,14 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
   const [u2, setU2] = useState(job ? String(job.uplift2) : '')
   const [terms, setTerms] = useState(job?.paymentTermsDays ? String(job.paymentTermsDays) : '30')
   const set = (k: keyof Job) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
+  // a new job for a client you've worked for: their invoice address and uplifts come over from the last one, said so
+  const last = job ? null : lastJobFor(jobs, f.client)
+  const [carried, setCarried] = useState<string | null>(null)
+  if (last && carried !== last.client && !f.clientAddress && !u1 && !u2) {
+    setCarried(last.client); setF({ ...f, clientAddress: last.clientAddress ?? '' })
+    setU1(last.uplift1 ? String(last.uplift1) : ''); setU2(last.uplift2 ? String(last.uplift2) : '')
+  }
+  const fromLast = last && carried === last.client ? `From your last job for ${last.client}: check it` : undefined
   const num = (s: string) => { const n = parseFloat(s.replace(/[£,\s]/g, '')); return isFinite(n) && n > 0 ? n : 0 }
 
   return (
@@ -33,7 +40,7 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
         </fieldset>
         <Field label="Job name *"><input value={f.name} onChange={set('name')} placeholder={f.kind === 'orders' ? 'e.g. Council repairs 2026' : 'e.g. 32 Park Road'} /></Field>
         <Field label="Client"><input value={f.client} onChange={set('client')} placeholder="e.g. the council, housing association or trust" /></Field>
-        <Field label="Client’s invoice address" hint="Where their invoices go: printed on every VAT invoice"><input value={f.clientAddress ?? ''} onChange={set('clientAddress')} placeholder="e.g. Finance, Civic Centre, Anytown, AB1 2CD" /></Field>
+        <Field label="Client’s invoice address" hint={fromLast ?? 'Where their invoices go: printed on every VAT invoice'}><input value={f.clientAddress ?? ''} onChange={set('clientAddress')} placeholder="e.g. Finance, Civic Centre, Anytown, AB1 2CD" /></Field>
         <Field label="Site address"><input value={f.address} onChange={set('address')} /></Field>
         <div className="row" style={{ alignItems: 'flex-start' }}>
           <div className="grow"><Field label="Contract ref"><input value={f.contractRef} onChange={set('contractRef')} placeholder="e.g. CR-0290" /></Field></div>
@@ -41,14 +48,10 @@ export function JobForm({ job, onSave, onClose, onDelete }: {
         </div>
         <Field label={f.kind === 'orders' ? 'Contract value (£, optional)' : 'PO value — all-in, incl. uplifts (£)'} hint={f.kind === 'orders' ? 'Leave blank for a call-off contract' : 'Uplifts below should turn the BoQ total into this figure'}><input inputMode="decimal" value={valueText} onChange={e => setValueText(e.target.value)} placeholder="From the purchase order" /></Field>
         <div className="row">
-          <div className="grow"><Field label="Uplift 1 (%)"><input inputMode="decimal" value={u1} onChange={e => setU1(e.target.value)} placeholder="0" /></Field></div>
+          <div className="grow"><Field label="Uplift 1 (%)" hint={fromLast && (u1 || u2) ? 'From the last job' : undefined}><input inputMode="decimal" value={u1} onChange={e => setU1(e.target.value)} placeholder="0" /></Field></div>
           <div className="grow"><Field label="Uplift 2 (%)"><input inputMode="decimal" value={u2} onChange={e => setU2(e.target.value)} placeholder="0" /></Field></div>
         </div>
         <Field label="Payment terms (days)" hint="Counted from the invoice date, or from the valuation's issue date if it isn't invoiced yet. Flags it when it's late."><input inputMode="numeric" value={terms} onChange={e => setTerms(e.target.value)} /></Field>
-        <div>
-          <div className="field"><span>Type of work</span></div>
-          <div className="chips">{TYPES.map(t => <button key={t} className={'chip' + (f.workType === t ? ' on' : '')} onClick={() => setF({ ...f, workType: t })}>{WORK_LABEL[t]}</button>)}</div>
-        </div>
         {job && (
           <div>
             <div className="field"><span>Status</span></div>

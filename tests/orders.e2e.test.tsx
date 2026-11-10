@@ -20,7 +20,6 @@ describe('small works orders', () => {
     await rates.put('rb', [{ bookId: 'rb', code: '015003', short: 'FLOOR:RENEW INTERNAL CONCRETE', long: '', unit: 'SM', rate: 228.62, section: 'FOUNDATIONS', subsection: '' }])
 
     render(<App />)
-    click(await screen.findByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     click(screen.getByLabelText(/Responsive or voids contract/))
     type('Job name *', 'Council Responsive 2026')

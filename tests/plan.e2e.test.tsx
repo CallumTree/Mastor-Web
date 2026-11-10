@@ -37,6 +37,9 @@ describe('the job line', () => {
     // from the date: a to-do the day before, already linked to it
     click(date)
     click(await screen.findByRole('button', { name: /To-do, day before/ }))
+    // nothing saved yet: closing now would leave no blank to-do behind
+    await screen.findByPlaceholderText(/Speak to the tenant/)
+    expect((await Promise.all((await db.jobs()).map(j => db.diary(j.id)))).flat().some(d => d.type === 'todo' && !d.note.trim())).toBe(false)
     fireEvent.change(await screen.findByPlaceholderText(/Speak to the tenant/), { target: { value: 'Speak to the tenant about the start' } })
     click(screen.getByRole('button', { name: /^(Save|Add it)$/ }))   // already on the line (linked), so either label
     const link = await screen.findByRole('button', { name: /^\w{3} \d+ \w{3} · Kitchen refit starts$/ })   // the to-do's link to its date

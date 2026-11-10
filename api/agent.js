@@ -23529,12 +23529,12 @@ var init_BetaToolRunner = __esm({
                     __classPrivateFieldGet(this, _BetaToolRunner_thread, "f")._state.checkNextTurn(turnParams(__classPrivateFieldGet(this, _BetaToolRunner_thread, "f")));
                   const toolMessage = await __classPrivateFieldGet(this, _BetaToolRunner_instances, "m", _BetaToolRunner_generateToolResponse).call(this, toAnswer, __classPrivateFieldGet(this, _BetaToolRunner_options, "f").signal, __classPrivateFieldGet(this, _BetaToolRunner_toolRunnerOtelContext, "f"));
                   if (toolMessage) {
-                    const history = __classPrivateFieldGet(this, _BetaToolRunner_thread, "f").messages;
-                    const answered = history.map((message) => message.role).lastIndexOf("assistant") + 1;
+                    const history2 = __classPrivateFieldGet(this, _BetaToolRunner_thread, "f").messages;
+                    const answered = history2.map((message) => message.role).lastIndexOf("assistant") + 1;
                     __classPrivateFieldGet(this, _BetaToolRunner_thread, "f")._state.setMessages([
-                      ...history.slice(0, answered),
+                      ...history2.slice(0, answered),
                       toolMessage,
-                      ...history.slice(answered)
+                      ...history2.slice(answered)
                     ]);
                   } else if (!__classPrivateFieldGet(this, _BetaToolRunner_mutated, "f") && !__classPrivateFieldGet(this, _BetaToolRunner_thread, "f")._state.hasTurnToSend) {
                     return "stop";
@@ -65806,10 +65806,7 @@ function issuePlan(job, val, vals, scope, vos) {
   const { u1, u2 } = upliftAmounts(totals.base, job.uplift1, job.uplift2);
   const previous = pennies(vals.filter((v) => v.status === "Issued" && v.id !== val.id).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0));
   const cumulative = pennies(previous + totals.gross);
-  const live = vos.filter((v) => v.status !== "Rejected");
-  const f = (1 + (job.uplift1 || 0) / 100) * (1 + (job.uplift2 || 0) / 100);
-  const scopeGross = pennies(scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) * f);
-  const target = pennies((job.contractValue || scopeGross) + live.reduce((t, v) => t + lineValue(v.qty, v.rate), 0) * f);
+  const target = jobWorth(job, scope, vos).total;
   const mine = scope.filter((i) => i.valuationId === val.id), myVos = vos.filter((v) => v.valuationId === val.id);
   const multi = new Set(scope.map((i) => i.property).filter(Boolean)).size > 1;
   const groupOf = (i) => multi ? i.property ? `No. ${i.property}` : "Unassigned" : i.workstream || i.room || "General";

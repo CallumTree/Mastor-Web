@@ -16,8 +16,7 @@ async function issueOne(desc: string, rate: string, valNo: number) {
   await waitFor(() => expect(screen.getByText(desc)).toBeTruthy())
   click((await screen.findAllByRole('button', { name: /add to valuation/i }))[0])
   nav('vals')
-  click(await screen.findByRole('button', { name: `Send VAL ${'I'.repeat(valNo)} for review` }))
-  click(await screen.findByRole('button', { name: new RegExp(`^send val ${'i'.repeat(valNo)} for £`, 'i') }))
+  click(await screen.findByRole('button', { name: new RegExp(`^send val ${'i'.repeat(valNo)} for £`, 'i') }))   // one deliberate tap: the figure is on the button
   // sent for review and locked; this client agreed it straight away, so the invoice is the next step on its row
   await closed()
   await screen.findAllByText(/^With client · For review/)
@@ -28,7 +27,6 @@ describe('VAT invoicing', () => {
   it('needs company details first, numbers carry on and never repeat, payment expects VAT', async () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Invoice Close'); type('Client', 'Example Council'); type(/^Client’s invoice address/, 'Finance, Civic Centre, Anytown, AB1 2CD'); type(/PO number/i, 'PC1')
     click(screen.getByRole('button', { name: 'Create job' }))
@@ -42,11 +40,12 @@ describe('VAT invoicing', () => {
     type('VAT number *', 'GB123456789'); type('Sort code *', '12-34-56'); type('Account no. *', '12345678')
     type('Prefix', 'TS-'); type(/next invoice number/i, '1042')
     await screen.findByText('TS-1042')
-    click(screen.getByRole('button', { name: 'Save' })); await closed()
+    click(screen.getByRole('button', { name: 'Save' }))
 
-    // nothing was recorded when the details were missing: the row still asks for agreement, and creating the invoice records it
-    click(await screen.findByRole('button', { name: 'Agreed — create invoice' }))
+    // saving the details brings you straight back to the invoice (no starting again); nothing was recorded meanwhile,
+    // and creating it is what records the client's agreement
     await screen.findByText('£200.00')                                  // VAT @ 20% on £1,000
+    expect(screen.getByRole('button', { name: 'Create invoice TS-1042' })).toBeTruthy()
     click(screen.getByRole('button', { name: 'Create invoice TS-1042' })); await closed()
     await screen.findByText('TS-1042')
     expect(screen.getAllByText(text(/£1,200\.00 incl\. VAT/)).some(el => !el.closest('.ledger'))).toBe(true)   // on the valuation (the ledger also says what's owed)

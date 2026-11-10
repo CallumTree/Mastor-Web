@@ -61,8 +61,8 @@ export function SiteReview({ diary, scope, valLabel, onDecide, note }: {
   const act = async (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => {
     setBusy(s.id); setLeaving(l => ({ ...l, [s.id]: state }))
     try {
-      await wait(reducedMotion() ? 150 : state === 'approved' ? 440 : 320)
-      await onDecide(e, s, state)
+      // saved at once; the row folds away alongside, not before it saves
+      await Promise.all([onDecide(e, s, state), wait(reducedMotion() ? 150 : state === 'approved' ? 440 : 320)])
     } catch (x) {
       setLeaving(l => { const { [s.id]: _, ...rest } = l; return rest })   // it didn't save: the row comes back
       throw x

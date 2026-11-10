@@ -3,7 +3,7 @@
 import { describe, it, expect, afterAll } from 'vitest'
 import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react'
 import App from '../src/App'
-import { wipeLocal } from '../src/lib/db'
+import { meta, wipeLocal } from '../src/lib/db'
 import { plainAuth } from '../src/screens/Gate'
 
 const click = (el: Element) => fireEvent.click(el)
@@ -25,7 +25,7 @@ describe('first run', () => {
 
     // the first job step opens the client's pack reader
     click(within(screen.getByRole('region', { name: 'Getting set up' })).getByRole('button', { name: /your first job/i }))
-    expect(await screen.findByRole('button', { name: /set it up by hand/i })).toBeTruthy()
+    await waitFor(() => expect(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /set it up by hand/i })).toBeTruthy())
     fireEvent.click(document.querySelector('.sheet-bg')!)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
 
@@ -44,6 +44,18 @@ describe('first run', () => {
     expect(steps.map(li => li.querySelector('.help-n')?.textContent)).toEqual(['I', 'II', 'III', 'IV', 'V', 'VI'])
     expect(within(guide).getByText(/Valuation week/)).toBeTruthy()
     expect(within(guide).queryByText(/Stuck\? Email/)).toBeNull()
+  })
+
+  it('company details start with the name given at sign-up, and the five an invoice needs come first', async () => {
+    cleanup(); await wipeLocal()
+    await meta.set('company', { id: 'c1', name: 'Example Builders Ltd', role: 'owner' })
+    render(<App />)
+    click(await screen.findByRole('button', { name: 'Settings' }))
+    expect((await screen.findByLabelText('Company name *') as HTMLInputElement).value).toBe('Example Builders Ltd')
+    const order = [...document.querySelectorAll('.sheet label, .sheet .field')].map(el => el.textContent ?? '')
+    const at = (re: RegExp) => order.findIndex(t => re.test(t))
+    expect(at(/Account no\. \*/)).toBeLessThan(at(/^Phone/))                         // required first; phone and the rest folded below
+    expect(document.querySelector('details.more')?.hasAttribute('open')).toBe(false)
   })
 
   it('says sign-in problems in plain words, with what to do next', () => {

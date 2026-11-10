@@ -12,7 +12,6 @@ describe('payments and chasing', () => {
   it('VO sent to client, valuation issued → due → part paid → paid; dashboard follows', async () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Pay Street'); type(/PO number/i, 'PO9'); type(/payment terms/i, '30')
     click(screen.getByRole('button', { name: 'Create job' }))
@@ -29,16 +28,14 @@ describe('payments and chasing', () => {
     await screen.findByText(/send to client for instruction/i)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     click(screen.getByRole('button', { name: /Extra socket/ }))
-    click(await screen.findByRole('button', { name: /mark as sent to client/i }))
-    click(screen.getByRole('button', { name: 'Save' }))
+    click(await screen.findByRole('button', { name: /mark as sent to client/i }))   // saved on the tap: it records a date and sends nothing
     await screen.findByText(/awaiting instruction · 0 days/i)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
 
     // claim it, issue, it becomes due
     click(screen.getByRole('button', { name: /add to valuation/i }))
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
-    click(await screen.findByRole('button', { name: /^send val i for £/i }))
+    click(await screen.findByRole('button', { name: /^send val i for £/i }))   // one deliberate tap: the figure is on the button
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · sent today/)
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()   // nothing to pay until it's agreed

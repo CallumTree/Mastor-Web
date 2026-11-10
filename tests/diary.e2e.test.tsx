@@ -25,7 +25,6 @@ describe('site diary', () => {
   it('note, labour, photos, video, mark-up link, raise VO, safe delete', async () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     fireEvent.change(screen.getByLabelText('Job name *'), { target: { value: 'Diary Close' } })
     click(screen.getByRole('button', { name: 'Create job' }))
@@ -64,9 +63,16 @@ describe('site diary', () => {
     await screen.findByText('VO')                                // badge on the diary photo
 
     // --- deleting the diary photo keeps the VO's evidence
+    // one tap, no "are you sure?": Undo brings it back with its picture, which is only removed once Undo has gone
     click(screen.getByRole('button', { name: /open photo/i }))
-    click(await screen.findByRole('button', { name: /delete…/i }))
-    click(screen.getByRole('button', { name: /delete this photo/i }))
+    const shot = (await db.diary(vo.jobId)).find(d => d.type === 'photo')!
+    click(await screen.findByRole('button', { name: /delete this photo/i }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: /open photo/i })).toBeNull())
+    expect(screen.getByText('Photo deleted')).toBeTruthy()
+    expect(await db.photo(shot.mediaId!)).toBeTruthy()
+    click(screen.getByRole('button', { name: 'Undo' }))
+    click(await screen.findByRole('button', { name: /open photo/i }))
+    click(await screen.findByRole('button', { name: /delete this photo/i }))
     await waitFor(() => expect(screen.queryByRole('button', { name: /open photo/i })).toBeNull())
     expect(await db.photo(vo.photoIds[0])).toBeTruthy()
 

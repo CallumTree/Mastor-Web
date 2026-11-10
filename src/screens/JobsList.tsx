@@ -14,14 +14,14 @@ import { SetupList, type SetupStep } from '../components/Setup'
  * signs (red = blocks invoicing, yellow = needs doing). Same list on a phone and a laptop: rows on a
  * phone, a ruled schedule with columns from 1024px.
  */
-export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setup, onOpen, onOpenLine, onToggle, onNew, onDashboard, onSettings }: {
+export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setup, onOpen, onOpenLine, onToggle, onNew, onByHand, onDashboard, onSettings }: {
   jobs: Job[]; vos: Variation[]; orders?: WorkOrder[]; diary?: DiaryEntry[]; onOpen: (j: Job) => void
   /** Mastor's own urgent items per job, for the week (office only) */
   alerts?: { jobId: string; text: string; hint: string }[]
   /** tick a to-do off from the week */
   onToggle?: (e: DiaryEntry) => void
   /** open a job on its line of days (from the week across all jobs) */
-  onOpenLine?: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
+  onOpenLine?: (j: Job, tab?: string) => void; onNew: (files: File[]) => void; onByHand: () => void; onDashboard: () => void; onSettings: () => void
   /** a new firm's first steps (office only), until they're done */
   setup?: SetupStep[]
 }) {
@@ -46,7 +46,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setu
 
       <div className="cover-body">
         {m && setup && <SetupList steps={setup} />}
-        {sorted.length > 0 && <WeekLine jobs={jobs} entries={diary} alerts={alerts} onToggle={onToggle} onOpen={id => { const j = jobs.find(x => x.id === id); if (j) (onOpenLine ?? onOpen)(j) }} />}
+        {sorted.length > 0 && <WeekLine jobs={jobs} entries={diary} alerts={alerts} onToggle={onToggle} onOpen={(id, tab) => { const j = jobs.find(x => x.id === id); if (j) (onOpenLine ? onOpenLine(j, tab) : onOpen(j)) }} />}
         {sorted.length > 0 ? (
           <section className="jobs" aria-label="Jobs">
             <div className="jobs-head" aria-hidden="true"><span>Job</span><span>Client</span><span className="num">{m ? 'Contract' : ''}</span><span>Needs</span><span>Status</span></div>
@@ -72,7 +72,12 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setu
           <div className="cover-empty">{m ? 'No jobs yet. Add your first job to get started.' : 'No jobs yet. The office adds them; they’ll be here when they do.'}</div>
         )}
         {m && <div className="cover-actions">
-          <button className="btn btn-primary" onClick={onNew}><IconPlus /> New job</button>
+          {/* New job is the file picker: what the client sent is how a job starts. No pack yet: by hand, beside it */}
+          <label className="btn btn-primary"><IconPlus /> New job
+            <input type="file" className="sr-only" multiple aria-label="New job: choose the client’s files" accept=".pdf,.xlsx,.xlsm,.xls,.docx,.doc,.csv,.txt,application/pdf"
+              onChange={e => { const f = [...(e.target.files ?? [])]; if (f.length) onNew(f); e.target.value = '' }} />
+          </label>
+          <button className="linkish tap new-hand" onClick={onByHand}>Set it up by hand</button>
         </div>}
       </div>
     </main>

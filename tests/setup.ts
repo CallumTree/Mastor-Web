@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { afterEach } from 'vitest'
-// each test starts at the app's address with no job or tab kept in it (src/lib/place.ts)
-afterEach(() => { history.replaceState(null, '', '/') })
+// each test starts at the app's address with no job or tab kept in it, nor remembered on the phone (src/lib/place.ts)
+afterEach(() => { history.replaceState(null, '', '/'); try { localStorage.removeItem('mastor.place') } catch { /* none kept */ } })
 // the test browser has no file URLs: a stand-in, so handing over a PDF (certificate, invoice) runs to the end
 if (typeof URL.createObjectURL !== 'function') URL.createObjectURL = () => 'blob:test'
 if (typeof URL.revokeObjectURL !== 'function') URL.revokeObjectURL = () => {}

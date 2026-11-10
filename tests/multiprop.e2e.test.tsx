@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import App from '../src/App'
+import { db } from '../src/lib/db'
 const TSV = readFileSync(join(process.cwd(), 'tests/boq-trades.tsv'), 'utf8')
 const click = (el: Element) => fireEvent.click(el)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
@@ -14,7 +15,6 @@ describe('multi-property scheme', () => {
   it('shows one collapsed block per property; tick all remaining; valuation grouped by property', async () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Example Road')
     click(screen.getByRole('button', { name: 'Create job' }))
@@ -46,9 +46,16 @@ describe('multi-property scheme', () => {
     expect(within(sheet).queryByText(/^Property$/)).toBeNull()                        // a whole-house line doesn't say "Property"
 
     // tick all remaining in No. 1 → VAL I, 100%
+    // it acts on the tap (no "are you sure?"); Undo takes exactly those lines back
     click(within(sheet).getByRole('button', { name: /tick all remaining lines \(3\)/i }))
-    click(within(sheet).getByRole('button', { name: 'Yes' }))
     await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))   // the sheet's bar and the house row
+    expect(screen.getByText('3 lines ticked')).toBeTruthy()
+    click(screen.getByRole('button', { name: 'Undo' }))
+    await waitFor(async () => expect((await db.scope((await db.jobs())[0].id)).filter(i => i.property === '1' && i.valuationId).length).toBe(0))
+    await waitFor(() => expect(within(screen.getByRole('dialog', { name: 'No. 1' })).queryAllByText('VAL I').length).toBe(0))
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull()
+    click(within(screen.getByRole('dialog', { name: 'No. 1' })).getByRole('button', { name: /tick all remaining lines \(3\)/i }))
+    await waitFor(() => expect(screen.getAllByText('100%').length).toBeGreaterThan(0))
     expect(within(screen.getByRole('dialog', { name: 'No. 1' })).getAllByText('VAL I').length).toBe(3)   // every line, all open
     click(within(screen.getByRole('dialog', { name: 'No. 1' })).getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -61,15 +68,14 @@ describe('multi-property scheme', () => {
     // clear unclaimed lines (to redo an import) keeps the claimed ones
     nav('scope')
     click(await screen.findByRole('button', { name: 'Scope options' }))
-    click(screen.getByRole('button', { name: /clear unclaimed lines/i }))
-    click(screen.getByRole('button', { name: /yes, clear unclaimed lines/i }))
+    click(screen.getByRole('button', { name: /clear unclaimed lines/i }))                        // on the tap, with Undo
+    expect(await screen.findByText('4 unclaimed lines cleared')).toBeTruthy()
     await waitFor(() => expect(screen.queryAllByRole('button', { name: /^property /i }).length).toBe(0))   // only No. 1 left → single-property layout
     expect(screen.getByText('3 items')).toBeTruthy()
 
     // wrong spec: delete entire scope → certified lines survive, everything else goes
     nav('vals')
-    click(await screen.findByRole('button', { name: 'Send VAL I for review' }))
-    click(await screen.findByRole('button', { name: /^send val i for £/i }))
+    click(await screen.findByRole('button', { name: /^send val i for £/i }))   // one deliberate tap: the figure is on the button
     await screen.findAllByText(/^With client · For review · sent today/)
     nav('scope')
     click(await screen.findByRole('button', { name: 'Scope options' })); click(screen.getByRole('button', { name: /^add a scope line/i }))

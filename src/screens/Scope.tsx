@@ -25,7 +25,7 @@ type Filter = 'all' | 'live' | 'claimed' | 'vos'
 
 /** What the Scope tab needs for the job's variations: they're work at a house like any line, so they live here too. */
 export interface VoProps {
-  vos: Variation[]; onToggleVo: (v: Variation) => void; onEditVo: (v: Variation) => void; onLogVo: () => void
+  vos: Variation[]; onToggleVo: (v: Variation) => void; onEditVo: (v: Variation) => void; onLogVo: (house?: string) => void
   onImportVo?: () => void; onRegister?: () => void; onDayworks?: () => void
   /** the operative's "done" marks (siteDone.ts): the diary they're kept in, and making or taking one back */
   diary?: DiaryEntry[]; onMarkDone?: (i: ScopeItem) => void; onUndoDone?: (e: DiaryEntry) => void
@@ -86,7 +86,7 @@ function SiteScope({ job, scope, vos, vals, diary = [], onEditVo, onToggleVo, on
   return (
     <div className="stack">
       <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? '' : 's'}${vos.length ? ` · ${vos.length} VO${vos.length === 1 ? '' : 's'}` : ''}`} />
-      <div className="tab-actions"><button className="btn btn-sm btn-primary" onClick={onLogVo}><IconPlus /> Add VO</button></div>
+      <div className="tab-actions"><button className="btn btn-sm btn-primary" onClick={() => onLogVo()}><IconPlus /> Add VO</button></div>
       {scope.length === 0 && vos.length === 0 && <div className="card empty">No scope on this job yet. Spot extra work? Add it as a VO, at its house.</div>}
       {trades.length > 1 && (
         <div className="chips" role="group" aria-label="Your trade">
@@ -157,7 +157,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   const hasProps = properties.filter(p => p !== '—').length > 1 || (properties.length > 1 && properties.includes('—'))
   // one tap on a house opens all its work in a sheet, under its trades; the list stays where it was underneath
   const [openHouse, setOpenHouse] = useState<string | null>(null)
-  const [confirmAll, setConfirmAll] = useState<string | null>(null)
   const groupsOf = (ls: ScopeItem[]) => [...new Set(ls.map(groupName))]
   const houseName = (p: string) => (p === '—' ? 'Whole job' : job.properties?.[p]?.split(',')[0] || `No. ${p}`)
   const unclaimed = scope.filter(i => !i.valuationId)
@@ -215,12 +214,12 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           <div className="prop-foot"><TradeBar items={all} label={`${pct}% claimed`} /><span className={'prop-pct' + (pct === 100 ? ' all' : '')}>{pct === 100 && <IconCheck size={13} />}{fig(`${pct}%`)}</span></div>
           {p !== '—' && job.properties?.[p] && <div className="hint">{job.properties[p]}</div>}
         </div>}
-        {inSheet && remaining.length > 0 && filter !== 'vos' && (
-          <div className="house-all">
-            {confirmAll === p
-              ? <div className="row"><span className="grow t-small">Put all {remaining.length} remaining lines ({fig(money(remaining.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)))}) into the valuation?</span>
-                  <button className="chip lg" onClick={() => setConfirmAll(null)}>No</button><button className="chip lg on" onClick={() => { setConfirmAll(null); onToggleMany(remaining) }}>Yes</button></div>
-              : <button className="btn btn-secondary" onClick={() => setConfirmAll(p)}>Tick all remaining lines ({remaining.length})</button>}
+        {inSheet && (
+          <div className="house-all row">
+            {/* acts on the tap; the Undo bar takes exactly these back */}
+            {remaining.length > 0 && filter !== 'vos' && <button className="btn btn-secondary grow" aria-label={`Tick all remaining lines (${remaining.length})`} onClick={() => onToggleMany(remaining)}>{figs(`Tick all (${remaining.length})`)}</button>}
+            {/* extra work found here: the house is already known */}
+            <button className="btn btn-secondary house-vo" onClick={() => onLogVo(p === '—' ? undefined : p)}><IconPlus /> Add VO</button>
           </div>
         )}
         {inSheet && groups.length > 2 && (
@@ -263,28 +262,22 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           ...(onDayworks ? [{ label: 'Dayworks sheets', hint: 'Hours, materials and plant, signed, then claimed as a VO', onClick: onDayworks }] : []),
           ...(onEvidence ? [{ label: 'Completion evidence (PDF)', hint: 'Work claimed so far, by property, with the diary’s photos — no prices', disabled: !scope.some(i => i.valuationId), onClick: () => { void onEvidence() } }] : []),
           ...(onCheckRates ? [{ label: 'Check rates against your SoR', hint: 'Lines that don’t follow the BoQ’s pattern, codes not in the schedule', disabled: !scope.length, onClick: onCheckRates }] : []),
-          { label: 'Clear unclaimed lines', hint: `${unclaimed.length} scope line${unclaimed.length === 1 ? '' : 's'} not in any valuation (VOs stay)`, danger: true, disabled: !unclaimed.length,
-            confirm: `Remove ${unclaimed.length} unclaimed lines? Anything in a valuation, and every VO, stays.`, onClick: () => onClearUnclaimed(unclaimed) },
+          { label: 'Clear unclaimed lines', hint: `${unclaimed.length} scope line${unclaimed.length === 1 ? '' : 's'} not in any valuation (VOs stay)`, danger: true, disabled: !unclaimed.length, onClick: () => onClearUnclaimed(unclaimed) },
           { label: 'Delete entire scope', hint: lockedCount ? `Wrong spec? ${lockedCount} certified line${lockedCount === 1 ? '' : 's'} will stay (issued valuations are locked); VOs stay` : 'Wrong spec? Removes every scope line so you can import again; VOs stay', danger: true, disabled: lockedCount === scope.length,
             confirm: lockedCount ? `Delete ${scope.length - lockedCount} lines? The ${lockedCount} certified on issued valuations stay.` : `Delete all ${scope.length} lines from this job? This can't be undone.`, onClick: () => onDeleteAll(scope.filter(i => !lockedIn(i, vals))) },
         ]} />} />
 
       {/* the two ways work comes in, under the heading: a VO as you spot it, or the client's documents */}
       <div className="tab-actions">
-        <button className={'btn btn-sm ' + (empty ? 'btn-secondary' : 'btn-primary')} onClick={onLogVo}><IconPlus /> Add VO</button>
+        <button className={'btn btn-sm ' + (empty ? 'btn-secondary' : 'btn-primary')} onClick={() => onLogVo()}><IconPlus /> Add VO</button>
         {onImportVo ? <TabMenu title="Import" button={{ label: <><IconDoc /> Import</>, className: 'btn btn-sm ' + (empty ? 'btn-primary' : 'btn-secondary') }} actions={[
           { label: 'Scope', hint: 'The schedule of works, BoQ, works orders, PCI or surveys: Excel, PDF or Word. Every line read for you to check.', onClick: onImport },
           { label: 'VOs', hint: 'The client’s VO ticket, site instruction or VO schedule: photo, scan, PDF, Word or Excel. A VO per line, at its house.', onClick: onImportVo },
         ]} /> : <button className={'btn btn-sm ' + (empty ? 'btn-primary' : 'btn-secondary')} onClick={onImport}><IconDoc /> Import scope</button>}
       </div>
 
-      {filter === 'vos' ? (vos.length > 0 && <VoSummary job={job} vos={vos} vals={vals} />)
-        : !empty && <SumStrip label="Work summary" caption="At base rates. Uplifts are added in the valuation." cells={[
-        { label: 'Scope total', value: money(total), note: unpricedLines ? `+ ${unpricedLines} unpriced` : `${scope.length} line${scope.length === 1 ? '' : 's'}`, nil: !scope.length },
-        { label: 'Variations', value: money(voTotal), note: [`${vos.filter(counts).length} VO${vos.filter(counts).length === 1 ? '' : 's'}`, voUnpriced ? `+ ${voUnpriced} unpriced` : ''].filter(Boolean).join(' · '), nil: !voTotal },   // unpriced is never £0
-        { label: 'Claimed', value: money(claimed + voClaimed), note: `${total + voTotal ? Math.round(((claimed + voClaimed) / (total + voTotal)) * 100) : 0}% of the work`, hot: true, nil: !(claimed + voClaimed) },
-        { label: 'Still to do', value: money(total - claimed + voTotal - voClaimed), note: `${unclaimed.length} line${unclaimed.length === 1 ? '' : 's'}${voLive.length ? ` · ${voLive.length} VO${voLive.length === 1 ? '' : 's'}` : ''}`, nil: !unclaimed.length && !voLive.length },
-      ]} />}
+      {/* the money for the job is on Home and Vals; Scope is the work, house by house (each house shows its value) */}
+      {filter === 'vos' && vos.length > 0 && <VoSummary job={job} vos={vos} vals={vals} />}
 
       <div className="chips">
         {(['all', 'live', 'claimed', 'vos'] as Filter[]).map(f => (
@@ -320,9 +313,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         )
       })}</div> : houseBody(properties[0] ?? '—', false)}
 
-      {openHouse && <Sheet onClose={() => { setOpenHouse(null); setConfirmAll(null) }} label={houseName(openHouse)} className="house-sheet">{houseBody(openHouse, true)}</Sheet>}
+      {openHouse && <Sheet onClose={() => setOpenHouse(null)} label={houseName(openHouse)} className="house-sheet">{houseBody(openHouse, true)}</Sheet>}
 
-      {!empty && <div className="hint" style={{ textAlign: 'center' }}>Tick a line or a priced VO to put it in the open valuation. Untick to send it back.</div>}
     </div>
   )
 }
@@ -362,7 +354,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}
         </div>
         {!locked && <button className="btn btn-primary" disabled={!f.description.trim()} onClick={() => onSave({ ...f, description: f.description.trim(), room: f.room.trim() || 'General', code: f.code.trim(), qty: n(qty), rate: n(rate) })}>{item ? 'Save' : 'Add line'}</button>}
-        {onDelete && !locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete this item</>} onConfirm={onDelete} />}
+        {onDelete && !locked && <ConfirmDelete instant confirmLabel="Delete this item" onConfirm={onDelete} />}
       </div>
     </Sheet>
   )

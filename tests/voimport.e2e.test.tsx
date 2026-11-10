@@ -13,7 +13,6 @@ const SCAN_REPLY = JSON.stringify({ ref: '11284', date: '2026-01-22', issued_by:
 beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async (u: string) => String(u).includes('parse-vo') ? new Response(JSON.stringify({ text: SCAN_REPLY }), { status: 200 }) : new Response('{}', { status: 404 }))) })
 
 async function newJob(name: string, po: string) {
-  click(await screen.findByRole('button', { name: /new job/i }))
   click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
   type('Job name *', name); type(/PO number/i, po)
   click(screen.getByRole('button', { name: 'Create job' }))
@@ -49,7 +48,7 @@ describe('council VO instructions', () => {
 
   it('handwritten site instruction 11284: matches PO, attaches line 1 to the VO already raised, adds line 2', async () => {
     render(<App />)
-    await screen.findByRole('button', { name: /new job/i })   // the jobs screen
+    await screen.findByLabelText(/new job: choose the client’s files/i)   // the jobs screen
     await newJob('57 Mill Drive', 'PO21812')
     nav('scope')
     click(await screen.findByRole('button', { name: /^add vo$/i }))

@@ -28,6 +28,7 @@ import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
 import { fig, figs } from '../components/Figs'
 import { DockShape, captureSlot } from '../components/Dock'
+import { offerUndo } from '../lib/undo'
 
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals' | 'ask'
@@ -208,15 +209,15 @@ const NAV: { tab: Tab; label: string; Icon: (p: { size?: number }) => JSX.Elemen
 
 export function JobView(p: {
   job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
-  onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: () => void; onImportVo: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
+  onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: (house?: string) => void; onImportVo: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onClaimMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteScope: (items: ScopeItem[]) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void; onCheckRates?: () => void; onEvidence: () => Promise<void>
   onIssue: (v: Valuation) => Promise<Valuation>; onReview: (v: Valuation, note?: string) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
   costs: Cost[]; dayRate?: number | null; onCosts: () => void
   onDayworks: (fresh: boolean) => void
   docs: JobDocument[]; onAddDoc: (file: File, kind: JobDocument['kind'], name: string) => Promise<void>; onOpenDoc: (d: JobDocument) => Promise<void>; onDeleteDoc: (d: JobDocument) => Promise<void>
   orders: WorkOrder[]; onNewOrder: () => void; onOpenOrder: (o: WorkOrder) => void; onClaimOrders: (lines: ScopeItem[]) => void
-  diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry) => void
-  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
+  diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry, linked?: DiaryEntry[]) => void
+  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<DiaryEntry>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
   /** why site captures aren't being read just now, if they aren't */
   readNote?: string | null
   onDecideSite?: (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => Promise<void>
@@ -253,8 +254,14 @@ export function JobView(p: {
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setCapErr(null)
-    try { const d = dayKey(); await p.onAddMedia(f, kind, d); closeCapture(); openDay(d) }
+    try { const d = dayKey(); landed(await p.onAddMedia(f, kind, d), d); closeCapture() }
     catch (x) { setCapErr((x as Error).message) }
+  }
+  // a capture made on Scope or Vals (walking a house, checking a valuation) stays there: it says where it went, with
+  // Undo; from Home or the Diary it opens the day, as before
+  const landed = (e: DiaryEntry, d: string) => {
+    if (tab === 'home' || tab === 'diary') { openDay(d); return }
+    offerUndo(`${e.type === 'voice' ? 'Voice note' : e.type === 'video' ? 'Video' : 'Photo'} added to today’s diary`, () => p.onDeleteDiary(e))
   }
   return (
     <>
@@ -272,7 +279,7 @@ export function JobView(p: {
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
         {tab === 'scope' && job.kind === 'orders' && <><OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />
-          <VoList vos={vos} vals={vals} onToggle={p.onToggleVo} onEdit={onEditVariation} onLog={onLogVariation} /></>}
+          <VoList vos={vos} vals={vals} onToggle={p.onToggleVo} onEdit={onEditVariation} onLog={() => onLogVariation()} /></>}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence}
           vos={vos} onToggleVo={p.onToggleVo} onEditVo={onEditVariation} onLogVo={onLogVariation} onImportVo={access.money ? p.onImportVo : undefined} onRegister={access.money ? p.onVoRegister : undefined} onDayworks={() => p.onDayworks(false)}
           diary={p.diary} onMarkDone={i => p.onSaveDiary(doneMark(job, i))} onUndoDone={p.onDeleteDiary} />}
@@ -302,7 +309,7 @@ export function JobView(p: {
       })()}
       {/* over the open capture menu the + turns into its close button, where the thumb already is (phones; the menu keeps its own × for screen readers and the desktop) */}
       {capture && <button className={'cap-close' + (capLeaving ? ' leaving' : '')} aria-hidden="true" tabIndex={-1} onClick={closeCapture}><span><IconPlus size={28} /></span></button>}
-      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); openDay(d) }} />}
+      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); const e = await p.onAddMedia(b, 'voice', d); setQuickVoice(false); landed(e, d) }} />}
       {capture && (
         <Sheet className={'capture-sheet' + (capLeaving ? ' leaving' : '')} onClose={closeCapture}>
           <div className="stack">
@@ -319,7 +326,6 @@ export function JobView(p: {
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setFocusNote(true); openDay(dayKey()) }}><IconPin /> Note</button>
             </div>
             {capErr && <div className="flag">{capErr}</div>}
-            <div className="hint">Everything here goes into today’s diary.</div>
           </div>
         </Sheet>
       )}

@@ -51,7 +51,7 @@ export function NoteEditor({ job, note, onSave, onDelete, onClose }: {
         <Field label="Note" hint="Tip: tap the mic on your keyboard to dictate"><textarea rows={5} autoFocus value={text} onChange={e => setText(e.target.value)} placeholder="e.g. The officer agreed the airing-cupboard partition can be claimed — email 2 Oct" /></Field>
         <label className="check-row t-note flush" style={{ alignItems: 'center' }}><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} /> Pin to the top of the job</label>
         <button className="btn btn-primary" disabled={!text.trim()} onClick={() => onSave({ ...base, note: text.trim(), category: cat, pinned })}>{note ? 'Save' : 'Add note'}</button>
-        {onDelete && <ConfirmDelete label="Delete…" confirmLabel={<>Delete this note</>} onConfirm={onDelete} />}
+        {onDelete && <ConfirmDelete instant confirmLabel="Delete this note" onConfirm={onDelete} />}
       </div>
     </Sheet>
   )
