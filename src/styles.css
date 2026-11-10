@@ -556,6 +556,10 @@ label.row { cursor: pointer; }
 /* ---------- update bar ---------- */
 .update-bar { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(var(--nav-h) + var(--cap-rise) + 8px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: var(--slate); color: var(--white); border-radius: var(--r-md); border: 1px solid var(--rule-ctl); font-size: 15px; font-weight: 600; }
 .update-bar .btn { width: auto; min-height: 44px; padding: 0 16px; }
+/* the Undo bar (lib/undo.ts): the same bar, one step higher so it never sits on the update bar; it slides up and drains */
+.undo-bar { z-index: 61; animation: undo-in .2s var(--ease-out, ease-out) both; }
+@keyframes undo-in { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .undo-bar { animation: none; } }
 .problem-bar { z-index: 90; align-items: flex-start; font-size: 14px; line-height: 1.4; padding-top: 12px; border-color: var(--red); }
 .problem-bar > svg { flex: none; margin-top: 1px; }
 .problem-page { min-height: 100vh; max-width: 480px; margin: 0 auto; padding: 64px 24px; display: grid; align-content: start; justify-items: start; gap: 16px; }

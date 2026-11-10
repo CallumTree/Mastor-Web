@@ -39,6 +39,9 @@ import { VoImport } from './screens/VoImport'
 import { CreateInvoiceSheet, SettingsSheet } from './screens/Settings'
 import { HelpSheet } from './screens/Help'
 import { tell } from './components/Problem'
+import { UndoBar } from './components/Undo'
+import { offerUndo } from './lib/undo'
+import { voRef } from './lib/format'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
 import { jobAlerts } from './lib/alerts'
@@ -216,6 +219,34 @@ export default function App() {
     const ids = new Set(items.filter(i => !i.valuationId && isPriced(i)).map(i => i.id))
     setScope(all => all.map(x => (ids.has(x.id) ? { ...x, valuationId: to } : x)))
   }
+  // ---- act, then Undo (lib/undo.ts): Mastor's own records change on the tap and can be taken back for a few seconds ----
+  /** Tick a batch into the valuation; more than one line offers Undo, which unticks exactly those. */
+  const claim = (jobId: string, items: ScopeItem[]) => {
+    const live = items.filter(i => !i.valuationId && isPriced(i)); if (!live.length) return
+    void act(jobId, ['scope', 'vals'], () => claimMany(live), tickNow(live))
+    if (live.length > 1) offerUndo(`${live.length} lines ticked`, () => act(jobId, ['scope', 'vals'], () => db.putScopeMany(live.map(i => ({ ...i, valuationId: null })))))
+  }
+  /** Remove scope lines; Undo puts them back as they were. */
+  const removeLines = (jobId: string, items: ScopeItem[], said: string) => {
+    if (!items.length) return
+    const ids = new Set(items.map(i => i.id))
+    void act(jobId, ['scope'], async () => { for (const id of ids) await db.deleteScope(id) }, () => setScope(all => all.filter(x => !ids.has(x.id))))
+    offerUndo(said, () => act(jobId, ['scope'], () => db.putScopeMany(items)))
+  }
+  const DIARY_WORD: Record<DiaryEntry['type'], string> = { photo: 'Photo', video: 'Video', voice: 'Voice note', note: 'Note', day: 'Site day', todo: 'To-do', event: 'Key date', done: 'Done mark' }
+  /** Delete a diary record (a photo, a note, a to-do, a key date and its to-dos' links). Its files go only once Undo closes. */
+  const removeDiary = (e: DiaryEntry, linked: DiaryEntry[] = []) => {
+    const media = [e.mediaId, e.originalMediaId].filter((x): x is string => !!x)
+    const gone = act(e.jobId, ['diary'], async () => { await db.deleteDiary(e, true); for (const t of linked) await db.putDiary({ ...t, linkId: null }) },
+      () => setDiary(all => all.filter(x => x.id !== e.id).map(x => (linked.some(t => t.id === x.id) ? { ...x, linkId: null } : x))))
+    if (e.type === 'done') { void gone.then(() => db.dropMedia(media)); return gone }   // taking a Done mark back is its own undo
+    offerUndo(`${DIARY_WORD[e.type]} deleted`, () => act(e.jobId, ['diary'], async () => { await db.putDiary(e); for (const t of linked) await db.putDiary(t) }), () => db.dropMedia(media))
+    return gone
+  }
+  const removeVo = (v: Variation) => {
+    void act(v.jobId, ['vos'], () => db.deleteVariation(v, true), () => setVos(all => all.filter(x => x.id !== v.id)))
+    offerUndo(`${voRef(v.number)} deleted`, () => act(v.jobId, ['vos'], () => db.putVariation(v)), () => db.dropMedia(v.photoIds))
+  }
 
   return (
     <AccessContext.Provider value={access}>
@@ -237,14 +268,18 @@ export default function App() {
             const to = i.valuationId ? null : isPriced(i) ? claimTarget(jobVals)?.id : undefined
             if (to !== undefined) setScope(all => all.map(x => (x.id === i.id ? { ...x, valuationId: to } : x)))
           }) }}
-          onClaimMany={items => { void act(job.id, ['scope', 'vals'], () => claimMany(items), tickNow(items)) }}
-          onClearUnclaimed={items => { const ids = new Set(items.filter(i => !i.valuationId).map(i => i.id)); void act(job.id, ['scope'], async () => { for (const id of ids) await db.deleteScope(id) }, () => setScope(all => all.filter(x => !ids.has(x.id)))) }}
+          onClaimMany={items => claim(job.id, items)}
+          onClearUnclaimed={items => { const out = items.filter(i => !i.valuationId); removeLines(job.id, out, `${out.length} unclaimed line${out.length === 1 ? '' : 's'} cleared`) }}
           onDeleteScope={items => { const ids = new Set(items.filter(i => !lockedIn(i, jobVals)).map(i => i.id)); void act(job.id, ['scope'], async () => { for (const id of ids) await db.deleteScope(id) }, () => setScope(all => all.filter(x => !ids.has(x.id)))) }}
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)} onCheckRates={books.length ? () => setChecking(true) : undefined}
           onEvidence={async () => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(schemeEvidence(job, jobScope, jobVals, jobDiary, company)), evidenceFileName(job, 'scheme')) }}
           onIssue={async v => (await act(job.id, ['vals', 'scope', 'vos'], () => issueValuation(v))) ?? v}
           onReview={(v, note) => { void act(job.id, ['vals', 'diary'], async () => { await db.putValuation({ ...v, byClaude: null }); if (note) await db.putDiary(newNote(job, note, 'Commercial')) }) }}
-          onDeleteOpenVal={v => { void act(job.id, ['vals', 'scope', 'vos'], () => deleteOpenValuation(v, jobScope, jobVos)) }}
+          onDeleteOpenVal={v => {
+            const lines = jobScope.filter(i => i.valuationId === v.id), extras = jobVos.filter(x => x.valuationId === v.id)
+            void act(job.id, ['vals', 'scope', 'vos'], () => deleteOpenValuation(v, jobScope, jobVos))
+            offerUndo(`${valRef(v.number)} deleted: its lines are back in live`, () => act(job.id, ['vals', 'scope', 'vos'], async () => { await db.putValuation(v); await db.putScopeMany(lines); await db.putVariationMany(extras) }))
+          }}
           onPaid={v => { void act(job.id, ['vals'], () => db.putValuation(v), () => setVals(all => all.map(x => (x.id === v.id ? v : x)))) }}
           onImportVo={() => setVoImport(true)}
           onVoRegister={async () => {
@@ -268,7 +303,7 @@ export default function App() {
             await shareOrDownload(new Blob([blob], { type: d.type }), d.name.replace(/[^A-Za-z0-9 _.-]+/g, '_') + ext)
           }}
           onDeleteDoc={async d => { await act(job.id, ['docs'], async () => { await db.remove('docs', d); await db.deletePhoto(d.fileId) }, () => setDocs(all => all.filter(x => x.id !== d.id))) }}
-          orders={jobOrders} onNewOrder={() => setOrderOpen('new')} onOpenOrder={setOrderOpen} onClaimOrders={lines => { void act(job.id, ['scope', 'vals'], () => claimMany(lines), tickNow(lines)) }}
+          orders={jobOrders} onNewOrder={() => setOrderOpen('new')} onOpenOrder={setOrderOpen} onClaimOrders={lines => claim(job.id, lines)}
           diary={jobDiary} costs={jobCosts} dayRate={settings?.labourDayRate} onCosts={() => setCostsOpen(true)}
           onSaveDiary={async (e, markedUp) => {
             // mark-up saves a NEW image; the first original is always kept
@@ -276,7 +311,7 @@ export default function App() {
             const entry = e
             await act(job.id, ['diary'], () => db.putDiary(entry), () => setDiary(all => (all.some(x => x.id === entry.id) ? all.map(x => (x.id === entry.id ? entry : x)) : [...all, entry])))
           }}
-          onDeleteDiary={async e => { await act(job.id, ['diary'], () => db.deleteDiary(e), () => setDiary(all => all.filter(x => x.id !== e.id))) }}
+          onDeleteDiary={(e, linked) => { void removeDiary(e, linked) }}
           onAddMedia={async (file, kind, date) => {
             const mediaId = kind === 'video' ? await saveVideo(file as File) : kind === 'voice' ? await saveVoice(file) : await savePhoto(file as File)
             const entry: DiaryEntry = { id: uid(), jobId: job.id, date, type: kind, note: '', labour: null, weather: '', mediaId, originalMediaId: null, room: '', voId: null, createdAt: Date.now() }
@@ -449,7 +484,7 @@ export default function App() {
             const stillPriced = v.qty != null && v.rate != null && v.status !== 'Rejected'
             await db.putVariation(stillPriced ? v : { ...v, valuationId: null }); setEditing(null); await reload()
           }}
-          onDelete={async () => { await db.deleteVariation(editing); setEditing(null); await reload() }} />
+          onDelete={() => { removeVo(editing); setEditing(null) }} />
       )}
       {importing && job && access.money && (
         <BoqImport job={job} existing={jobScope.length} books={books} onClose={() => setImporting(false)}
@@ -468,8 +503,9 @@ export default function App() {
             const stillPriced = i.qty != null && i.rate != null
             await db.putScope(stillPriced ? i : { ...i, valuationId: null }); setScopeForm(null); await reload()
           }}
-          onDelete={scopeForm !== 'new' ? async () => { await db.deleteScope((scopeForm as ScopeItem).id); setScopeForm(null); await reload() } : undefined} />
+          onDelete={scopeForm !== 'new' ? () => { removeLines(job.id, [scopeForm as ScopeItem], 'Line deleted'); setScopeForm(null) } : undefined} />
       )}
+      <UndoBar />
     </AccessContext.Provider>
   )
 }

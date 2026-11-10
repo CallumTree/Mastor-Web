@@ -131,10 +131,13 @@ export const db = {
   variations: (jobId: string) => tx<Variation[]>('variations', 'readonly', s => s.index('jobId').getAll(jobId)),
   putVariation: (vo: Variation) => db.putVariationMany([vo]),
   putVariationMany: (vos: Variation[]) => { const vs = vos.map(byPerson); return save(['variations'], st => { for (const v of vs) st('variations').put(v) }, vs.map(v => rec('variations', v.id, v.jobId, v))) },
-  deleteVariation: (v: Variation) => save(['variations', 'photos'], st => { for (const p of v.photoIds) st('photos').delete(p); st('variations').delete(v.id) }, [rec('variations', v.id, v.jobId, null)]),
+  /** `keepMedia`: the record goes now, its photos stay until the Undo offer closes (then dropMedia). */
+  deleteVariation: (v: Variation, keepMedia = false) => save(['variations', 'photos'], st => { if (!keepMedia) for (const p of v.photoIds) st('photos').delete(p); st('variations').delete(v.id) }, [rec('variations', v.id, v.jobId, null)]),
   diary: (jobId: string) => tx<DiaryEntry[]>('diary', 'readonly', s => s.index('jobId').getAll(jobId)),
   putDiary: (entry: DiaryEntry) => { const d = byPerson(entry); return save(['diary'], st => st('diary').put(d), [rec('diary', d.id, d.jobId, d)]) },
-  deleteDiary: (d: DiaryEntry) => save(['diary', 'photos'], st => { for (const m of [d.mediaId, d.originalMediaId]) if (m) st('photos').delete(m); st('diary').delete(d.id) }, [rec('diary', d.id, d.jobId, null)]),
+  deleteDiary: (d: DiaryEntry, keepMedia = false) => save(['diary', 'photos'], st => { if (!keepMedia) for (const m of [d.mediaId, d.originalMediaId]) if (m) st('photos').delete(m); st('diary').delete(d.id) }, [rec('diary', d.id, d.jobId, null)]),
+  /** The files of records deleted a moment ago, once Undo is no longer on offer. */
+  dropMedia: (ids: string[]) => (ids.length ? save(['photos'], st => { for (const id of ids) st('photos').delete(id) }, []) : Promise.resolve()),
   /** costs, orders, dayworks, docs: list for a job, save, delete */
   list: <K extends JobStore>(store: K, jobId: string) => tx<JobRecord[K][]>(store, 'readonly', s => s.index('jobId').getAll(jobId)),
   put: <K extends JobStore>(store: K, r: JobRecord[K]) => save([store], st => st(store).put(r), [rec(store, r.id, r.jobId, r)]),

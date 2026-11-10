@@ -29,8 +29,7 @@ describe('payments and chasing', () => {
     await screen.findByText(/send to client for instruction/i)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     click(screen.getByRole('button', { name: /Extra socket/ }))
-    click(await screen.findByRole('button', { name: /mark as sent to client/i }))
-    click(screen.getByRole('button', { name: 'Save' }))
+    click(await screen.findByRole('button', { name: /mark as sent to client/i }))   // saved on the tap: it records a date and sends nothing
     await screen.findByText(/awaiting instruction · 0 days/i)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
 

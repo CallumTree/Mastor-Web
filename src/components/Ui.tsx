@@ -118,9 +118,11 @@ export function TitleBlock({ head, rows, sheetRef, progress }: {
   )
 }
 
-/** Delete with a second step that can be backed out of: "Delete…" → Cancel | Delete X. One pattern everywhere. */
-export function ConfirmDelete({ label = 'Delete…', confirmLabel, onConfirm, note }: { label?: string; confirmLabel: ReactNode; onConfirm: () => void; note?: string }) {
+/** Delete with a second step that can be backed out of: "Delete…" → Cancel | Delete X. One pattern everywhere.
+ *  `instant`: for Mastor's own records that come back with Undo (lib/undo.ts): one tap, no second step. */
+export function ConfirmDelete({ label = 'Delete…', confirmLabel, onConfirm, note, instant }: { label?: string; confirmLabel: ReactNode; onConfirm: () => void; note?: string; instant?: boolean }) {
   const [asking, setAsking] = useState(false)
+  if (instant) return <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={onConfirm}>{confirmLabel}</button>
   if (!asking) return <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--red)' }} onClick={() => setAsking(true)}>{label}</button>
   return (
     <div role="group" aria-label="Confirm delete">

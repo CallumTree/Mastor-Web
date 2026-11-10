@@ -137,7 +137,7 @@ export function EditVariation({ vo, locked, books = [], houses = [], onSave, onD
         {m && qv && rv && v.status === 'Identified' && !v.clientRef && (
           v.submittedAt
             ? <div className="row"><span className="grow flag">Sent to client {ukd(v.submittedAt)} — waiting on their instruction</span><button className="chip" onClick={() => setV({ ...v, submittedAt: null })}>Undo</button></div>
-            : <button className="btn btn-secondary" onClick={() => setV({ ...v, submittedAt: Date.now() })}>Mark as sent to client for instruction</button>
+            : <button className="btn btn-secondary" onClick={() => save({ ...v, submittedAt: Date.now() })}>Mark as sent to client for instruction</button>
         )}
         {m && <Field label="Client VO reference" hint="Once the client issues one, it’s instructed"><input value={v.clientRef} onChange={e => setV({ ...v, clientRef: e.target.value })} /></Field>}
         {m && v.status === 'Rejected' && <div className="flag">The client rejected this variation. It isn’t counted or claimed.</div>}
@@ -148,7 +148,7 @@ export function EditVariation({ vo, locked, books = [], houses = [], onSave, onD
         {m && !locked && (v.status === 'Rejected'
           ? <button className="btn btn-secondary" onClick={() => save({ ...v, status: v.clientRef.trim() ? 'Instructed' : 'Identified' })}>Not rejected after all</button>
           : <button className="btn btn-secondary" onClick={() => save({ ...v, status: 'Rejected' })}>Client rejected it</button>)}
-        {m && !locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete {voRef(vo.number)}</>} onConfirm={onDelete} />}
+        {m && !locked && <ConfirmDelete instant confirmLabel={<>Delete {voRef(vo.number)}</>} onConfirm={onDelete} />}
       </div>
     </Sheet>
   )

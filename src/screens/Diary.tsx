@@ -87,7 +87,7 @@ function MediaSheet({ e, rooms, vos, onSave, onDelete, onRaiseVo, onClose }: {
         {vo ? <div className="flag">Evidence for {voRef(vo.number)} — {vo.description}</div>
           : e.type === 'photo' && <button className="btn btn-secondary" onClick={() => { onSave({ ...e, note: caption.trim(), room: room.trim() }); onRaiseVo({ ...e, note: caption.trim(), room: room.trim() }) }}><IconFlag /> Raise VO from this photo</button>}
         <button className="btn btn-primary" onClick={close}>Done</button>
-        <ConfirmDelete label="Delete…" confirmLabel={<>Delete this {e.type === 'voice' ? 'voice note' : e.type}</>} onConfirm={onDelete} />
+        <ConfirmDelete instant confirmLabel={<>Delete this {e.type === 'voice' ? 'voice note' : e.type}</>} onConfirm={onDelete} />
       </div>
     </Sheet>
   )

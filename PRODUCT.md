@@ -50,6 +50,8 @@ Help: Settings → How Mastor works (`src/screens/Help.tsx`) walks a month on a 
 
 The front page shows the three plans (`Prices` in `src/landing/Landing.tsx`: monthly, yearly, seats, the founding half price) and seven common questions (`Questions`). Prices are shown as paid, no VAT (`VAT_REGISTERED = false`); one line changes it once Mastor registers. The founding sign-up turns away a form sent faster than a person could fill it and more than six sign-ups an hour from one connection.
 
+Saves are instant and safe (`src/App.tsx` `act`, `src/lib/db.ts` `save`): the screen changes on the tap, the record and its outbox entry are written to the phone in one transaction (so nothing is ever saved without being queued to sync), writes run in order, and only the affected job's records are re-read. A write that fails is said in the problem bar and the screen goes back to what the phone holds. Mastor's own records act at once with Undo (`src/lib/undo.ts`): tick all, deletes, clearing unclaimed lines, deleting the open valuation; a deleted photo's file goes only when the Undo offer closes.
+
 Money is never recorded by a stray tap: "Agreed — create invoice" opens the invoice and records the client's agreement only when the invoice is made (or "agreed, invoice it later" is chosen); a payment's white button is the amount typed ("Save £10,000.00 received"), "Paid in full" stepping back once an amount is in; one white button per screen on Vals. When the PDF after sending or invoicing fails, the problem bar says what's saved and where the PDF is.
 
 ## Product Purpose

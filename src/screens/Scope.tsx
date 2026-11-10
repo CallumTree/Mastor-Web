@@ -157,7 +157,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   const hasProps = properties.filter(p => p !== '—').length > 1 || (properties.length > 1 && properties.includes('—'))
   // one tap on a house opens all its work in a sheet, under its trades; the list stays where it was underneath
   const [openHouse, setOpenHouse] = useState<string | null>(null)
-  const [confirmAll, setConfirmAll] = useState<string | null>(null)
   const groupsOf = (ls: ScopeItem[]) => [...new Set(ls.map(groupName))]
   const houseName = (p: string) => (p === '—' ? 'Whole job' : job.properties?.[p]?.split(',')[0] || `No. ${p}`)
   const unclaimed = scope.filter(i => !i.valuationId)
@@ -217,10 +216,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         </div>}
         {inSheet && remaining.length > 0 && filter !== 'vos' && (
           <div className="house-all">
-            {confirmAll === p
-              ? <div className="row"><span className="grow t-small">Put all {remaining.length} remaining lines ({fig(money(remaining.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)))}) into the valuation?</span>
-                  <button className="chip lg" onClick={() => setConfirmAll(null)}>No</button><button className="chip lg on" onClick={() => { setConfirmAll(null); onToggleMany(remaining) }}>Yes</button></div>
-              : <button className="btn btn-secondary" onClick={() => setConfirmAll(p)}>Tick all remaining lines ({remaining.length})</button>}
+            {/* acts on the tap; the Undo bar takes exactly these back */}
+            <button className="btn btn-secondary" onClick={() => onToggleMany(remaining)}>Tick all remaining lines ({remaining.length})</button>
           </div>
         )}
         {inSheet && groups.length > 2 && (
@@ -263,8 +260,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           ...(onDayworks ? [{ label: 'Dayworks sheets', hint: 'Hours, materials and plant, signed, then claimed as a VO', onClick: onDayworks }] : []),
           ...(onEvidence ? [{ label: 'Completion evidence (PDF)', hint: 'Work claimed so far, by property, with the diary’s photos — no prices', disabled: !scope.some(i => i.valuationId), onClick: () => { void onEvidence() } }] : []),
           ...(onCheckRates ? [{ label: 'Check rates against your SoR', hint: 'Lines that don’t follow the BoQ’s pattern, codes not in the schedule', disabled: !scope.length, onClick: onCheckRates }] : []),
-          { label: 'Clear unclaimed lines', hint: `${unclaimed.length} scope line${unclaimed.length === 1 ? '' : 's'} not in any valuation (VOs stay)`, danger: true, disabled: !unclaimed.length,
-            confirm: `Remove ${unclaimed.length} unclaimed lines? Anything in a valuation, and every VO, stays.`, onClick: () => onClearUnclaimed(unclaimed) },
+          { label: 'Clear unclaimed lines', hint: `${unclaimed.length} scope line${unclaimed.length === 1 ? '' : 's'} not in any valuation (VOs stay)`, danger: true, disabled: !unclaimed.length, onClick: () => onClearUnclaimed(unclaimed) },
           { label: 'Delete entire scope', hint: lockedCount ? `Wrong spec? ${lockedCount} certified line${lockedCount === 1 ? '' : 's'} will stay (issued valuations are locked); VOs stay` : 'Wrong spec? Removes every scope line so you can import again; VOs stay', danger: true, disabled: lockedCount === scope.length,
             confirm: lockedCount ? `Delete ${scope.length - lockedCount} lines? The ${lockedCount} certified on issued valuations stay.` : `Delete all ${scope.length} lines from this job? This can't be undone.`, onClick: () => onDeleteAll(scope.filter(i => !lockedIn(i, vals))) },
         ]} />} />
@@ -320,7 +316,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         )
       })}</div> : houseBody(properties[0] ?? '—', false)}
 
-      {openHouse && <Sheet onClose={() => { setOpenHouse(null); setConfirmAll(null) }} label={houseName(openHouse)} className="house-sheet">{houseBody(openHouse, true)}</Sheet>}
+      {openHouse && <Sheet onClose={() => setOpenHouse(null)} label={houseName(openHouse)} className="house-sheet">{houseBody(openHouse, true)}</Sheet>}
 
       {!empty && <div className="hint" style={{ textAlign: 'center' }}>Tick a line or a priced VO to put it in the open valuation. Untick to send it back.</div>}
     </div>
@@ -362,7 +358,7 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}
         </div>
         {!locked && <button className="btn btn-primary" disabled={!f.description.trim()} onClick={() => onSave({ ...f, description: f.description.trim(), room: f.room.trim() || 'General', code: f.code.trim(), qty: n(qty), rate: n(rate) })}>{item ? 'Save' : 'Add line'}</button>}
-        {onDelete && !locked && <ConfirmDelete label="Delete…" confirmLabel={<>Delete this item</>} onConfirm={onDelete} />}
+        {onDelete && !locked && <ConfirmDelete instant confirmLabel="Delete this item" onConfirm={onDelete} />}
       </div>
     </Sheet>
   )

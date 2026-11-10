@@ -73,7 +73,7 @@ const MarkRow = ({ m }: { m: LineMark }) => (
 
 export function JobLine({ job, entries, properties, trades, onSave, onDelete, onOpenDay, marks = [] }: {
   job: Job; entries: DiaryEntry[]; properties: string[]; trades: string[]
-  onSave: (e: DiaryEntry) => void; onDelete: (e: DiaryEntry) => void; onOpenDay: (date: string) => void
+  onSave: (e: DiaryEntry) => void; onDelete: (e: DiaryEntry, linked?: DiaryEntry[]) => void; onOpenDay: (date: string) => void
   marks?: LineMark[]
 }) {
   const { money } = useAccess()
@@ -171,7 +171,7 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
         onClose={() => setEditing(null)}
         onSave={e => { onSave({ ...e, byClaude: null }); setEditing(null) }}
         onAddLinked={(event, todo) => { onSave({ ...event, byClaude: null }); onSave(todo); setEditing(todo) }}
-        onDelete={e => { onDelete(e); for (const t of todosFor(e, entries)) onSave({ ...t, linkId: null }); setEditing(null) }} />}
+        onDelete={e => { onDelete(e, todosFor(e, entries)); setEditing(null) }} />}
     </div>
   )
 }
@@ -275,7 +275,7 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
 
         <button className="btn btn-primary" disabled={!ok} onClick={() => onSave({ ...e, note: e.note.trim() })}>{isNew ? (e.type === 'event' ? 'Book it' : 'Add it') : 'Save'}</button>
         {!isNew && e.type === 'todo' && <button className="btn btn-secondary" onClick={() => onSave({ ...e, note: e.note.trim(), doneAt: e.doneAt ? null : Date.now() })}>{e.doneAt ? 'Not done after all' : 'Mark done'}</button>}
-        {!isNew && <ConfirmDelete label={`Delete this ${kind}…`} confirmLabel={`Delete ${kind}`} note={e.type === 'event' && todos.length ? 'Its to-dos stay, unlinked.' : undefined} onConfirm={() => onDelete(e)} />}
+        {!isNew && <ConfirmDelete instant confirmLabel={`Delete ${kind}`} onConfirm={() => onDelete(e)} />}
       </div>
     </Sheet>
   )
