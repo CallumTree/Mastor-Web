@@ -320,6 +320,7 @@ export default function App() {
             const mediaId = kind === 'video' ? await saveVideo(file as File) : kind === 'voice' ? await saveVoice(file) : await savePhoto(file as File)
             const entry: DiaryEntry = { id: uid(), jobId: job.id, date, type: kind, note: '', labour: null, weather: '', mediaId, originalMediaId: null, room: '', voId: null, createdAt: Date.now() }
             await act(job.id, ['diary'], () => db.putDiary(entry), () => setDiary(all => [...all, entry]))
+            return entry
           }}
           onRaiseVoFromPhoto={e => { setLogFrom(e); setLogging(true) }}
           onDecideSite={(e, s, state) => act(job.id, ['scope', 'vals', 'vos', 'diary'], async () => {

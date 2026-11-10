@@ -98,7 +98,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
   /** back to the job's line of days */
   onBack?: () => void
   onSave: (e: DiaryEntry, markedUp?: Blob) => void; onDelete: (e: DiaryEntry) => void
-  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVo: (e: DiaryEntry) => void
+  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<unknown>; onRaiseVo: (e: DiaryEntry) => void
 }) {
   const today = dayKey()
   const day = entries.find(e => e.id === dayId(job.id, date)) ?? null
@@ -250,14 +250,24 @@ export function VoiceSheet({ onSave, onClose }: { onSave: (wav: Blob) => Promise
   const [secs, setSecs] = useState<number | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  useEffect(() => () => rec.current?.cancel(), [])
+  // tapping Voice note is the intent: it starts recording as it opens (no second tap). If the phone won't start the
+  // microphone without one, it says why and Start recording is there as before.
+  useEffect(() => {
+    let gone = false
+    void (async () => {
+      try { const r = await startRecording(); if (gone) { r.cancel(); return } rec.current = r; setSecs(0) }
+      catch (e) { if (!gone) setErr(micError(e)) }
+    })()
+    return () => { gone = true; rec.current?.cancel(); rec.current = null }
+  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (secs == null) return
     if (secs >= MAX_VOICE_SECONDS) { void stop(); return }
     const t = window.setTimeout(() => setSecs(s => (s == null ? s : s + 1)), 1000)
     return () => clearTimeout(t)
   }, [secs])
-  const start = async () => { setErr(null); try { rec.current = await startRecording(); setSecs(0) } catch (e) { setErr((e as Error).name === 'NotAllowedError' ? 'Microphone blocked — allow it for Mastor in the phone’s settings.' : (e as Error).message) } }
+  const micError = (e: unknown) => (e as Error).name === 'NotAllowedError' ? 'Microphone blocked — allow it for Mastor in the phone’s settings.' : (e as Error).message
+  const start = async () => { setErr(null); try { rec.current = await startRecording(); setSecs(0) } catch (e) { setErr(micError(e)) } }
   const stop = async () => { const r = rec.current; if (!r) return; rec.current = null; setSecs(null); setSaving(true); try { await onSave(await r.stop()) } catch (e) { setErr(`Couldn’t save the recording — ${(e as Error).message}`); setSaving(false) } }
   const mmss = (n: number) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`
   return (

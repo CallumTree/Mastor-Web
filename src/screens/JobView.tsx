@@ -28,6 +28,7 @@ import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
 import { fig, figs } from '../components/Figs'
 import { DockShape, captureSlot } from '../components/Dock'
+import { offerUndo } from '../lib/undo'
 
 
 export type Tab = 'home' | 'diary' | 'scope' | 'vos' | 'vals' | 'ask'
@@ -216,7 +217,7 @@ export function JobView(p: {
   docs: JobDocument[]; onAddDoc: (file: File, kind: JobDocument['kind'], name: string) => Promise<void>; onOpenDoc: (d: JobDocument) => Promise<void>; onDeleteDoc: (d: JobDocument) => Promise<void>
   orders: WorkOrder[]; onNewOrder: () => void; onOpenOrder: (o: WorkOrder) => void; onClaimOrders: (lines: ScopeItem[]) => void
   diary: DiaryEntry[]; onSaveDiary: (e: DiaryEntry, markedUp?: Blob) => void; onDeleteDiary: (e: DiaryEntry, linked?: DiaryEntry[]) => void
-  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<void>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
+  onAddMedia: (file: File | Blob, kind: 'photo' | 'video' | 'voice', date: string) => Promise<DiaryEntry>; onRaiseVoFromPhoto: (e: DiaryEntry) => void
   /** why site captures aren't being read just now, if they aren't */
   readNote?: string | null
   onDecideSite?: (e: DiaryEntry, s: SiteSuggestion, state: 'approved' | 'rejected') => Promise<void>
@@ -253,8 +254,14 @@ export function JobView(p: {
   const quickAdd = async (f: File | undefined, kind: 'photo' | 'video') => {
     if (!f) return
     setCapErr(null)
-    try { const d = dayKey(); await p.onAddMedia(f, kind, d); closeCapture(); openDay(d) }
+    try { const d = dayKey(); landed(await p.onAddMedia(f, kind, d), d); closeCapture() }
     catch (x) { setCapErr((x as Error).message) }
+  }
+  // a capture made on Scope or Vals (walking a house, checking a valuation) stays there: it says where it went, with
+  // Undo; from Home or the Diary it opens the day, as before
+  const landed = (e: DiaryEntry, d: string) => {
+    if (tab === 'home' || tab === 'diary') { openDay(d); return }
+    offerUndo(`${e.type === 'voice' ? 'Voice note' : e.type === 'video' ? 'Video' : 'Photo'} added to today’s diary`, () => p.onDeleteDiary(e))
   }
   return (
     <>
@@ -302,7 +309,7 @@ export function JobView(p: {
       })()}
       {/* over the open capture menu the + turns into its close button, where the thumb already is (phones; the menu keeps its own × for screen readers and the desktop) */}
       {capture && <button className={'cap-close' + (capLeaving ? ' leaving' : '')} aria-hidden="true" tabIndex={-1} onClick={closeCapture}><span><IconPlus size={28} /></span></button>}
-      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); await p.onAddMedia(b, 'voice', d); setQuickVoice(false); openDay(d) }} />}
+      {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); const e = await p.onAddMedia(b, 'voice', d); setQuickVoice(false); landed(e, d) }} />}
       {capture && (
         <Sheet className={'capture-sheet' + (capLeaving ? ' leaving' : '')} onClose={closeCapture}>
           <div className="stack">
