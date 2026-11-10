@@ -15,7 +15,6 @@ describe('multi-property scheme', () => {
   it('shows one collapsed block per property; tick all remaining; valuation grouped by property', async () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Example Road')
     click(screen.getByRole('button', { name: 'Create job' }))

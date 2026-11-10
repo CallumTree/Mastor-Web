@@ -30,7 +30,7 @@ const ROWS = [
   ['3051AB', 'PLASTER:RENEW WALL HARDWALL', 'SM', '42.10'],
   ['', 'Plaster:Hack off and renew wall plaster in hardwall.', '', ''],
 ]
-const pick = (files: File[]) => fireEvent.change(document.querySelector('input[type=file][accept*=".docx"]')!, { target: { files } })
+const pick = (files: File[]) => fireEvent.change(document.querySelector('.sheet input[type=file][accept*=".docx"]')!, { target: { files } })
 
 describe('schedule of rates', () => {
   it('import → search → price a VO and a scope line from it; a second copy is spotted', async () => {
@@ -63,7 +63,6 @@ describe('schedule of rates', () => {
     click(screen.getByRole('button', { name: 'Close' }))
 
     // --- a job with a variation, priced from the book
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', '4 Rates Road')
     click(screen.getByRole('button', { name: 'Create job' }))

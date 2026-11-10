@@ -12,7 +12,6 @@ describe('motion', () => {
   it('the tab marker follows the tab; the + closes the menu it opened', async () => {
     const { container } = render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))
     fireEvent.change(screen.getByLabelText('Job name *'), { target: { value: 'Motion Row' } })
     click(screen.getByRole('button', { name: 'Create job' }))

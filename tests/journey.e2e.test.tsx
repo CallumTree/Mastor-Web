@@ -29,7 +29,6 @@ describe('Park Road, end to end', () => {
     await screen.findByRole('img', { name: 'MASTOR' })
 
     // --- new job
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', '32 Park Road')
     type('Client', 'Example Council')

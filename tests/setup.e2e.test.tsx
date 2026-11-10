@@ -25,7 +25,7 @@ describe('first run', () => {
 
     // the first job step opens the client's pack reader
     click(within(screen.getByRole('region', { name: 'Getting set up' })).getByRole('button', { name: /your first job/i }))
-    expect(await screen.findByRole('button', { name: /set it up by hand/i })).toBeTruthy()
+    await waitFor(() => expect(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /set it up by hand/i })).toBeTruthy())
     fireEvent.click(document.querySelector('.sheet-bg')!)
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
 

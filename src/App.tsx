@@ -130,7 +130,7 @@ export default function App() {
   // a job opens on the tab you last used in it, unless something asks for a particular one (an alert: Vals)
   const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab: tab ?? (id ? lastTab(id) : null) }) }
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
-  const [newJob, setNewJob] = useState(false)
+  const [newJob, setNewJob] = useState<boolean | File[]>(false)   // files: chosen with New job on the jobs list
   const [logging, setLogging] = useState(false)
   const [logHouse, setLogHouse] = useState<string | null>(null)   // Add VO from inside a house: that house, already picked
   const [editing, setEditing] = useState<Variation | null>(null)
@@ -355,7 +355,7 @@ export default function App() {
             { key: 'job', label: 'Your first job, from the client’s pack', hint: 'The schedule, works orders and surveys: every line read for you to check.', done: jobs.length > 0, onClick: () => setNewJob(true) },
           ] : undefined}
           alerts={weekAlerts(jobs, scope, vos, vals, orders, diary)}
-          onToggle={async e => { const t = { ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }; await act(e.jobId, ['diary'], () => db.putDiary(t), () => setDiary(all => all.map(x => (x.id === t.id ? t : x)))) }} onOpenLine={(j, tab) => setOpenId(j.id, tab ?? 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
+          onToggle={async e => { const t = { ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }; await act(e.jobId, ['diary'], () => db.putDiary(t), () => setDiary(all => all.map(x => (x.id === t.id ? t : x)))) }} onOpenLine={(j, tab) => setOpenId(j.id, tab ?? 'diary')} onNew={files => setNewJob(files)} onByHand={() => setJobForm('new')} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
       {voImport && job && access.money && <VoImport job={job} vos={jobVos} houses={houses} onClose={() => setVoImport(false)}
@@ -465,10 +465,10 @@ export default function App() {
           }} />
       })()}
       {/* the office's screens: an operative never reaches a figure, even through a stale button */}
-      {newJob && access.money && <NewJob books={books} onClose={() => setNewJob(false)} onByHand={() => { setNewJob(false); setJobForm('new') }}
+      {newJob && access.money && <NewJob books={books} jobs={jobs} files={Array.isArray(newJob) ? newJob : undefined} onClose={() => setNewJob(false)} onByHand={() => { setNewJob(false); setJobForm('new') }}
         onCreate={async (j, lines, pack) => { await db.putJob(j); await savePack(j, [], lines, pack); setNewJob(false); await reload(); setOpenId(j.id) }} />}
       {jobForm && access.money && (
-        <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} onClose={() => { setJobForm(null); setResumeInvoice(null) }}
+        <JobForm job={jobForm === 'edit' ? job ?? undefined : undefined} jobs={jobs} onClose={() => { setJobForm(null); setResumeInvoice(null) }}
           onSave={async j => { await db.putJob({ ...j, byClaude: null }); setJobForm(null); await reload(); setOpenId(j.id); if (resumeInvoice) { setInvoicing(resumeInvoice); setResumeInvoice(null) } }}
           onDelete={jobForm === 'edit' && job ? async () => { await db.deleteJob(job.id); setJobForm(null); setOpenId(null); await reload() } : undefined} />
       )}

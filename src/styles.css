@@ -481,6 +481,7 @@ label.row { cursor: pointer; }
 .cover-body { width: 100%; max-width: 1040px; margin: 0 auto; padding: 18px 16px 32px; flex: 1; }
 .cover-empty { text-align: center; color: var(--meta); padding: 40px 16px; font-size: 18px; }
 .cover-actions { margin-top: 16px; display: grid; gap: 10px; }
+.cover-actions .new-hand { justify-self: center; margin: 0; }   /* no pack yet: by hand, quietly under New job */
 .jobs { background: var(--slate); border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; }
 .jobs-head { display: none; }
 .job-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "job value" "client client" "needs status"; gap: 4px 12px; align-items: center; padding: 15px 16px; background: none; border: 0; text-align: left; color: var(--white); font: inherit; }
@@ -707,7 +708,8 @@ body { background-image: linear-gradient(var(--grid) 1px, transparent 1px), line
   .jr-job, .jr-client, .jr-value, .jr-needs, .jr-status { grid-area: auto; margin: 0; }
   .jr-status { justify-self: start; }
   .jr-value { align-self: center; }
-  .cover-actions { display: flex; justify-content: flex-end; gap: 12px; }
+  .cover-actions { display: flex; justify-content: flex-end; align-items: center; gap: 20px; }
+  .cover-actions .new-hand { order: -1; }
   .cover-actions .btn { width: auto; padding: 0 24px; }
 }
 

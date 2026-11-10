@@ -397,6 +397,12 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 - Mastor's own records change on the tap: tick all, deleting a photo, note, VO, line, to-do or key date, clearing unclaimed lines, deleting the open valuation. No "are you sure?". One bar rises above the dock for six seconds (the update bar's own shape: Milled Steel, Slate Edge, 2px corners): what happened in white ("11 lines ticked", "Photo deleted") and one outlined Undo button. One offer at a time; a new action, the timer or leaving the app closes it. A deleted photo's file is only removed once the offer has closed.
 - What keeps a deliberate step: anything that reaches the client or makes an invoice or payment record (send, create invoice, payments), Delete job, Delete entire scope, and "Discard what you've entered?" on a sheet with typing in it.
 
+### One deliberate tap, and the right place
+- Sending a valuation is one white button on its own card with the figure on it ("Send VAL I for £4,280.69", figure in mono); anything the client would query sits above it as plates. No second screen.
+- An alert opens where it's dealt with; a job opens on the tab last used in it; the app opens cold where it was left.
+- New job on the jobs list is the white block and the file picker itself; "Set it up by hand" is a quiet underlined link beside it.
+- Company details: the five fields an invoice needs, then the invoice number, then a ruled "More details" fold (+ / −) for the rest.
+
 ### AI this month (Settings)
 - The plan's name and the share used (figure in mono) on one line, a plain 8px rule under it filled drafting white to that share on Slate Edge; then site days left at the firm's own rate and today's Clerk questions, in Slate Note. Never credits, tokens or prices. A closing line says AI pauses and records carry on, and nothing is ever charged.
 - Vals → From site says plainly when captures are with the reader ("2 site captures are with the reader. What they show arrives here, usually within the hour."), so a quiet panel never reads as nothing happening.

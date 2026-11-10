@@ -12,7 +12,6 @@ describe('BoQ vs PO difference', () => {
   it('flags, can be accepted with a note, and re-flags if the difference changes', async () => {
     render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
-    click(screen.getByRole('button', { name: /new job/i }))
     click(await screen.findByRole('button', { name: /set it up by hand/i }))   // no client pack in this test: the job is set up by hand
     type('Job name *', 'Gap Road'); type(/PO number/i, 'PC1'); type(/PO value/i, '1000'); type('Uplift 1 (%)', '20.28'); type('Uplift 2 (%)', '5')
     click(screen.getByRole('button', { name: 'Create job' }))
