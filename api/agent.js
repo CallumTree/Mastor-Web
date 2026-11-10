@@ -23529,12 +23529,12 @@ var init_BetaToolRunner = __esm({
                     __classPrivateFieldGet(this, _BetaToolRunner_thread, "f")._state.checkNextTurn(turnParams(__classPrivateFieldGet(this, _BetaToolRunner_thread, "f")));
                   const toolMessage = await __classPrivateFieldGet(this, _BetaToolRunner_instances, "m", _BetaToolRunner_generateToolResponse).call(this, toAnswer, __classPrivateFieldGet(this, _BetaToolRunner_options, "f").signal, __classPrivateFieldGet(this, _BetaToolRunner_toolRunnerOtelContext, "f"));
                   if (toolMessage) {
-                    const history = __classPrivateFieldGet(this, _BetaToolRunner_thread, "f").messages;
-                    const answered = history.map((message) => message.role).lastIndexOf("assistant") + 1;
+                    const history2 = __classPrivateFieldGet(this, _BetaToolRunner_thread, "f").messages;
+                    const answered = history2.map((message) => message.role).lastIndexOf("assistant") + 1;
                     __classPrivateFieldGet(this, _BetaToolRunner_thread, "f")._state.setMessages([
-                      ...history.slice(0, answered),
+                      ...history2.slice(0, answered),
                       toolMessage,
-                      ...history.slice(answered)
+                      ...history2.slice(answered)
                     ]);
                   } else if (!__classPrivateFieldGet(this, _BetaToolRunner_mutated, "f") && !__classPrivateFieldGet(this, _BetaToolRunner_thread, "f")._state.hasTurnToSend) {
                     return "stop";

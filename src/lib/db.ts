@@ -5,6 +5,7 @@
  */
 import type { CompanySettings, Cost, Dayworks, DiaryEntry, Job, JobDocument, RateItem, ScopeItem, Valuation, Variation, WorkOrder } from './types'
 import { clearThumbs } from './thumbs'
+import { forgetPlace } from './place'
 
 const DB_NAME = 'mastor'
 const VERSION = 7 // v2: scope + valuations · v3: outbox + meta (cloud sync) · v4: diary · v5: company settings · v6: rate books · v7: costs, orders, dayworks, documents
@@ -175,6 +176,7 @@ export const rates = {
 
 /** Sign-out: remove every local copy so the next person on this phone sees nothing of yours. */
 export async function wipeLocal() {
+  forgetPlace()
   for (const store of ['jobs', 'scope', 'variations', 'valuations', 'diary', 'settings', 'photos', 'rates', ...JOB_STORES, 'outbox', 'meta']) await tx(store, 'readwrite', s => s.clear())
   rateCache = null
   await clearThumbs().catch(() => {})   // the thumbnail cache lives in its own database

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { blankSettings, type CompanySettings, type Cost, type Dayworks, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder } from './lib/types'
-import { placeParam, setPlace } from './lib/place'
+import { lastTab, setPlace, startJob } from './lib/place'
 import { db, nextVoNumber, rates, uid } from './lib/db'
 import { dayKey } from './lib/dates'
 import { RatesSheet } from './screens/Rates'
@@ -44,7 +44,7 @@ import { offerUndo } from './lib/undo'
 import { voRef } from './lib/format'
 import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
-import { jobAlerts } from './lib/alerts'
+import { jobAlerts, type AlertPlace } from './lib/alerts'
 import { lastText, siteDaysSince, valRhythm } from './lib/rhythm'
 import type { WeekAlert } from './screens/Plan'
 import { addDays } from './lib/dates'
@@ -53,17 +53,20 @@ import { addDays } from './lib/dates'
  * Mastor's own deadlines for the week across all jobs: money overdue, a review or VO late with the client,
  * the valuation week — and, a few days ahead, the valuation week coming on any job with work to claim.
  */
+/** Where each kind of alert is dealt with in the job. */
+const ALERT_TAB: Record<AlertPlace, string> = { vals: 'vals', vos: 'scope', scope: 'scope', gap: 'home', setup: 'home', diary: 'diary' }
+
 function weekAlerts(jobs: Job[], scope: ScopeItem[], vos: Variation[], vals: Valuation[], orders: WorkOrder[], diary: DiaryEntry[]): WeekAlert[] {
   const today = dayKey()
   return jobs.filter(j => j.status !== 'Complete').flatMap(j => {
     const of = <T extends { jobId: string }>(xs: T[]) => xs.filter(x => x.jobId === j.id)
     const jv = of(vals), jd = of(diary)
     const own: WeekAlert[] = jobAlerts(j, of(scope), of(vos), jv, of(orders), Date.now(), jd).alerts.filter(a => a.deadline)
-      .map(a => ({ jobId: j.id, text: a.text, hint: a.hint, kind: a.kind }))
+      .map(a => ({ jobId: j.id, text: a.text, hint: a.hint, kind: a.kind, tab: ALERT_TAB[a.place] }))
     const r = valRhythm(j, jv, { diary: jd, today })
     const work = r && (of(scope).some(i => jv.some(v => v.status === 'Open' && v.id === i.valuationId)) || of(vos).some(x => jv.some(v => v.status === 'Open' && v.id === x.valuationId)) || siteDaysSince(r, jd, j.id) > 0)
     const coming = r && work && r.from > today && r.from <= addDays(today, 7)
-      ? [{ jobId: j.id, date: r.from, text: `${valRef(r.next)} · valuation week`, hint: lastText(r) }] : []
+      ? [{ jobId: j.id, date: r.from, text: `${valRef(r.next)} · valuation week`, hint: lastText(r), tab: 'vals' }] : []
     return [...own, ...coming]
   })
 }
@@ -120,8 +123,9 @@ export default function App() {
   const [voImport, setVoImport] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   // the open job is kept in the address, so a reload comes back to it (src/lib/place.ts)
-  const [openId, setOpenIdState] = useState<string | null>(() => placeParam('job'))
-  const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab }) }
+  const [openId, setOpenIdState] = useState<string | null>(startJob)
+  // a job opens on the tab you last used in it, unless something asks for a particular one (an alert: Vals)
+  const setOpenId = (id: string | null, tab: string | null = null) => { setOpenIdState(id); setPlace({ job: id, tab: tab ?? (id ? lastTab(id) : null) }) }
   const [jobForm, setJobForm] = useState<'new' | 'edit' | null>(null)
   const [newJob, setNewJob] = useState(false)
   const [logging, setLogging] = useState(false)
@@ -346,7 +350,7 @@ export default function App() {
             { key: 'job', label: 'Your first job, from the client’s pack', hint: 'The schedule, works orders and surveys: every line read for you to check.', done: jobs.length > 0, onClick: () => setNewJob(true) },
           ] : undefined}
           alerts={weekAlerts(jobs, scope, vos, vals, orders, diary)}
-          onToggle={async e => { const t = { ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }; await act(e.jobId, ['diary'], () => db.putDiary(t), () => setDiary(all => all.map(x => (x.id === t.id ? t : x)))) }} onOpenLine={j => setOpenId(j.id, 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
+          onToggle={async e => { const t = { ...e, doneAt: e.doneAt ? null : Date.now(), byClaude: null }; await act(e.jobId, ['diary'], () => db.putDiary(t), () => setDiary(all => all.map(x => (x.id === t.id ? t : x)))) }} onOpenLine={(j, tab) => setOpenId(j.id, tab ?? 'diary')} onNew={() => setNewJob(true)} onDashboard={() => setShowDash(true)} onSettings={() => setSettingsOpen(true)} />
       )}
 
       {voImport && job && access.money && <VoImport job={job} vos={jobVos} houses={houses} onClose={() => setVoImport(false)}

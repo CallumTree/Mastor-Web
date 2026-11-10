@@ -21,7 +21,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setu
   /** tick a to-do off from the week */
   onToggle?: (e: DiaryEntry) => void
   /** open a job on its line of days (from the week across all jobs) */
-  onOpenLine?: (j: Job) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
+  onOpenLine?: (j: Job, tab?: string) => void; onNew: () => void; onDashboard: () => void; onSettings: () => void
   /** a new firm's first steps (office only), until they're done */
   setup?: SetupStep[]
 }) {
@@ -46,7 +46,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setu
 
       <div className="cover-body">
         {m && setup && <SetupList steps={setup} />}
-        {sorted.length > 0 && <WeekLine jobs={jobs} entries={diary} alerts={alerts} onToggle={onToggle} onOpen={id => { const j = jobs.find(x => x.id === id); if (j) (onOpenLine ?? onOpen)(j) }} />}
+        {sorted.length > 0 && <WeekLine jobs={jobs} entries={diary} alerts={alerts} onToggle={onToggle} onOpen={(id, tab) => { const j = jobs.find(x => x.id === id); if (j) (onOpenLine ? onOpenLine(j, tab) : onOpen(j)) }} />}
         {sorted.length > 0 ? (
           <section className="jobs" aria-label="Jobs">
             <div className="jobs-head" aria-hidden="true"><span>Job</span><span>Client</span><span className="num">{m ? 'Contract' : ''}</span><span>Needs</span><span>Status</span></div>

@@ -283,10 +283,11 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
 
 /** Every job's week on the jobs screen: late and today first, then the days ahead. Tapping an item opens its job's line. */
 /** Mastor's own deadline on the week: red plate (stop), yellow (warn) or none; dated ones sit on their day, the rest at today. */
-export interface WeekAlert { jobId: string; text: string; hint: string; kind?: 'stop' | 'warn' | 'do'; date?: string }
+/** `tab`: where in the job it's about (an overdue valuation opens Vals, a late VO opens Scope); else the job's line. */
+export interface WeekAlert { jobId: string; text: string; hint: string; kind?: 'stop' | 'warn' | 'do'; date?: string; tab?: string }
 
 export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
-  jobs: Job[]; entries: DiaryEntry[]; onOpen: (jobId: string) => void
+  jobs: Job[]; entries: DiaryEntry[]; onOpen: (jobId: string, tab?: string) => void
   /** Mastor's own items (overdue valuations, the valuation week…), office only, shown as "From Mastor" */
   alerts?: WeekAlert[]
   /** tick a to-do off from here, without opening the job */
@@ -322,7 +323,7 @@ export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
     const plate = a.kind === 'stop' || a.kind === 'warn'
     return (
       <div key={`m${i}`} className="pl-item wk-item">
-        <button className="pl-open grow" onClick={() => onOpen(a.jobId)} aria-describedby={`wk-m${i}`}>
+        <button className="pl-open grow" onClick={() => onOpen(a.jobId, a.tab)} aria-describedby={`wk-m${i}`}>
           <span className="pl-t">{a.text.replace(/ — /g, ' · ')}</span>
           <span className="pl-m" id={`wk-m${i}`} aria-hidden="true"><span className="pl-job">{name(a.jobId)}</span>
             {plate && <span className={'plate pl-late plate-' + a.kind}>{a.kind === 'stop' ? stop : <SignMark kind="warn" size={12} />}{fact}</span>}
