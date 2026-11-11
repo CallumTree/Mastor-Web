@@ -1,7 +1,8 @@
 /**
  * Act, then Undo. A change to Mastor's own records (a tick-all, a delete) happens on the tap; for a few seconds one
- * bar offers to take it back (components/Undo.tsx). Nothing that reaches the client or makes an invoice or payment
- * record goes through here: those keep their one deliberate tap.
+ * bar offers to take it back (components/Undo.tsx). Marking a valuation sent is one of them: Mastor can't see the
+ * email leave, so its record of the send can be taken back (the certificate already saved stays saved). Nothing that
+ * makes an invoice or payment record goes through here: those keep their one deliberate tap.
  *  - `undo` puts things back as they were.
  *  - `commit` is whatever was held back until the offer closed (a deleted photo's file is only removed then).
  * A new offer, the timer, or the app going to the background closes the one before it.

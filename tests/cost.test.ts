@@ -37,5 +37,8 @@ ok(/still read, more lightly/.test(v.lines[0]), 'Jupiter used up: site captures 
 v = aiMonthLines(month({ plan: 'mercury', allowance: 0, reads_allowed: 5, reads: 2, questions_allowed: 0 }))
 ok(v.plan === 'Mercury I' && v.figure === '2 of 5 reads' && v.pct === 40 && !v.lines.some(l => /Clerk/.test(l)), 'Mercury: reads counted, no Clerk line')
 
+v = aiMonthLines(month({ allowance: 0, used: 0 }))
+ok(v.figure === 'No allowance' && v.pct === 0 && !/used/.test(v.lines.join()), 'no allowance on the plan: says so, never “100% used”')
+
 console.log(`\n${pass} passed, ${fail} failed`)
 if (fail) process.exit(1)

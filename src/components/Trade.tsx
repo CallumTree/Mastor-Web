@@ -1,8 +1,15 @@
-import { tradeCore } from '../lib/trade'
+import { createContext, useContext } from 'react'
+import { tradeCore, type Core } from '../lib/trade'
+
+/** The open job's trades and their cores (lib/trade jobCores), so a job never shows two trades in one colour. Outside
+ *  a job (a pack being imported) each trade takes its own core. */
+export const TradeCores = createContext<Map<string, Core> | null>(null)
+export const useCore = () => { const cores = useContext(TradeCores); return (name: string) => cores?.get(name) ?? tradeCore(name) }
 
 /** A trade's core: a small coloured band before its name (the name always says it; the band helps you find it). */
 export function TradeMark({ name }: { name: string }) {
-  return <span className={`core core-${tradeCore(name)}`} aria-hidden="true" />
+  const core = useCore()
+  return <span className={`core core-${core(name)}`} aria-hidden="true" />
 }
 
 /**

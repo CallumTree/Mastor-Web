@@ -170,6 +170,36 @@ export function jobWorth(job: Job, scope: ScopeItem[], vos: Variation[]): { cont
   return { contract, vos: voGross, total: pennies(contract + voGross), fromScope }
 }
 
+/** A total shared out over its parts in proportion to their bases, to the penny, so the parts always add up to the
+ *  total exactly: each share is rounded, then the odd pennies go to the parts that rounding moved furthest. */
+export function shareOut(total: number, bases: number[]): number[] {
+  const sum = bases.reduce((t, b) => t + b, 0)
+  if (!bases.length) return []
+  if (!sum) return bases.map((_, i) => (i === 0 ? pennies(total) : 0))
+  const want = bases.map(b => (b / sum) * Math.round(total * 100))
+  const got = want.map(w => Math.round(w))
+  let left = Math.round(total * 100) - got.reduce((t, g) => t + g, 0)
+  const order = want.map((w, i) => ({ i, r: w - got[i] })).sort((a, b) => (left > 0 ? b.r - a.r : a.r - b.r))
+  for (let k = 0; left !== 0 && k < order.length; k++) { got[order[k].i] += Math.sign(left); left -= Math.sign(left) }
+  return got.map(g => g / 100)
+}
+
+/** Every line's and VO's value with the job's uplifts, by id, worked out so the screens agree to the penny: the scope
+ *  lines add up to the scope with uplifts (jobWorth's contract, when it comes from the scope) and the VOs that count add
+ *  up to jobWorth's variations. A rejected VO carries its own value, counted nowhere. */
+export function upliftedValues(job: Job, scope: ScopeItem[], vos: Variation[]): Map<string, number> {
+  const out = new Map<string, number>()
+  const pool = (items: { id: string; qty: number | null; rate: number | null }[]) => {
+    const bases = items.map(i => lineValue(i.qty, i.rate))
+    const shares = shareOut(upliftAmounts(pennies(bases.reduce((t, b) => t + b, 0)), job.uplift1, job.uplift2).gross, bases)
+    items.forEach((i, k) => out.set(i.id, shares[k]))
+  }
+  pool(scope)
+  pool(vos.filter(v => v.status !== 'Rejected'))
+  for (const v of vos) if (v.status === 'Rejected') out.set(v.id, upliftAmounts(lineValue(v.qty, v.rate), job.uplift1, job.uplift2).gross)
+  return out
+}
+
 export interface ValTotals { scopeBase: number; voBase: number; base: number; gross: number; lines: number }
 export function valTotals(job: Job, valId: string, scope: ScopeItem[], vos: Variation[]): ValTotals {
   const s = scope.filter(x => x.valuationId === valId)

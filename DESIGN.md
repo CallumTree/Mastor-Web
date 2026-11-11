@@ -50,6 +50,16 @@ typography:
     fontSize: "16px"
     fontWeight: 450
     lineHeight: 1.45
+  row-title:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 600
+    lineHeight: 1.3
+  meta:
+    fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 450
+    lineHeight: 1.35
   small:
     fontFamily: "'Archivo Variable', Archivo, system-ui, sans-serif"
     fontSize: "13px"
@@ -270,6 +280,8 @@ A drafting sheet with two signals; every neutral leans blue.
 - **Figure** (Mono 520, 19px; the key figure 600 at 26px; -0.02em): the money ledger's column, shrunk to fit beside its label (down to 15px) rather than cut off.
 - **Title** (Archivo 700, 16px, 1.25, -0.01em): an action row's title, a sheet's question, a property.
 - **Body** (Archivo 450, 16px, 1.45): reading text; Clerk's answers to 62ch.
+- **Row title** (Archivo 600, 15px, 1.3): a line in a list, a trade heading, a small button's word. One step under Title, so a list of lines reads quieter than the action rows above it.
+- **Meta** (Archivo 450, 14px, 1.35, Slate Note or Ink 2): a row's second line, a note under a figure, a chip's word.
 - **Section head** (Archivo 87.5% 700, 13px, 0.1em, uppercase, cyan, over a 1px Hairline): ACTION NEEDED, PINNED NOTES.
 - **Label** (Archivo 87.5% 650, 13px, 0.08em, uppercase, Slate Note): figure labels, register heads, field labels (in Ink 2).
 - **Status** (Archivo 87.5% 700, 13px, 0.05em, uppercase): tags and plates.
@@ -342,7 +354,7 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 
 ### Figures: the ledger
 - The money is read like a statement (`SumStrip`, `.ledger`): each label and its note on the left, its figure on the right, so the amounts stand in one column and compare at a glance. Head and foot rules at 2px Hairline, 1px Hairline between rows. No box, no fill, no corner marks: nothing about it says tap. The key figure (the one the screen is about) is set heavier and larger, and nothing else. A row that opens something (Margin on the job home) is a button with a chevron, the only row that looks like one. From 560px the rows run in two columns.
-- **Certified means agreed.** A valuation sent for review is "with client", not certified, until the client agrees it (or it's invoiced or paid); `isCertified` / `isWithClient` decide it for every screen and for Clerk. Each ledger names its basis once: Scope at base rates (its caption), Home and Vals with uplifts and without VAT; a VAT figure is only ever an invoice's own. Margin is "so far": costs so far against the job's value.
+- **Certified means agreed.** A valuation sent for review is "with client", not certified, until the client agrees it (or it's invoiced or paid); `isCertified` / `isWithClient` decide it for every screen and for Clerk. Every screen's money is with the job's uplifts and without VAT (Scope's houses, trades, lines and VOs too, shared out to the penny by `upliftedValues` so they add up to Home's figures); base rates appear only in the edit forms, in Vals' build-up line and on the certificate; a VAT figure is only ever an invoice's own. Margin is "so far": costs so far against the job's value.
 - **Where the money is (Valuations):** the ledger's whole, Contract + VOs, carries a 12px split bar of its parts, end to end with 2px of ground between them, the more settled the more filled: Paid in solid drafting white, Certified and unpaid in white hatching, With client (sent, not agreed) as a white outline (drawn, not yet signed), the open valuation in cyan (as on the job's line), Still to claim the empty track. Each part's row carries its swatch, so the ledger is the key and every figure is on the page, never behind a tap. All without VAT so the parts add up to the whole exactly: a payment against a VAT invoice counts less its VAT, its note gives what landed. Before the first valuation only the whole shows. Never orange: gold is for what needs you. No pie: the figures overlap (Certified holds Paid, Owed adds VAT) and lengths compare where angles don't.
 - **One chart per screen: the job's line.** Progress is charted once, on the job's line under the header (solid white certified, i.e. agreed by the client; dashed white with the client; dashed cyan the open valuation), against the same worth as Vals (`jobWorth`), which keeps its length on a phone and drops its label underneath. A ledger never repeats progress as a bar along its foot: that reads as a scrollbar. The split bar answers a different question (where the money sits) and sits under its whole, keyed to its rows.
 
@@ -352,7 +364,7 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - **Warn / Disabled:** a gold border with a gold hint led by the triangle; disabled is dashed on Milled Steel.
 
 ### Chips and Switches
-- 0px corners, Slate Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Slate Edge rule.
+- 0px corners, Slate Edge outline, white type; the chosen one is a white block. The two-way switch is the same, divided by a Slate Edge rule. Every chip is 44px tall, the small ones included: a filter or a per-trade Tick all is tapped in gloves too.
 
 ### Navigation
 - **Phone (360px and up): the scooped dock.** A Milled Steel dock edged in Slate Edge, flat, square-cornered, its outline drawn as one path (`src/components/Dock.tsx`) so the scoops are part of its edge. Its four tabs, Home, Diary, Scope and Vals (three for operatives), share it around a middle column of their own for the capture key. The capture key is a 60px Blueprint Cyan disc with an ink plus, sitting in a scoop cut into the dock's top edge that follows its circle with a 5px gap and rounded shoulders: the one thing you can always do. The open tab rises into a second, smaller scoop: its icon in a 44px Milled Steel disc ringed 2px in cyan, its label white below; inactive tabs are Slate Note icon and label. Tap a tab and its scoop slides across (280ms, eased out, frame by frame); side by side, the two scoops run into one edge. While the page scrolls the + sinks and its scoop closes flat, both returning when it stops; with Clerk open there's no + and no open tab, so the dock is a plain bar. Reduced motion: everything jumps to place. No shadow anywhere (the round shapes are the capture key and the open-tab disc, by the owner's choice: the look of the 8 Nov reference). Under 360px, and as the desktop rail, the dock is the plain bar: tabs evenly spaced, a 22×2px cyan marker sliding along its bottom edge, the + key standing on its top edge. When the + opens the capture menu, the menu rises behind it and the plus turns a quarter and a half into an × (300ms) that closes the menu where the thumb already is. Clerk sits in the job's header beside Job setup, not in the dock.

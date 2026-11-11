@@ -282,6 +282,13 @@ export default function App() {
           onAddScope={() => setScopeForm('new')} onEditScope={setScopeForm} onImportScope={() => setImporting(true)} onCheckRates={books.length ? () => setChecking(true) : undefined}
           onEvidence={async () => { const company = settings?.name || (await meta.get<{ name: string }>('company'))?.name; await shareOrDownload(await buildEvidence(schemeEvidence(job, jobScope, jobVals, jobDiary, company)), evidenceFileName(job, 'scheme')) }}
           onIssue={async v => (await act(job.id, ['vals', 'scope', 'vos'], () => issueValuation(v))) ?? v}
+          // sent is Mastor's own record of it: for a few seconds it can be taken back (the PDF already saved stays saved)
+          onUndoSend={before => offerUndo(`${valRef(before.number)} marked sent`, () => act(job.id, ['vals'], async () => {
+            // only while it's still just sent: once agreed or invoiced, that record stands
+            const now = (await db.valuations(job.id)).find(x => x.id === before.id)
+            if (!now || reviewStage(now) !== 'review') { tell(new Error('moved on'), `${valRef(before.number)} has moved on since it was sent, so it stays sent.`); return }
+            await db.putValuation(before)
+          }))}
           onReview={(v, note) => { void act(job.id, ['vals', 'diary'], async () => { await db.putValuation({ ...v, byClaude: null }); if (note) await db.putDiary(newNote(job, note, 'Commercial')) }) }}
           onDeleteOpenVal={v => {
             const lines = jobScope.filter(i => i.valuationId === v.id), extras = jobVos.filter(x => x.valuationId === v.id)
@@ -306,7 +313,7 @@ export default function App() {
           onAddDoc={async (file, kind, name) => { const fileId = uid(); await db.putPhoto(fileId, file); await act(job.id, ['docs'], () => db.put('docs', { id: uid(), jobId: job.id, name, kind, fileId, type: file.type || 'application/octet-stream', size: file.size, addedAt: Date.now() })) }}
           onOpenDoc={async d => {
             const blob = (await db.photo(d.fileId)) ?? (await fetchPhoto(d.fileId))
-            if (!blob) { alert('That document isn’t on this device yet and couldn’t be fetched — check signal and try again.'); return }
+            if (!blob) { tell(new Error('document not on this device'), 'That document isn’t on this device yet and couldn’t be fetched. Check the signal and try again.'); return }
             const ext = d.type === 'application/pdf' ? '.pdf' : ''
             await shareOrDownload(new Blob([blob], { type: d.type }), d.name.replace(/[^A-Za-z0-9 _.-]+/g, '_') + ext)
           }}
@@ -347,7 +354,7 @@ export default function App() {
           }).then(() => {})}
           readNote={readNote} />
       ) : (
-        <JobsList jobs={jobs} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
+        <JobsList jobs={jobs} scope={scope} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
           setup={access.money ? [
             { key: 'company', label: 'Your company details', hint: 'Name, address, VAT number and bank details: they go on every invoice.', done: !missingForInvoice(settings).length, onClick: () => setSettingsOpen(true) },
             { key: 'rates', label: 'Your schedule of rates', hint: 'Import the SoR you price from, so lines and VOs are checked against it.', done: books.length > 0, onClick: () => setRatesOpen(true), skip: 'We don’t use one' },

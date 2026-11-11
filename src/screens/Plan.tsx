@@ -215,6 +215,10 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
           </div>
         </div>
 
+        {/* where and which trade: folded until it's wanted (most are for the whole job), open when either is set */}
+        {(properties.length > 0 || trades.length > 0) && <details className="more" open={!!(e.property || e.trade)}>
+          <summary className="more-h">House and trade<small>{[e.property ? `No. ${e.property}` : 'Whole job', e.trade || 'no trade'].join(' · ')}</small></summary>
+          <div className="stack" style={{ marginTop: 6 }}>
         {properties.length > 0 && (
           <div>
             <div className="field"><span>Property</span></div>
@@ -233,6 +237,8 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
             </div>
           </div>
         )}
+          </div>
+        </details>}
 
         {e.type === 'todo' && events.length > 0 && (
           <Field label="Leads up to" hint="The key date this to-do is for: each shows the other on the line.">
@@ -261,8 +267,9 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
         )}
 
         {money && (
-          <label className="row ln-office">
-            <input type="checkbox" checked={!!e.office} onChange={x => set({ office: x.target.checked })} />
+          <label className="row ln-office pl-office">
+            <input className="sr-only" type="checkbox" checked={!!e.office} onChange={x => set({ office: x.target.checked })} />
+            <span className={'tick-box' + (e.office ? ' on' : '')} aria-hidden="true"><Check /></span>
             <span className="grow"><b>Office only</b><small>Site doesn’t see it: money, chasing, valuations.</small></span>
           </label>
         )}
