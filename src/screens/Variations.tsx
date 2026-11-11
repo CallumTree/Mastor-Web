@@ -13,7 +13,7 @@ import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { ukDate as ukd } from '../lib/format'
 import { Field, Sheet, ConfirmDelete, useOnce } from '../components/Ui'
 import { describeProblem } from '../components/Problem'
-import { lineValue } from '../lib/valuation'
+import { lineValue, shareOut, upliftedValues } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoThumb } from '../lib/photos'
 import { IconCamera, IconPlus } from '../components/Icons'
@@ -157,7 +157,9 @@ const stageClass: Record<VoStage, string> = { Logged: 'b-amber', Priced: 'b-ambe
  * A VO as one row of the job's work, beside the scope lines at its house: its number, what and where, how much, where it
  * stands with the client, and the same tick into the valuation once it's priced. Operatives see what and where, never money.
  */
-export function VoRow({ v, vals, idx, onToggle, onEdit }: { v: Variation; vals: Valuation[]; idx: number; onToggle: (v: Variation) => void; onEdit: (v: Variation) => void }) {
+/** One VO as a row. `value` is its worth with the job's uplifts (upliftedValues), the figure every screen shows; the
+ *  rate itself is in the VO's edit form. */
+export function VoRow({ v, vals, idx, onToggle, onEdit, value }: { v: Variation; vals: Valuation[]; idx: number; onToggle: (v: Variation) => void; onEdit: (v: Variation) => void; value?: number }) {
   const { money: m } = useAccess()
   const priced = v.qty != null && v.rate != null
   const rejected = v.status === 'Rejected'
@@ -179,44 +181,47 @@ export function VoRow({ v, vals, idx, onToggle, onEdit }: { v: Variation; vals: 
         </div>
         <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{v.description}</div>
         <div className="hint">
-          {figs(v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured')}{figs(m ? (v.rate != null ? ` @ ${money(v.rate)}` : ' · unpriced') : '')}
+          {figs(v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured')}{figs(m && v.rate == null ? ' · unpriced' : '')}
           {v.clientRef ? <> · client ref <span className="mono">{v.clientRef}</span></> : ''}{evidence ? ` · ${evidence}` : ''}
         </div>
         <div className="vo-status">{/* the office reads where it stands from its court line; operatives from the stage */}
           {m && !rejected ? <CourtLine c={voCourt(v, vals)} /> : <span className={'badge ' + stageClass[voStage(v)]}>{voStage(v)}</span>}
         </div>
       </div>
-      {m && <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap', color: priced && !rejected ? 'var(--ink)' : 'var(--ink-muted)' }}>{priced ? money(lineValue(v.qty, v.rate)) : '—'}</div>}
+      {m && <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap', color: priced && !rejected ? 'var(--ink)' : 'var(--ink-muted)' }}>{priced ? money(value ?? lineValue(v.qty, v.rate)) : '—'}</div>}
     </div>
   )
 }
 
 /** The variation register at a glance (the Scope tab's VOs view): the total first, then only the stages that hold VOs,
- *  all at base rates so the stages add up to the total exactly; the total with uplifts is its note. Rejected VOs are
+ *  all with uplifts like every other screen, the total shared out so the stages add up to it exactly. Rejected VOs are
  *  left out of the sum and said so underneath. */
 export function VoSummary({ job, vos, vals }: { job: Job; vos: Variation[]; vals: Valuation[] }) {
   const sum = registerSummary(job, vos, vals)
   const live = sum.rows.filter(r => r.key !== 'rejected')
   const rejected = sum.rows.find(r => r.key === 'rejected')
   const none = live.filter(r => !r.count)
+  const shares = shareOut(sum.gross, live.map(r => r.base))
+  const gross = (key: string) => shares[live.findIndex(r => r.key === key)] ?? 0
   return <SumStrip label="Variation summary" caption={[
-      'At base rates.',
+      'With uplifts, excl. VAT.',
       none.length ? `None ${none.map(r => VO_GROUP_SHORT[r.key].toLowerCase()).join(', ').replace(/, ([^,]*)$/, ' or $1')}.` : '',
       rejected?.count ? `${rejected.count} rejected, not counted.` : ''].filter(Boolean).join(' ')} cells={[
-    { label: 'Variations', whole: true, value: money(sum.base), nil: !sum.base, note: [sum.base ? `${money(sum.gross)} with uplifts` : '', sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · ') },
-    ...live.filter(r => r.count).map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(r.base, r.count, r.unpriced),
+    { label: 'Variations', whole: true, value: money(sum.gross), nil: !sum.gross, note: [sum.unpriced ? `+ ${sum.unpriced} unpriced` : '', sum.overdue ? `${sum.overdue} overdue` : ''].filter(Boolean).join(' · ') },
+    ...live.filter(r => r.count).map(r => ({ key: r.key, label: VO_GROUP_SHORT[r.key], value: groupValue(gross(r.key), r.count, r.unpriced),
       note: [`${r.count} VO${r.count === 1 ? '' : 's'}`, r.unsent ? `${r.unsent} not sent` : '', r.unpriced && r.unpriced < r.count ? `+ ${r.unpriced} unpriced` : ''].filter(Boolean).join(' · ') })),
   ]} />
 }
 
 /** A job's VOs as one ruled list (the Orders tab, where work comes order by order rather than by house). */
-export function VoList({ vos, vals, onToggle, onEdit, onLog }: { vos: Variation[]; vals: Valuation[]; onToggle: (v: Variation) => void; onEdit: (v: Variation) => void; onLog: () => void }) {
+export function VoList({ job, vos, vals, onToggle, onEdit, onLog }: { job: Job; vos: Variation[]; vals: Valuation[]; onToggle: (v: Variation) => void; onEdit: (v: Variation) => void; onLog: () => void }) {
   const sorted = [...vos].sort((a, b) => a.number - b.number)
+  const uv = upliftedValues(job, [], vos)
   return (
     <section className="stack" style={{ gap: 8 }}>
       <h3 className="sec-h">Variations{sorted.length ? ` · ${sorted.length}` : ''}</h3>
       <div className="tab-actions"><button className="btn btn-sm btn-secondary" onClick={onLog}><IconPlus /> Add VO</button></div>
-      {sorted.length > 0 && <div className="panel flush clip">{sorted.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggle} onEdit={onEdit} />)}</div>}
+      {sorted.length > 0 && <div className="panel flush clip">{sorted.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggle} onEdit={onEdit} value={uv.get(v.id)} />)}</div>}
     </section>
   )
 }

@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { db, uid } from '../src/lib/db'
-import { toggleScope, toggleVariation, issueValuation, deleteOpenValuation, valTotals, lockedIn, isCertified, isWithClient, jobWorth } from '../src/lib/valuation'
+import { toggleScope, toggleVariation, issueValuation, deleteOpenValuation, valTotals, lockedIn, isCertified, isWithClient, jobWorth, shareOut, upliftedValues } from '../src/lib/valuation'
 import type { Valuation } from '../src/lib/types'
 import type { Job, ScopeItem, Variation } from '../src/lib/types'
 
@@ -80,6 +80,17 @@ const get = async () => ({ scope: await db.scope('j1'), vals: await db.valuation
   ok(w.contract === 1000 && w.vos === 36.66 && w.total === 1036.66 && !w.fromScope, `contract + VOs with uplifts, rejected left out (${w.total})`)
   const ws = jobWorth({ ...job, contractValue: 0, uplift1: 10, uplift2: 0 }, [item(9, 3, 33.33)], [])
   ok(ws.fromScope && ws.contract === 109.99 && ws.total === 109.99, `no contract value: the scope at its rates with uplifts, to the penny like a valuation (${ws.contract})`)
+
+  // every line and VO with uplifts, shared out so the screens add up to the job's figures to the penny
+  const parts = shareOut(106.35, [33.33, 33.33, 33.34, 0.01])
+  ok(Math.round(parts.reduce((t, x) => t + x, 0) * 100) === 10635 && parts.every(x => Math.round(x * 100) === x * 100), 'a total shared out: whole pennies that add up exactly')
+  const uj = { contractValue: 0, uplift1: 4.2, uplift2: 1.3 } as Job
+  const us = Array.from({ length: 53 }, (_, k) => ({ id: 's' + k, qty: (k % 7) + 0.37, rate: 3.17 + k * 1.11 })) as ScopeItem[]
+  const uvos = [{ id: 'x1', qty: 1, rate: 170, status: 'Identified' }, { id: 'x2', qty: 2.5, rate: 13.33, status: 'Instructed' }, { id: 'x3', qty: 1, rate: 50, status: 'Rejected' }] as Variation[]
+  const uv = upliftedValues(uj, us, uvos), uw = jobWorth(uj, us, uvos)
+  const add = (ids: string[]) => Math.round(ids.reduce((t, id) => t + uv.get(id)! * 100, 0))
+  ok(add(us.map(i => i.id)) === Math.round(uw.contract * 100), 'scope lines with uplifts add up to the job’s contract (from the scope)')
+  ok(add(['x1', 'x2']) === Math.round(uw.vos * 100) && uv.get('x3') === 52.78, 'VOs that count add up to its variations; a rejected one has its own value, counted nowhere')
 
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
 })()

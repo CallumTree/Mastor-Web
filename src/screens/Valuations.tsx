@@ -17,6 +17,9 @@ import { invoiceAmounts } from '../lib/invoice'
 import { fig, figs } from '../components/Figs'
 import { tell } from '../components/Problem'
 
+/** Where a line is, only when it says something: not "Property" (a whole-house line), not its trade again. */
+const placeOf = (i: { room?: string | null; workstream?: string | null }) => (i.room && !/^(the )?property$/i.test(i.room.trim()) && i.room !== i.workstream ? i.room : '')
+
 function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   val: Valuation; scope: ScopeItem[]; vos: Variation[]
   onRemoveScope?: (i: ScopeItem) => void; onRemoveVo?: (v: Variation) => void
@@ -39,14 +42,14 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   return (
     <div>
       {s.length > 0 && !byProp && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}{i.room && i.room !== i.workstream ? ` · ${i.room}` : ''}</>}{!i.workstream && i.room} · {fig(`${qtyText(i.qty!)} ${i.unit}`)} @ {fig(money(i.rate!))}</>, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}</>}{placeOf(i) && `${i.workstream ? ' · ' : ''}${placeOf(i)}`}{(i.workstream || placeOf(i)) ? ' · ' : ''}{fig(`${qtyText(i.qty!)} ${i.unit}`)} @ {fig(money(i.rate!))}</>, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
       {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
-      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${v.room} · ${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
+      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${placeOf(v) ? `${placeOf(v)} · ` : ''}${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
     </div>
   )
 }
 
-export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate, onCreateInvoice, onInvoicePdf, diary = [], onDecideSite, readNote, onReview, onUpdateJob }: {
+export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo, onIssue, onDeleteOpen, go, onPaid, onCertificate, onCreateInvoice, onInvoicePdf, diary = [], onDecideSite, readNote, onReview, onUpdateJob, onUndoSend }: {
   job: Job; scope: ScopeItem[]; vos: Variation[]; vals: Valuation[]
   onRemoveScope: (i: ScopeItem) => void; onRemoveVo: (v: Variation) => void
   onIssue: (v: Valuation) => Promise<Valuation>; onDeleteOpen: (v: Valuation) => void; go: (t: 'scope' | 'vos') => void
@@ -56,6 +59,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   /** the client's answer on a sent valuation (agreed, or changes asked — with a note for the record) */
   onReview: (v: Valuation, note?: string) => void
   onUpdateJob: (j: Job) => void
+  /** once it's sent and its certificate handed over: offer to take the send back for a few seconds */
+  onUndoSend?: (before: Valuation) => void
 }) {
   const [making, setMaking] = useState<string | null>(null)
   const cert = async (v: Valuation) => { setMaking(v.id); try { await onCertificate(v) } finally { setMaking(null) } }
@@ -117,7 +122,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
       {rhythm && <ValWeek rhythm={rhythm} onWait={() => onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />}
 
       {fixing && <Working job={job} val={fixing} scope={scope} vos={vos} certified={valued - valTotals(job, fixing.id, scope, vos).gross} hot
-        send={<SendButton job={job} val={fixing} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} />} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />}
+        send={<SendButton job={job} val={fixing} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} />} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />}
 
       {onDecideSite && <SiteReview diary={diary} scope={scope} valLabel={valRef(open?.number ?? nextNo)} onDecide={onDecideSite} note={readNote} />}
 
@@ -137,8 +142,10 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             {(job.uplift1 || job.uplift2) ? <>, plus uplifts of {job.uplift1}%{job.uplift2 ? <>&nbsp;+&nbsp;{job.uplift2}%</> : null}</> : null}
           </div>}
           {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
+          {/* a long valuation gets its send above the lines too, so it's never a long scroll away */}
+          {current.lines > 6 && <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} bare />}
           <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
-          <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} />
+          <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} />
         </div>
       ) : fixing ? null : (
         <div className="card empty">
@@ -236,9 +243,13 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
  * would query sits here, and the figure is on the button. Sent, it's locked while they review it and the certificate
  * opens to send them; if they ask for changes it opens again. (A draft certificate is in the ⋯ menu.)
  */
-function SendButton({ job, val, vals, scope, vos, onIssue, onCertificate }: {
+function SendButton({ job, val, vals, scope, vos, onIssue, onCertificate, onSent, bare }: {
   job: Job; val: Valuation; vals: Valuation[]; scope: ScopeItem[]; vos: Variation[]
   onIssue: (v: Valuation) => Promise<Valuation>; onCertificate: (v: Valuation) => Promise<void>
+  /** it went: the Undo offer, made after the certificate so the share sheet doesn't eat its seconds */
+  onSent?: (before: Valuation) => void
+  /** the copy above a long valuation's lines: the button only, the checks stay with the one at the foot */
+  bare?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const p = issuePlan(job, val, vals, scope, vos)
@@ -248,12 +259,14 @@ function SendButton({ job, val, vals, scope, vos, onIssue, onCertificate }: {
     setBusy(true)
     try {
       const issued = await onIssue(val)
+      if (issued === val) return   // it didn't save: act() has already said so
       try { await onCertificate(issued) } catch (e) { tell(e, `${ref} is sent and saved, but its certificate PDF didn’t open. It’s on ${ref}’s row: tap the row, then Certificate PDF.`) }
+      onSent?.(val)
     } finally { setBusy(false) }
   }
   return (
-    <div className="stack" style={{ marginTop: 14 }}>
-      {p.checks.filter(c => c.kind !== 'ok').map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
+    <div className="stack" style={{ marginTop: bare ? 4 : 14, marginBottom: bare ? 12 : 0 }}>
+      {!bare && p.checks.filter(c => c.kind !== 'ok').map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
       <button className="btn btn-primary" disabled={busy || p.totals.lines === 0} onClick={send}>{busy ? 'Sending…' : figs(`Send ${ref}${amending(val) ? ' again' : ''} for ${money(p.totals.gross)}`)}</button>
     </div>
   )

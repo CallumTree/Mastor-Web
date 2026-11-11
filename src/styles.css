@@ -374,8 +374,7 @@ label.btn { cursor: pointer; }
 .prop-pct.all { color: var(--green); }
 .prop-pct svg { vertical-align: -2px; margin-right: 2px; }
 .tbar { flex: 1; display: flex; gap: 2px; height: 6px; min-width: 0; }
-.tbar > i { position: relative; display: block; flex-basis: 0; min-width: 4px; background: var(--rule); }
-.tbar > i::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--c); }
+.tbar > i { position: relative; display: block; flex-basis: 0; min-width: 4px; background: color-mix(in srgb, var(--c) 45%, var(--slate)); }
 .tbar > i > b { position: absolute; top: 0; bottom: 0; left: 0; background: var(--c); }
 /* the house sheet: the house and its value, the bar, then every trade open under a heading that stays in view */
 .house-h { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 12px; padding-bottom: 12px; border-bottom: 2px solid var(--rule); }
@@ -388,7 +387,8 @@ label.btn { cursor: pointer; }
 .house-all > .btn.grow { flex: 1 1 0; min-width: 0; }
 .house-all > .house-vo { flex: none; padding: 0 14px; }
 .trade-jump { margin: 8px 0 4px; }
-.chip.sm { min-height: 36px; padding: 0 11px; font-size: 14px; }
+.chip.sm { min-height: 44px; padding: 0 11px; font-size: 14px; }   /* 44px like every target: gloves */
+.trade-key { margin: 8px 2px 0; }
 .chip.sm .core { margin-right: 6px; }
 .hs-trade { margin-top: 6px; }
 .trade-h { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 0; border-bottom: 1px solid var(--rule-ctl); font-weight: 650; font-size: 15px; }
@@ -957,6 +957,11 @@ input[type=radio]:focus-visible { outline: 2px solid var(--cyan); outline-offset
 .ln-office input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--white); }
 .ln-office b { display: block; font-weight: 600; }
 .ln-office small { display: block; font-size: 13px; color: var(--meta); }
+/* the to-do's Office only: a drafted square like every tick, the whole row the target */
+.pl-office { min-height: 56px; align-items: center; cursor: pointer; }
+.pl-office .tick-box { flex: none; }
+.pl-office .tick-box.on { background: var(--white); border-color: var(--white); }
+.pl-office:focus-within { outline: 2px solid var(--white); outline-offset: 2px; }
 /* one to-do or key date */
 .pl-item { display: flex; align-items: flex-start; gap: 2px; border-radius: var(--r-md); transition: background-color .6s; }
 .pl-item .tick { width: 44px; height: 44px; margin: -4px 0 0 -10px; }   /* a gloved thumb: 44px at least */

@@ -1,4 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { TradeCores } from '../components/Trade'
+import { jobCores } from '../lib/trade'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
 import { WORK_LABEL, type Cost, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder, type SiteSuggestion } from '../lib/types'
@@ -46,7 +48,8 @@ function jobRail(job: Job, scope: ScopeItem[], vals: Valuation[], vos: Variation
     const open = vals.find(v => v.status === 'Open')
     const next = open ? valTotals(job, open.id, scope, vos).gross / worth : 0
     const pct = (x: number) => `${Math.round(x * 100)}%`
-    return { done, sent, next, short: pct(done),
+    // the short form on the other tabs keeps its words, so "0%" never sits beside Vals' "43% claimed" unexplained
+    return { done, sent, next, short: sent + next > 0.004 ? `${pct(done)} cert. · ${pct(done + sent + next)} claimed` : `${pct(done)} certified`,
       label: [`${pct(done)} certified`, sent > 0.004 ? `${pct(sent)} with client` : '', next > 0.004 ? `${valRef(open!.number)} ${pct(next)} more` : ''].filter(Boolean).join(' · ') }
   }
   if (!scope.length) return null
@@ -211,7 +214,7 @@ export function JobView(p: {
   job: Job; vos: Variation[]; scope: ScopeItem[]; vals: Valuation[]
   onBack: () => void; onSetup: () => void; onUpdateJob: (j: Job) => void; onLogVariation: (house?: string) => void; onImportVo: () => void; onVoRegister: () => void; onEditVariation: (v: Variation) => void
   onToggleVo: (v: Variation) => void; onToggleScope: (i: ScopeItem) => void; onClaimMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteScope: (items: ScopeItem[]) => void; onAddScope: () => void; onEditScope: (i: ScopeItem) => void; onImportScope: () => void; onCheckRates?: () => void; onEvidence: () => Promise<void>
-  onIssue: (v: Valuation) => Promise<Valuation>; onReview: (v: Valuation, note?: string) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
+  onIssue: (v: Valuation) => Promise<Valuation>; onUndoSend?: (before: Valuation) => void; onReview: (v: Valuation, note?: string) => void; onDeleteOpenVal: (v: Valuation) => void; onPaid: (v: Valuation) => void; onCertificate: (v: Valuation) => Promise<void>; onCreateInvoice: (v: Valuation) => void; onInvoicePdf: (v: Valuation) => Promise<void>
   costs: Cost[]; dayRate?: number | null; onCosts: () => void
   onDayworks: (fresh: boolean) => void
   docs: JobDocument[]; onAddDoc: (file: File, kind: JobDocument['kind'], name: string) => Promise<void>; onOpenDoc: (d: JobDocument) => Promise<void>; onDeleteDoc: (d: JobDocument) => Promise<void>
@@ -263,8 +266,10 @@ export function JobView(p: {
     if (tab === 'home' || tab === 'diary') { openDay(d); return }
     offerUndo(`${e.type === 'voice' ? 'Voice note' : e.type === 'video' ? 'Video' : 'Photo'} added to today’s diary`, () => p.onDeleteDiary(e))
   }
+  // the job's trades, each its own colour within this job (scope order, so the first trade always gets the same one)
+  const cores = useMemo(() => jobCores([...scope].sort((a, b) => a.order - b.order).map(i => i.workstream || i.room || 'General')), [scope])
   return (
-    <>
+    <TradeCores.Provider value={cores}>
       <main className="page with-rail">
         <Hero job={job} compact={tab !== 'home'} rail={jobRail(job, scope, vals, vos, access.money, p.diary)} onBack={onBack} onSetup={onSetup} onClerk={() => setTab('ask')} inClerk={tab === 'ask'} />
         {tab === 'home' && <Home job={job} vos={vos} scope={scope} vals={vals} go={setTab} onSetup={onSetup} onUpdateJob={p.onUpdateJob}
@@ -279,12 +284,12 @@ export function JobView(p: {
           date={diaryDate} setDate={setDiaryDate} focusNote={focusNote} onBack={() => { setFocusNote(false); setDiaryView('line') }}
           onSave={p.onSaveDiary} onDelete={p.onDeleteDiary} onAddMedia={p.onAddMedia} onRaiseVo={p.onRaiseVoFromPhoto} />}
         {tab === 'scope' && job.kind === 'orders' && <><OrdersTab job={job} orders={p.orders} scope={scope} vals={vals} onNew={p.onNewOrder} onOpen={p.onOpenOrder} onClaim={p.onClaimOrders} />
-          <VoList vos={vos} vals={vals} onToggle={p.onToggleVo} onEdit={onEditVariation} onLog={() => onLogVariation()} /></>}
+          <VoList job={job} vos={vos} vals={vals} onToggle={p.onToggleVo} onEdit={onEditVariation} onLog={() => onLogVariation()} /></>}
         {tab === 'scope' && job.kind !== 'orders' && <ScopeTab job={job} scope={scope} vals={vals} onToggle={p.onToggleScope} onToggleMany={p.onClaimMany} onClearUnclaimed={p.onClearUnclaimed} onDeleteAll={p.onDeleteScope} onAdd={p.onAddScope} onEdit={p.onEditScope} onImport={p.onImportScope} onCheckRates={p.onCheckRates} onEvidence={p.onEvidence}
           vos={vos} onToggleVo={p.onToggleVo} onEditVo={onEditVariation} onLogVo={onLogVariation} onImportVo={access.money ? p.onImportVo : undefined} onRegister={access.money ? p.onVoRegister : undefined} onDayworks={() => p.onDayworks(false)}
           diary={p.diary} onMarkDone={i => p.onSaveDiary(doneMark(job, i))} onUndoDone={p.onDeleteDiary} />}
         {tab === 'vals' && access.money && <ValuationsTab job={job} scope={scope} vos={vos} vals={vals} go={setTab}
-          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} readNote={p.readNote} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
+          onRemoveScope={p.onToggleScope} onRemoveVo={p.onToggleVo} onIssue={p.onIssue} onUndoSend={p.onUndoSend} onDeleteOpen={p.onDeleteOpenVal} onPaid={p.onPaid} onCertificate={p.onCertificate} onCreateInvoice={p.onCreateInvoice} onInvoicePdf={p.onInvoicePdf} diary={p.diary} onDecideSite={p.onDecideSite} readNote={p.readNote} onReview={p.onReview} onUpdateJob={p.onUpdateJob} />}
         {tab === 'ask' && <AskTab job={job} seed={askSeed} onSeeded={() => setAskSeed(null)} />}
       </main>
       {/* the tabs share the dock evenly around a middle column for the + key, which sits in a scoop cut into the dock's
@@ -329,7 +334,7 @@ export function JobView(p: {
           </div>
         </Sheet>
       )}
-    </>
+    </TradeCores.Provider>
   )
 }
 

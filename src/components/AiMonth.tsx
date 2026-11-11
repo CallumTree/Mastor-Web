@@ -14,11 +14,15 @@ export const PLAN_NAME: Record<string, string> = { pilot: 'Founding pilot', merc
 /** What the meter says. Never a credit or a price: a share of the allowance, and site days left once there's a usual rate to go on. */
 export function aiMonthLines(d: AiMonthData) {
   const plan = PLAN_NAME[d.plan] ?? d.plan
+  // a plan with no AI on it (or none set yet) says so; it's never "100% used" before anything was used
+  const none = { plan, pct: 0, figure: 'No allowance', lines: ['AI reading isn’t on this plan. Everything else works as normal; lines can be entered by hand.'] }
   if (d.reads_allowed != null) {
+    if (!d.reads_allowed) return none
     const pct = d.reads_allowed ? Math.min(100, Math.round(d.reads / d.reads_allowed * 100)) : 100
     return { plan, pct, figure: `${d.reads} of ${d.reads_allowed} reads`, lines: [d.reads >= d.reads_allowed ? 'This month’s document reads are used. They start again on the 1st; you can still enter lines by hand.' : 'Document reads this month: the client’s pack and scanned schedules.'] }
   }
   const used = Number(d.used) || 0, allowance = Number(d.allowance) || 0
+  if (!allowance) return none
   const pct = allowance ? Math.min(100, Math.round(used / allowance * 100)) : 100
   const lines: string[] = []
   if (used >= allowance) lines.push(d.economy > 0 ? 'This month’s allowance is used. Site captures are still read, more lightly, until the 1st; other AI reading pauses.' : 'This month’s allowance is used. AI reading pauses until the 1st.')

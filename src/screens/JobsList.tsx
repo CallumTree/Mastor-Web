@@ -1,5 +1,6 @@
 import { Wordmark } from '../components/Wordmark'
-import { WORK_LABEL, type DiaryEntry, type Job, type Variation, type WorkOrder } from '../lib/types'
+import { WORK_LABEL, type DiaryEntry, type Job, type ScopeItem, type Variation, type WorkOrder } from '../lib/types'
+import { jobWorth } from '../lib/valuation'
 import { isOverdue } from './Orders'
 import { money } from '../lib/format'
 import { IconChart, IconCog, IconPlus } from '../components/Icons'
@@ -14,8 +15,8 @@ import { SetupList, type SetupStep } from '../components/Setup'
  * signs (red = blocks invoicing, yellow = needs doing). Same list on a phone and a laptop: rows on a
  * phone, a ruled schedule with columns from 1024px.
  */
-export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setup, onOpen, onOpenLine, onToggle, onNew, onByHand, onDashboard, onSettings }: {
-  jobs: Job[]; vos: Variation[]; orders?: WorkOrder[]; diary?: DiaryEntry[]; onOpen: (j: Job) => void
+export function JobsList({ jobs, scope = [], vos, orders = [], diary = [], alerts = [], setup, onOpen, onOpenLine, onToggle, onNew, onByHand, onDashboard, onSettings }: {
+  jobs: Job[]; scope?: ScopeItem[]; vos: Variation[]; orders?: WorkOrder[]; diary?: DiaryEntry[]; onOpen: (j: Job) => void
   /** Mastor's own urgent items per job, for the week (office only) */
   alerts?: { jobId: string; text: string; hint: string }[]
   /** tick a to-do off from the week */
@@ -56,7 +57,7 @@ export function JobsList({ jobs, vos, orders = [], diary = [], alerts = [], setu
                 <button key={j.id} className="job-row" onClick={() => onOpen(j)}>
                   <span className="jr-job"><b>{j.name}</b><small className="mono">{j.contractRef || WORK_LABEL[j.workType] || j.workType}</small></span>
                   <span className="jr-client">{j.client || '—'}</span>
-                  <span className="jr-value num">{m ? (j.contractValue > 0 ? money(j.contractValue) : '—') : ''}</span>
+                  <span className="jr-value num">{m ? (() => { const c = jobWorth(j, scope.filter(i => i.jobId === j.id), vos.filter(v => v.jobId === j.id)).contract; return c > 0 ? money(c) : '—' })() : ''}</span>
                   <span className="jr-needs">
                     {m && !j.poNumber && <Plate kind="stop">No PO</Plate>}
                     {(() => { const late = orders.filter(o => o.jobId === j.id && isOverdue(o)).length; return late ? <Plate kind="stop">{late} overdue order{late === 1 ? '' : 's'}</Plate> : null })()}

@@ -1,18 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAccess } from '../lib/access'
 import type { RateBook } from '../lib/types'
 import { RateLookup } from './Rates'
 import type { DiaryEntry, Job, ScopeItem, Valuation, Variation } from '../lib/types'
 import { Field, Sheet, ConfirmDelete } from '../components/Ui'
 import { money, qtyText } from '../lib/format'
-import { isPriced, lineValue, lockedIn, valRef } from '../lib/valuation'
+import { isPriced, lineValue, lockedIn, pennies, upliftedValues, valRef } from '../lib/valuation'
 import { uid } from '../lib/db'
 import { IconCheck, IconChevron, IconDoc, IconPlus } from '../components/Icons'
 import { doneMarks, undecided } from '../lib/siteDone'
 import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
-import { TradeMark } from '../components/Trade'
-import { tradeCore } from '../lib/trade'
+import { TradeList, TradeMark, useCore } from '../components/Trade'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { fig, figs } from '../components/Figs'
 import { VoRow, VoSummary } from './Variations'
@@ -33,17 +32,17 @@ export interface VoProps {
 const sortHouses = (a: string, b: string) => (a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b, 'en', { numeric: true }))
 const houseOf = (v: Variation) => voHouse(v) || '—'
 const counts = (v: Variation) => v.status !== 'Rejected'
-const voValue = (vs: Variation[]) => vs.filter(counts).reduce((t, v) => t + lineValue(v.qty, v.rate), 0)
 /** A house's work by trade (Kitchen, Bathroom, Paint, Scaffold…), else by location. */
 const groupName = (i: ScopeItem) => i.workstream || i.room || 'General'
 /** The location, only when it says something: not "Property" (a whole-house line), not the trade again. */
 const placeOf = (i: ScopeItem) => (i.room && !/^(the )?property$/i.test(i.room.trim()) && i.room !== groupName(i) ? i.room : '')
 
 /**
- * A house's trades as one thin bar: each trade's share of the work, in its colour (a fine line along the foot shows
- * every trade, claimed or not), filling solid as its lines are claimed. Read at a glance, no names needed.
+ * A house's trades as one bar: each trade's share of the work in its colour, pale until its lines are claimed, then
+ * filling solid. Read at a glance; the names are in the key under it and on the trade headings.
  */
 export function TradeBar({ items, label }: { items: ScopeItem[]; label: string }) {
+  const core = useCore()
   const trades = [...new Set(items.map(groupName))].map(name => {
     const ls = items.filter(i => groupName(i) === name)
     const value = ls.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
@@ -52,7 +51,7 @@ export function TradeBar({ items, label }: { items: ScopeItem[]; label: string }
   if (!trades.length) return <div className="tbar" aria-hidden="true" />
   return (
     <div className="tbar" role="img" aria-label={label}>
-      {trades.map(t => <i key={t.name} style={{ flexGrow: t.value, '--c': `var(--core-${tradeCore(t.name)})` } as React.CSSProperties}><b style={{ width: `${Math.round((t.claimed / t.value) * 100)}%` }} /></i>)}
+      {trades.map(t => <i key={t.name} style={{ flexGrow: t.value, '--c': `var(--core-${core(t.name)})` } as React.CSSProperties}><b style={{ width: `${Math.round((t.claimed / t.value) * 100)}%` }} /></i>)}
     </div>
   )
 }
@@ -145,10 +144,10 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   job: Job; scope: ScopeItem[]; vals: Valuation[]; onToggle: (i: ScopeItem) => void; onToggleMany: (items: ScopeItem[]) => void; onClearUnclaimed: (items: ScopeItem[]) => void; onDeleteAll: (items: ScopeItem[]) => void; onAdd: () => void; onEdit: (i: ScopeItem) => void; onImport: () => void; onCheckRates?: () => void; onEvidence?: () => Promise<void>
 } & VoProps) {
   const [filter, setFilter] = useState<Filter>('all')
-  const total = scope.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
-  const claimed = scope.filter(i => i.valuationId).reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
-  const voTotal = voValue(vos), voClaimed = voValue(vos.filter(v => v.valuationId))
-  const voUnpriced = vos.filter(v => counts(v) && (v.qty == null || v.rate == null)).length
+  // every figure on Scope is with the job's uplifts, the same money as Home and Vals; base rates are in the edit forms
+  const uv = useMemo(() => upliftedValues(job, scope, vos), [job, scope, vos])
+  const worth = (items: { id: string }[]) => pennies(items.reduce((t, i) => t + (uv.get(i.id) ?? 0), 0))
+  const voValue = (vs: Variation[]) => worth(vs.filter(counts))
   const shown = filter === 'vos' ? [] : scope.filter(i => filter === 'all' || (filter === 'live' ? !i.valuationId : !!i.valuationId))
   const shownVos = vos.filter(v => filter === 'all' || filter === 'vos' || (filter === 'live' ? !v.valuationId && counts(v) : !!v.valuationId)).sort((a, b) => a.number - b.number)
   const valById = (id: string | null) => vals.find(v => v.id === id)
@@ -161,9 +160,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   const houseName = (p: string) => (p === '—' ? 'Whole job' : job.properties?.[p]?.split(',')[0] || `No. ${p}`)
   const unclaimed = scope.filter(i => !i.valuationId)
   const voLive = vos.filter(v => !v.valuationId && counts(v))
-  const unpricedLines = scope.filter(i => !isPriced(i)).length
   const lockedCount = scope.filter(i => !!lockedIn(i, vals)).length
-  const voRows = (list: Variation[]) => list.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggleVo} onEdit={onEditVo} />)
+  const voRows = (list: Variation[]) => list.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggleVo} onEdit={onEditVo} value={uv.get(v.id)} />)
   const row = (i: ScopeItem, idx: number) => {
     const val = valById(i.valuationId)
     const locked = !!lockedIn(i, vals)
@@ -183,11 +181,11 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           </div>
           <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
           <div className="hint">
-            {figs(i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated')}{figs(i.rate != null ? ` @ ${money(i.rate)}` : '')}{figs(i.hours ? ` · ${i.hours}h` : '')}
+            {figs(i.qty != null ? `${qtyText(i.qty)} ${i.unit}` : 'qty not stated')}{figs(i.hours ? ` · ${i.hours}h` : '')}
           </div>
           {!isPriced(i) && <div className="flag">{i.rate == null ? 'NO RATE' : 'NO QTY'} — tap to fix</div>}
         </div>
-        <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap', color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(lineValue(i.qty, i.rate)) : '—'}</div>
+        <div className="amt t-note" style={{ flex: 'none', whiteSpace: 'nowrap', color: isPriced(i) ? 'var(--ink)' : 'var(--ink-muted)' }}>{isPriced(i) ? money(uv.get(i.id) ?? 0) : '—'}</div>
       </div>
     )
   }
@@ -200,8 +198,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
     const pv = vos.filter(v => houseOf(v) === p)
     const lines = shown.filter(i => (i.property || '—') === p).sort((a, b) => a.order - b.order)
     const pvShown = shownVos.filter(v => houseOf(v) === p)
-    const tot = all.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) + voValue(pv)
-    const cl = all.filter(i => i.valuationId).reduce((t, i) => t + lineValue(i.qty, i.rate), 0) + voValue(pv.filter(v => v.valuationId))
+    const tot = pennies(worth(all) + voValue(pv))
+    const cl = pennies(worth(all.filter(i => i.valuationId)) + voValue(pv.filter(v => v.valuationId)))
     const pct = tot ? Math.round((cl / tot) * 100) : 0
     const remaining = all.filter(i => !i.valuationId && isPriced(i))
     const groups = groupsOf(lines)
@@ -216,13 +214,15 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         </div>}
         {inSheet && (
           <div className="house-all row">
-            {/* acts on the tap; the Undo bar takes exactly these back */}
-            {remaining.length > 0 && filter !== 'vos' && <button className="btn btn-secondary grow" aria-label={`Tick all remaining lines (${remaining.length})`} onClick={() => onToggleMany(remaining)}>{figs(`Tick all (${remaining.length})`)}</button>}
+            {/* the one main action here: acts on the tap; the Undo bar takes exactly these back */}
+            {remaining.length > 0 && filter !== 'vos' && <button className="btn btn-primary grow" aria-label={`Tick all remaining lines (${remaining.length})`} onClick={() => onToggleMany(remaining)}>{figs(`Tick all (${remaining.length})`)}</button>}
             {/* extra work found here: the house is already known */}
             <button className="btn btn-secondary house-vo" onClick={() => onLogVo(p === '—' ? undefined : p)}><IconPlus /> Add VO</button>
           </div>
         )}
-        {inSheet && groups.length > 2 && (
+        {/* the key to the bar's colours: a line of names, or, past four trades, chips that also jump to each */}
+        {inSheet && groups.length > 1 && groups.length <= 4 && <div className="hint trade-key"><TradeList names={groups} /></div>}
+        {inSheet && groups.length > 4 && (
           <div className="chips trade-jump" role="group" aria-label="Go to a trade">
             {groups.map(g => <button key={g} className="chip sm" onClick={() => jump(g)}><TradeMark name={g} />{g}</button>)}
           </div>
@@ -237,7 +237,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         {groups.map(g => {
           const gl = lines.filter(i => groupName(i) === g)
           const gall = all.filter(i => groupName(i) === g)
-          const gt = gall.reduce((t, i) => t + lineValue(i.qty, i.rate), 0)
+          const gt = worth(gall)
           const grem = gall.filter(i => !i.valuationId && isPriced(i))
           return (
             <section key={g} className="hs-trade" aria-label={g}>
@@ -295,8 +295,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         const pv = vos.filter(v => houseOf(v) === p)
         const lines = shown.filter(i => (i.property || '—') === p)
         const pvShown = shownVos.filter(v => houseOf(v) === p)
-        const tot = all.reduce((t, i) => t + lineValue(i.qty, i.rate), 0) + voValue(pv)
-        const cl = all.filter(i => i.valuationId).reduce((t, i) => t + lineValue(i.qty, i.rate), 0) + voValue(pv.filter(v => v.valuationId))
+        const tot = pennies(worth(all) + voValue(pv))
+        const cl = pennies(worth(all.filter(i => i.valuationId)) + voValue(pv.filter(v => v.valuationId)))
         const pct = tot ? Math.round((cl / tot) * 100) : 0
         if (!lines.length && !pvShown.length && filter !== 'all') return null
         const vosHere = pv.filter(counts).length

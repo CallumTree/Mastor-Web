@@ -18,9 +18,23 @@ const BY_WORD: [RegExp, Core][] = [
   [/scaffold|prelim|general|site set|welfare|skip/, 'graphite'],
 ]
 
+const byWord = (name: string): Core | null => { const n = name.toLowerCase(); for (const [re, core] of BY_WORD) if (re.test(n)) return core; return null }
+
+/** A job's trades with their cores, so no two in one job share a colour where it can be helped: named trades keep
+ *  their own core (bathrooms teal on every job); any other trade takes, in the order it first appears, a core no trade
+ *  in this job is using yet. Only when every core is taken does a name share one. */
+export function jobCores(names: string[]): Map<string, Core> {
+  const out = new Map<string, Core>()
+  const unique = [...new Set(names)]
+  for (const n of unique) { const c = byWord(n); if (c) out.set(n, c) }
+  const free = () => CORES.slice(0, -1).find(c => ![...out.values()].includes(c))
+  for (const n of unique) if (!out.has(n)) out.set(n, free() ?? tradeCore(n))
+  return out
+}
+
 export function tradeCore(name: string): Core {
   const n = name.toLowerCase()
-  for (const [re, core] of BY_WORD) if (re.test(n)) return core
+  const named = byWord(name); if (named) return named
   let h = 0
   for (const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0
   return CORES[h % (CORES.length - 1)]   // graphite is kept for prelims and general items

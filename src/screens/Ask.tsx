@@ -79,7 +79,7 @@ export function AskTab({ job, seed, onSeeded }: { job: Job; seed?: string | null
   if (!online) return (
     <section className="ask">
       <h1 className="tab-title">Clerk</h1>
-      <div className="card empty">Clerk works when this phone is signed in to Mastor’s cloud, so it can read and change the job you share with the office. Sign in from Settings.</div>
+      <div className="card empty">Clerk needs this phone signed in to your company’s Mastor, so it can read and change the job you share with the office. It opens here once you’re signed in.</div>
     </section>
   )
 
