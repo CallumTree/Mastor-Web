@@ -13,7 +13,7 @@ import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { ukDate as ukd } from '../lib/format'
 import { Field, Sheet, ConfirmDelete, useOnce } from '../components/Ui'
 import { describeProblem } from '../components/Problem'
-import { lineValue, shareOut, upliftedValues } from '../lib/valuation'
+import { lineValue, shareOut, upliftAmounts, upliftedValues } from '../lib/valuation'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { savePhoto, usePhotoThumb } from '../lib/photos'
 import { IconCamera, IconPlus } from '../components/Icons'
@@ -102,7 +102,18 @@ export function LogVariation({ onSave, onClose, initial, houses = [] }: { onSave
   )
 }
 
-export function EditVariation({ vo, locked, books = [], houses = [], onSave, onDelete, onClose }: { vo: Variation; locked: boolean; books?: RateBook[]; houses?: House[]; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
+/** An edit form's total: at its base rate (what the form prices), and, when the job has uplifts, what it's worth with them,
+ *  the figure every other screen shows. */
+export function FormTotal({ base, uplifts, muted }: { base: number; uplifts?: [number, number]; muted?: boolean }) {
+  const [u1, u2] = uplifts ?? [0, 0]
+  const up = u1 || u2 ? upliftAmounts(base, u1, u2).gross : null
+  return <div className="form-total">
+    <div className="amt" style={{ fontSize: 20, fontWeight: 700, color: muted ? 'var(--ink-2)' : 'var(--ink)' }}>{money(base)}</div>
+    {up != null && <div className="hint">{figs(`at base rate · ${money(up)} with uplifts`)}</div>}
+  </div>
+}
+
+export function EditVariation({ vo, locked, books = [], houses = [], uplifts, onSave, onDelete, onClose }: { vo: Variation; locked: boolean; books?: RateBook[]; houses?: House[]; uplifts?: [number, number]; onSave: (v: Variation) => void; onDelete: () => void; onClose: () => void }) {
   const [v, setV] = useState({ ...vo, property: vo.property ?? (voHouse(vo) || undefined) })
   const [qty, setQty] = useState(vo.qty != null ? String(vo.qty) : '')
   const [rate, setRate] = useState(vo.rate != null ? String(vo.rate) : '')
@@ -129,7 +140,7 @@ export function EditVariation({ vo, locked, books = [], houses = [], onSave, onD
           {m && <div className="grow"><Field label="Rate (£)" hint={v.rateBook ? `From ${v.rateBook}` : undefined}><input inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setV({ ...v, rateBook: undefined }) }} placeholder="Unpriced" /></Field></div>}
         </div>
         {m && (qv && rv
-          ? <div className="amt" style={{ fontSize: 20, color: 'var(--ink)', fontWeight: 700 }}>{money(lineValue(qv, rv))}</div>
+          ? <FormTotal base={lineValue(qv, rv)} uplifts={uplifts} />
           : <div className="hint">Add the quantity and rate to price it.</div>)}
         {m && qv && rv && v.status === 'Identified' && !v.clientRef && (
           v.submittedAt

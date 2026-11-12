@@ -66612,12 +66612,14 @@ function allocateInvoiceNo(s, allVals) {
   while (used.has(formatInvoiceNo(s, n))) n++;
   return { number: formatInvoiceNo(s, n), next: n + 1 };
 }
+var vatRegistered = (s) => s?.vatRegistered !== false;
+var invoiceVatRateFor = (s) => vatRegistered(s) ? s?.vatRate ?? 20 : 0;
 function missingForInvoice(s) {
   if (!s) return ["company details"];
   const m = [];
   if (!s.name.trim()) m.push("company name");
   if (!s.address.trim()) m.push("company address");
-  if (!s.vatNumber.trim()) m.push("VAT number");
+  if (vatRegistered(s) && !s.vatNumber.trim()) m.push("VAT number");
   if (!s.sortCode.trim() || !s.accountNumber.trim()) m.push("bank details");
   return m;
 }
@@ -67064,7 +67066,7 @@ ${added}` } : {},
     const n = want ? /^\d+$/.test(want) ? Number(want) : fromRoman(want) : 0;
     const vals = [...d.vals].sort((a, b) => a.number - b.number).filter((v) => !valuation || v.id === valuation || v.number === n);
     if (valuation && !vals.length) throw new Error(`No ${valuation} on ${job.name}.`);
-    const rate = s?.vatRate ?? 20;
+    const rate = invoiceVatRateFor(s);
     const allVals = s ? await records(ctx, "valuations") : [];
     const missing2 = missingForInvoice(s ?? void 0);
     return text({

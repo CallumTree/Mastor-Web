@@ -4,7 +4,7 @@ import { SiteReview } from './SiteReview'
 import { IconChevron, IconLock } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
-import { amending, askChanges, isCertified, isWithClient, issuePlan, jobWorth, lineValue, reviewStage, valRef, valTotals } from '../lib/valuation'
+import { amending, askChanges, isCertified, isWithClient, issuePlan, jobWorth, lineValue, reviewStage, shareOut, valRef, valTotals } from '../lib/valuation'
 import { valRhythm, waitAMonth, weekText, VAL_MIN_DAYS } from '../lib/rhythm'
 import { shortDay } from '../lib/plan'
 import { dayKey } from '../lib/dates'
@@ -17,17 +17,24 @@ import { invoiceAmounts } from '../lib/invoice'
 import { fig, figs } from '../components/Figs'
 import { tell } from '../components/Problem'
 
+/** Does this valuation's invoice carry VAT? (A firm that isn't VAT-registered invoices at 0%.) */
+const withVat = (v: Valuation) => (v.invoiceVatRate ?? 20) > 0
+
 /** Where a line is, only when it says something: not "Property" (a whole-house line), not its trade again. */
 const placeOf = (i: { room?: string | null; workstream?: string | null }) => (i.room && !/^(the )?property$/i.test(i.room.trim()) && i.room !== i.workstream ? i.room : '')
 
-function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
-  val: Valuation; scope: ScopeItem[]; vos: Variation[]
+function Lines({ job, val, scope, vos, onRemoveScope, onRemoveVo }: {
+  job: Job; val: Valuation; scope: ScopeItem[]; vos: Variation[]
   onRemoveScope?: (i: ScopeItem) => void; onRemoveVo?: (v: Variation) => void
 }) {
   const byProp = scope.some(x => x.property)
   const s = scope.filter(x => x.valuationId === val.id).sort((a, b) => byProp ? (a.property ?? '').localeCompare(b.property ?? '', 'en', { numeric: true }) || a.order - b.order : a.room.localeCompare(b.room) || a.order - b.order)
   const o = vos.filter(x => x.valuationId === val.id).sort((a, b) => a.number - b.number)
   const open = val.status === 'Open' || amending(val)   // Claude's marks matter while the valuation can still change
+  // each line at its share of the valuation's own total with uplifts, so the lines add up to "This valuation" exactly;
+  // the rate stays in the line's small print, and the base build-up is said once, above
+  const shares = shareOut(valTotals(job, val.id, scope, vos).gross, [...s, ...o].map(x => lineValue(x.qty, x.rate)))
+  const worth = new Map([...s, ...o].map((x, k) => [x.id, shares[k]]))
   const row = (key: string, ref: string, desc: string, sub: React.ReactNode, value: number, onRemove?: () => void, claude?: number | null) => (
     <div key={key} className="row val-line" style={{ padding: '10px 0', borderTop: '1px solid var(--line)', alignItems: 'flex-start' }}>
       <div className="grow">
@@ -42,9 +49,9 @@ function Lines({ val, scope, vos, onRemoveScope, onRemoveVo }: {
   return (
     <div>
       {s.length > 0 && !byProp && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}</>}{placeOf(i) && `${i.workstream ? ' · ' : ''}${placeOf(i)}`}{(i.workstream || placeOf(i)) ? ' · ' : ''}{fig(`${qtyText(i.qty!)} ${i.unit}`)} @ {fig(money(i.rate!))}</>, lineValue(i.qty, i.rate), onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}</>}{placeOf(i) && `${i.workstream ? ' · ' : ''}${placeOf(i)}`}{(i.workstream || placeOf(i)) ? ' · ' : ''}{fig(`${qtyText(i.qty!)} ${i.unit}`)} @ {fig(money(i.rate!))}</>, worth.get(i.id) ?? 0, onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
       {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
-      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${placeOf(v) ? `${placeOf(v)} · ` : ''}${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, lineValue(v.qty, v.rate), onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
+      {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${placeOf(v) ? `${placeOf(v)} · ` : ''}${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, worth.get(v.id) ?? 0, onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
     </div>
   )
 }
@@ -111,7 +118,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
         ...(!issued.length && !open ? [] : [
           { label: 'Paid', swatch: 'paid' as const, amount: split.paid, value: money(split.paid), nil: split.paid < 0.005, note: paid - split.paid > 0.005 ? `${money(paid)} incl. VAT` : paid ? 'as received' : 'nothing yet' },
             { label: 'Certified, unpaid', swatch: 'due' as const, amount: split.due, value: money(split.due), nil: split.due < 0.005, hot: owed > 0 && !open && !fixing,
-            note: [owedOnInvoice ? `${money(owedOnInvoice)} on invoice incl. VAT` : certified ? 'agreed by the client' : 'none agreed yet', overdue ? `${overdue} overdue` : ''].filter(Boolean).join(' · ') },
+            note: [owedOnInvoice ? `${money(owedOnInvoice)} on invoice${vals.some(v => v.invoiceNumber && withVat(v)) ? ' incl. VAT' : ''}` : certified ? 'agreed by the client' : 'none agreed yet', overdue ? `${overdue} overdue` : ''].filter(Boolean).join(' · ') },
           ...(withClient.length ? [{ label: 'With client', swatch: 'sent' as const, amount: split.sent, value: money(split.sent), nil: split.sent < 0.005,
             note: withClient.length === 1 ? `${valRef(withClient[0].number)}, ${fixing === withClient[0] ? 'changes asked' : 'for review'}` : `${withClient.length} valuations for review` }] : []),
           ...(open ? [{ label: `${valRef(open.number)}, open`, swatch: 'open' as const, amount: split.open, value: money(split.open), nil: split.open < 0.005, note: 'not sent yet' }] : []),
@@ -142,10 +149,9 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             {(job.uplift1 || job.uplift2) ? <>, plus uplifts of {job.uplift1}%{job.uplift2 ? <>&nbsp;+&nbsp;{job.uplift2}%</> : null}</> : null}
           </div>}
           {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
-          {/* a long valuation gets its send above the lines too, so it's never a long scroll away */}
-          {current.lines > 6 && <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} bare />}
-          <Lines val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
-          <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} />
+          {/* one Send, with what the client's QS would query, above the lines: never a long scroll away */}
+          {current.lines > 0 && <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} />}
+          <Lines job={job} val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
         </div>
       ) : fixing ? null : (
         <div className="card empty">
@@ -169,8 +175,8 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                   <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span><small><IconLock size={12} /> {word}</small></div>
                   <div className="vo-main">
                     <div className="vo-desc">{v.issuedAt ? ukDate(v.issuedAt) : 'Sent'}</div>
-                    <div className="vo-meta">{t.lines} line{t.lines === 1 ? '' : 's'} · base {fig(money(t.base))}</div>
-                    {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {fig(money(invoiceAmounts(job, v, scope, vos).total))} incl. VAT</div>}
+                    <div className="vo-meta">{t.lines} line{t.lines === 1 ? '' : 's'}</div>
+                    {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {fig(money(invoiceAmounts(job, v, scope, vos).total))}{withVat(v) ? ' incl. VAT' : ''}</div>}
                     <div className="vo-status"><CourtLine c={courts.get(v.id)!} /></div>
                   </div>
                   <div className="vo-amt"><span className="mono">{money(t.gross)}</span><span className="prop-chev" aria-hidden="true" style={{ transform: isOpen ? 'rotate(90deg)' : undefined }}><IconChevron size={16} /></span></div>
@@ -194,7 +200,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                     {stage !== 'review' && (v.paidAt || !v.invoiceNumber) && <button className="btn btn-secondary" onClick={() => setPaying(v)}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>}
                     {v.review && stage !== 'review' && !v.invoiceNumber && !v.paidAt && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setChanging(v)}>Client wants changes after all</button>}
                     <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setShowLines(showLines === v.id ? null : v.id)}>{showLines === v.id ? 'Hide lines' : `Show ${t.lines} line${t.lines === 1 ? '' : 's'}`}</button>
-                    {showLines === v.id && <Lines val={v} scope={scope} vos={vos} />}
+                    {showLines === v.id && <Lines job={job} val={v} scope={scope} vos={vos} />}
                   </div>
                 )}
               </div>
@@ -225,7 +231,7 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
       <div className="stack">
         <h2 className="label bracket">Payment · {valRef(v.number)}</h2>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
-        <div className="hint">{figs(v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)} incl. VAT.` : `Certified ${money(gross)}.`)} Less than that landed? Enter what did — the rest stays owed.</div>
+        <div className="hint">{figs(v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)}${withVat(v) ? ' incl. VAT' : ''}.` : `Certified ${money(gross)}.`)} Less than that landed? Enter what did — the rest stays owed.</div>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
         {/* the white block is whatever matches what you typed: an amount typed means that amount, never "in full" */}
         {typed && n < gross - 0.005 && <div className="flag">{fig(money(gross - n))} will still show as owed</div>}
@@ -243,13 +249,11 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
  * would query sits here, and the figure is on the button. Sent, it's locked while they review it and the certificate
  * opens to send them; if they ask for changes it opens again. (A draft certificate is in the ⋯ menu.)
  */
-function SendButton({ job, val, vals, scope, vos, onIssue, onCertificate, onSent, bare }: {
+function SendButton({ job, val, vals, scope, vos, onIssue, onCertificate, onSent }: {
   job: Job; val: Valuation; vals: Valuation[]; scope: ScopeItem[]; vos: Variation[]
   onIssue: (v: Valuation) => Promise<Valuation>; onCertificate: (v: Valuation) => Promise<void>
   /** it went: the Undo offer, made after the certificate so the share sheet doesn't eat its seconds */
   onSent?: (before: Valuation) => void
-  /** the copy above a long valuation's lines: the button only, the checks stay with the one at the foot */
-  bare?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const p = issuePlan(job, val, vals, scope, vos)
@@ -265,8 +269,8 @@ function SendButton({ job, val, vals, scope, vos, onIssue, onCertificate, onSent
     } finally { setBusy(false) }
   }
   return (
-    <div className="stack" style={{ marginTop: bare ? 4 : 14, marginBottom: bare ? 12 : 0 }}>
-      {!bare && p.checks.filter(c => c.kind !== 'ok').map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
+    <div className="stack" style={{ marginTop: 14, marginBottom: 12 }}>
+      {p.checks.filter(c => c.kind !== 'ok').map((c, i) => <Plate key={i} kind={c.kind}>{c.text}</Plate>)}
       <button className="btn btn-primary" disabled={busy || p.totals.lines === 0} onClick={send}>{busy ? 'Sending…' : figs(`Send ${ref}${amending(val) ? ' again' : ''} for ${money(p.totals.gross)}`)}</button>
     </div>
   )
@@ -321,8 +325,8 @@ function Working({ job, val, scope, vos, certified, hot, send, onRemoveScope, on
         { label: 'Cumulative', value: money(certified + t.gross), note: `${money(certified)} previously` },
       ]} />
       <div className="hint" style={{ margin: '10px 2px' }}>Take out what they won’t agree (it goes back to live), fix quantities in Scope or VOs. Ticks go into {ref} until you send it again.</div>
-      <Lines val={val} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
       {send}
+      <Lines job={job} val={val} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
     </div>
   )
 }

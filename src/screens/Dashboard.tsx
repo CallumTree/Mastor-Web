@@ -55,7 +55,7 @@ export function Dashboard({ jobs, scope, vos, vals, costs = [], diary = [], orde
       </div>
 
       <SumStrip label="Money across all jobs" caption={`Owed includes VAT once invoiced; everything else is with uplifts, excl. VAT.${p.unpricedVos ? ` ${p.unpricedVos} unpriced VO${p.unpricedVos === 1 ? '' : 's'} not counted until priced.` : ''}${withCosts.length && withCosts.length < work.length ? ` Margin covers the ${withCosts.length} job${withCosts.length === 1 ? '' : 's'} with costs in.` : ''}`} cells={[
-        { label: 'Owed to you', value: money(p.owed), nil: !p.owed, hot: p.owed > 0, note: 'incl. VAT once invoiced' },
+        { label: 'Owed to you', value: money(p.owed), nil: !p.owed, hot: p.owed > 0, note: 'incl. any VAT once invoiced' },
         { label: 'Overdue', value: money(p.overdue), nil: !p.overdueCount, neg: p.overdueCount > 0, note: p.overdueCount ? `${p.overdueCount} valuation${p.overdueCount === 1 ? '' : 's'} · chase below` : 'nothing late' },
         { label: 'With clients', value: money(p.withClient), nil: !p.withClient, note: 'sent, not agreed yet' },
         { label: 'Ready to claim', value: money(p.inValuation), nil: !p.inValuation, note: 'in open valuations' },

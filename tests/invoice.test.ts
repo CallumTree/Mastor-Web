@@ -1,4 +1,4 @@
-import { allocateInvoiceNo, formatInvoiceNo, missingForInvoice, jobMissingForInvoice, invoiceAmounts, buildInvoice } from '../src/lib/invoice'
+import { allocateInvoiceNo, formatInvoiceNo, missingForInvoice, jobMissingForInvoice, invoiceAmounts, buildInvoice, invoiceVatRateFor } from '../src/lib/invoice'
 import { valCourt } from '../src/lib/chase'
 import { blankSettings, type Job, type ScopeItem, type Valuation } from '../src/lib/types'
 let pass = 0, fail = 0
@@ -25,5 +25,14 @@ ok(valCourt({ ...inv, paidAt: Date.UTC(2026, 8, 20), paidAmount: 6033.97 }, job,
   ok(jobMissingForInvoice({ ...job, clientAddress: 'Finance, Civic Centre, Anytown, AB1 2CD' }).length === 0, 'client and address → ready')
   const to = Buffer.from(await (await buildInvoice({ job: { ...job, clientAddress: 'Finance, Civic Centre, Anytown, AB1 2CD' }, val: inv, scope, vos: [], settings: s })).arrayBuffer()).toString('latin1')
   ok(to.includes('Example Council') && to.includes('Civic Centre') && to.includes('AB1 2CD'), 'PDF: invoice to the client, at their address')
+
+  // a firm that isn't VAT-registered: no VAT number asked, no VAT charged, a plain invoice that says why
+  const nr = { ...s, vatNumber: '', vatRegistered: false }
+  ok(missingForInvoice(nr).length === 0 && invoiceVatRateFor(nr) === 0 && invoiceVatRateFor(s) === 20 && invoiceVatRateFor(blankSettings()) === 20, 'not VAT-registered: no VAT number needed, invoices at 0%; unset means registered')
+  const plain = { ...inv, invoiceVatRate: 0 }
+  const pa = invoiceAmounts(job, plain, scope, [])
+  ok(pa.vat === 0 && pa.total === pa.net && valCourt(plain, job, scope, [], Date.UTC(2026, 8, 5)).owed === pa.net, 'no VAT: the total is the net, and that’s what is owed')
+  const pt = Buffer.from(await (await buildInvoice({ job: { ...job, clientAddress: 'Finance, Civic Centre' }, val: plain, scope, vos: [], settings: nr })).arrayBuffer()).toString('latin1')
+  ok(!pt.includes('VAT INVOICE') && !pt.includes('VAT reg. no.') && !pt.includes('VAT @') && pt.includes('Not VAT-registered') && pt.includes('5,028.31'), 'PDF: a plain invoice, no VAT number or VAT line, says it isn’t VAT-registered')
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0)
 })()

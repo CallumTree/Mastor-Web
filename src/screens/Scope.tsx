@@ -14,7 +14,7 @@ import { ByClaude } from '../components/Sign'
 import { TradeList, TradeMark, useCore } from '../components/Trade'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { fig, figs } from '../components/Figs'
-import { VoRow, VoSummary } from './Variations'
+import { FormTotal, VoRow, VoSummary } from './Variations'
 import { voHouse } from '../lib/property'
 
 export { Tick, ValBadge } from '../components/Tick'
@@ -319,8 +319,8 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   )
 }
 
-export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams = [], locked, books = [], onSave, onDelete, onClose }: {
-  item?: ScopeItem; jobId: string; nextOrder: number; rooms: string[]; props?: string[]; streams?: string[]; locked: boolean; books?: RateBook[]
+export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams = [], locked, books = [], uplifts, onSave, onDelete, onClose }: {
+  item?: ScopeItem; jobId: string; nextOrder: number; rooms: string[]; props?: string[]; streams?: string[]; locked: boolean; books?: RateBook[]; uplifts?: [number, number]
   onSave: (i: ScopeItem) => void; onDelete?: () => void; onClose: () => void
 }) {
   const [f, setF] = useState<ScopeItem>(item ?? { id: uid(), jobId, code: '', description: '', room: rooms[rooms.length - 1] ?? 'General', qty: null, unit: 'nr', rate: null, valuationId: null, order: nextOrder, createdAt: Date.now() })
@@ -350,9 +350,8 @@ export function ScopeForm({ item, jobId, nextOrder, rooms, props = [], streams =
           <div style={{ width: '22%' }}><Field label="Unit"><input disabled={locked} value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })} /></Field></div>
           <div className="grow"><Field label="Rate (£)" hint={f.rateBook ? `From ${f.rateBook}` : undefined}><input disabled={locked} inputMode="decimal" value={rate} onChange={e => { setRate(e.target.value); setF({ ...f, rateBook: undefined }) }} placeholder="No rate" /></Field></div>
         </div>
-        <div className="amt" style={{ fontSize: 20, fontWeight: 700, color: n(qty) && n(rate) ? 'var(--ink-2)' : 'var(--ink-muted)' }}>
-          {n(qty) && n(rate) ? money(n(qty)! * n(rate)!) : 'Qty × rate'}
-        </div>
+        {n(qty) && n(rate) ? <FormTotal base={lineValue(n(qty), n(rate))} uplifts={uplifts} muted />
+          : <div className="amt" style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink-muted)' }}>Qty × rate</div>}
         {!locked && <button className="btn btn-primary" disabled={!f.description.trim()} onClick={() => onSave({ ...f, description: f.description.trim(), room: f.room.trim() || 'General', code: f.code.trim(), qty: n(qty), rate: n(rate) })}>{item ? 'Save' : 'Add line'}</button>}
         {onDelete && !locked && <ConfirmDelete instant confirmLabel="Delete this item" onConfirm={onDelete} />}
       </div>

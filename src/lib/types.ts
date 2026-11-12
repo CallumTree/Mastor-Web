@@ -182,6 +182,7 @@ export interface CompanySettings {
   nextInvoiceNumber: number    // carries on from your current numbering
   invoicePad: number           // digits, e.g. 4 → 0042
   vatRate: number              // % (20)
+  vatRegistered?: boolean      // false: not VAT-registered, so invoices carry no VAT and no VAT number (unset = registered)
   defaultTermsDays: number
   accountsFormat?: 'xero' | 'quickbooks' // invoice export
   accountsCode?: string        // Xero sales account code (default 200)

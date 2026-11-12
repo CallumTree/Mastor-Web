@@ -42,7 +42,7 @@ import { tell } from './components/Problem'
 import { UndoBar } from './components/Undo'
 import { offerUndo } from './lib/undo'
 import { voRef } from './lib/format'
-import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
+import { allocateInvoiceNo, buildInvoice, invoiceAmounts, invoiceFileName, invoiceVatRateFor, jobMissingForInvoice, missingForInvoice } from './lib/invoice'
 import { money } from './lib/format'
 import { jobAlerts, type AlertPlace } from './lib/alerts'
 import { lastText, siteDaysSince, valRhythm } from './lib/rhythm'
@@ -356,7 +356,7 @@ export default function App() {
       ) : (
         <JobsList jobs={jobs} scope={scope} vos={vos} orders={orders} diary={diary} onOpen={j => setOpenId(j.id)}
           setup={access.money ? [
-            { key: 'company', label: 'Your company details', hint: 'Name, address, VAT number and bank details: they go on every invoice.', done: !missingForInvoice(settings).length, onClick: () => setSettingsOpen(true) },
+            { key: 'company', label: 'Your company details', hint: 'Name, address, bank details and VAT, if you’re registered: they go on every invoice.', done: !missingForInvoice(settings).length, onClick: () => setSettingsOpen(true) },
             { key: 'rates', label: 'Your schedule of rates', hint: 'Import the SoR you price from, so lines and VOs are checked against it.', done: books.length > 0, onClick: () => setRatesOpen(true), skip: 'We don’t use one' },
             ...(access.manage ? [{ key: 'team', label: 'Your team', hint: 'Directors, QSs, site managers and foremen: whoever runs the job.', done: false, onClick: () => setTeamOpen(true), skip: 'Just me for now' }] : []),
             { key: 'job', label: 'Your first job, from the client’s pack', hint: 'The schedule, works orders and surveys: every line read for you to check.', done: jobs.length > 0, onClick: () => setNewJob(true) },
@@ -450,7 +450,7 @@ export default function App() {
         }} />}
       {intro && <Splash onDone={() => setIntro(false)} />}
       {invoicing && job && (() => {
-        const rate = settings?.vatRate ?? 20
+        const rate = invoiceVatRateFor(settings)
         const a = invoiceAmounts(job, invoicing, jobScope, jobVos, rate)
         const alloc = settings ? allocateInvoiceNo(settings, vals) : { number: '—', next: 1 }
         return <CreateInvoiceSheet number={alloc.number} net={money(a.net)} vat={money(a.vat)} total={money(a.total)} rate={rate} missing={missingForInvoice(settings)} jobMissing={jobMissingForInvoice(job)}
@@ -495,7 +495,7 @@ export default function App() {
           }} />
       )}
       {editing && (
-        <EditVariation vo={editing} books={books} houses={houses} locked={!!lockedIn(editing, jobVals)} onClose={() => setEditing(null)}
+        <EditVariation vo={editing} books={books} houses={houses} uplifts={job ? [job.uplift1, job.uplift2] : undefined} locked={!!lockedIn(editing, jobVals)} onClose={() => setEditing(null)}
           onSave={async v => {
             // A VO that loses its price can't stay in a valuation
             const stillPriced = v.qty != null && v.rate != null && v.status !== 'Rejected'
@@ -509,7 +509,7 @@ export default function App() {
           }} />
       )}
       {scopeForm && job && access.money && (
-        <ScopeForm item={scopeForm === 'new' ? undefined : scopeForm} jobId={job.id} books={books}
+        <ScopeForm item={scopeForm === 'new' ? undefined : scopeForm} jobId={job.id} books={books} uplifts={[job.uplift1, job.uplift2]}
           nextOrder={jobScope.reduce((m, s) => Math.max(m, s.order), 0) + 1}
           rooms={[...new Set(jobScope.map(s => s.room))]}
           props={[...new Set(jobScope.map(s => s.property).filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))}

@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { NOTE_CATEGORIES, type DiaryEntry, type Job, type ScopeItem, type Valuation, type Variation } from '../../src/lib/types'
 import { money, qtyText, roman, voRef } from '../../src/lib/format'
 import { amending, claimTarget, isPriced, issuePlan, lineValue, lockedIn, pennies, valRef } from '../../src/lib/valuation'
-import { allocateInvoiceNo, invoiceAmounts, missingForInvoice } from '../../src/lib/invoice'
+import { allocateInvoiceNo, invoiceAmounts, invoiceVatRateFor, missingForInvoice } from '../../src/lib/invoice'
 import { jobAlerts } from '../../src/lib/alerts'
 import { shortDay } from '../../src/lib/plan'
 import { copyMedia, findJob, jobData, records, save, settings, type Ctx, type JobData } from './data'
@@ -385,7 +385,7 @@ export function registerWrites(server: McpServer, ctx: Ctx) {
     const n = want ? (/^\d+$/.test(want) ? Number(want) : fromRoman(want)) : 0
     const vals = [...d.vals].sort((a, b) => a.number - b.number).filter(v => !valuation || v.id === valuation || v.number === n)
     if (valuation && !vals.length) throw new Error(`No ${valuation} on ${job.name}.`)
-    const rate = s?.vatRate ?? 20
+    const rate = invoiceVatRateFor(s)
     const allVals = s ? await records<Valuation>(ctx, 'valuations') : []
     const missing = missingForInvoice(s ?? undefined)
     return text({

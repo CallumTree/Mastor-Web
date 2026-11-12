@@ -1,5 +1,5 @@
 /**
- * VAT invoices — one per issued valuation. Numbers carry on from the company's own sequence and are
+ * Invoices — one per issued valuation; VAT invoices for a VAT-registered firm, plain invoices with no VAT for one that isn't. Numbers carry on from the company's own sequence and are
  * never reused: if a number is already on any invoice, the next free one is used.
  */
 import type { CompanySettings, Job, ScopeItem, Valuation, Variation } from './types'
@@ -16,7 +16,12 @@ export function allocateInvoiceNo(s: CompanySettings, allVals: Valuation[]): { n
   return { number: formatInvoiceNo(s, n), next: n + 1 }
 }
 
-/** What's missing before a legal VAT invoice can be produced. */
+/** Is the firm VAT-registered? Unset means yes (every firm before the switch existed). */
+export const vatRegistered = (s?: CompanySettings | null) => s?.vatRegistered !== false
+/** The VAT rate a new invoice carries: the firm's rate, or none for a firm that isn't VAT-registered. */
+export const invoiceVatRateFor = (s?: CompanySettings | null) => (vatRegistered(s) ? s?.vatRate ?? 20 : 0)
+
+/** What's missing before a legal invoice can be produced (a VAT number only for a VAT-registered firm). */
 /** What the job needs before it can be invoiced: a VAT invoice names the customer and their address. */
 export function jobMissingForInvoice(job: Job): string[] {
   const m: string[] = []
@@ -28,7 +33,7 @@ export function missingForInvoice(s: CompanySettings | undefined): string[] {
   if (!s) return ['company details']
   const m: string[] = []
   if (!s.name.trim()) m.push('company name'); if (!s.address.trim()) m.push('company address')
-  if (!s.vatNumber.trim()) m.push('VAT number'); if (!s.sortCode.trim() || !s.accountNumber.trim()) m.push('bank details')
+  if (vatRegistered(s) && !s.vatNumber.trim()) m.push('VAT number'); if (!s.sortCode.trim() || !s.accountNumber.trim()) m.push('bank details')
   return m
 }
 
@@ -54,8 +59,10 @@ export async function buildInvoice({ job, val, scope, vos, settings }: { job: Jo
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...MUTED)
   let y = M + 12
   for (const l of [...lines(settings.address), settings.phone, settings.email].filter(Boolean)) { doc.text(l, M, y); y += 4 }
-  doc.text(`VAT reg. no. ${settings.vatNumber}`, M, y + 2); if (settings.companyNumber) doc.text(`Company no. ${settings.companyNumber}`, M, y + 6)
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(...COPPER); doc.text('VAT INVOICE', W - M, M + 8, { align: 'right' })
+  // what the invoice carries decides how it reads: a VAT invoice, or a plain one from a firm that isn't VAT-registered
+  const withVat = a.rate > 0
+  doc.text(withVat ? `VAT reg. no. ${settings.vatNumber}` : 'Not VAT-registered', M, y + 2); if (settings.companyNumber) doc.text(`Company no. ${settings.companyNumber}`, M, y + 6)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(...COPPER); doc.text(withVat ? 'VAT INVOICE' : 'INVOICE', W - M, M + 8, { align: 'right' })
 
   // title block of invoice facts (right)
   const cells: [string, string][] = [['INVOICE NO.', val.invoiceNumber ?? '—'], ['DATE / TAX POINT', val.invoiceDate ? ukDate(val.invoiceDate) : '—'],
@@ -90,13 +97,15 @@ export async function buildInvoice({ job, val, scope, vos, settings }: { job: Jo
   doc.setFont('courier', 'normal'); doc.text(money(a.net), W - M - 1, y + 12, { align: 'right' })
   y += 12 + desc.length * 4.5 + 6
   doc.line(M, y, W - M, y)
-  const tx = 120, rows: [string, string, boolean?][] = [['Net', money(a.net)], [`VAT @ ${a.rate}%`, money(a.vat)], ['Total due', money(a.total), true]]
+  const tx = 120, rows: [string, string, boolean?][] = withVat ? [['Net', money(a.net)], [`VAT @ ${a.rate}%`, money(a.vat)], ['Total due', money(a.total), true]]
+    : [['Net', money(a.net)], ['Total due', money(a.total), true]]
   rows.forEach(([k, v, strong], i) => {
     const yy = y + 6 + i * 7
     doc.setFont('helvetica', strong ? 'bold' : 'normal'); doc.setFontSize(strong ? 11 : 9); doc.setTextColor(...INK); doc.text(k, tx, yy)
     doc.setFont('courier', strong ? 'bold' : 'normal'); doc.setTextColor(...(strong ? COPPER : INK)); doc.text(v, W - M - 1, yy, { align: 'right' })
   })
-  doc.setLineWidth(0.35); doc.line(tx, y + 15.5, W - M, y + 15.5)
+  doc.setLineWidth(0.35); doc.line(tx, y + 1.5 + (rows.length - 1) * 7, W - M, y + 1.5 + (rows.length - 1) * 7)
+  if (!withVat) { doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...MUTED); doc.text('No VAT is charged: not VAT-registered.', tx, y + 6 + rows.length * 7) }
 
   // bank details
   y += 34

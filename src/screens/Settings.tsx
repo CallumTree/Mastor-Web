@@ -3,7 +3,7 @@ import { Plate } from '../components/Sign'
 import { useAccess } from '../lib/access'
 import { blankSettings, type CompanySettings } from '../lib/types'
 import { Field, Sheet } from '../components/Ui'
-import { formatInvoiceNo, missingForInvoice } from '../lib/invoice'
+import { formatInvoiceNo, missingForInvoice, vatRegistered } from '../lib/invoice'
 import { SignOutButton } from '../components/SyncBadge'
 import { checkAi, type AiCheck } from '../lib/aiCheck'
 import { AiMonth } from '../components/AiMonth'
@@ -33,12 +33,19 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
       <div className="stack">
         {m && <>
         <h2 className="label bracket">Company settings</h2>
-        <div className="hint">Used on your VAT invoices. Shared with everyone in your company.</div>
+        <div className="hint">Used on your invoices. Shared with everyone in your company.</div>
 
         <h3 className="label sec">Company</h3>
         {T('name', 'Company name *', { placeholder: 'As it appears on your invoices' })}
         <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
-        {T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}
+        {/* not every firm is VAT-registered: one that isn't invoices without VAT and without a VAT number */}
+        <div>
+          <div className="field"><span id="vat-reg">VAT-registered</span></div>
+          <div className="seg" role="radiogroup" aria-labelledby="vat-reg">
+            {([[true, 'Yes'], [false, 'No']] as const).map(([v, l]) => <button key={l} type="button" role="radio" aria-checked={vatRegistered(s) === v} className={vatRegistered(s) === v ? 'on' : ''} onClick={() => set('vatRegistered', v)}>{l}</button>)}
+          </div>
+        </div>
+        {vatRegistered(s) ? T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' }) : <div className="hint">Invoices go out with no VAT and say you’re not VAT-registered.</div>}
 
         <h3 className="label sec">Bank details (printed on invoices)</h3>
         <div className="row pair"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
@@ -59,7 +66,7 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
             {T('bankName', 'Bank')}
             <div className="row pair">
               <div className="grow"><Field label="Digits" hint="e.g. 4 → 0042"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} /></Field></div>
-              <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>
+              {vatRegistered(s) && <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>}
             </div>
             <Field label="Labour day rate (£)" hint="Your cost of one operative-day. Lets each job’s margin include the labour recorded in the diary, shown as an estimate. Leave blank to leave it out.">
               <input inputMode="decimal" value={s.labourDayRate != null ? String(s.labourDayRate) : ''} onChange={e => { const v = parseFloat(e.target.value.replace(/[£,]/g, '')); set('labourDayRate', isFinite(v) && v > 0 ? v : null) }} placeholder="e.g. 180" />
@@ -141,7 +148,7 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, job
   return (
     <Sheet onClose={onClose}>
       <div className="stack">
-        <h2 className="label bracket">Create VAT invoice</h2>
+        <h2 className="label bracket">{rate > 0 ? 'Create VAT invoice' : 'Create invoice'}</h2>
         {agreeing && <div className="t-note">The client agreed {agreeing}. Creating the invoice records that; closing this records nothing.</div>}
         {missing.length ? (
           <>
@@ -150,7 +157,7 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, job
           </>
         ) : jobMissing.length ? (
           <>
-            <div className="t-note">A VAT invoice has to say who it’s to. Add <b>{jobMissing.join(' and ')}</b> in the job’s setup.</div>
+            <div className="t-note">An invoice has to say who it’s to. Add <b>{jobMissing.join(' and ')}</b> in the job’s setup.</div>
             {onJobSetup && <button className="btn btn-primary" onClick={onJobSetup}>Open job setup</button>}
           </>
         ) : (
@@ -158,7 +165,8 @@ export function CreateInvoiceSheet({ number, net, vat, total, rate, missing, job
             <div className="panel" style={{ padding: 14 }}>
               <div className="row"><span className="grow muted">Invoice number</span><b className="mono" style={{ color: 'var(--ink-2)', fontSize: 18 }}>{number}</b></div>
               <div className="row" style={{ marginTop: 8 }}><span className="grow muted">Net</span><span className="mono">{net}</span></div>
-              <div className="row"><span className="grow muted">VAT @ {rate}%</span><span className="mono">{vat}</span></div>
+              {rate > 0 ? <div className="row"><span className="grow muted">VAT @ {rate}%</span><span className="mono">{vat}</span></div>
+                : <div className="row"><span className="grow muted">No VAT: not VAT-registered</span></div>}
               <div className="row" style={{ borderTop: '1px solid var(--line)', marginTop: 6, paddingTop: 6 }}><b className="grow">Total</b><b className="mono">{total}</b></div>
             </div>
             <Field label="Invoice date (tax point)"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
