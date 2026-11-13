@@ -74,7 +74,7 @@ describe('operative', () => {
 
     click(screen.getByRole('button', { name: 'Jobs' }))
     click(await screen.findByRole('button', { name: 'Settings' }))
-    await screen.findByText('Open team')
+    await screen.findByRole('button', { name: 'Team' })
     expect(screen.queryByText('Company settings')).toBeNull()
     noMoney()
   })

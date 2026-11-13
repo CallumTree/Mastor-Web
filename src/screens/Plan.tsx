@@ -67,7 +67,7 @@ const DayLabel = ({ date, today, prev }: { date: string; today: string; prev?: s
 export interface LineMark { id: string; date: string; text: string; sub?: string; onOpen: () => void }
 const MarkRow = ({ m }: { m: LineMark }) => (
   <div className="pl-item ev mk">
-    <button className="pl-open" onClick={m.onOpen}><span className="pl-t">{m.text}</span><span className="pl-m">{['From Mastor', m.sub].filter(Boolean).join(' · ')}</span></button>
+    <button className="pl-open" onClick={m.onOpen}><span className="pl-t">{m.text}</span>{m.sub && <span className="pl-m">{m.sub}</span>}</button>
   </div>
 )
 
@@ -144,7 +144,7 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
           <DayLabel date={today} today={today} />
           <div className="ln-c">
             <button className="ln-site" onClick={() => onOpenDay(today)}>
-              <span className="grow"><b>{line.today.site || line.today.captures || line.today.notes ? 'Today’s site day' : 'Start today’s site diary'}</b><small>{siteLine(line.today) || prettyDay(today)}</small></span><IconChevron size={16} />
+              <span className="grow"><b>{line.today.site || line.today.captures || line.today.notes ? 'Today’s site day' : 'Start today’s site diary'}</b>{siteLine(line.today) && <small>{siteLine(line.today)}</small>}</span><IconChevron size={16} />
             </button>
             {marksOn(today).map(m => <MarkRow key={m.id} m={m} />)}
             {line.late.map(e => row(e, true))}
@@ -161,7 +161,7 @@ export function JobLine({ job, entries, properties, trades, onSave, onDelete, on
         {ahead.length === 0 && (
           <div className="ln-day ahead empty" role="listitem">
             <div className="ln-l" aria-hidden="true" />
-            <div className="ln-c"><div className="ln-empty">Nothing booked yet. Add the key dates (a start, a delivery, a test) and the to-dos that lead up to them.</div></div>
+            <div className="ln-c"><div className="ln-empty">Nothing booked.</div></div>
           </div>
         )}
       </div>
@@ -193,6 +193,8 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
   const ok = e.note.trim().length > 1 && (e.type === 'todo' || !!e.date)
   const quick: [string, string][] = [['Today', today], ['Tomorrow', addDays(today, 1)], ['Next week', addDays(today, 7)]]
   const kind = e.type === 'event' ? 'date' : 'to-do'
+  // the date field shows for any day the chips don't cover, or a time
+  const [picking, setPicking] = useState(() => !!item.time || (!!item.date && ![dayKey(), addDays(dayKey(), 1), addDays(dayKey(), 7)].includes(item.date)))
 
   return (
     <Sheet onClose={onClose} label={isNew ? `New ${kind}` : `Change ${kind}`}>
@@ -207,17 +209,19 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
           <div className="field"><span>{e.type === 'event' ? 'Day' : 'Do it by'}</span></div>
           <div className="chips">
             {e.type === 'todo' && <button className={'chip' + (!e.date ? ' on' : '')} aria-pressed={!e.date} onClick={() => set({ date: '' })}>No date</button>}
-            {quick.map(([l, d]) => <button key={l} className={'chip' + (e.date === d ? ' on' : '')} aria-pressed={e.date === d} onClick={() => set({ date: d })}>{l}</button>)}
+            {quick.map(([l, d]) => <button key={l} className={'chip' + (e.date === d && !picking ? ' on' : '')} aria-pressed={e.date === d && !picking} onClick={() => { setPicking(false); set({ date: d }) }}>{l}</button>)}
+            <button className={'chip' + (picking ? ' on' : '')} aria-pressed={picking} onClick={() => setPicking(true)}>Pick a date</button>
           </div>
-          <div className="row" style={{ marginTop: 10, gap: 10 }}>
+          {/* any other day, or a time: folded behind its chip until it's wanted */}
+          {picking && <div className="row" style={{ marginTop: 10, gap: 10 }}>
             <div className="grow"><Field label="Date"><input type="date" value={e.date} onChange={x => set({ date: x.target.value })} /></Field></div>
             <div style={{ width: 132 }}><Field label="Time (optional)"><input type="time" value={e.time ?? ''} onChange={x => set({ time: x.target.value || undefined })} /></Field></div>
-          </div>
+          </div>}
         </div>
 
-        {/* where and which trade: folded until it's wanted (most are for the whole job), open when either is set */}
-        {(properties.length > 0 || trades.length > 0) && <details className="more" open={!!(e.property || e.trade)}>
-          <summary className="more-h">House and trade<small>{[e.property ? `No. ${e.property}` : 'Whole job', e.trade || 'no trade'].join(' · ')}</small></summary>
+        {/* where, which trade and what it leads up to: folded until wanted (most are for the whole job), open when set */}
+        {(properties.length > 0 || trades.length > 0 || (e.type === 'todo' && events.length > 0)) && <details className="more" open={!!(e.property || e.trade || e.linkId)}>
+          <summary className="more-h">More<small>{[e.property ? `No. ${e.property}` : 'Whole job', e.trade || 'no trade'].join(' · ')}</small></summary>
           <div className="stack" style={{ marginTop: 6 }}>
         {properties.length > 0 && (
           <div>
@@ -237,17 +241,16 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
             </div>
           </div>
         )}
-          </div>
-        </details>}
-
         {e.type === 'todo' && events.length > 0 && (
-          <Field label="Leads up to" hint="The key date this to-do is for: each shows the other on the line.">
+          <Field label="Leads up to">
             <select value={e.linkId ?? ''} onChange={x => set({ linkId: x.target.value || null })}>
               <option value="">Nothing</option>
               {events.map(v => <option key={v.id} value={v.id}>{shortDay(v.date)} · {v.note}{v.property ? ` · No. ${v.property}` : ''}</option>)}
             </select>
           </Field>
         )}
+          </div>
+        </details>}
 
         {e.type === 'event' && !isNew && (
           <div>
@@ -275,7 +278,6 @@ function PlanSheet({ job, item, entries, properties, trades, onSave, onDelete, o
         )}
 
         <button className="btn btn-primary" disabled={!ok} onClick={() => onSave({ ...e, note: e.note.trim() })}>{isNew ? (e.type === 'event' ? 'Book it' : 'Add it') : 'Save'}</button>
-        {!isNew && e.type === 'todo' && <button className="btn btn-secondary" onClick={() => onSave({ ...e, note: e.note.trim(), doneAt: e.doneAt ? null : Date.now() })}>{e.doneAt ? 'Not done after all' : 'Mark done'}</button>}
         {!isNew && <ConfirmDelete instant confirmLabel={`Delete ${kind}`} onConfirm={() => onDelete(e)} />}
       </div>
     </Sheet>

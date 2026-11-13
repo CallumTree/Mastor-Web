@@ -304,13 +304,11 @@ export function JobView(p: {
           </nav>
         )
       })()}
-      {/* over the open capture menu the + turns into its close button, where the thumb already is (phones; the menu keeps its own × for screen readers and the desktop) */}
-      {capture && <button className={'cap-close' + (capLeaving ? ' leaving' : '')} aria-hidden="true" tabIndex={-1} onClick={closeCapture}><span><IconPlus size={28} /></span></button>}
       {quickVoice && <VoiceSheet onClose={() => setQuickVoice(false)} onSave={async b => { const d = dayKey(); const e = await p.onAddMedia(b, 'voice', d); setQuickVoice(false); landed(e, d) }} />}
       {capture && (
         <Sheet className={'capture-sheet' + (capLeaving ? ' leaving' : '')} onClose={closeCapture}>
           <div className="stack">
-            <h2 className="label bracket">Capture · {job.name}</h2>
+            <h2 className="label bracket">Capture</h2>
             {/* a photo is what site reaches for nine times in ten: it leads, the one white block; the rest sit under it */}
             <label className="btn btn-primary cap-lead"><IconCamera /> Photo
               <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'photo'); e.target.value = '' }} /></label>
@@ -319,9 +317,11 @@ export function JobView(p: {
                 <input type="file" className="sr-only" accept="video/*" capture="environment" onChange={e => { quickAdd(e.target.files?.[0], 'video'); e.target.value = '' }} /></label>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setQuickVoice(true) }}><IconMic /> Voice note</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); onLogVariation() }}><IconFlag /> Variation</button>
-              <button className="btn btn-secondary" onClick={() => { setCapture(false); p.onDayworks(true) }}><IconClock /> Dayworks</button>
               <button className="btn btn-secondary" onClick={() => { setCapture(false); setFocusNote(true); openDay(dayKey()) }}><IconPin /> Note</button>
             </div>
+            {/* the one way to bring in a photo or video taken earlier (Dayworks lives in Scope ⋯) */}
+            <label className="btn btn-ghost">From gallery
+              <input type="file" className="sr-only" accept="image/*,video/*" onChange={e => { const f = e.target.files?.[0]; quickAdd(f, f?.type.startsWith('video') ? 'video' : 'photo'); e.target.value = '' }} /></label>
             {capErr && <div className="flag">{capErr}</div>}
           </div>
         </Sheet>

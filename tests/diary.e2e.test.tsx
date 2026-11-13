@@ -41,13 +41,15 @@ describe('site diary', () => {
     click(screen.getByRole('button', { name: /more operatives/i }))
     await waitFor(() => expect(screen.getByText('2')).toBeTruthy())
 
-    // --- video + photo into today
+    // --- video + photo into today, through the + key (the one way in for today)
     const inputs = () => [...document.querySelectorAll('input[type=file]')] as HTMLInputElement[]
+    click(screen.getByRole('button', { name: 'Capture' }))
     pick(inputs().find(i => i.accept === 'video/*')!, new File(['v'], 'clip.mp4', { type: 'video/mp4' }))
     await screen.findByRole('button', { name: /open video/i })
+    click(screen.getByRole('button', { name: 'Capture' }))
     pick(inputs().find(i => i.accept === 'image/*')!, new File(['p'], 'joist.jpg', { type: 'image/jpeg' }))
     await screen.findByRole('button', { name: /open photo/i })
-    expect(screen.getByText(/photos, video & voice \(2\)/i)).toBeTruthy()
+    expect(screen.getByText(/photos, video & voice/i)).toBeTruthy()
 
     // --- caption + raise VO from the photo
     click(screen.getByRole('button', { name: /open photo/i }))

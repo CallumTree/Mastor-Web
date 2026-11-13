@@ -180,7 +180,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
 
       <div className="panel" style={{ padding: 14 }}>
         <div className="row" style={{ alignItems: 'flex-end', gap: 12 }}>
-          <div className="grow"><Field label="Weather" hint={job.address ? undefined : 'Add the site address in job setup and the weather fills in itself.'}><input value={weather} onChange={e => setWeather(e.target.value)} onBlur={() => weather !== (day?.weather ?? '') && saveDay({ weather: weather.trim() })} placeholder={job.address ? 'Looking up…' : 'e.g. Dry, 12°C'} /></Field></div>
+          <div className="grow"><Field label="Weather"><input value={weather} onChange={e => setWeather(e.target.value)} onBlur={() => weather !== (day?.weather ?? '') && saveDay({ weather: weather.trim() })} placeholder="e.g. Dry, 12°C" /></Field></div>
         </div>
         <div className="row diary-labour" style={{ marginTop: 12 }}>
           <span className="grow hint t-strong">Labour on site</span>
@@ -189,7 +189,7 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
           <button aria-label="More operatives" onClick={() => { const n = (labour ?? 0) + 1; setLabour(n); saveDay({ labour: n }) }} className="step-btn">+</button>
         </div>
         <div style={{ marginTop: 12 }}>
-          <Field label="Note" hint={note.trim() ? undefined : 'What happened, what was agreed, anything to watch. Tip: tap the mic on your keyboard to dictate'}>
+          <Field label="Note">
             <textarea ref={noteRef} rows={4} value={note} onChange={e => typeNote(e.target.value)} onBlur={flushNote} placeholder="What happened on site today?" />
           </Field>
           {note.trim().length > 0 && <div className="row file-as" role="group" aria-label="File this note as">
@@ -203,36 +203,20 @@ export function DiaryTab({ job, entries, rooms, vos, date, setDate, focusNote, o
         </div>}
       </div>
 
-      <div className="row">
-        <h2 className="label bracket grow">Photos, video &amp; voice ({media.length})</h2>
-      </div>
+      {media.length > 0 && <h2 className="label bracket">Photos, video &amp; voice</h2>}
       {media.length > 0 && (
         <div className="diary-thumbs">
           {media.map(e => <Thumb key={e.id} e={e} onOpen={() => setOpen(e)} uploading={!!e.mediaId && mediaWaiting.has(e.mediaId)} stalled={stalled} />)}
         </div>
       )}
       {err && <div className="flag">{err}</div>}
-      <div className="cap-row">
-        <label className="btn btn-secondary">
-          <IconCamera /> {busy ? 'Saving…' : 'Photo'}
-          <input type="file" className="sr-only" accept="image/*" capture="environment" onChange={e => { add(e.target.files?.[0], 'photo'); e.target.value = '' }} />
-        </label>
-        <label className="btn btn-secondary">
-          <IconVideo /> Video
-          <input type="file" className="sr-only" accept="video/*" capture="environment" onChange={e => { add(e.target.files?.[0], 'video'); e.target.value = '' }} />
-        </label>
-        <button className="btn btn-secondary" onClick={() => setRecording(true)}><IconMic /> Voice</button>
-      </div>
-      <div className="row">
+      {/* today's photos, video and voice come in through the + key; an earlier day takes them from the gallery */}
+      {date !== today && <div className="row">
         <label className="btn btn-ghost" style={{ flex: 1 }}>
-          From gallery
+          {busy ? 'Saving…' : 'Add from gallery'}
           <input type="file" className="sr-only" accept="image/*,video/*" onChange={e => { const f = e.target.files?.[0]; add(f, f?.type.startsWith('video') ? 'video' : 'photo'); e.target.value = '' }} />
         </label>
-      </div>
-
-      {toRead > 0 && date >= addDays(today, -AUTO_DAYS) && <div className="hint">{money
-        ? 'Mastor reads these against the scope once they’ve uploaded and the day goes quiet. What’s done or extra waits in Vals for you to approve.'
-        : 'Mastor reads these against the scope once they’ve uploaded. What’s done or extra goes to the office to approve.'}</div>}
+      </div>}
       {recording && <VoiceSheet onClose={() => setRecording(false)} onSave={async b => { await add(b, 'voice'); setRecording(false) }} />}
 
       {noteOpen && <NoteEditor job={job} note={noteOpen} onClose={() => setNoteOpen(null)} onSave={n => { onSave(n); setNoteOpen(null) }} onDelete={() => { onDelete(noteOpen); setNoteOpen(null) }} />}

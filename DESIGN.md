@@ -337,7 +337,7 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 
 ### The operative's site list
 - Houses fold to a 60px row (name in white, "10 lines · 6 done · 1 VO" in Slate Note, a filled white tick square when the house is all done). Inside, each line ends in a Done button at least 48px tall: an outlined 20px square and the word; marked, the square fills drafting white with a tick and the edge turns white. Signed off is the same, greyed and fixed. Gloves and glare: nothing under 44px, the word always beside the mark.
-- The capture sheet leads with Photo as the one white block (64px); video, voice, variation, dayworks and note sit under it, outlined, two across.
+- The capture sheet leads with Photo as the one white block (64px); video, voice, variation and note sit under it, outlined, two across, then From gallery. Dayworks live in Scope ⋯. The capture sheet is the one way in for today's photos, video and voice; an earlier day takes them from the gallery.
 
 ### Small rules the polish pass settled
 - Every money figure on every screen is in pence, the same as Vals: no "£12.5k" anywhere in the app (the Dashboard's figures are a ledger now, like the job's).

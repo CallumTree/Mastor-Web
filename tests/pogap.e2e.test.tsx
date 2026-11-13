@@ -48,7 +48,7 @@ describe('BoQ vs PO difference', () => {
     fireEvent.click(document.querySelector('.sheet-bg')!)
     nav('diary')
     await openToday()
-    await screen.findByText(/photos, video & voice \(0\)/i)
+    await screen.findByPlaceholderText(/what happened on site today/i)
     nav('home')
     // change the uplifts → the difference changes → flagged again
     click(screen.getByRole('button', { name: /job setup/i }))

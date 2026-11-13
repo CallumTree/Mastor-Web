@@ -22,7 +22,7 @@ describe('the job line', () => {
     render(<App />)
     click(await screen.findByRole('button', { name: /Hill Terrace/ }))
     nav('diary')
-    await screen.findByText(/Nothing booked yet/)
+    await screen.findByText('Nothing booked.')
 
     // book the key date: tomorrow, No. 6, Kitchen
     click(screen.getByRole('button', { name: '+ Date' }))

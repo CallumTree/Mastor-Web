@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Plate } from '../components/Sign'
+import { IconChevron } from '../components/Icons'
 import { useAccess } from '../lib/access'
 import { blankSettings, type CompanySettings } from '../lib/types'
 import { Field, Sheet } from '../components/Ui'
@@ -8,14 +9,20 @@ import { SignOutButton } from '../components/SyncBadge'
 import { checkAi, type AiCheck } from '../lib/aiCheck'
 import { AiMonth } from '../components/AiMonth'
 
-/** Company details for invoices (shared with the whole company), plus this device's own tools: backup, restore, intro, sign out. */
-export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onPlayIntro, onRates, onTeam, onExportInvoices, onHelp }: {
+/** One line in Settings: what it is, sometimes one fact, and a chevron. Everything else is behind the tap. */
+const SetRow = ({ label, sub, onClick }: { label: string; sub?: string; onClick: () => void }) => (
+  <button className="set-row" onClick={onClick}><span className="grow"><b>{label}</b>{sub && <span className="hint"> {sub}</span>}</span><IconChevron size={16} /></button>
+)
+
+/** Company details for invoices (shared with the whole company), then one row each for help, the team, the rates, the
+ *  month's AI, exports and this device. Once the company's details are complete they fold to one row. */
+export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, onRates, onTeam, onExportInvoices, onHelp }: {
   settings?: CompanySettings; onSave: (s: CompanySettings) => void; onClose: () => void
-  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro: () => void; onRates: () => void; onTeam: () => void
+  onBackup: () => Promise<void>; onRestore: (text: string) => Promise<number>; onPlayIntro?: () => void; onRates: () => void; onTeam: () => void
   onHelp?: () => void
   onExportInvoices?: (format: 'xero' | 'quickbooks', period: 'thisMonth' | 'lastMonth' | 'all', code: string) => Promise<number>
 }) {
-  const { money: m } = useAccess()
+  const { money: m, manage } = useAccess()
   const [period, setPeriod] = useState<'thisMonth' | 'lastMonth' | 'all'>('lastMonth')
   const [exportMsg, setExportMsg] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
@@ -24,20 +31,18 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
   const set = <K extends keyof CompanySettings>(k: K, v: CompanySettings[K]) => setS(x => ({ ...x, [k]: v }))
   const nextN = Math.max(1, parseInt(nextText.replace(/\D/g, '') || '1', 10))
   const preview = { ...s, nextInvoiceNumber: nextN }
-  const missing = missingForInvoice(preview)
+  // complete details fold to one row; missing ones stay open, so the first invoice is never a hunt
+  const [editing, setEditing] = useState(() => !settings || missingForInvoice(settings).length > 0)
   const T = (k: keyof CompanySettings, label: string, props: Record<string, unknown> = {}) => (
     <Field label={label}><input value={String(s[k] ?? '')} onChange={e => set(k, e.target.value as never)} {...props} /></Field>
   )
   return (
     <Sheet onClose={onClose} label="Settings">
       <div className="stack">
-        {m && <>
-        <h2 className="label bracket">Company settings</h2>
-        <div className="hint">Used on your invoices. Shared with everyone in your company.</div>
-
-        <h3 className="label sec">Company</h3>
+        {m && (editing ? <>
+        <h2 className="label bracket">Your company</h2>
         {T('name', 'Company name *', { placeholder: 'As it appears on your invoices' })}
-        <Field label="Address *" hint="One line per row, or separated by commas"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
+        <Field label="Address *"><textarea rows={3} value={s.address} onChange={e => set('address', e.target.value)} /></Field>
         {/* not every firm is VAT-registered: one that isn't invoices without VAT and without a VAT number */}
         <div>
           <div className="field"><span id="vat-reg">VAT-registered</span></div>
@@ -45,76 +50,66 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
             {([[true, 'Yes'], [false, 'No']] as const).map(([v, l]) => <button key={l} type="button" role="radio" aria-checked={vatRegistered(s) === v} className={vatRegistered(s) === v ? 'on' : ''} onClick={() => set('vatRegistered', v)}>{l}</button>)}
           </div>
         </div>
-        {vatRegistered(s) ? T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' }) : <div className="hint">Invoices go out with no VAT and say you’re not VAT-registered.</div>}
+        {vatRegistered(s) && T('vatNumber', 'VAT number *', { placeholder: 'GB 123 4567 89' })}
 
-        <h3 className="label sec">Bank details (printed on invoices)</h3>
+        <h3 className="label sec">Bank details</h3>
         <div className="row pair"><div className="grow">{T('sortCode', 'Sort code *', { inputMode: 'numeric', placeholder: '12-34-56' })}</div><div className="grow">{T('accountNumber', 'Account no. *', { inputMode: 'numeric' })}</div></div>
+        <div className="row pair"><div className="grow">{T('accountName', 'Account name')}</div><div className="grow">{T('bankName', 'Bank')}</div></div>
 
         {/* the number carries on from the firm's own sequence, so it's asked before the first invoice, never folded away */}
         <h3 className="label sec">Invoices</h3>
         <div className="row pair">
-          <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. INV- (or blank)' })}</div>
-          <div className="grow"><Field label="Next invoice number" hint="Carry on from your current sequence"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
+          <div className="grow">{T('invoicePrefix', 'Prefix', { placeholder: 'e.g. INV-' })}</div>
+          <div className="grow"><Field label="Next invoice number"><input inputMode="numeric" value={nextText} onChange={e => setNextText(e.target.value)} /></Field></div>
+        </div>
+        <div className="row pair">
+          <div className="grow"><Field label="Digits"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} placeholder="e.g. 4" /></Field></div>
+          <div className="grow invoice-next"><span className="hint">Next</span> <b className="mono">{formatInvoiceNo(preview, nextN)}</b></div>
         </div>
 
-        {/* everything an invoice doesn't need first: there when wanted, out of the way when not */}
-        <details className="more" open={!!(s.phone || s.email || s.companyNumber || s.accountName || s.bankName || s.labourDayRate)}>
-          <summary className="more-h">More details<small>Phone, email, company no., bank name, VAT rate, labour rate</small></summary>
+        <details className="more" open={!!(s.phone || s.email || s.companyNumber || s.labourDayRate)}>
+          <summary className="more-h">More</summary>
           <div className="stack" style={{ marginTop: 10 }}>
             <div className="row pair"><div className="grow">{T('phone', 'Phone', { inputMode: 'tel' })}</div><div className="grow">{T('email', 'Email', { inputMode: 'email' })}</div></div>
-            <div className="row pair"><div className="grow">{T('companyNumber', 'Company no.')}</div><div className="grow">{T('accountName', 'Account name')}</div></div>
-            {T('bankName', 'Bank')}
             <div className="row pair">
-              <div className="grow"><Field label="Digits" hint="e.g. 4 → 0042"><input inputMode="numeric" value={String(s.invoicePad || '')} onChange={e => set('invoicePad', Math.min(8, parseInt(e.target.value || '0', 10) || 0))} /></Field></div>
+              <div className="grow">{T('companyNumber', 'Company no.')}</div>
               {vatRegistered(s) && <div className="grow"><Field label="VAT rate (%)"><input inputMode="decimal" value={String(s.vatRate)} onChange={e => set('vatRate', parseFloat(e.target.value) || 0)} /></Field></div>}
             </div>
-            <Field label="Labour day rate (£)" hint="Your cost of one operative-day. Lets each job’s margin include the labour recorded in the diary, shown as an estimate. Leave blank to leave it out.">
+            <Field label="Labour day rate (£)" hint="Your cost of one operative-day, for each job’s margin.">
               <input inputMode="decimal" value={s.labourDayRate != null ? String(s.labourDayRate) : ''} onChange={e => { const v = parseFloat(e.target.value.replace(/[£,]/g, '')); set('labourDayRate', isFinite(v) && v > 0 ? v : null) }} placeholder="e.g. 180" />
             </Field>
           </div>
         </details>
-        <div className="panel t-small" style={{ padding: '10px 14px' }}>Your next invoice will be <b className="mono slate">{formatInvoiceNo(preview, nextN)}</b></div>
-        {missing.length > 0 && <div className="flag">Needed before invoicing: {missing.join(', ')}</div>}
-        <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() })}>Save</button>
+        <button className="btn btn-primary" disabled={!s.name.trim()} onClick={() => { onSave({ ...s, nextInvoiceNumber: nextN, updatedAt: Date.now() }); if (!missingForInvoice(preview).length) setEditing(false) }}>Save</button>
+        </> : <SetRow label={s.name || 'Your company'} sub={`invoices ${formatInvoiceNo(preview, nextN)}`} onClick={() => setEditing(true)} />)}
 
-        </>}
-
-        {onHelp && <>
-          <h3 className="label bracket sec">Help</h3>
-          <button className="btn btn-secondary" onClick={onHelp}>How Mastor works</button>
-        </>}
-
-        <h3 className="label bracket sec">Team</h3>
-        <div className="hint">Add your office and site staff so they see the same jobs.</div>
-        <button className="btn btn-secondary" onClick={onTeam}>Open team</button>
+        <div className="set-rows">
+          {onHelp && <SetRow label="How Mastor works" onClick={onHelp} />}
+          <SetRow label="Team" onClick={onTeam} />
+          {m && <SetRow label="Schedule of rates" sub={s.rateBooks?.length ? `${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates` : undefined} onClick={onRates} />}
+        </div>
 
         {m && <AiMonth />}
-        <AiSetup />
 
-        {m && <>
-        <h3 className="label bracket sec">Export invoices</h3>
-        <div className="hint">A CSV your accounts package imports, so invoices aren’t typed in twice. Only invoices you’ve created are included.</div>
-        <div className="chips" role="group" aria-label="Accounts package">
-          {(['xero', 'quickbooks'] as const).map(f => <button key={f} className={'chip' + ((s.accountsFormat ?? 'xero') === f ? ' on' : '')} aria-pressed={(s.accountsFormat ?? 'xero') === f} onClick={() => set('accountsFormat', f)}>{f === 'xero' ? 'Xero' : 'QuickBooks'}</button>)}
-        </div>
-        {(s.accountsFormat ?? 'xero') === 'xero' && <Field label="Xero sales account code" hint="Where the income goes in Xero — 200 (Sales) unless you use another"><input inputMode="numeric" value={s.accountsCode ?? '200'} onChange={e => set('accountsCode', e.target.value)} /></Field>}
-        <div className="chips" role="group" aria-label="Period">
-          {([['thisMonth', 'This month'], ['lastMonth', 'Last month'], ['all', 'All']] as const).map(([p, l]) => <button key={p} className={'chip' + (period === p ? ' on' : '')} aria-pressed={period === p} onClick={() => setPeriod(p)}>{l}</button>)}
-        </div>
-        <button className="btn btn-secondary" disabled={!onExportInvoices} onClick={async () => {
-          const n = await onExportInvoices!(s.accountsFormat ?? 'xero', period, (s.accountsCode ?? '200').trim() || '200')
-          setExportMsg(n ? `Downloaded ${n} invoice${n === 1 ? '' : 's'} for ${(s.accountsFormat ?? 'xero') === 'xero' ? 'Xero' : 'QuickBooks'}` : 'No invoices in that period')
-        }}>Download CSV</button>
-        {exportMsg && <div role="status"><Plate kind={exportMsg.startsWith('No') ? 'wait' : 'ok'}>{exportMsg}</Plate></div>}
-
-        <h3 className="label bracket sec">Schedule of rates</h3>
-        <div className="hint">{s.rateBooks?.length ? `${s.rateBooks.length} rate book${s.rateBooks.length === 1 ? '' : 's'} · ${s.rateBooks.reduce((n, b) => n + b.lines, 0).toLocaleString('en-GB')} rates. Shared with everyone in your company.` : 'Import your framework schedule of rates so every SoR code can be priced from it.'}</div>
-        <button className="btn btn-secondary" onClick={onRates}>Open schedule of rates</button>
-
-        </>}
+        {m && <details className="more">
+          <summary className="more-h">Export invoices</summary>
+          <div className="stack" style={{ marginTop: 10 }}>
+            <div className="chips" role="group" aria-label="Accounts package">
+              {(['xero', 'quickbooks'] as const).map(f => <button key={f} className={'chip' + ((s.accountsFormat ?? 'xero') === f ? ' on' : '')} aria-pressed={(s.accountsFormat ?? 'xero') === f} onClick={() => set('accountsFormat', f)}>{f === 'xero' ? 'Xero' : 'QuickBooks'}</button>)}
+            </div>
+            {(s.accountsFormat ?? 'xero') === 'xero' && <Field label="Xero sales account code"><input inputMode="numeric" value={s.accountsCode ?? '200'} onChange={e => set('accountsCode', e.target.value)} /></Field>}
+            <div className="chips" role="group" aria-label="Period">
+              {([['thisMonth', 'This month'], ['lastMonth', 'Last month'], ['all', 'All']] as const).map(([p, l]) => <button key={p} className={'chip' + (period === p ? ' on' : '')} aria-pressed={period === p} onClick={() => setPeriod(p)}>{l}</button>)}
+            </div>
+            <button className="btn btn-secondary" disabled={!onExportInvoices} onClick={async () => {
+              const n = await onExportInvoices!(s.accountsFormat ?? 'xero', period, (s.accountsCode ?? '200').trim() || '200')
+              setExportMsg(n ? `Downloaded ${n} invoice${n === 1 ? '' : 's'} for ${(s.accountsFormat ?? 'xero') === 'xero' ? 'Xero' : 'QuickBooks'}` : 'No invoices in that period')
+            }}>Download CSV</button>
+            {exportMsg && <div role="status"><Plate kind={exportMsg.startsWith('No') ? 'wait' : 'ok'}>{exportMsg}</Plate></div>}
+          </div>
+        </details>}
 
         <h3 className="label bracket sec">This device</h3>
-        <div className="hint">A backup is a file of every job on this phone or computer — keep one before changing devices.</div>
         <div className="row">
           <button className="btn btn-secondary" style={{ flex: 1 }} onClick={async () => { await onBackup(); setMsg('Backup saved to your Downloads') }}>Back up</button>
           <label className="btn btn-secondary" style={{ flex: 1 }} data-keep-clean>Restore…
@@ -126,7 +121,10 @@ export function SettingsSheet({ settings, onSave, onClose, onBackup, onRestore, 
           </label>
         </div>
         {msg && <div className="flag" role="status">{msg}</div>}
-        <button className="btn btn-ghost" style={{ width: '100%' }} onClick={onPlayIntro}>Play the opening titles</button>
+        {manage && <details className="more">
+          <summary className="more-h">Check AI setup</summary>
+          <div className="stack" style={{ marginTop: 10 }}><AiSetup /></div>
+        </details>}
         <SignOutButton />
       </div>
     </Sheet>
@@ -187,8 +185,6 @@ function AiSetup() {
   const [busy, setBusy] = useState(false)
   return (
     <>
-      <h3 className="label bracket sec">AI setup</h3>
-      <div className="hint">Checks the keys and models for reading documents (Claude) and voice and video (Gemini). Counts as one everyday question.</div>
       <button className="btn btn-secondary" disabled={busy} onClick={async () => { setBusy(true); setOut(null); try { setOut(await checkAi()) } finally { setBusy(false) } }}>{busy ? 'Checking…' : 'Check AI setup'}</button>
       {res && <div className="stack" role="status">
         {res.map(c => <div key={c.name}><Plate kind={c.ok ? 'ok' : 'stop'}>{c.name}</Plate><div className="hint" style={{ marginTop: 2 }}>{c.detail}</div></div>)}

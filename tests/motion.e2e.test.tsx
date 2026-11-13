@@ -9,7 +9,7 @@ const tab = (name: string) => screen.getAllByRole('button').find(b => b.closest(
 beforeAll(() => { vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 404 }))) })
 
 describe('motion', () => {
-  it('the tab marker follows the tab; the + closes the menu it opened', async () => {
+  it('the tab marker follows the tab; the capture menu has one close', async () => {
     const { container } = render(<App />)
     await screen.findByRole('img', { name: 'MASTOR' })
     click(await screen.findByRole('button', { name: /set it up by hand/i }))
@@ -26,13 +26,9 @@ describe('motion', () => {
 
     click(tab('home'))
     click(await screen.findByRole('button', { name: 'Capture' }))
-    await screen.findByText(/^Capture · /)
-    const close = container.querySelector('.cap-close')!
-    expect(close).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy()   // the menu's own × stays for screen readers
-    click(close)
-    expect(container.querySelector('.capture-sheet.leaving')).toBeTruthy()   // drops away first…
-    await waitFor(() => expect(screen.queryByText(/^Capture · /)).toBeNull())   // …then it's gone
-    expect(container.querySelector('.cap-close')).toBeNull()
+    await screen.findByText(/^Capture$/)
+    expect(container.querySelector('.cap-close')).toBeNull()   // one close: the menu's own ×
+    click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByText(/^Capture$/)).toBeNull())
   })
 })

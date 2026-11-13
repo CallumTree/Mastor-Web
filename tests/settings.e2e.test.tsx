@@ -6,14 +6,12 @@ afterEach(cleanup)
 const props = () => ({ onSave: vi.fn(), onClose: vi.fn(), onBackup: vi.fn(async () => {}), onRestore: vi.fn(async () => 3), onPlayIntro: vi.fn(), onRates: vi.fn(), onTeam: vi.fn() })
 
 describe('settings: this device', () => {
-  it('holds backup, restore, the opening titles and sign out (moved off the cover banner)', async () => {
+  it('holds backup, restore and sign out', async () => {
     const p = props(); render(<SettingsSheet {...p} />)
-    for (const name of ['Back up', 'Sign out', 'Play the opening titles']) expect(screen.getByRole('button', { name })).toBeTruthy()
+    for (const name of ['Back up', 'Sign out']) expect(screen.getByRole('button', { name })).toBeTruthy()
     expect(screen.getByText('Restore…')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Back up' }))
     await screen.findByText('Backup saved to your Downloads')
-    fireEvent.click(screen.getByRole('button', { name: 'Play the opening titles' }))
-    expect(p.onPlayIntro).toHaveBeenCalled()
   })
 
   it('restoring a file reports what came back and does not count as unsaved typing', async () => {

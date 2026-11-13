@@ -16,8 +16,8 @@ function examples(job: Job, money: boolean): string[] {
   const nos = Object.keys(job.properties ?? {}).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
   const at = (i: number) => (nos.length ? ` at No. ${nos[Math.min(i, nos.length - 1)]}` : '')
   return money
-    ? [`What’s still to claim${at(0)}?`, 'Tick the finished kitchen lines into the open val', `Log a VO for a wet room${at(1)}, priced like the last one`, 'Does the PO match the job’s value and uplifts?']
-    : [`What’s left to do${at(0)}?`, 'Log a VO: cracked lintel over the back door, 1.2 m', `Today: dry, 5 on site, scaffold struck${at(1)}`, 'What does the client’s pack say about asbestos?']
+    ? [`What’s still to claim${at(0)}?`, 'Tick the finished kitchen lines into the open val', `Log a VO for a wet room${at(1)}, priced like the last one`]
+    : [`What’s left to do${at(0)}?`, 'Log a VO: cracked lintel over the back door, 1.2 m', `Today: dry, 5 on site, scaffold struck${at(1)}`]
 }
 
 /**
@@ -92,7 +92,7 @@ export function AskTab({ job, seed, onSeeded }: { job: Job; seed?: string | null
 
       {!convo.messages.length && (
         <div className="ask-intro">
-          <p>Ask Clerk about {job.name}, or tell it what to change. It reads the job the way the app does, reads the job’s documents as filed, finds rates from your schedule and past work, and nothing changes until you tap <b>Do it</b>.</p>
+          <p>Ask about {job.name}, or tell Clerk what to change. Nothing changes until you tap <b>Do it</b>.</p>
           <div className="ask-try">
             {examples(job, access.money).map(x => <button key={x} className="chip" onClick={() => { setText(x); box.current?.focus() }}>{x}</button>)}
           </div>

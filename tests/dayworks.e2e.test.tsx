@@ -8,6 +8,7 @@ import { dayworksVariation, dwTotals } from '../src/lib/dayworks'
 
 afterAll(async () => { cleanup(); await wipeLocal() })
 const click = (el: Element) => fireEvent.click(el)
+const nav = (name: string) => click(screen.getAllByRole('button').find(b => b.closest('nav') && b.textContent?.toLowerCase().includes(name))!)
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getAllByLabelText(label).at(-1)!, { target: { value } })
 
 describe('dayworks', () => {
@@ -31,8 +32,11 @@ describe('dayworks', () => {
     await db.putJob(job)
     render(<App />)
     click(await screen.findByRole('button', { name: /3 Mill Lane/ }))
-    click(await screen.findByRole('button', { name: 'Capture' }))
-    click(screen.getByRole('button', { name: /Dayworks/ }))
+    // dayworks live in Scope ⋯ (the capture sheet keeps to photo, video, voice, VO and note)
+    nav('scope')
+    click(await screen.findByRole('button', { name: 'Scope options' }))
+    click(screen.getByRole('button', { name: /Dayworks sheets/ }))
+    click(await screen.findByRole('button', { name: /new dayworks sheet/i }))
     await screen.findByText(/Dayworks DW 1/)
     type(/Work done, and why/, 'Clear flooded cellar before survey')
     await waitFor(() => expect(screen.getAllByRole('option').some(o => o.textContent?.startsWith('M — Multiskilled'))).toBe(true))

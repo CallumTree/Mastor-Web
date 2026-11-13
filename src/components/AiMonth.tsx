@@ -53,8 +53,7 @@ export function AiMonth() {
         <div className="row"><span className="grow">{v.plan}</span><b>{figs(v.figure)}</b></div>
         <div className="ai-meter" role="meter" aria-label="AI allowance used this month" aria-valuemin={0} aria-valuemax={100} aria-valuenow={v.pct}><i style={{ width: `${v.pct}%` }} /></div>
       </div>
-      {v.lines.map(l => <div key={l} className="hint">{l}</div>)}
-      <div className="hint">When it runs out, AI pauses and your records carry on. Nothing is ever charged.</div>
+      {v.lines[0] && <div className="hint">{v.lines[0]}</div>}
     </>
   )
 }
