@@ -61,7 +61,7 @@ describe('Park Road, end to end', () => {
 
     // --- valuation shows both; remove one → back to live
     nav('vals')
-    await screen.findByText('This valuation')
+    await screen.findByRole('button', { name: /^send val i for £/i })
     const removes = screen.getAllByRole('button', { name: /remove from valuation/i })
     expect(removes.length).toBe(2)
     click(removes[0])

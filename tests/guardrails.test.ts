@@ -1,7 +1,7 @@
 /**
  * Design guardrails (DESIGN.md "Guardrails"), checked on every test run so nothing generic creeps back in:
  * no blur or glass, no glows or soft shadows, no smooth gradients, no purple, every colour a token, corners
- * 4px at most (the capture key is the one round control, by the owner's choice), Mastor's own fonts only,
+ * 4px at most or scooped (the capture key is the one round control, by the owner's choice), Mastor's own fonts only,
  * no emoji, and every figure in the screens set in the mono.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs'
@@ -35,8 +35,12 @@ const px = (v: string) => { const m = v.match(/^(-?[\d.]+)(px)?$/); return m ? p
 const blur = rules.flatMap(r => decls(r).filter(([p, v]) => p.includes('backdrop-filter') || /\bblur\(/.test(v)).map(() => where(r)))
 const blurTsx = TSX.flatMap(f => read(f).split('\n').map((l, i) => /backdropFilter|backdrop-filter|blur\(/.test(l) && !INK_FILES.has(f) ? `${f}:${i + 1}` : '').filter(Boolean))
 ok(!blur.length && !blurTsx.length, 'no blur and no frosted glass', [...blur, ...blurTsx])
-const radial = rules.filter(r => /radial-gradient|conic-gradient/.test(r.body)).map(where)
-ok(!radial.length, 'no radial blooms, orbs or halos', radial)
+// the one radial shape allowed is the scoop: hard-edged rings and holes cut on --s, never a bloom (DESIGN.md "Shapes")
+const scoop = (r: Rule) => /--scoop-(ring|hole)/.test(r.body) || /var\(--scoop-(ring|hole)\)/.test(r.body)
+const radial = rules.filter(r => /radial-gradient|conic-gradient/.test(r.body) && !scoop(r)).map(where)
+ok(!radial.length, 'no radial blooms, orbs or halos (the scoop\'s hard-edged corners aside)', radial)
+const softScoop = rules.filter(scoop).flatMap(r => [...r.body.matchAll(/--scoop-(?:ring|hole):([^;]+)/g)].filter(m => !/calc\(var\(--s\)/.test(m[1])).map(() => where(r)))
+ok(!softScoop.length, 'the scoop is cut on --s, a hard edge, never a soft fade', softScoop)
 
 // shadows: any blur radius over 4px is a floating, soft shadow
 const softShadows = rules.flatMap(r => decls(r).filter(([p]) => p === 'box-shadow' || p === 'text-shadow').flatMap(([, v]) =>

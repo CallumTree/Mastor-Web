@@ -129,12 +129,9 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
             <span className="ref-roman" style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{valRef(open.number)}</span><span className="grow" />
             <When rhythm={rhythm} onWait={() => rhythm && onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />
           </div>
-          {/* the figure, once; the cumulative only when there's an earlier valuation to add it to. The base build-up is on
-              the certificate (⋯ → Preview certificate), where the client's QS checks it */}
-          <SumStrip label={`${valRef(open.number)} figures`} cells={[
-            { label: 'This valuation', value: money(current.gross), hot: !fixing },
-            ...(valued > 0.005 ? [{ label: 'Cumulative', value: money(valued + current.gross) }] : []),
-          ]} />
+          {/* its figure is said once, on the Send button (and in the ledger above); the cumulative only when there's an
+              earlier valuation to add it to. The base build-up is on the certificate (⋯ → Preview certificate) */}
+          {valued > 0.005 && current.lines > 0 && <div className="hint">{figs(`Cumulative ${money(valued + current.gross)}`)}</div>}
           {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in it yet.</div>}
           {/* one Send, with what the client's QS would query, above the lines: never a long scroll away */}
           {current.lines > 0 && <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} />}

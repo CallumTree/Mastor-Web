@@ -309,7 +309,9 @@ Flat. Depth is told by value and by drawing: Ink Navy ground, Milled Steel panel
 
 ## Shapes
 
-Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for panels, buttons, rows, sheets and the dock. Squares replace circles everywhere except the sign marks (the overdue and next-step discs are sign shapes, kept so meaning never rests on colour alone): the job line's day nodes, status dots and the "cancelled" mark are squares. Every line is 1px.
+**The Scoop Rule** (13 Nov 2026, the owner's choice of "something more unique than pills or square boxes, futuristic and historic"). Every box, button and field has its corners scooped inward on a circle: the dock's own move, carried into everything, like the corners of a carved plaque or an instrument panel. Never rounded, never a pill. The scoop is 12px on panels, cards, action rows and the jobs list, 9px on buttons and switches, 8px on chips, fields and icon buttons, 6px on a tick box. It is drawn, not rounded: a mask cuts each corner away and four hard-edged rings carry the 1px edge round the cut in the edge's own colour (`--edge`, set wherever a border colour is), so an outlined button keeps an unbroken line. Focus rings sit inside the scoop. Tags, plates, badges and thumbnails stay square: they are stamped markings, not things you hold. Sheets and the dock keep their own shapes.
+
+Drafted corners elsewhere: 0px for tags, plates and thumbnails. Squares replace circles everywhere except the sign marks (the overdue and next-step discs are sign shapes, kept so meaning never rests on colour alone): the job line's day nodes, status dots and the "cancelled" mark are squares. Every line is 1px.
 
 ## Components
 
