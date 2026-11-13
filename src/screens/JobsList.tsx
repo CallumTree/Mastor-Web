@@ -42,7 +42,7 @@ export function JobsList({ jobs, scope = [], vos, orders = [], diary = [], alert
           </div>
           {m && sorted.length > 0 ? <button onClick={onDashboard} aria-label="Money across all jobs" className="icon-btn on-dark"><IconChart size={22} /></button> : <span className="icon-gap" />}
         </div>
-        <div className="cover-sync"><SyncBadge /></div>
+        <SyncBadge wrap="cover-sync" />
       </header>
 
       <div className="cover-body">

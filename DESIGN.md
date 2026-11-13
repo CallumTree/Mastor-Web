@@ -217,7 +217,7 @@ components:
 
 **Creative North Star: "The Drawing Office"**
 
-The app is drawn like a technical drawing. The ground is deep ink navy with a faint 24px alignment grid under everything, panels are milled steel, and every line is a drafting hairline. Each data block is drawn twice, its own edge and a bounding box 3px outside it, the way a title block sits on a sheet. Facts are in drafting white; dimensions and notes are in slate. Figures, refs and codes are set in a tabular mono so a column of money lines up to the penny, and labels are short uppercase markings tracked wide.
+The app is drawn like a technical drawing. The ground is deep ink navy with a faint 24px alignment grid under everything, panels are milled steel, and every line is a drafting hairline. Each data block has one hairline edge, and nothing is said twice: one headline figure and one white button a screen, words only when something is wrong or empty. Facts are in drafting white; dimensions and notes are in slate. Figures, refs and codes are set in a tabular mono so a column of money lines up to the penny, and labels are short uppercase markings tracked wide.
 
 Two signals do all the work, the drafting office's own: blueprint cyan is the selection (the next step and the one live thing, variations, a record Claude changed, progress, ticks into the valuation) and surveyor gold is the mark that needs you (overdue, to-do, caution, recording). Overdue and to-do share gold, so the sign's shape tells them apart: a disc with a bar for overdue, a triangle for to-do. Done is drafting white. The primary action is a white block; everything else is outlined in slate.
 
@@ -225,7 +225,7 @@ The user chose this world in November 2026 from three dark directions, after the
 
 **Key Characteristics:**
 - Ink navy ground with a faint drafting grid; milled-steel panels; 1px hairlines; no shadows
-- Every data block drawn twice: its edge and a bounding box 3px outside
+- One hairline per block; every fact said once; no caption that explains what a screen already shows
 - Two signals: cyan for the selection, gold for what needs you; done is white
 - Tabular mono for every figure, code, ref, quantity and date number
 - Uppercase micro-labels tracked at 0.08em; section heads are cyan title lines over a hairline
@@ -250,7 +250,7 @@ A drafting sheet with two signals; every neutral leans blue.
 - **Drafting Grid** (rgba(148, 163, 184, 0.06)): the 24px alignment grid drawn on the ground, fixed behind the page. Drafting-neutral slate, not cyan: cyan is a signal and never wallpaper.
 - **Milled Steel** (#101827): panels, the dock and rail, sheets.
 - **Steel Raised** (#16213A): an open, hovered or hot row; Clerk's "you said" block.
-- **Hairline** (#1E293B): dividers, panel edges and the bounding boxes.
+- **Hairline** (#1E293B): dividers and panel edges.
 - **Slate Edge** (#64748B): the edge of anything you operate (inputs, outlined buttons, chips, ticks). 3.7:1 on a panel, for WCAG 1.4.11.
 - **Ink 2** (#CBD5E1): quieter reading text and field labels. 11:1.
 - **Slate Note** (#8291A7): dimensions, notes and labels. 5.6:1 on a panel, 5.1:1 on a raised row. The brief's #64748B is kept for control edges only: at 3.7:1 it is too faint for small text outdoors.
@@ -262,7 +262,7 @@ A drafting sheet with two signals; every neutral leans blue.
 
 **The Shape Carries It Rule.** Overdue and to-do are both gold, so they are never told apart by colour: overdue is a disc with a bar, to-do a triangle, the next step a cyan disc with an arrow, done a white square with a tick. Every sign also has its word for screen readers.
 
-**The Drawn Twice Rule.** A block you work in (panel, action row, job list, title block) carries a 1px Hairline bounding box 3px outside its own edge. A block inside a sheet or inside another block is drawn once. The money ledger is never boxed: it's a reading, not a window.
+**The Once Rule.** A block has one 1px edge, never a second box around it or a box inside it. A fact appears once on a screen: a figure isn't repeated in a caption, a button and a badge. Captions under figures, hints that teach what the screen shows, and a second way to do the same thing are cut. Words appear when something is wrong (a warning, a late plate) or empty. The money ledger is never boxed: it's a reading, not a window.
 
 **The Drafting Sheet Rule.** The app and the front page are dark only (`color-scheme: only dark`) and drawn on the grid; the front page carries the same tokens in `src/landing/landing.css` (its brief: `.impeccable/surfaces/src-landing-landing-tsx.md`). The client's PDFs stay print-white.
 
@@ -298,11 +298,11 @@ A drafting sheet with two signals; every neutral leans blue.
 
 ## Layout
 
-One column on a phone (16px gutters, 720px max), a 104px rail and a 960px column from 1024px. Panels are ruled registers: rows divided by 1px Hairline, never cards inside cards, each panel inside its bounding box. Rhythm: 6px inside groups, 12px between rows of controls, 28px above a section head and 10px below it. Touch targets are 44px or more everywhere (52px for buttons) for gloves. Under 360px button pairs stack and the dock shares its width evenly; under 300px the dock goes to two rows.
+One column on a phone (16px gutters, 720px max), a 104px rail and a 960px column from 1024px. Panels are ruled registers: rows divided by 1px Hairline, never cards inside cards. Rhythm: 6px inside groups, 12px between rows of controls, 28px above a section head and 10px below it. Touch targets are 44px or more everywhere (52px for buttons) for gloves. Under 360px button pairs stack and the dock shares its width evenly; under 300px the dock goes to two rows.
 
 ## Elevation & Depth
 
-Flat. Depth is told by value and by drawing: Ink Navy ground, Milled Steel panels, Steel Raised for what is open, hovered or hot, the bounding box around each data block, and the one dim, Scrim (black at 72%, never milky), under sheets. The only shadow in the app is a drop shadow under the white play mark laid over a video frame.
+Flat. Depth is told by value and by drawing: Ink Navy ground, Milled Steel panels, Steel Raised for what is open, hovered or hot, and the one dim, Scrim (black at 72%, never milky), under sheets. The only shadow in the app is a drop shadow under the white play mark laid over a video frame.
 
 ### Named Rules
 **The No Glow Rule.** Signals are flat fills and flat lines. No glow, no blur, no glass, and no smooth gradient anywhere: the only gradients are hard-edged patterns (the drafting grid, the dashed open-valuation segment of the rail, the corner marks, scale bars).
@@ -326,13 +326,13 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - **Variants:** gold (overdue, late, to-do), cyan (the open valuation, the next step, by Claude), white (done, claimed, paid), Ink 2 on Slate Edge (neutral states), Slate Note on Hairline (waiting on someone else).
 
 ### Action Rows
-- Milled Steel rows, 64px tall, inside their bounding box, led by their sign mark, title in white, hint in Slate Note, chevron right. An overdue row's frame is gold; a next-step row's frame is cyan; the live next step is marked at its corners instead.
+- Milled Steel rows, 64px tall, led by their sign mark, title in white, hint in Slate Note, chevron right. An overdue row's frame is gold; a next-step row's frame is cyan.
 
 ### Cards / Containers
 - **Corner Style:** 2px.
 - **Background:** Milled Steel on Ink Navy.
 - **Shadow Strategy:** none.
-- **Border:** 1px Hairline, plus the bounding box 3px outside.
+- **Border:** 1px Hairline.
 - **Internal Padding:** 14px; registers carry their own 12–14px row padding.
 
 ### The operative's site list
@@ -374,7 +374,7 @@ Drafted corners: 0px for tags, chips and thumbnails, 1px for inputs, 2px for pan
 - Solid Ink Navy, ruled underneath. The contract ref sits above the name as a mono line; the rail runs along the foot: certified in white, the open valuation dashed in cyan, a 1px tick at each valuation, the figure beside it in mono.
 
 ### The Selection (signature)
-- The one live thing on a screen (the next step on the job home, the change waiting for Do it in Clerk: always something you act on, never a figure) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
+- The one live thing on a screen (the change waiting for Do it in Clerk: always something you act on, never a figure) is marked by four 12×2px cyan corner marks, 3px inside its edge, the way a drawing program marks what's selected. They close in from outside once (460ms, ease-out) and hold. While Clerk works, its status row carries the marks and they breathe. Under reduced motion they are simply there.
 
 ### Variations in the Scope
 - **A house is one line, one tap** (office Scope): its number in white, "22 lines · 1 VO" in Slate Note on the same line, its value in mono on the right, and under it a 6px trade bar: each trade's share of the house's work in its trade core, a 2px line of that colour along the foot so every trade shows, filling solid as its lines are claimed, with the % claimed in mono at the end. One tap opens the house sheet: the house and value, the same bar, Tick all remaining, trade chips to jump (more than two trades), then every line already open under a trade heading that stays in view as you scroll (core, name, count, subtotal, Tick all). No second tap per trade. A location reads only when it says something: never "Property", never the trade again.
@@ -440,7 +440,7 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 - **Do** set every figure, amount, code, ref and quantity in JetBrains Mono with tabular numerals.
 - **Do** keep to two signals: cyan for the selection, gold for what needs you; done is white.
 - **Do** let the sign's shape carry the difference between overdue and to-do.
-- **Do** draw each data block twice: its edge and a Hairline bounding box 3px outside.
+- **Do** draw each data block once: one Hairline edge, and say each fact once.
 - **Do** make the screen's primary action the white block, and outline everything else in Slate Edge (#64748B).
 - **Do** mark the one live thing on a screen at its corners in cyan, and only that thing.
 - **Do** keep small text at Slate Note (#8291A7) or brighter, 13px or larger.

@@ -247,7 +247,6 @@ label.btn { cursor: pointer; }
 .act-h { display: block; font-size: 14px; font-weight: 450; color: var(--meta); margin-top: 2px; }
 .act-chev { flex: none; color: var(--meta); }
 .act-do .act-chev { color: var(--cyan); }
-.act-do.live { border-color: var(--rule-ctl); }   /* the live one: its corner marks are its frame */
 .act > .grow { overflow-wrap: anywhere; }   /* a long figure in an alert wraps rather than widening the page */
 .act-clear { gap: 10px; font-weight: 600; }
 
@@ -448,7 +447,6 @@ label.row { cursor: pointer; }
 .nav button svg { width: 24px; height: 24px; }
 .nav button:hover { color: var(--ink-2); }
 .nav button.on { color: var(--white); }
-.nav button.on::before { content: ""; position: absolute; top: 0; left: 50%; width: 22px; height: 2px; margin-left: -11px; background: var(--cyan); }
 .nav-l { white-space: nowrap; }
 /* the capture key: a blueprint-cyan disc standing on the dock's top edge, centred over the tabs, cut out of the page by a ring of ink */
 .nav .nav-capture { position: absolute; left: 50%; bottom: calc(100% - 6px); width: var(--cap); height: var(--cap); margin-left: calc(var(--cap) / -2); padding: 0; flex: none; z-index: 1; }
@@ -589,11 +587,8 @@ label.row { cursor: pointer; }
 .mk-tool { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; border-radius: var(--r-md); border: 1px solid var(--rule-ctl); background: transparent; color: var(--white); font-size: 15px; font-weight: 600; }
 .mk-tool[aria-pressed=true] { border-color: var(--white); background: var(--slate-2); }
 
-/* ---------- the drafting sheet: a faint 24px alignment grid under everything; every data block is drawn
-   twice, its own edge and a bounding box 3px outside it, like a title block on a drawing ---------- */
+/* ---------- the drafting sheet: a faint 24px alignment grid under everything; one hairline per box, never two ---------- */
 body { background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 24px 24px; background-attachment: fixed; }
-.panel, .card, .jobs, .act, .tb, .rate-list { outline: 1px solid var(--rule); outline-offset: 3px; }
-.sheet .panel, .sheet .card { outline: 0; }
 .jbar { background: var(--void); }
 
 /* ---------- keyboard: a white ring, everywhere ---------- */

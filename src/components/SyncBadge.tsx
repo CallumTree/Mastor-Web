@@ -3,23 +3,25 @@ import { onSyncStatus, syncNow, type SyncStatus } from '../lib/sync'
 import { supabase } from '../lib/supabase'
 import { outbox, wipeLocal } from '../lib/db'
 
-/** One line: where your data is. Synced / syncing / no signal (N waiting) / problem (tap to retry). Announced to screen readers. */
-export function SyncBadge({ dark = true }: { dark?: boolean }) {
+/** One line, only when it matters: no signal (N waiting), changes still waiting, or a problem (tap to retry). When all is
+ *  well it says nothing; the status region stays in place so a change is still announced to screen readers. */
+export function SyncBadge({ dark = true, wrap }: { dark?: boolean; wrap?: string }) {
   const [s, setS] = useState<SyncStatus>({ state: 'idle', pending: 0 })
   useEffect(() => onSyncStatus(setS), [])
+  const worth = s.state === 'offline' || s.state === 'error' || (s.state === 'synced' && s.pending > 0)
+  if (!worth) return <span role="status" aria-live="polite" className="sr-only" />
   const colour = s.state === 'error' ? (dark ? 'var(--red-on-dark)' : 'var(--red)') : s.state === 'offline' ? (dark ? 'var(--yellow)' : 'var(--ink)') : dark ? 'var(--shell-muted)' : 'var(--ink-muted)'
   const text =
-    s.state === 'synced' ? `Synced ✓${s.pending ? ` · ${s.pending} waiting` : ''}` :
-    s.state === 'syncing' ? 'Syncing…' :
-    s.state === 'offline' ? `No signal — ${s.pending} change${s.pending === 1 ? '' : 's'} saved on phone, will sync` :
-    s.state === 'error' ? 'Sync problem — tap to retry' : 'Saved on this device'
-  return (
+    s.state === 'offline' ? `No signal · ${s.pending} saved on this phone, will sync` :
+    s.state === 'error' ? 'Sync problem — tap to retry' : `${s.pending} waiting to sync`
+  const badge = (
     <span role="status" aria-live="polite" style={{ color: colour }}>
       {s.state === 'error'
         ? <button className="linkish tap" style={{ color: colour }} onClick={() => syncNow()} title={s.message}>{text}</button>
         : text}
     </span>
   )
+  return wrap ? <div className={wrap}>{badge}</div> : badge
 }
 
 /** Sign out — warns first if changes made on this device haven't reached the server yet. */

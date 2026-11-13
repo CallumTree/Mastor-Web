@@ -258,7 +258,7 @@ export default function App() {
 
   return (
     <AccessContext.Provider value={access}>
-      {ready && job && <div className="banner"><SyncBadge dark /></div>}
+      {ready && job && <SyncBadge dark wrap="banner" />}
       {!ready ? null : showDash && !job ? (
         <Dashboard jobs={jobs} scope={scope} vos={vos} vals={vals} costs={costs} diary={diary} orders={orders} dayRate={settings?.labourDayRate} onBack={() => setShowDash(false)} onOpenJob={j => { setShowDash(false); setOpenId(j.id) }} />
       ) : job ? (

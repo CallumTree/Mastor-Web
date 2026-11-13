@@ -99,7 +99,7 @@ Not now (parked deliberately): formal CVR (accruals, cost codes, period locks, f
 - Name: **Mastor**. Wordmark **MΛSTΘR**: Cinzel Roman capitals, a hand-drawn Λ and a Θ whose bar reads as a spirit level (`src/components/Wordmark.tsx`). Everything else uses Archivo (normal width for reading and headings, semi-condensed uppercase for markings) and JetBrains Mono for every figure, code, ref and quantity.
 - App icon: a Roman masonry arch, copper on charcoal (`public/icon.svg`).
 - Classical thread: Roman numerals for valuations and VOs; opening titles with the arch and keystone, played once on first open.
-- Visual language: the drawing office (see DESIGN.md), chosen by the user in Nov 2026 from three dark directions. An ink-navy drafting sheet with a faint grid, milled-steel panels and hairlines, every data block drawn twice like a title block; white type for the facts; two signals only: cyan for the selection (the next step, variations, by Claude), gold for what needs you (overdue, to-do), told apart by the sign's shape. The front page carries the same look; the client's PDFs stay print-white.
+- Visual language: the drawing office (see DESIGN.md), chosen by the user in Nov 2026 from three dark directions. An ink-navy drafting sheet with a faint grid, milled-steel panels and single hairlines, every fact said once; white type for the facts; two signals only: cyan for the selection (the next step, variations, by Claude), gold for what needs you (overdue, to-do), told apart by the sign's shape. The front page carries the same look; the client's PDFs stay print-white.
 - Voice: plain, direct builder's English (en-GB). Never overstates.
 
 ## Evidence on Hand

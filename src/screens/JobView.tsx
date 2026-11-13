@@ -3,11 +3,10 @@ import { TradeCores } from '../components/Trade'
 import { jobCores } from '../lib/trade'
 import { useAccess } from '../lib/access'
 import { jobMargin, type Margin } from '../lib/margin'
-import { WORK_LABEL, type Cost, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder, type SiteSuggestion } from '../lib/types'
+import { type Cost, type DiaryEntry, type Job, type JobDocument, type ScopeItem, type Valuation, type Variation, type WorkOrder, type SiteSuggestion } from '../lib/types'
 import { OrdersTab } from './Orders'
 import { DocumentsPanel } from './Documents'
 import { money } from '../lib/format'
-import { Trace } from '../components/Trace'
 import { placeParam, setPlace } from '../lib/place'
 import { IconBack, IconCamera, IconChevron, IconDiary, IconFlag, IconHome, IconPin, IconScope, IconSettings, IconValuation, IconVideo, IconClock, IconMic, IconPlus, IconAsk } from '../components/Icons'
 import { VoList } from './Variations'
@@ -90,9 +89,9 @@ function Hero({ job, compact, rail, onBack, onSetup, onClerk, inClerk }: { job: 
       <div className="jbar-in">
         <button className="back-btn" onClick={onBack}><IconBack size={18} /><span>Jobs</span></button>
         <div className="jbar-title">
-          <div className="jbar-ref mono">{job.contractRef || WORK_LABEL[job.workType] || job.workType}{job.status !== 'Active' ? ` · ${job.status}` : ''}</div>
+          {/* the name, and the status only when it isn't the usual; the ref, client and address are in Setup */}
+          {job.status !== 'Active' && <div className="jbar-ref">{job.status}</div>}
           <h1 className="jbar-name">{job.name}</h1>
-          {!compact && (job.client || job.address) && <div className="jbar-sub">{[job.client, job.address].filter(Boolean).join(' · ')}</div>}
         </div>
         <div className="jbar-tools">
           {/* Clerk sits with the job, not in the dock: one tap from any tab */}
@@ -156,7 +155,6 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
           const kind: SignKind = a.kind
           return (
             <button key={i} className={'act act-' + kind + (i === liveAt ? ' live' : '')} onClick={a.onClick}>
-              {i === liveAt && <Trace r={8} />}
               <SignMark kind={kind} size={22} />
               <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{figs(a.text)}</span><span className="act-h">{figs(a.hint)}</span></span>
               <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
