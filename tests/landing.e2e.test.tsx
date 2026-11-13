@@ -21,11 +21,12 @@ describe('front page', () => {
     expect(container.querySelectorAll('.tile.taken').length).toBe(13)
     const claim = screen.getAllByRole('button', { name: /Claim place XIV/ })[0]
 
-    // the time back is one valuation, step by step: its totals add up from the steps shown
-    const table = screen.getByRole('table', { name: /A monthly valuation/ })
-    const foot = table.querySelector('tfoot tr')!
-    expect([...foot.querySelectorAll('td')].map(td => td.textContent)).toEqual(['3 hrs', '27 min'])
-    expect(table.querySelectorAll('tbody tr').length).toBe(6)
+    // the time back is two figures, by hand and in Mastor, stated as our estimate
+    const time = screen.getByRole('figure', { name: /A monthly valuation/ })
+    expect([...time.querySelectorAll('.vt-n')].map(n => n.textContent)).toEqual(['3 hrs', '27 min'])
+    expect(screen.getByText(/Our estimate/)).toBeTruthy()
+    // the plans by their new names
+    for (const n of ['Column I', 'Arch II', 'Dome III']) expect(screen.getByText(n)).toBeTruthy()
 
     fireEvent.click(claim)
     expect((await screen.findByRole('alert')).textContent).toMatch(/Add your name and your firm and an email address that works/)

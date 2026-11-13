@@ -57,3 +57,12 @@ Hero art (revised): the kitchen mid-refit (Brett Jordan, already credited) repla
 
 ## Revision (4 Nov 2026): no ties to any firm
 Requested by the owner: Mastor is a separate business, with no links or ties to any contractor. The closing line that said it was built inside a named contractor is replaced by a line about the product ("Mastor is built for contractors on schedule-of-rates work: the whole job, from site to paid, in one place."). No firm, client or council is named anywhere on the page; examples stay made up (Example Housing, Hill Street refurb).
+
+## Revision (13 Nov 2026): overthrown to what earns a sign-up
+Requested by the owner: "do the words actually contribute to the end goal of getting users to sign up, or is it extra waffle already stated elsewhere? If so, delete." Also: rename the plans (they read oddly) and soften the boxes with something more unique than pills or squares that fits the futuristic/historic feel.
+Plans renamed **Column I · Arch II · Dome III** (Roman building forms, each a bigger span; the arch is Mastor's mark), owner's choice.
+Every fact said once: the founding offer lives in the hero and on each plan's Founding row, nowhere else; the pilot's "no card" is under the claim button; the places left are said once under the button (the next-place strip went, the button already names the numeral).
+Cut: the second lede sentence, the hero and video captions (the footer says the screens are an example), the feature's body paragraph (the three steps say it, a line each), the six-row time table and its paragraph (two figures, by hand and in Mastor, stated as our estimate), the honest section's long paragraph (one line), the prices lede, the paid-yearly row and the AI fine print (one line: yearly two months free, stop any month), the places term list, two of seven questions (answers to a line each), the closing origin line, and the sign-up's phone field.
+Shapes: the app's Scoop Rule on the page's boxes, buttons and fields (the claim, the register board, the VO register, the claimed card, the fields, the play button); one hairline per box, no second outline.
+Assets: public/landing/app-home.webp recaptured from the cut app (13 Nov 2026, sidecar updated). The recording and its poster still show the 3 Nov app: re-record on the launch route ("Refresh the product film").
+
