@@ -1,7 +1,7 @@
 /**
  * The client's review, through the real screens: send VAL I for review (locked), the client asks for changes
  * (on the job's notes), a line comes out while it's open to amend, it goes again, the client agrees, and the
- * invoice is next. The valuation week says when the last one went.
+ * invoice is next. When the next one goes in is said once, on its card.
  */
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react'
@@ -24,8 +24,8 @@ describe('the client’s review', () => {
     render(<App />)
     click(await screen.findByRole('button', { name: /18 Example Place/ }))
     nav('vals')
-    const week = await screen.findByLabelText('Valuation week')
-    expect(within(week).getByText('None yet')).toBeTruthy()
+    // when it goes in is said once, on the valuation's own card (this job is long overdue: late)
+    await screen.findByText(/^Late · due /)
 
     // send it: locked while the client reviews it
     click(await screen.findByRole('button', { name: /^send val i for £7,000\.00/i }))   // one deliberate tap, no second screen
@@ -33,7 +33,7 @@ describe('the client’s review', () => {
     // sending hands over the certificate and closes: no second sheet to dismiss
     await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())
     await screen.findAllByText(/^With client · For review · sent today/)
-    expect([...screen.getByLabelText('Valuation week').querySelectorAll('.val-week-n')].some(n => /^VAL I · /.test(n.textContent ?? ''))).toBe(true)   // when the last one went
+    expect(document.querySelector('.vo-row-wrap .ref-roman')?.textContent).toBe('VAL I')   // the last one sent heads the list
     expect(screen.queryByRole('button', { name: /mark as paid/i })).toBeNull()
 
     // the client wants changes: say what, and it opens to amend

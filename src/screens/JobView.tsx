@@ -27,7 +27,7 @@ import { doneMark, doneMarks } from '../lib/siteDone'
 import { reducedMotion } from '../lib/motion'
 import { jobAlerts, type AlertPlace } from '../lib/alerts'
 import { lastText, valRhythm, weekText } from '../lib/rhythm'
-import { fig, figs } from '../components/Figs'
+import { figs } from '../components/Figs'
 import { DockShape, captureSlot } from '../components/Dock'
 import { offerUndo } from '../lib/undo'
 
@@ -123,46 +123,41 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
   const open = vals.find(v => v.status === 'Open')
   const openTotals = open ? valTotals(job, open.id, scope, vos) : null
   const certified = vals.filter(isCertified).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
-  const withClient = vals.filter(isWithClient).reduce((t, v) => t + valTotals(job, v.id, scope, vos).gross, 0)
   const worth = jobWorth(job, scope, vos)
-  const live = vos.filter(v => v.status !== 'Rejected')
-  const unpriced = live.filter(v => v.rate == null).length
-  const unmeasured = live.filter(v => v.qty == null).length
 
   const { money: seesMoney } = useAccess()
   const [gapOpen, setGapOpen] = useState(false)
   // the same alerts Claude reads through the connector (lib/alerts); operatives see only the site ones
-  const { alerts, gap, poNote } = jobAlerts(job, scope, vos, vals, orders, Date.now(), diary)
+  const { alerts, gap } = jobAlerts(job, scope, vos, vals, orders, Date.now(), diary)
   const placeAction = (p: AlertPlace) => (p === 'gap' ? () => setGapOpen(true) : p === 'setup' ? onSetup : () => go(p))
   const actions = alerts.filter(a => seesMoney || a.site).map(a => ({ ...a, onClick: placeAction(a.place) }))
   const liveAt = actions.findIndex(a => a.kind === 'do')   // one live thing: the first next step
-  // the margin row's note: provisional, its share and costs, or a nudge to add costs (set in the mono by the ledger)
-  const marginNote = !(margin.costs || margin.labourEstimate != null) ? { note: 'Add costs' } : margin.provisional.length ? { warn: 'Provisional' } : { note: `costs so far ${money(margin.costs)}${margin.pct != null ? ` · ${margin.pct}%` : ''}` }
+  // a hint earns its line only when it carries a figure; one that just says what to do repeats the row's own title
+  const said = (h: string) => (/£|\d/.test(h) ? h : '')
 
   return (
     <div>
-      {seesMoney && <SumStrip label="Job figures" caption="With uplifts, excl. VAT: the same figures as Vals." cells={[
-        { label: 'Contract', value: money(worth.contract), nil: !worth.contract, note: worth.fromScope && worth.contract ? 'the scope at its rates; no contract value yet' : undefined },
-        { label: 'Certified', value: money(certified), nil: !certified, note: withClient ? `agreed · + ${money(withClient)} with client` : certified ? 'agreed by the client' : undefined },
-        { label: 'Variations', value: money(worth.vos), nil: !worth.vos, warn: (unpriced || unmeasured) > 0 ? `+ ${Math.max(unpriced, unmeasured)} not priced` : undefined },
+      {/* four figures, no notes: every figure in the app is with uplifts and excl. VAT, so it's said once, in Help */}
+      {seesMoney && <SumStrip label="Job figures" cells={[
+        { label: 'Contract', value: money(worth.contract), nil: !worth.contract },
+        { label: 'Certified', value: money(certified), nil: !certified },
+        { label: 'Variations', value: money(worth.vos), nil: !worth.vos },
         { label: 'Margin so far', value: money(margin.margin), nil: !(margin.costs || margin.labourEstimate != null), neg: margin.margin < 0, onClick: onCosts, action: `Margin so far ${money(margin.margin)} — costs and margin`,
-          ...marginNote },
+          warn: margin.provisional.length ? 'Provisional' : undefined },
       ]} />}
-      <h2 className="sec-h">{actions.length ? `Action needed · ${actions.length}` : 'All clear'}</h2>
+      {actions.length ? <h2 className="sec-h">{`Action needed · ${actions.length}`}</h2> : <div className="all-clear"><SignMark kind="ok" size={18} /><span>All clear</span></div>}
       <div className="acts">
-        {actions.length === 0 && <div className="act act-clear"><SignMark kind="ok" size={22} /><span>Nothing outstanding on this job.</span></div>}
         {actions.map((a, i) => {
           const kind: SignKind = a.kind
           return (
             <button key={i} className={'act act-' + kind + (i === liveAt ? ' live' : '')} onClick={a.onClick}>
               <SignMark kind={kind} size={22} />
-              <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{figs(a.text)}</span><span className="act-h">{figs(a.hint)}</span></span>
+              <span className="grow"><span className="sr-only">{SIGN_WORD[kind]}: </span><span className="act-t">{figs(a.text)}</span>{said(a.hint) && <span className="act-h">{figs(said(a.hint))}</span>}</span>
               <svg aria-hidden="true" className="act-chev" width="10" height="16" viewBox="0 0 10 16"><path d="M2 2l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" /></svg>
             </button>
           )
         })}
       </div>
-      {poNote && <div className="panel t-small" style={{ padding: '10px 14px', marginTop: 10 }}><span className="label" style={{ marginRight: 6 }}>PO</span>{poNote} · <button className="linkish tap slate" onClick={() => setGapOpen(true)}>review</button></div>}
       {gapOpen && gap && <PoGapSheet job={job} gap={gap} onClose={() => setGapOpen(false)} onSetup={() => { setGapOpen(false); onSetup() }} onSave={j => {
         setGapOpen(false); onUpdateJob(j)
         // the reason goes on record in the job's notes
@@ -171,20 +166,19 @@ function Home({ job, vos, scope, vals, go, onSetup, onUpdateJob, notes, onSaveNo
       {/* notes are written on the day, in the diary; the job's home keeps only the pinned ones in view */}
       {(notes.length > 0 || days.length > 0) && <>
         <div className="row" style={{ margin: '18px 0 8px' }}>
-          <h2 className="sec-h grow" style={{ margin: 0 }}>Pinned notes</h2>
+          {pinned.length > 0 && <h2 className="sec-h grow" style={{ margin: 0 }}>Pinned notes</h2>}
+          {!pinned.length && <span className="grow" />}
           <button className="linkish tap t-note" onClick={() => setNotesOpen(true)}>All notes</button>
         </div>
-        <div className="panel" style={{ padding: '0 14px' }}>
-          {pinned.length === 0 && <div className="muted t-note" style={{ padding: '14px 0' }}>Nothing pinned. Pin a note in the diary to keep it here; H&amp;S notes pin themselves.</div>}
+        {pinned.length > 0 && <div className="panel" style={{ padding: '0 14px' }}>
           {pinned.map((n, i) => <div key={n.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}><NoteRow n={n} onOpen={() => setNoteEdit(n)} /></div>)}
-        </div>
+        </div>}
       </>}
       {documents}
       {notesOpen && <NotesSheet job={job} notes={notes} days={days} onClose={() => setNotesOpen(false)} onSave={onSaveNote} onDelete={onDeleteNote} onOpenDay={onOpenDay} />}
       {noteEdit && <NoteEditor job={job} note={noteEdit} onClose={() => setNoteEdit(null)} onSave={n => { onSaveNote(n); setNoteEdit(null) }} onDelete={() => { onDeleteNote(noteEdit); setNoteEdit(null) }} />}
-      {seesMoney && <div className="hint" style={{ marginTop: 12 }}>
-        PO number {job.poNumber ? <span className="mono">{job.poNumber}</span> : 'not set'} · uplifts {fig(`${job.uplift1}%`)} + {fig(`${job.uplift2}%`)} <ByClaude at={job.byClaude} />
-      </div>}
+      {/* the PO and uplifts live in Setup; a change Claude made to them is still marked here, for someone to check */}
+      {seesMoney && job.byClaude && <div className="hint" style={{ marginTop: 12 }}>Job details changed <ByClaude at={job.byClaude} /></div>}
     </div>
   )
 }

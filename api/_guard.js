@@ -56,7 +56,7 @@ export async function aiCheck(token, kind) {
   const msg = String(e?.message || ''), hint = /^\d+$/.test(String(e?.hint)) ? String(e.hint) : ''
   if (r.status === 401 || /jwt|not signed in/i.test(msg)) return { ok: false, status: 401, error: 'Your sign-in has expired — sign in again and retry.' }
   if (/no company/.test(msg)) return { ok: false, status: 403, error: 'Set up or join a company before reading documents.' }
-  if (/ai_plan/.test(msg)) return { ok: false, status: 403, error: `${FEATURE[kind] ?? 'This'} isn’t on your plan. It comes with Minerva and Jupiter.` }
+  if (/ai_plan/.test(msg)) return { ok: false, status: 403, error: `${FEATURE[kind] ?? 'This'} isn’t on your plan. It comes with Arch and Dome.` }
   if (/ai_month_reads/.test(msg)) return { ok: false, status: 429, error: `Your company has used this month’s ${hint || ''} document reads. They start again on the 1st, or enter the lines by hand.`.replace('  ', ' ') }
   if (/ai_month/.test(msg)) return { ok: false, status: 429, error: 'Your company has used this month’s AI allowance. AI reading starts again on the 1st; everything else carries on as normal.' }
   if (/ai_daily_credits/.test(msg)) return { ok: false, status: 429, error: 'Your company has done the most AI reading for one day. It starts again at midnight; everything else carries on as normal.' }

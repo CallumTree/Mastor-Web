@@ -304,7 +304,8 @@ export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
   const days = [...new Map([...w.days.filter(d => d.date !== today).map(d => [d.date, d] as const),
     ...fromMastor.filter(a => a.date && a.date > today && !w.days.some(d => d.date === a.date)).map(a => [a.date!, { date: a.date!, items: [] as DiaryEntry[] }] as const)]).values()]
     .sort((a, b) => a.date.localeCompare(b.date))
-  const name = (id: string) => jobs.find(j => j.id === id)?.name ?? ''
+  // the job's name only when there's more than one job to tell apart
+  const name = (id: string) => (jobs.length > 1 ? jobs.find(j => j.id === id)?.name ?? '' : '')
   const stop = <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" /><rect x="3" y="5.2" width="6" height="1.6" /></svg>
   const item = (e: DiaryEntry, late?: boolean) => (
     <div key={e.id} className={'pl-item wk-item' + (e.type === 'event' ? ' ev' : '')}>
@@ -312,23 +313,22 @@ export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
       {/* named by what it is; the job and the rest are its description (so a job's name names one button: the job) */}
       <button className="pl-open grow" onClick={() => onOpen(e.jobId)} aria-describedby={`wk-${e.id}`}>
         <span className="pl-t">{e.trade && <TradeMark name={e.trade} />}{e.note}</span>
-        <span className="pl-m" id={`wk-${e.id}`} aria-hidden="true"><span className="pl-job">{name(e.jobId)}</span>{[e.time, placeOf(e)].filter(Boolean).join(' · ')}
+        <span className="pl-m" id={`wk-${e.id}`} aria-hidden="true">{name(e.jobId) && <span className="pl-job">{name(e.jobId)}</span>}{[e.time, placeOf(e)].filter(Boolean).join(' · ')}
           {e.office && <span className="badge b-slate pl-off">Office</span>}
           {late && e.date && <span className="plate plate-stop pl-late">{stop}{lateBy(e.date, today)}</span>}</span>
       </button>
     </div>
   )
-  // Mastor's own deadline: the plate says what's wrong ("Overdue 2 days"); the grey line says where it's from
+  // Mastor's own deadline, said once: the title, then its figure (e.g. "£3,265.27 ready"). Only bad news gets a plate
   const mastor = (a: WeekAlert, i: number | string) => {
-    const [fact, ...rest] = a.hint.split(' · ')
-    const plate = a.kind === 'stop' || a.kind === 'warn'
+    const [fact] = a.hint.split(' · ')
+    const plate = a.kind === 'stop'
     return (
       <div key={`m${i}`} className="pl-item wk-item">
         <button className="pl-open grow" onClick={() => onOpen(a.jobId, a.tab)} aria-describedby={`wk-m${i}`}>
           <span className="pl-t">{a.text.replace(/ — /g, ' · ')}</span>
-          <span className="pl-m" id={`wk-m${i}`} aria-hidden="true"><span className="pl-job">{name(a.jobId)}</span>
-            {plate && <span className={'plate pl-late plate-' + a.kind}>{a.kind === 'stop' ? stop : <SignMark kind="warn" size={12} />}{fact}</span>}
-            {['From Mastor', ...(plate ? rest : [fact, ...rest])].filter(Boolean).join(' · ')}</span>
+          <span className="pl-m" id={`wk-m${i}`} aria-hidden="true">{name(a.jobId) && <span className="pl-job">{name(a.jobId)}</span>}
+            {plate ? <span className="plate pl-late plate-stop">{stop}{fact}</span> : fact}</span>
         </button>
       </div>
     )
@@ -336,7 +336,7 @@ export function WeekLine({ jobs, entries, alerts = [], onOpen, onToggle }: {
   const todays = w.days.find(d => d.date === today)
   return (
     <section className="wk" aria-label="The week across all jobs">
-      <div className="row"><h2 className="sec-h grow" style={{ margin: 0 }}>The week · all jobs</h2><span className="hint">{shortDay(today)}</span></div>
+      <h2 className="sec-h" style={{ margin: 0 }}>This week</h2>
       <div className="ln wk-ln" role="list">
         {(w.late.length > 0 || todays || atToday.length > 0) && (
           <div className="ln-day now" role="listitem" aria-current="date">

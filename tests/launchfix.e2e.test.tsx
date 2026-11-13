@@ -50,10 +50,11 @@ describe('the 11 Nov fixes', () => {
     click(screen.getByRole('button', { name: /^Property 1/ }))
     const sheet = document.querySelector('.house-sheet') as HTMLElement
     await within(sheet).findAllByText(money(worth.vos))
-    const cores = [...sheet.querySelectorAll('.trade-key .core')].map(c => c.className)
+    const cores = [...sheet.querySelectorAll('.trade-h .core')].map(c => c.className)
+
     expect(cores.length).toBe(4)
     expect(new Set(cores).size).toBe(4)
-    expect(sheet.querySelector('.trade-jump')).toBeNull()   // four trades or fewer: a key, not chips
+    expect(sheet.querySelector('.trade-jump')).toBeNull()   // four trades or fewer: the headings are the key, no chips
     // the one main action in the sheet is the white block
     expect(within(sheet).getByRole('button', { name: /Tick all remaining lines/ }).className).toContain('btn-primary')
     // and no row says "Property" where it means the whole house

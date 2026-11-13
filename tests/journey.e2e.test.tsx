@@ -21,7 +21,6 @@ beforeAll(() => {
 })
 
 // issued = locked: the lock is a drawn icon next to the text
-const lockedText = (text: string) => (_: string, el: Element | null) => !!el && el.textContent?.trim() === text && !!el.querySelector(':scope > svg')
 
 describe('Park Road, end to end', () => {
   it('create job → import BoQ → scope → valuations → issue → VAL II → VOs → survives reload', async () => {
@@ -51,18 +50,18 @@ describe('Park Road, end to end', () => {
     click(screen.getByRole('button', { name: 'Import 58 items' }))
 
     // --- scope saved
-    await screen.findByText('58 items')
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /add to valuation/i }).length).toBeGreaterThan(0))
     expect(screen.getAllByText('Bathroom').length).toBeGreaterThan(0)
     const ticks = () => screen.getAllByRole('button', { name: /add to valuation/i })
     expect(ticks().length).toBe(58)
 
     // --- tick two into VAL I
-    click(ticks()[0]); await waitFor(() => expect(screen.getAllByText('VAL I').length).toBe(1))
-    click(ticks()[0]); await waitFor(() => expect(screen.getAllByText('VAL I').length).toBe(2))
+    click(ticks()[0]); await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remove from valuation' }).length).toBe(1))
+    click(ticks()[0]); await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remove from valuation' }).length).toBe(2))
 
     // --- valuation shows both; remove one → back to live
     nav('vals')
-    await screen.findByText(/incl\. uplifts, excl\. VAT/i)
+    await screen.findByText('This valuation')
     const removes = screen.getAllByRole('button', { name: /remove from valuation/i })
     expect(removes.length).toBe(2)
     click(removes[0])
@@ -73,14 +72,14 @@ describe('Park Road, end to end', () => {
     // --- issue VAL I → locked
     nav('vals')
     click(await screen.findByRole('button', { name: /^send val i for £/i }))   // one deliberate tap: the figure is on the button
-    await screen.findByText(lockedText('Sent'))
+    await screen.findAllByText(/^With client · For review/)
     nav('scope')
-    const locked = await screen.findByText(lockedText('VAL I'))
-    expect(locked).toBeTruthy()
+    const locked = await screen.findAllByRole('button', { name: 'In an issued valuation (locked)' })   // ticked lines carry the lock, not a label
+    expect(locked.length).toBe(1)
 
     // --- next tick opens VAL II
     click(ticks()[0])
-    await screen.findByText('VAL II')
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remove from valuation' }).length).toBe(1))   // into VAL II, the one open now
 
     // --- log a variation, price it, tick it into VAL II
     nav('scope')
@@ -96,7 +95,7 @@ describe('Park Road, end to end', () => {
     await waitFor(() => expect(screen.queryByText(/^price it$/i)).toBeNull())
     // the VO sits in Scope with the lines: tick it there, like any line
     click(within(screen.getByText('Replace rotten joists under bath').closest('.vo-line') as HTMLElement).getByRole('button', { name: /add to valuation/i }))
-    await waitFor(() => expect(screen.getAllByText('VAL II').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remove from valuation' }).length).toBe(2))
     nav('vals')
     expect((await screen.findAllByText(/VO I/)).length).toBeGreaterThan(0)   // its line in VAL II (and the check above the send button that it isn't instructed yet)
 
@@ -105,9 +104,8 @@ describe('Park Road, end to end', () => {
     render(<App />)
     await screen.findByRole('heading', { name: '32 Park Road' })   // still in the job after the reload
     nav('scope')
-    await screen.findByText(/^58 items · 1 VO$/)   // the scope and its VO, one list, after a reload
-    expect(screen.getAllByText(lockedText('VAL I')).length).toBe(1)
-    expect(screen.getAllByText('VAL II').length).toBe(2)   // the line and the VO ticked into it, side by side
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'In an issued valuation (locked)' }).length).toBe(1))   // after a reload: VAL I's line locked
+    expect(screen.getAllByRole('button', { name: 'Remove from valuation' }).length).toBe(2)   // the line and the VO ticked into VAL II, side by side
 
     // --- the money across all jobs reflects it
     cleanup()

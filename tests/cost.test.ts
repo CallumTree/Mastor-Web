@@ -25,7 +25,7 @@ delete process.env.AI_USD_TO_GBP
 // Settings → AI this month
 const month = (d: Partial<AiMonthData>): AiMonthData => ({ plan: 'minerva', allowance: 1500, reads_allowed: null, economy: 0, used: 0, reads: 0, site_reads: 0, site_credits: 0, questions_today: 0, questions_allowed: 50, ...d })
 let v = aiMonthLines(month({ used: 930, site_reads: 20, site_credits: 160 }))
-ok(v.plan === 'Minerva II' && v.pct === 62 && v.figure === '62% used', 'a share of the allowance, never credits or pence')
+ok(v.plan === 'Arch II' && v.pct === 62 && v.figure === '62% used', 'a share of the allowance, never credits or pence')
 ok(v.lines[0] === 'About 71 site days left at your usual rate.', 'site days left at this firm’s own rate (8 credits a day here)')
 ok(v.lines[1] === 'Everyday Clerk questions don’t count: 0 of 50 asked today.', 'everyday questions said to be outside it')
 v = aiMonthLines(month({ used: 300, site_reads: 2, site_credits: 20 }))
@@ -35,7 +35,7 @@ ok(v.pct === 100 && /pauses until the 1st/.test(v.lines[0]), 'used up: says it p
 v = aiMonthLines(month({ plan: 'jupiter', allowance: 4000, economy: 4000, used: 4100 }))
 ok(/still read, more lightly/.test(v.lines[0]), 'Jupiter used up: site captures still read in the economy lane')
 v = aiMonthLines(month({ plan: 'mercury', allowance: 0, reads_allowed: 5, reads: 2, questions_allowed: 0 }))
-ok(v.plan === 'Mercury I' && v.figure === '2 of 5 reads' && v.pct === 40 && !v.lines.some(l => /Clerk/.test(l)), 'Mercury: reads counted, no Clerk line')
+ok(v.plan === 'Column I' && v.figure === '2 of 5 reads' && v.pct === 40 && !v.lines.some(l => /Clerk/.test(l)), 'Mercury: reads counted, no Clerk line')
 
 v = aiMonthLines(month({ allowance: 0, used: 0 }))
 ok(v.figure === 'No allowance' && v.pct === 0 && !/used/.test(v.lines.join()), 'no allowance on the plan: says so, never “100% used”')

@@ -9,7 +9,8 @@ export interface AiMonthData {
   questions_today: number; questions_allowed: number
 }
 
-export const PLAN_NAME: Record<string, string> = { pilot: 'Founding pilot', mercury: 'Mercury I', minerva: 'Minerva II', jupiter: 'Jupiter III' }
+/** The plans as people see them. The ids (mercury, minerva, jupiter) are the database's and never shown. */
+export const PLAN_NAME: Record<string, string> = { pilot: 'Founding pilot', mercury: 'Column I', minerva: 'Arch II', jupiter: 'Dome III' }
 
 /** What the meter says. Never a credit or a price: a share of the allowance, and site days left once there's a usual rate to go on. */
 export function aiMonthLines(d: AiMonthData) {

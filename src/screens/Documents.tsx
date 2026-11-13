@@ -7,7 +7,6 @@ import { ConfirmDelete, Field, Sheet } from '../components/Ui'
 const KINDS: JobDocument['kind'][] = ['Purchase order', 'Client pack', 'RAMS', 'Programme', 'Certificate', 'Drawing', 'Other']
 /** Kinds that carry money: hidden from operatives, as rates and values are (server/mcp/docs.ts keeps the same list). */
 export const MONEY_KINDS: JobDocument['kind'][] = ['Purchase order']
-const size = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`)
 export const MAX_DOC_BYTES = 20 * 1024 * 1024
 
 /**
@@ -36,7 +35,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete, onAsk }: {
   return (
     <>
       <div className="row" style={{ margin: '18px 0 8px' }}>
-        <h2 className="sec-h grow" style={{ margin: 0 }}>Documents{sorted.length ? ` · ${sorted.length}` : ''}</h2>
+        <h2 className="sec-h grow" style={{ margin: 0 }}>Documents</h2>
         <label className="linkish tap t-note">+ Add document
           <input type="file" className="sr-only" onChange={e => {
             const f = e.target.files?.[0]; e.target.value = ''; if (!f) return
@@ -53,10 +52,10 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete, onAsk }: {
         </div>
       )}
       <div className="panel chk">
-        {sorted.length === 0 && <div className="muted" style={{ padding: '14px' }}>{office ? 'The purchase order, the client’s pack, programme, RAMS, certificates, drawings' : 'The client’s pack, programme, RAMS, certificates, drawings'} — keep them here so they’re on the phone on site. Clerk reads them too, so the paperwork is the source of truth.</div>}
+        {sorted.length === 0 && <div className="muted" style={{ padding: '14px' }}>No documents yet.</div>}
         {sorted.map(d => (
           <div key={d.id} className="chk-row doc-row">
-            <button className="grow doc-open" onClick={() => onOpen(d)}><span className="badge b-slate">{d.kind}</span> <b>{d.name}</b><small>{size(d.size)} · added {ukDate(d.addedAt)}</small></button>
+            <button className="grow doc-open" onClick={() => onOpen(d)}><span className="badge b-slate">{d.kind}</span> <b>{d.name}</b><small>{ukDate(d.addedAt)}</small></button>
             {office && <button className="icon-btn" aria-label={`Remove ${d.name}`} onClick={() => setManage(d)}>×</button>}
           </div>
         ))}
@@ -66,7 +65,7 @@ export function DocumentsPanel({ docs, onAdd, onOpen, onDelete, onAsk }: {
         <Sheet onClose={() => setPicked(null)} label="Add document" locked={busy}>
           <div className="stack">
             <h2 className="label bracket">Add document</h2>
-            <div className="muted t-note" style={{ overflowWrap: 'anywhere' }}>{picked.name} · {size(picked.size)}</div>
+            <div className="muted t-note" style={{ overflowWrap: 'anywhere' }}>{picked.name}</div>
             <div className="chips" role="group" aria-label="Kind">{kinds.map(k => <button key={k} className={'chip' + (kind === k ? ' on' : '')} aria-pressed={kind === k} onClick={() => setKind(k)}>{k}</button>)}</div>
             <Field label="Name"><input value={name} onChange={e => setName(e.target.value)} /></Field>
             <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={async () => { setBusy(true); try { await onAdd(picked, kind, name.trim()); setJustAdded(kind === 'Purchase order' ? name.trim() : null); setPicked(null) } finally { setBusy(false) } }}>Add to job</button>

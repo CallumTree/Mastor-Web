@@ -14,8 +14,7 @@ describe('job documents', () => {
     await db.putJob(job)
     render(<App />)
     click(await screen.findByRole('button', { name: /12 Castle Way/ }))
-    await screen.findByText(/purchase order, the client’s pack, programme, RAMS, certificates, drawings/)
-    await screen.findByText(/Clerk reads them too/)
+    await screen.findByText('No documents yet.')
     const input = screen.getByText('+ Add document').querySelector('input[type=file]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [new File(['%PDF-1.4 rams'], 'CW12 RAMS rev B.pdf', { type: 'application/pdf' })] } })
     await screen.findByText('Add document')
@@ -23,7 +22,7 @@ describe('job documents', () => {
     expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('CW12 RAMS rev B')
     click(screen.getByRole('button', { name: 'Add to job' }))
     await screen.findByText('CW12 RAMS rev B')
-    expect(screen.getByText('Documents · 1')).toBeTruthy()
+    expect(document.querySelectorAll('.doc-open').length).toBe(1)
     const [d] = await db.list('docs', 'jdoc')
     expect(d.kind).toBe('RAMS'); expect(d.type).toBe('application/pdf')
     expect(screen.getByRole('button', { name: 'Remove CW12 RAMS rev B' })).toBeTruthy()
@@ -34,7 +33,7 @@ describe('job documents', () => {
     expect(screen.getByRole('button', { name: 'Purchase order' }).getAttribute('aria-pressed')).toBe('true')
     click(screen.getByRole('button', { name: 'Add to job' }))
     await screen.findByText('Order-PC10001_Roof')
-    expect(screen.getByText('Documents · 2')).toBeTruthy()
+    expect(document.querySelectorAll('.doc-open').length).toBe(2)
 
     // an operative on the same device: can see and open it, not remove it
     await meta.set('company', { id: 'c', name: 'Example Builders', user: 'u', role: 'operative' })
@@ -43,6 +42,6 @@ describe('job documents', () => {
     await screen.findByText('CW12 RAMS rev B')
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Remove CW12 RAMS rev B' })).toBeNull())
     expect(screen.queryByText('Order-PC10001_Roof')).toBeNull()   // the PO carries money: not listed for an operative
-    expect(screen.getByText('Documents · 1')).toBeTruthy()
+    expect(document.querySelectorAll('.doc-open').length).toBe(1)
   })
 })

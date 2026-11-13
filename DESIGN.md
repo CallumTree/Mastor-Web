@@ -423,7 +423,7 @@ Motion explains a change you made or that arrived; nothing plays when a screen f
 - One sheet, the month as six ruled steps, each led by its Roman numeral in cyan (`.ref-roman`) like a valuation: the step's name in white, two or three lines of plain how-to in Ink 2. No screenshots, no tooltips, no tour.
 
 ### Plans and questions (front page)
-- The three plans are ruled columns, not cards: Minerva carries the 2px cyan top rule and "Most firms choose this"; each plan's price is mono, with VAT and yearly underneath as a ruled list. Questions are plain details rows with a + that turns to − when open, answers in Ink 2.
+- The three plans are ruled columns, not cards: Arch carries the 2px cyan top rule and "Most firms choose this"; each plan's price is mono, with VAT and yearly underneath as a ruled list. Questions are plain details rows with a + that turns to − when open, answers in Ink 2.
 
 ### The Street Print (front page)
 - Behind the header and headline, a real photograph of a terraced street printed like a cyanotype: its light in Prussian blue (#1B4A80, luminosity blend), printed dark enough on its own (no scrim, no fade) under the drafting grid, and cut off on a 1px Slate Edge rule just under the offer. Decorative and credited; measured over a pure white sky, the lede holds 6.8:1 and white type 9.7:1.

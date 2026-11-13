@@ -25,7 +25,6 @@ describe('BoQ vs PO difference', () => {
     click(await screen.findByText(/doesn't reconcile with the po/i))
     type(/why \(for the record\)/i, 'Added after PO — Dylan aware')
     click(screen.getByRole('button', { name: /accept £136\.65 difference/i }))
-    await screen.findByText(/accepted .* — Added after PO — Dylan aware/i)
     await waitFor(() => expect(screen.queryByText(/doesn't reconcile/i)).toBeNull())
     await waitFor(async () => expect((await db.diary((await db.jobs())[0].id)).some(d => d.type === 'note' && /PO difference of £136\.65 accepted \(BoQ over PO\): Added after PO — Dylan aware/.test(d.note))).toBe(true))   // on record in the notes
 

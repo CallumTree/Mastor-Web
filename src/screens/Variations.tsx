@@ -3,7 +3,7 @@ import { useAccess } from '../lib/access'
 import type { RateBook } from '../lib/types'
 import { RateLookup } from './Rates'
 import type { Job, Valuation, Variation } from '../lib/types'
-import { Tick, ValBadge } from '../components/Tick'
+import { Tick } from '../components/Tick'
 import { lockedIn } from '../lib/valuation'
 import { CourtLine, voCourt, voStage, voStatusAfter, type VoStage } from '../lib/chase'
 import { TabMenu } from '../components/TabMenu'
@@ -175,7 +175,6 @@ export function VoRow({ v, vals, idx, onToggle, onEdit, value }: { v: Variation;
   const priced = v.qty != null && v.rate != null
   const rejected = v.status === 'Rejected'
   const locked = !!lockedIn(v, vals)
-  const evidence = [v.photoIds.length ? `${v.photoIds.length} photo${v.photoIds.length === 1 ? '' : 's'}` : '', (v.attachments?.length ?? 0) ? `${v.attachments!.length} doc${v.attachments!.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ')
   return (
     <div className={'row has-hit line-row vo-line' + (rejected ? ' rejected' : '')} style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--line)' : 'none', alignItems: 'flex-start' }}>
       <RowHit label={`${voRef(v.number)}: ${v.description}`} onClick={() => onEdit(v)} />
@@ -187,13 +186,11 @@ export function VoRow({ v, vals, idx, onToggle, onEdit, value }: { v: Variation;
           <span className="badge b-vo">{voRef(v.number)}</span>
           {v.code && <span className="mono t-small slate">{v.code}</span>}
           {v.room && <span className="hint">{v.room}</span>}
-          <ValBadge val={vals.find(x => x.id === v.valuationId)} />
           {!locked && <ByClaude at={v.byClaude} />}
         </div>
         <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{v.description}</div>
         <div className="hint">
           {figs(v.qty != null ? `${qtyText(v.qty)} ${v.unit}` : 'not measured')}{figs(m && v.rate == null ? ' · unpriced' : '')}
-          {v.clientRef ? <> · client ref <span className="mono">{v.clientRef}</span></> : ''}{evidence ? ` · ${evidence}` : ''}
         </div>
         <div className="vo-status">{/* the office reads where it stands from its court line; operatives from the stage */}
           {m && !rejected ? <CourtLine c={voCourt(v, vals)} /> : <span className={'badge ' + stageClass[voStage(v)]}>{voStage(v)}</span>}

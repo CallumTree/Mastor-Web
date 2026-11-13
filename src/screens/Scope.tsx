@@ -11,14 +11,14 @@ import { IconCheck, IconChevron, IconDoc, IconPlus } from '../components/Icons'
 import { doneMarks, undecided } from '../lib/siteDone'
 import { TabMenu } from '../components/TabMenu'
 import { ByClaude } from '../components/Sign'
-import { TradeList, TradeMark, useCore } from '../components/Trade'
+import { TradeMark, useCore } from '../components/Trade'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
-import { fig, figs } from '../components/Figs'
+import { figs } from '../components/Figs'
 import { FormTotal, VoRow, VoSummary } from './Variations'
 import { voHouse } from '../lib/property'
 
 export { Tick, ValBadge } from '../components/Tick'
-import { Tick, ValBadge } from '../components/Tick'
+import { Tick } from '../components/Tick'
 
 type Filter = 'all' | 'live' | 'claimed' | 'vos'
 
@@ -150,7 +150,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   const voValue = (vs: Variation[]) => worth(vs.filter(counts))
   const shown = filter === 'vos' ? [] : scope.filter(i => filter === 'all' || (filter === 'live' ? !i.valuationId : !!i.valuationId))
   const shownVos = vos.filter(v => filter === 'all' || filter === 'vos' || (filter === 'live' ? !v.valuationId && counts(v) : !!v.valuationId)).sort((a, b) => a.number - b.number)
-  const valById = (id: string | null) => vals.find(v => v.id === id)
   // one block per house, its scope lines and its VOs together; lines and VOs for no one house sit under "Whole job"
   const properties = [...new Set([...scope.map(i => i.property || '—'), ...vos.map(houseOf)])].sort(sortHouses)
   const hasProps = properties.filter(p => p !== '—').length > 1 || (properties.length > 1 && properties.includes('—'))
@@ -163,7 +162,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
   const lockedCount = scope.filter(i => !!lockedIn(i, vals)).length
   const voRows = (list: Variation[]) => list.map((v, i) => <VoRow key={v.id} v={v} vals={vals} idx={i} onToggle={onToggleVo} onEdit={onEditVo} value={uv.get(v.id)} />)
   const row = (i: ScopeItem, idx: number) => {
-    const val = valById(i.valuationId)
     const locked = !!lockedIn(i, vals)
     return (
       <div key={i.id} className="row has-hit line-row" style={{ padding: '12px 12px', borderTop: idx ? '1px solid var(--line)' : 'none', alignItems: 'flex-start' }}>
@@ -176,7 +174,6 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
             {i.code && <span className="mono t-small slate">{i.code}</span>}
             {placeOf(i) && <span className="hint">{placeOf(i)}</span>}
-            <ValBadge val={val} />
             {!locked && <ByClaude at={i.byClaude} />}
           </div>
           <div className="clamp2" style={{ fontWeight: 500, marginTop: 2 }}>{i.description}</div>
@@ -209,7 +206,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         {inSheet && <div className="house-h">
           <h2 className="house-name">{houseName(p)}</h2>
           <span className="mono house-amt">{money(tot)}</span>
-          <div className="prop-foot"><TradeBar items={all} label={`${pct}% claimed`} /><span className={'prop-pct' + (pct === 100 ? ' all' : '')}>{pct === 100 && <IconCheck size={13} />}{fig(`${pct}%`)}</span></div>
+          <div className="prop-foot"><TradeBar items={all} label={`${pct}% claimed`} />{pct === 100 && <span className="prop-pct all" aria-hidden="true"><IconCheck size={13} /></span>}</div>
           {p !== '—' && job.properties?.[p] && <div className="hint">{job.properties[p]}</div>}
         </div>}
         {inSheet && (
@@ -220,8 +217,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
             <button className="btn btn-secondary house-vo" onClick={() => onLogVo(p === '—' ? undefined : p)}><IconPlus /> Add VO</button>
           </div>
         )}
-        {/* the key to the bar's colours: a line of names, or, past four trades, chips that also jump to each */}
-        {inSheet && groups.length > 1 && groups.length <= 4 && <div className="hint trade-key"><TradeList names={groups} /></div>}
+        {/* past four trades, chips that jump to each; fewer, and the headings below are the key */}
         {inSheet && groups.length > 4 && (
           <div className="chips trade-jump" role="group" aria-label="Go to a trade">
             {groups.map(g => <button key={g} className="chip sm" onClick={() => jump(g)}><TradeMark name={g} />{g}</button>)}
@@ -229,7 +225,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
         )}
         {pvShown.length > 0 && (
           <section className="hs-trade">
-            <div className="trade-h"><span className="grow">Variations <span className="hint">· {pvShown.length}</span></span><span className="mono t-small">{voValue(pvShown) > 0 ? money(voValue(pvShown)) : 'unpriced'}</span></div>
+            <div className="trade-h"><span className="grow">Variations</span><span className="mono t-small">{voValue(pvShown) > 0 ? money(voValue(pvShown)) : 'unpriced'}</span></div>
             <div className="vo-group">{voRows(pvShown)}</div>
           </section>
         )}
@@ -242,7 +238,7 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           return (
             <section key={g} className="hs-trade" aria-label={g}>
               <div className="trade-h" id={`trade-${p}-${g}`}>
-                <span className="grow"><TradeMark name={g} />{g} <span className="hint">· {gall.length}</span></span>
+                <span className="grow"><TradeMark name={g} />{g}</span>
                 <span className="mono t-small">{money(gt)}</span>
                 {grem.length > 1 && <button className="chip sm" onClick={() => onToggleMany(grem)} aria-label={`Tick all ${g} (${grem.length})`}>Tick all</button>}
               </div>
@@ -256,39 +252,41 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
 
   return (
     <div className="stack">
-      <TabHead label="Scope" meta={`${scope.length} item${scope.length === 1 ? '' : 's'}${vos.length ? ` · ${vos.length} VO${vos.length === 1 ? '' : 's'}` : ''}`} menu={<TabMenu title="Scope" actions={[
-          { label: 'Add a scope line', hint: 'By hand, when there’s no schedule to import it from', onClick: onAdd },
-          ...(onRegister ? [{ label: 'Variation register (PDF)', hint: 'Every VO: client ref, status, value, evidence', disabled: !vos.length, onClick: onRegister }] : []),
-          ...(onDayworks ? [{ label: 'Dayworks sheets', hint: 'Hours, materials and plant, signed, then claimed as a VO', onClick: onDayworks }] : []),
-          ...(onEvidence ? [{ label: 'Completion evidence (PDF)', hint: 'Work claimed so far, by property, with the diary’s photos — no prices', disabled: !scope.some(i => i.valuationId), onClick: () => { void onEvidence() } }] : []),
-          ...(onCheckRates ? [{ label: 'Check rates against your SoR', hint: 'Lines that don’t follow the BoQ’s pattern, codes not in the schedule', disabled: !scope.length, onClick: onCheckRates }] : []),
+      <TabHead label="Scope" menu={<TabMenu title="Scope" actions={[
+          // once there's scope, importing more is an occasional job: it lives here
+          ...(!empty ? [{ label: 'Import scope', onClick: onImport }, ...(onImportVo ? [{ label: 'Import VOs', onClick: onImportVo }] : [])] : []),
+          { label: 'Add a scope line', onClick: onAdd },
+          ...(onRegister ? [{ label: 'Variation register (PDF)', disabled: !vos.length, onClick: onRegister }] : []),
+          ...(onDayworks ? [{ label: 'Dayworks sheets', onClick: onDayworks }] : []),
+          ...(onEvidence ? [{ label: 'Completion evidence (PDF)', disabled: !scope.some(i => i.valuationId), onClick: () => { void onEvidence() } }] : []),
+          ...(onCheckRates ? [{ label: 'Check rates against your SoR', disabled: !scope.length, onClick: onCheckRates }] : []),
           { label: 'Clear unclaimed lines', hint: `${unclaimed.length} scope line${unclaimed.length === 1 ? '' : 's'} not in any valuation (VOs stay)`, danger: true, disabled: !unclaimed.length, onClick: () => onClearUnclaimed(unclaimed) },
           { label: 'Delete entire scope', hint: lockedCount ? `Wrong spec? ${lockedCount} certified line${lockedCount === 1 ? '' : 's'} will stay (issued valuations are locked); VOs stay` : 'Wrong spec? Removes every scope line so you can import again; VOs stay', danger: true, disabled: lockedCount === scope.length,
             confirm: lockedCount ? `Delete ${scope.length - lockedCount} lines? The ${lockedCount} certified on issued valuations stay.` : `Delete all ${scope.length} lines from this job? This can't be undone.`, onClick: () => onDeleteAll(scope.filter(i => !lockedIn(i, vals))) },
         ]} />} />
 
-      {/* the two ways work comes in, under the heading: a VO as you spot it, or the client's documents */}
+      {/* a VO as you spot it; on an empty job, the client's documents first */}
       <div className="tab-actions">
+        {empty && (onImportVo ? <TabMenu title="Import" button={{ label: <><IconDoc /> Import</>, className: 'btn btn-sm btn-primary' }} actions={[
+          { label: 'Scope', hint: 'Schedule, BoQ, works orders', onClick: onImport },
+          { label: 'VOs', hint: 'The client’s VO tickets', onClick: onImportVo },
+        ]} /> : <button className="btn btn-sm btn-primary" onClick={onImport}><IconDoc /> Import scope</button>)}
         <button className={'btn btn-sm ' + (empty ? 'btn-secondary' : 'btn-primary')} onClick={() => onLogVo()}><IconPlus /> Add VO</button>
-        {onImportVo ? <TabMenu title="Import" button={{ label: <><IconDoc /> Import</>, className: 'btn btn-sm ' + (empty ? 'btn-primary' : 'btn-secondary') }} actions={[
-          { label: 'Scope', hint: 'The schedule of works, BoQ, works orders, PCI or surveys: Excel, PDF or Word. Every line read for you to check.', onClick: onImport },
-          { label: 'VOs', hint: 'The client’s VO ticket, site instruction or VO schedule: photo, scan, PDF, Word or Excel. A VO per line, at its house.', onClick: onImportVo },
-        ]} /> : <button className={'btn btn-sm ' + (empty ? 'btn-primary' : 'btn-secondary')} onClick={onImport}><IconDoc /> Import scope</button>}
       </div>
 
       {/* the money for the job is on Home and Vals; Scope is the work, house by house (each house shows its value) */}
       {filter === 'vos' && vos.length > 0 && <VoSummary job={job} vos={vos} vals={vals} />}
 
       <div className="chips">
-        {(['all', 'live', 'claimed', 'vos'] as Filter[]).map(f => (
+        {(['all', 'live', 'vos'] as Filter[]).map(f => (
           <button key={f} className={'chip sm' + (filter === f ? ' on' : '')} aria-pressed={filter === f} onClick={() => setFilter(f)}>
             {f === 'all' ? 'All' : f === 'live' ? 'Still to do' : f === 'claimed' ? 'Claimed' : `VOs${vos.length ? ` (${vos.length})` : ''}`}
           </button>
         ))}
       </div>
 
-      {empty && <div className="card empty">No scope yet. Import the client’s schedule, BoQ, scope of works or works orders and every line is read for you to check. VOs go in here too, at their house.</div>}
-      {filter === 'vos' && !vos.length && <div className="card empty">No variations yet. Add extras the moment you spot them, at their house.</div>}
+      {empty && <div className="card empty">No scope yet.</div>}
+      {filter === 'vos' && !vos.length && <div className="card empty">No variations yet.</div>}
 
       {hasProps ? <div className="panel prop-list">{properties.map(p => {
         const all = scope.filter(i => (i.property || '—') === p)
@@ -304,11 +302,11 @@ function OfficeScope({ job, scope, vals, onToggle, onToggleMany, onClearUnclaime
           <div key={p} className="prop-item">
             {/* one line: the house, how much is there, its value; the bar under it shows its trades and how far they're claimed */}
             <button className="prop-row" onClick={() => setOpenHouse(p)} aria-haspopup="dialog" aria-label={`${p === '—' ? 'Whole job' : `Property ${p}`}${vosHere ? `, ${vosHere} VO${vosHere === 1 ? '' : 's'}` : ''}`}>
-              <span className="prop-main"><span className="prop-name">{houseName(p)}</span><span className="prop-meta">{figs(`${all.length} line${all.length === 1 ? '' : 's'}`)}{vosHere > 0 && <> · {figs(`${vosHere} VO${vosHere === 1 ? '' : 's'}`)}</>}</span></span>
+              <span className="prop-main"><span className="prop-name">{houseName(p)}</span></span>
               <span className="prop-amt"><span className="mono">{money(tot)}</span></span>
               <span className="prop-chev" aria-hidden="true"><IconChevron size={16} /></span>
             </button>
-            <div className="prop-foot"><TradeBar items={all} label={`${houseName(p)}: ${pct}% claimed`} /><span className={'prop-pct' + (pct === 100 ? ' all' : '')}>{pct === 100 && <IconCheck size={13} />}{fig(`${pct}%`)}</span></div>
+            <div className="prop-foot"><TradeBar items={all} label={`${houseName(p)}: ${pct}% claimed`} />{pct === 100 && <span className="prop-pct all" aria-hidden="true"><IconCheck size={13} /></span>}</div>
           </div>
         )
       })}</div> : houseBody(properties[0] ?? '—', false)}

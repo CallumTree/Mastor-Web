@@ -20,8 +20,10 @@ async function newJob(name: string, po: string) {
 }
 async function importFile(file: File) {
   nav('scope')
-  click(await screen.findByRole('button', { name: 'Import' }))   // VOs live in Scope, at their house; one importer for tickets, instructions and schedules
-  click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^VOs/ }))
+  // VOs live in Scope, at their house: on an empty job Import is a button, once there's scope it's in ⋯
+  const importBtn = screen.queryByRole('button', { name: 'Import' })
+  click(importBtn ?? await screen.findByRole('button', { name: 'Scope options' }))
+  click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: importBtn ? /^VOs/ : /^Import VOs/ }))
   fireEvent.change(document.querySelector('.sheet input[type=file]:not([capture])')!, { target: { files: [file] } })
   await screen.findByText('Import VOs · check them')
 }

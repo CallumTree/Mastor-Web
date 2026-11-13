@@ -27,7 +27,6 @@ export function JobsList({ jobs, scope = [], vos, orders = [], diary = [], alert
   setup?: SetupStep[]
 }) {
   const sorted = [...jobs].sort((a, b) => (a.status === b.status ? b.createdAt - a.createdAt : a.status === 'Active' ? -1 : 1))
-  const active = sorted.filter(j => j.status === 'Active').length
   const { money: m } = useAccess()
 
   return (
@@ -38,7 +37,6 @@ export function JobsList({ jobs, scope = [], vos, orders = [], diary = [], alert
           <div className="cover-mark">
             <h1 className="sr-only">Mastor — your jobs</h1>
             <Wordmark />
-            <div className="cover-sub">{sorted.length ? `${active} active job${active === 1 ? '' : 's'}` : 'Site · Variations · Valuations'}</div>
           </div>
           {m && sorted.length > 0 ? <button onClick={onDashboard} aria-label="Money across all jobs" className="icon-btn on-dark"><IconChart size={22} /></button> : <span className="icon-gap" />}
         </div>
@@ -46,13 +44,13 @@ export function JobsList({ jobs, scope = [], vos, orders = [], diary = [], alert
       </header>
 
       <div className="cover-body">
-        {m && setup && <SetupList steps={setup} />}
+        {/* once there's a job, the first steps fold to one row, so the job comes first */}
+        {m && setup && <SetupList steps={setup} folded={sorted.length > 0} />}
         {sorted.length > 0 && <WeekLine jobs={jobs} entries={diary} alerts={alerts} onToggle={onToggle} onOpen={(id, tab) => { const j = jobs.find(x => x.id === id); if (j) (onOpenLine ? onOpenLine(j, tab) : onOpen(j)) }} />}
         {sorted.length > 0 ? (
           <section className="jobs" aria-label="Jobs">
             <div className="jobs-head" aria-hidden="true"><span>Job</span><span>Client</span><span className="num">{m ? 'Contract' : ''}</span><span>Needs</span><span>Status</span></div>
             {sorted.map(j => {
-              const unpriced = vos.filter(v => v.jobId === j.id && v.rate === null && v.status !== 'Rejected').length
               return (
                 <button key={j.id} className="job-row" onClick={() => onOpen(j)}>
                   <span className="jr-job"><b>{j.name}</b><small className="mono">{j.contractRef || WORK_LABEL[j.workType] || j.workType}</small></span>
@@ -62,9 +60,8 @@ export function JobsList({ jobs, scope = [], vos, orders = [], diary = [], alert
                     {m && !j.poNumber && <Plate kind="stop">No PO</Plate>}
                     {(() => { const late = orders.filter(o => o.jobId === j.id && isOverdue(o)).length; return late ? <Plate kind="stop">{late} overdue order{late === 1 ? '' : 's'}</Plate> : null })()}
                     {j.kind === 'orders' && <Plate kind="wait">{orders.filter(o => o.jobId === j.id && o.status === 'open').length} open orders</Plate>}
-                    {m && unpriced > 0 && <Plate kind="warn">{unpriced} unpriced VO{unpriced === 1 ? '' : 's'}</Plate>}
                   </span>
-                  <span className="jr-status"><span className={'badge ' + (j.status === 'Active' ? 'b-slate' : 'b-quiet')}>{j.status}</span></span>
+                  <span className="jr-status">{j.status !== 'Active' && <span className="badge b-quiet">{j.status}</span>}</span>
                 </button>
               )
             })}

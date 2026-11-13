@@ -97,10 +97,10 @@ describe('schedule of rates', () => {
     expect((screen.getByLabelText(/Rate \(£\)/) as HTMLInputElement).value).toBe('42.1')
     type('Qty', '10')
     click(screen.getAllByRole('button', { name: 'Add line' }).at(-1)!)
+    await waitFor(() => expect(document.querySelector('.sheet')).toBeNull())   // the line is saved and the form closed
     await waitFor(() => expect(screen.getAllByText('£421.00').length).toBeGreaterThan(0))
 
     // --- check the scope's rates against the book
-    await screen.findByText(/^1 item · 1 VO$/)   // the scope and its VO, one list
     click(screen.getByRole('button', { name: 'Scope options' }))
     click(screen.getByRole('button', { name: /check rates against your sor/i }))
     await screen.findByText('All 1 priced lines follow the SoR rates exactly')

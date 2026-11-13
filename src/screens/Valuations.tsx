@@ -1,15 +1,12 @@
 import { useState, type ReactNode } from 'react'
 import type { DiaryEntry, Job, ScopeItem, SiteSuggestion, Valuation, Variation } from '../lib/types'
 import { SiteReview } from './SiteReview'
-import { IconChevron, IconLock } from '../components/Icons'
+import { IconChevron } from '../components/Icons'
 import { RowHit, SumStrip, TabHead } from '../components/Register'
 import { money, qtyText, ukDate, voRef } from '../lib/format'
 import { amending, askChanges, isCertified, isWithClient, issuePlan, jobWorth, lineValue, reviewStage, shareOut, valRef, valTotals } from '../lib/valuation'
-import { valRhythm, waitAMonth, weekText, VAL_MIN_DAYS } from '../lib/rhythm'
-import { shortDay } from '../lib/plan'
-import { dayKey } from '../lib/dates'
+import { valRhythm, waitAMonth, weekText } from '../lib/rhythm'
 import { ByClaude, Plate } from '../components/Sign'
-import { TradeMark } from '../components/Trade'
 import { CourtLine, valCourt } from '../lib/chase'
 import { Field, Sheet } from '../components/Ui'
 import { TabMenu } from '../components/TabMenu'
@@ -49,7 +46,7 @@ function Lines({ job, val, scope, vos, onRemoveScope, onRemoveVo }: {
   return (
     <div>
       {s.length > 0 && !byProp && <h3 className="label" style={{ marginTop: 8 }}>Scope</h3>}
-      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{i.workstream && <><TradeMark name={i.workstream} />{i.workstream}</>}{placeOf(i) && `${i.workstream ? ' · ' : ''}${placeOf(i)}`}{(i.workstream || placeOf(i)) ? ' · ' : ''}{fig(`${qtyText(i.qty!)} ${i.unit}`)} @ {fig(money(i.rate!))}</>, worth.get(i.id) ?? 0, onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
+      {s.map((i, n) => <div key={i.id}>{byProp && (n === 0 || s[n - 1].property !== i.property) && <h3 className="label" style={{ marginTop: 10 }}>Scope · No. {i.property || '—'}</h3>}{row(i.id, i.code, i.description, <>{placeOf(i) && `${placeOf(i)} · `}{fig(`${qtyText(i.qty!)} ${i.unit}`)} @ {fig(money(i.rate!))}</>, worth.get(i.id) ?? 0, onRemoveScope && (() => onRemoveScope(i)), i.byClaude)}</div>)}
       {o.length > 0 && <h3 className="label" style={{ marginTop: 12 }}>Variations</h3>}
       {o.map(v => row(v.id, voRef(v.number) + (v.clientRef ? ` · council ${v.clientRef}` : ''), v.description, `${placeOf(v) ? `${placeOf(v)} · ` : ''}${qtyText(v.qty!)} ${v.unit} @ ${money(v.rate!)}`, worth.get(v.id) ?? 0, onRemoveVo && (() => onRemoveVo(v)), v.byClaude))}
     </div>
@@ -87,14 +84,12 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   const withClient = issued.filter(isWithClient)
   const current = open ? valTotals(job, open.id, scope, vos) : null
   const worth = jobWorth(job, scope, vos)
-  const pricedVos = worth.vos, target = worth.total
+  const target = worth.total
   const nextNo = vals.reduce((m, v) => Math.max(m, v.number), 0) + 1
   const expanded = expandedPick === undefined ? sent[0]?.id ?? null : expandedPick
   const courts = new Map(issued.map(v => [v.id, valCourt(v, job, scope, vos)]))
-  const paid = issued.reduce((t, v) => t + (v.paidAmount ?? 0), 0)
   const owed = issued.reduce((t, v) => t + (courts.get(v.id)?.owed ?? 0), 0)
   const overdue = issued.filter(v => courts.get(v.id)?.tone === 'late' && !courts.get(v.id)?.review).length
-  const pct = target > 0 ? Math.round(((valued + (current?.gross ?? 0)) / target) * 100) : 0
   // where the money is, all without VAT so the parts add up to the contract + VOs: a payment received against a VAT
   // invoice is put back on the same footing (less its VAT), and never counts for more than the valuation it paid
   const pence = (x: number) => Math.round(x * 100) / 100
@@ -104,29 +99,24 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
   }, 0))
   const sentNet = pence(valued - certified)
   const split = { paid: paidNet, due: Math.max(0, pence(certified - paidNet)), sent: sentNet, open: pence(current?.gross ?? 0), left: Math.max(0, pence(target - valued - (current?.gross ?? 0))) }
-  // owed with VAT is only ever an invoice's figure: built from invoiced valuations alone, never added to one without VAT
-  const owedOnInvoice = pence(issued.filter(v => v.invoiceNumber).reduce((t, v) => t + (courts.get(v.id)?.owed ?? 0), 0))
   return (
     <div className="stack">
       <TabHead label="Valuations" menu={<TabMenu title="Valuations" actions={[
-          { label: 'Preview certificate', hint: open ? `${valRef(open.number)} as a draft PDF` : 'No open valuation', disabled: !open || !current?.lines, onClick: () => open && cert(open) },
-          { label: 'Delete open valuation', hint: open ? `Sends every line in ${valRef(open.number)} back to live` : 'No open valuation', danger: true, disabled: !open, onClick: () => open && onDeleteOpen(open) },
+          { label: 'Preview certificate', disabled: !open || !current?.lines, onClick: () => open && cert(open) },
+          { label: 'Delete open valuation', hint: open ? `Its lines go back to Scope` : undefined, danger: true, disabled: !open, onClick: () => open && onDeleteOpen(open) },
         ]} />} />
       <SumStrip label="Where the money is" cells={[
-        { label: 'Contract + VOs', value: money(target), nil: !target, whole: true, note: target ? `${pct}% claimed${open ? ' incl. this valuation' : ''}${pricedVos ? ` · VOs ${money(pricedVos)}` : ''}` : 'No contract value yet — add it in job setup' },
-        // the parts only once there's something to split: before the first valuation the whole is all still to claim
+        { label: 'Contract + VOs', value: money(target), nil: !target, whole: true, note: target ? undefined : 'No contract value yet — add it in job setup' },
+        // the parts only once there's something to split, and only the parts that hold money: each figure said once,
+        // no notes; the one word kept is a warning
         ...(!issued.length && !open ? [] : [
-          { label: 'Paid', swatch: 'paid' as const, amount: split.paid, value: money(split.paid), nil: split.paid < 0.005, note: paid - split.paid > 0.005 ? `${money(paid)} incl. VAT` : paid ? 'as received' : 'nothing yet' },
-            { label: 'Certified, unpaid', swatch: 'due' as const, amount: split.due, value: money(split.due), nil: split.due < 0.005, hot: owed > 0 && !open && !fixing,
-            note: [owedOnInvoice ? `${money(owedOnInvoice)} on invoice${vals.some(v => v.invoiceNumber && withVat(v)) ? ' incl. VAT' : ''}` : certified ? 'agreed by the client' : 'none agreed yet', overdue ? `${overdue} overdue` : ''].filter(Boolean).join(' · ') },
-          ...(withClient.length ? [{ label: 'With client', swatch: 'sent' as const, amount: split.sent, value: money(split.sent), nil: split.sent < 0.005,
-            note: withClient.length === 1 ? `${valRef(withClient[0].number)}, ${fixing === withClient[0] ? 'changes asked' : 'for review'}` : `${withClient.length} valuations for review` }] : []),
-          ...(open ? [{ label: `${valRef(open.number)}, open`, swatch: 'open' as const, amount: split.open, value: money(split.open), nil: split.open < 0.005, note: 'not sent yet' }] : []),
-          { label: 'Still to claim', swatch: 'left' as const, amount: split.left, value: money(split.left), nil: split.left < 0.005, note: target ? `${Math.max(0, 100 - pct)}% left` : undefined },
-        ]),
+          { label: 'Paid', swatch: 'paid' as const, amount: split.paid, value: money(split.paid) },
+          { label: 'Certified, unpaid', swatch: 'due' as const, amount: split.due, value: money(split.due), hot: owed > 0 && !open && !fixing, warn: overdue ? `${overdue} overdue` : undefined },
+          { label: 'With client', swatch: 'sent' as const, amount: split.sent, value: money(split.sent) },
+          ...(open ? [{ label: valRef(open.number), swatch: 'open' as const, amount: split.open, value: money(split.open) }] : []),
+          { label: 'Still to claim', swatch: 'left' as const, amount: split.left, value: money(split.left) },
+        ].filter(c => c.amount >= 0.005)),
       ]} />
-
-      {rhythm && <ValWeek rhythm={rhythm} onWait={() => onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />}
 
       {fixing && <Working job={job} val={fixing} scope={scope} vos={vos} certified={valued - valTotals(job, fixing.id, scope, vos).gross} hot
         send={<SendButton job={job} val={fixing} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} />} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />}
@@ -136,46 +126,42 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
       {open && current ? (
         <div className="card" style={{ padding: 12 }}>
           <div className="row" style={{ marginBottom: 10 }}>
-            <span className="ref-roman" style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{valRef(open.number)}</span>
-            <span className="badge b-volt">Open</span><span className="grow" />
-            <span className="hint">{rhythm ? (rhythm.state === 'due' ? 'due this week' : rhythm.state === 'late' ? `was due ${weekText(rhythm)}` : `goes in ${weekText(rhythm)}`) : `started ${ukDate(open.createdAt)}`}</span>
+            <span className="ref-roman" style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{valRef(open.number)}</span><span className="grow" />
+            <When rhythm={rhythm} onWait={() => rhythm && onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />
           </div>
+          {/* the figure, once; the cumulative only when there's an earlier valuation to add it to. The base build-up is on
+              the certificate (⋯ → Preview certificate), where the client's QS checks it */}
           <SumStrip label={`${valRef(open.number)} figures`} cells={[
-            { label: 'This valuation', value: money(current.gross), note: 'incl. uplifts, excl. VAT', hot: !fixing },
-            { label: 'Cumulative', value: money(valued + current.gross), note: `${money(valued)} in earlier valuations` },
+            { label: 'This valuation', value: money(current.gross), hot: !fixing },
+            ...(valued > 0.005 ? [{ label: 'Cumulative', value: money(valued + current.gross) }] : []),
           ]} />
-          {current.lines > 0 && <div className="val-build">
-            {current.voBase ? <>{fig(money(current.scopeBase))} scope + {fig(money(current.voBase))} VOs = <b>{money(current.base)}</b> at base rates</> : <><b>{money(current.base)}</b> scope at base rates</>}
-            {(job.uplift1 || job.uplift2) ? <>, plus uplifts of {job.uplift1}%{job.uplift2 ? <>&nbsp;+&nbsp;{job.uplift2}%</> : null}</> : null}
-          </div>}
-          {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in this valuation yet — tick items in Scope or VOs.</div>}
+          {current.lines === 0 && <div className="hint" style={{ padding: '12px 0' }}>Nothing in it yet.</div>}
           {/* one Send, with what the client's QS would query, above the lines: never a long scroll away */}
           {current.lines > 0 && <SendButton job={job} val={open} vals={vals} scope={scope} vos={vos} onIssue={onIssue} onCertificate={onCertificate} onSent={onUndoSend} />}
           <Lines job={job} val={open} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
         </div>
       ) : fixing ? null : (
         <div className="card empty">
-          <div style={{ fontWeight: 600, color: 'var(--ink)', marginBottom: 6 }}>No open valuation</div>
-          Tick completed items in <button className="linkish tap slate" onClick={() => go('scope')}>Scope</button> or priced <button className="linkish tap slate" onClick={() => go('vos')}>VOs</button> to start {valRef(nextNo)}.
+          <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+            <span className="grow"><b className="ref-roman">{valRef(nextNo)}</b> · tick lines in <button className="linkish tap slate" onClick={() => go('scope')}>Scope</button> to start it</span>
+            <When rhythm={rhythm} onWait={() => rhythm && onUpdateJob(waitAMonth(job, rhythm))} onUndo={() => onUpdateJob({ ...job, valWait: null })} />
+          </div>
         </div>
       )}
 
       {sent.length > 0 && (
         <div className="card vo-list">
-          <div className="vo-head"><span>Val</span><span>Sent · status</span><span>Value</span></div>
           {sent.map(v => {
             const t = valTotals(job, v.id, scope, vos)
             const isOpen = expanded === v.id
             const stage = reviewStage(v)
-            const word = !v.review ? 'Issued' : stage === 'review' ? 'Sent' : 'Agreed'
             return (
               <div key={v.id} className={'vo-row-wrap' + (isOpen ? ' open' : '')}>
                 <div className="vo-row has-hit">
                   <RowHit label={`${valRef(v.number)}, sent${v.issuedAt ? ' ' + ukDate(v.issuedAt) : ''} — ${isOpen ? 'hide' : 'show'} actions`} expanded={isOpen} onClick={() => setExpanded(isOpen ? null : v.id)} />
-                  <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span><small><IconLock size={12} /> {word}</small></div>
+                  <div className="vo-ref"><span className="ref-roman">{valRef(v.number)}</span></div>
                   <div className="vo-main">
                     <div className="vo-desc">{v.issuedAt ? ukDate(v.issuedAt) : 'Sent'}</div>
-                    <div className="vo-meta">{t.lines} line{t.lines === 1 ? '' : 's'}</div>
                     {v.invoiceNumber && <div className="vo-meta">Invoice <span className="vo-cref mono">{v.invoiceNumber}</span> · {fig(money(invoiceAmounts(job, v, scope, vos).total))}{withVat(v) ? ' incl. VAT' : ''}</div>}
                     <div className="vo-status"><CourtLine c={courts.get(v.id)!} /></div>
                   </div>
@@ -199,7 +185,7 @@ export function ValuationsTab({ job, scope, vos, vals, onRemoveScope, onRemoveVo
                     </div>
                     {stage !== 'review' && (v.paidAt || !v.invoiceNumber) && <button className="btn btn-secondary" onClick={() => setPaying(v)}>{v.paidAt ? 'Edit payment' : 'Mark as paid'}</button>}
                     {v.review && stage !== 'review' && !v.invoiceNumber && !v.paidAt && <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setChanging(v)}>Client wants changes after all</button>}
-                    <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setShowLines(showLines === v.id ? null : v.id)}>{showLines === v.id ? 'Hide lines' : `Show ${t.lines} line${t.lines === 1 ? '' : 's'}`}</button>
+                    <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => setShowLines(showLines === v.id ? null : v.id)}>{showLines === v.id ? 'Hide lines' : 'Show lines'}</button>
                     {showLines === v.id && <Lines job={job} val={v} scope={scope} vos={vos} />}
                   </div>
                 )}
@@ -231,7 +217,7 @@ function PaidSheet({ v, gross, onSave, onClose }: { v: Valuation; gross: number;
       <div className="stack">
         <h2 className="label bracket">Payment · {valRef(v.number)}</h2>
         <Field label="Date received"><input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
-        <div className="hint">{figs(v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)}${withVat(v) ? ' incl. VAT' : ''}.` : `Certified ${money(gross)}.`)} Less than that landed? Enter what did — the rest stays owed.</div>
+        <div className="hint">{figs(v.invoiceNumber ? `Invoice ${v.invoiceNumber}: ${money(gross)}${withVat(v) ? ' incl. VAT' : ''}` : `Certified ${money(gross)}`)}</div>
         <Field label="Amount received (£)"><input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="As on the remittance" /></Field>
         {/* the white block is whatever matches what you typed: an amount typed means that amount, never "in full" */}
         {typed && n < gross - 0.005 && <div className="flag">{fig(money(gross - n))} will still show as owed</div>}
@@ -276,32 +262,17 @@ function SendButton({ job, val, vals, scope, vos, onIssue, onCertificate, onSent
   )
 }
 
-/**
- * The valuation week, said plainly: when the last one went, when the next one goes in (the first week of
- * the month), and a way to let a thin month wait for the next.
- */
-function ValWeek({ rhythm: r, onWait, onUndo }: { rhythm: NonNullable<ReturnType<typeof valRhythm>>; onWait: () => void; onUndo: () => void }) {
-  const day = (t: number) => shortDay(dayKey(new Date(t)))
-  const ago = r.last ? Math.floor((Date.now() - r.last.issuedAt!) / 864e5) : 0
-  const when = r.state === 'due' ? 'This week' : r.state === 'late' ? `Late · was due ${weekText(r)}` : r.state === 'soon' ? 'Starts in a few days' : r.waited ? 'Moved on a month' : `First week of the month · under ${VAL_MIN_DAYS === 14 ? 'two' : VAL_MIN_DAYS / 7} weeks’ work waits`
+/** When this valuation goes in, said once: due, late (gold) or the week it goes, with the one thing you can do about it
+ *  (let a thin month wait, or undo that). */
+function When({ rhythm: r, onWait, onUndo }: { rhythm: ReturnType<typeof valRhythm>; onWait: () => void; onUndo: () => void }) {
+  if (!r) return null
+  const now = r.state === 'due' || r.state === 'late'
   return (
-    <div className={'panel val-week' + (r.state === 'due' || r.state === 'late' ? ' now' : '')} aria-label="Valuation week">
-      <div className="val-week-c">
-        <div className="label">Last sent</div>
-        <div className="val-week-n">{r.last ? <><span><span className="ref-roman">{valRef(r.last.number)}</span> ·</span> <span>{day(r.last.issuedAt!)}</span></> : 'None yet'}</div>
-        <small>{r.last ? (ago === 0 ? 'today' : `${ago} day${ago === 1 ? '' : 's'} ago`) : 'the first on this job'}</small>
-      </div>
-      <div className="val-week-c">
-        <div className="label">Next</div>
-        <div className="val-week-n"><span><span className="ref-roman">{valRef(r.next)}</span> ·</span> <span>{weekText(r)}</span></div>
-        <small>{when}</small>
-      </div>
-      {(r.state === 'due' || r.state === 'late' || r.waited) && <div className="val-week-f">
-        <span className="grow" />
-        {(r.state === 'due' || r.state === 'late') && <button className="linkish tap t-small" onClick={onWait}>Wait till next month</button>}
-        {r.waited && r.state !== 'due' && r.state !== 'late' && <button className="linkish tap t-small" onClick={onUndo}>Undo the wait</button>}
-      </div>}
-    </div>
+    <span className="val-when">
+      <span className={r.state === 'late' ? 'late' : 'hint'}>{r.state === 'late' ? `Late · due ${weekText(r)}` : r.state === 'due' ? 'Due this week' : `Goes in ${weekText(r)}`}</span>
+      {now && <button className="linkish tap t-small" onClick={onWait}>Wait a month</button>}
+      {r.waited && !now && <button className="linkish tap t-small" onClick={onUndo}>Undo the wait</button>}
+    </span>
   )
 }
 
@@ -321,10 +292,9 @@ function Working({ job, val, scope, vos, certified, hot, send, onRemoveScope, on
       </div>
       {val.review?.changes && <blockquote className="val-asked">{val.review.changes}</blockquote>}
       <SumStrip label={`${ref} figures`} cells={[
-        { label: 'This valuation', value: money(t.gross), note: 'incl. uplifts, excl. VAT', hot },
-        { label: 'Cumulative', value: money(certified + t.gross), note: `${money(certified)} previously` },
+        { label: 'This valuation', value: money(t.gross), hot },
+        ...(certified > 0.005 ? [{ label: 'Cumulative', value: money(certified + t.gross) }] : []),
       ]} />
-      <div className="hint" style={{ margin: '10px 2px' }}>Take out what they won’t agree (it goes back to live), fix quantities in Scope or VOs. Ticks go into {ref} until you send it again.</div>
       {send}
       <Lines job={job} val={val} scope={scope} vos={vos} onRemoveScope={onRemoveScope} onRemoveVo={onRemoveVo} />
     </div>

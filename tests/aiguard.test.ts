@@ -48,7 +48,7 @@ const refused = async (body: unknown, status: number, re: RegExp, m: string, h =
 await refused({ code: 'P0001', message: 'ai_month', hint: '1500' }, 429, /this month’s AI allowance.*1st.*carries on/, 'allowance used: refused until the 1st, records carry on')
 await refused({ code: 'P0001', message: 'ai_daily_credits', hint: '300' }, 429, /most AI reading for one day.*midnight/, 'the day’s guard reached: refused until midnight')
 await refused({ code: 'P0001', message: 'ai_month_reads', hint: '5' }, 429, /this month’s 5 document reads/, 'Mercury’s 5 reads used: says how many')
-await refused({ code: 'P0001', message: 'ai_plan', hint: 'mercury' }, 403, /The VO ticket reader isn’t on your plan.*Minerva and Jupiter/, 'not on the plan: names what, and which plans have it', vo)
+await refused({ code: 'P0001', message: 'ai_plan', hint: 'mercury' }, 403, /The VO ticket reader isn’t on your plan.*Arch and Dome/, 'not on the plan: names what, and which plans have it', vo)
 await refused({ message: 'JWT expired' }, 401, /expired/, 'expired sign-in: refused')
 check = { status: 401, body: { message: 'JWT expired' } }
 r = await call(boq, doc, 'old')

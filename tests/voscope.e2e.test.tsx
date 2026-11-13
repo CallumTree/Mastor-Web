@@ -66,8 +66,8 @@ describe('VOs in Scope', () => {
     click(screen.getByRole('button', { name: 'All' }))
 
     // the client's VO schedule, laid out like a spec list: a VO per line, at its house, instructed under their ref
-    click(screen.getByRole('button', { name: 'Import' }))   // one importer for VOs: tickets, instructions and schedules
-    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^VOs/ }))
+    click(screen.getByRole('button', { name: 'Scope options' }))   // once there's scope, importing lives in ⋯
+    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^Import VOs/ }))
     const sheet = XLSX.utils.aoa_to_sheet([['Code', 'Description', 'Qty', 'Unit', 'Rate', 'Total'],
       ['No. 3 Elm Row'], ['4350AA', 'Gutter: renew in uPVC', 9, 'LM', 31.2, 280.8],
       ['No. 5 Elm Row'], ['5110AB', 'Fascia: renew', 6, 'LM', 44, 264]])
@@ -85,8 +85,8 @@ describe('VOs in Scope', () => {
 
     // a VO schedule in a layout of its own (no CODE / QTY / RATE headings) is read by what its columns mean; with no
     // reference from the client the VOs wait as raised, at the house the schedule names, which can be changed
-    click(screen.getByRole('button', { name: 'Import' }))
-    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^VOs/ }))
+    click(screen.getByRole('button', { name: 'Scope options' }))
+    click(within(document.querySelector('.sheet') as HTMLElement).getByRole('button', { name: /^Import VOs/ }))
     const own = XLSX.utils.aoa_to_sheet([['Variation schedule – Elm Row'], [], ['Ref', 'Work required', 'Quantity', 'Unit', 'Rate (£)', 'Amount (£)'],
       ['3 Elm Row'], ['V1', 'Ease and adjust back door', 1, 'nr', 45, 45], ['V2', 'Renew rear gate', 1, 'nr', 180, 180]])
     const wb2 = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb2, own, 'VOs')
